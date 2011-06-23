@@ -31,7 +31,7 @@ import mothership.validate
 
 from mothership_models import *
 from sqlalchemy import or_, desc, MetaData
-from zabbix_api import ZabbixAPI, ZabbixAPIException
+from zabbix_api2 import ZabbixAPI, ZabbixAPIException
 
 
 # Mothership's main exception type
