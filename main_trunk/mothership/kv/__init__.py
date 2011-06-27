@@ -45,7 +45,7 @@ def select(cfg, fqdn, key, value=None):
     kv = results.first()
     return kv
 
-def collect(cfg, fqdn, key=None):
+def collect(cfg, fqdn, key=None, value=None):
     """
     Returns a list of all matches.
     """
@@ -58,9 +58,10 @@ def collect(cfg, fqdn, key=None):
             filter(or_(KV.realm==realm, KV.realm==None)).\
             filter(or_(KV.hostname==hostname, KV.hostname==None)).\
             order_by(desc(KV.site_id), desc(KV.realm), desc(KV.hostname))
-
     if key:
         results = results.filter(KV.key==key)
+    if value:
+        results = results.filter(KV.value==value)
 
     kvs = results.all()
     return kvs
