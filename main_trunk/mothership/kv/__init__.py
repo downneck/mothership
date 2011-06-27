@@ -83,6 +83,14 @@ def add(cfg, fqdn, key, value):
             print "key=value unchanged, exiting."
             return kv
     print "no existing key=value found, inserting."
+    if fqdn = '':
+        print "this will apply %s=%s globally" % (key, value)
+        ans = raw_input("are you sure you want to do this? (y/n): ")
+        if ans = "Y" or ans = "y":
+            kv = new(fqdn, key, value)
+            cfg.dbsess.add(kv)
+            cfg.dbsess.commit()
+            return kv
     kv = new(fqdn, key, value)
     cfg.dbsess.add(kv)
     cfg.dbsess.commit()
