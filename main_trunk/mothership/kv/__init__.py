@@ -73,7 +73,16 @@ def add(cfg, fqdn, key, value):
     # Check for duplicate key=value.
     kv = select(cfg, fqdn, key, value)
     if kv:
-        return kv
+        print "that key=value pair exists already!"
+        ans = raw_input("Do you want to update it? (y/n): ")
+        if ans = "Y" or ans = "y":
+            print "updating key=value"
+            kv = upsert(cfg, fqdn, key, value)
+            return kv
+        else:
+            print "key=value unchanged, exiting."
+            return kv
+    print "no existing key=value found, inserting."
     kv = new(fqdn, key, value)
     cfg.dbsess.add(kv)
     cfg.dbsess.commit()
@@ -85,7 +94,9 @@ def upsert(cfg, fqdn, key, value):
     """
     kv = select(cfg, fqdn, key)
     if not kv:
+        print "key=value not found, adding"
         kv = new(fqdn, key, value)
+    print "key=value found, updating"
     kv.value = value
     cfg.dbsess.add(kv)
     cfg.dbsess.commit()
@@ -99,3 +110,5 @@ def delete(cfg, fqdn, key, value):
     if kv:
         cfg.dbsess.delete(kv)
         cfg.dbsess.commit()
+    else:
+        print "key=value not found, exiting."

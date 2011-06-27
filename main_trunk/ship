@@ -829,6 +829,10 @@ class ShipCli(cmdln.Cmdln):
         if key.find('=') > 0:
             key, value = key.split('=')
 
+        if opts.add and opts.delete or opts.add and opts.update or opts.delete and opts.update:
+            print "Incompatible options."
+            return
+
         if opts.add:
             # Add another value for a key
             kvs = [mothership.kv.add(self.cfg, fqdn, key, value)]
