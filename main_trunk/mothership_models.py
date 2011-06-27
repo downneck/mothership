@@ -36,10 +36,10 @@ class KV(Base):
         self.site_id = site_id
 
     def __repr__(self):
-        namespace = [self.site_id, self.realm, self.hostname, self.key]
+        namespace = [self.hostname, self.realm, self.site_id]
         namespace = filter(None, namespace)
         display = ".".join(namespace)
-        return "%s=%s" % (display, self.value)
+        return "%s %s=%s" % (display, self.key, self.value)
 
 class Role(Base):
     __tablename__ = 'roles'
