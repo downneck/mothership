@@ -36,16 +36,16 @@ def select(cfg, fqdn, key, value=None):
     """
     hostname, realm, site_id = mothership.split_fqdn(fqdn)
     results = cfg.dbsess.query(KV).\
-            filter(KV.site_id==site_id).\
-            filter(KV.realm==realm).\
             filter(KV.hostname==hostname).\
+            filter(KV.realm==realm).\
+            filter(KV.site_id==site_id).\
             filter(KV.key==key)
     if value:
         results = results.filter(KV.value==value)
     kv = results.first()
     return kv
 
-def collect(cfg, fqdn, key=None):
+def collect(cfg, fqdn, key=None, value=None):
     """
     Returns a list of all matches.
     """
@@ -57,10 +57,11 @@ def collect(cfg, fqdn, key=None):
             filter(or_(KV.site_id==site_id, KV.site_id==None)).\
             filter(or_(KV.realm==realm, KV.realm==None)).\
             filter(or_(KV.hostname==hostname, KV.hostname==None)).\
-            order_by(desc(KV.site_id), desc(KV.realm), desc(KV.hostname))
-
+            order_by(desc(KV.hostname), desc(KV.realm), desc(KV.site_id))
     if key:
         results = results.filter(KV.key==key)
+    if value:
+        results = results.filter(KV.value==value)
 
     kvs = results.all()
     return kvs
@@ -72,7 +73,24 @@ def add(cfg, fqdn, key, value):
     # Check for duplicate key=value.
     kv = select(cfg, fqdn, key, value)
     if kv:
-        return kv
+        print "that key=value pair exists already!"
+        ans = raw_input("Do you want to update it? (y/n): ")
+        if ans == "Y" or ans == "y":
+            print "updating key=value"
+            kv = upsert(cfg, fqdn, key, value)
+            return kv
+        else:
+            print "key=value unchanged, exiting."
+            return kv
+    print "no existing key=value found, inserting."
+    if fqdn == '':
+        print "this will apply %s=%s globally" % (key, value)
+        ans = raw_input("are you sure you want to do this? (y/n): ")
+        if ans == "Y" or ans == "y":
+            kv = new(fqdn, key, value)
+            cfg.dbsess.add(kv)
+            cfg.dbsess.commit()
+            return kv
     kv = new(fqdn, key, value)
     cfg.dbsess.add(kv)
     cfg.dbsess.commit()
@@ -84,7 +102,9 @@ def upsert(cfg, fqdn, key, value):
     """
     kv = select(cfg, fqdn, key)
     if not kv:
+        print "key=value not found, adding"
         kv = new(fqdn, key, value)
+    print "key=value found, updating"
     kv.value = value
     cfg.dbsess.add(kv)
     cfg.dbsess.commit()
@@ -98,3 +118,5 @@ def delete(cfg, fqdn, key, value):
     if kv:
         cfg.dbsess.delete(kv)
         cfg.dbsess.commit()
+    else:
+        print "key=value not found, exiting."

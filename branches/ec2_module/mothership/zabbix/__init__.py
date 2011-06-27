@@ -23,7 +23,7 @@ import sys
 import mothership
 
 # Zabbix API
-from zabbix_api import ZabbixAPI, ZabbixAPIException
+from zabbix_api2 import ZabbixAPI, ZabbixAPIException
 
 # Useful handy functions brought in from mothership
 from mothership.kv import collect as kv_collect

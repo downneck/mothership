@@ -792,6 +792,8 @@ class ShipCli(cmdln.Cmdln):
             help="Update the value of the key.  Will overwrite any existing values.")
     @cmdln.option("-d", "--delete", action="store_true",
             help="Delete a key=value pair.")
+    @cmdln.option("-a", "--add", action="store_true",
+            help="Add a key=value pair.")
     def do_keyvalues(self, subcmd, opts, name, key):
         """${cmd_name}: Manipulate the kv table.
 
@@ -805,8 +807,8 @@ class ShipCli(cmdln.Cmdln):
             update: ship kv -u . key=global
                     ship kv -u name key=specific
 
-            append: ship kv name array=two
-                    ship kv name array=three
+            append: ship kv -a . key=global
+                    ship kv -a name array=three
 
             delete: ship kv -d name key=junk
         """
@@ -827,10 +829,17 @@ class ShipCli(cmdln.Cmdln):
         if key.find('=') > 0:
             key, value = key.split('=')
 
-        if opts.delete:
-            if opts.update:
-                print "Incompatible options -d and -u."
-                return
+        if opts.add and opts.delete or opts.add and opts.update or opts.delete and opts.update:
+            print "Incompatible options."
+            return
+
+        if opts.add:
+            # Add another value for a key
+            kvs = [mothership.kv.add(self.cfg, fqdn, key, value)]
+        elif opts.update:
+            # Update or insert the value for a key
+            kvs = [mothership.kv.upsert(self.cfg, fqdn, key, value)]
+        elif opts.delete:
             if key and value:
                 # Display the value
                 kvs = [mothership.kv.select(self.cfg, fqdn, key, value)]
@@ -838,21 +847,13 @@ class ShipCli(cmdln.Cmdln):
                 mothership.kv.delete(self.cfg, fqdn, key, value)
             else:
                 print "Delete requires key=value parameter."
-        else:
-            if value:
-                if not opts.update:
-                    # Add another value for a key
-                    kvs = [mothership.kv.add(self.cfg, fqdn, key, value)]
-                else:
-                    # Update or insert the value for a key
-                    kvs = [mothership.kv.upsert(self.cfg, fqdn, key, value)]
+        else:   # everything else should be collect
+            if key == '%':
+                # Query all values for a host
+                kvs = mothership.kv.collect(self.cfg, fqdn)
             else:
-                if key == '%':
-                    # Query all values for a host
-                    kvs = mothership.kv.collect(self.cfg, fqdn)
-                else:
-                    # Query all values for a key
-                    kvs = mothership.kv.collect(self.cfg, fqdn, key=key)
+                # Query all values for a key
+                kvs = mothership.kv.collect(self.cfg, fqdn, key=key, value=value)
 
         if kvs:
             for kv in kvs:
