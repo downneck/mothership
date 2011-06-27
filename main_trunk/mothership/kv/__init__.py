@@ -36,9 +36,9 @@ def select(cfg, fqdn, key, value=None):
     """
     hostname, realm, site_id = mothership.split_fqdn(fqdn)
     results = cfg.dbsess.query(KV).\
-            filter(KV.site_id==site_id).\
-            filter(KV.realm==realm).\
             filter(KV.hostname==hostname).\
+            filter(KV.realm==realm).\
+            filter(KV.site_id==site_id).\
             filter(KV.key==key)
     if value:
         results = results.filter(KV.value==value)
@@ -57,7 +57,7 @@ def collect(cfg, fqdn, key=None, value=None):
             filter(or_(KV.site_id==site_id, KV.site_id==None)).\
             filter(or_(KV.realm==realm, KV.realm==None)).\
             filter(or_(KV.hostname==hostname, KV.hostname==None)).\
-            order_by(desc(KV.site_id), desc(KV.realm), desc(KV.hostname))
+            order_by(desc(KV.hostname), desc(KV.realm), desc(KV.site_id))
     if key:
         results = results.filter(KV.key==key)
     if value:
