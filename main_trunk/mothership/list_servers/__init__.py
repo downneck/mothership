@@ -79,9 +79,9 @@ def list_servers(cfg, listby=None, lookfor=None):
         servers_kv = []
         kvs = mothership.kv.collect(cfg, None, key='role')
         for i in kvs:
-           site_id,realm,host,key = str(i).split('.')
+           namespace,key = str(i).split(' ')
            if key == "role="+lookfor:
-             servers_kv.append(host+"."+realm+"."+site_id)
+             servers_kv.append(i.host+"."+i.realm+"."+i.site_id)
            else:
              pass
         if servers_primary:
