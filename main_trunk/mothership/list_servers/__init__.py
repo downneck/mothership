@@ -81,7 +81,7 @@ def list_servers(cfg, listby=None, lookfor=None):
         for i in kvs:
            namespace,key = str(i).split(' ')
            if key == "role="+lookfor:
-             servers_kv.append(i.host+"."+i.realm+"."+i.site_id)
+             servers_kv.append(i.hostname+"."+i.realm+"."+i.site_id)
            else:
              pass
         if servers_primary:
