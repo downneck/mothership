@@ -113,7 +113,16 @@ def v_ssh2_pubkey(cfg, key):
     True/False based on success of validation
     """
 
-    k = key.split()
+    DSA_KEY_ID="ssh-dss"
+    RSA_KEY_ID="ssh-rsa"
+
+    if DSA_KEY_ID in key:
+        k = key.split(DSA_KEY_ID)
+    elif RSA_KEY_ID in key:
+        k = key.split(RSA_KEY_ID)
+    else:
+        return False
+
     if k:
         try:
             data = base64.decodestring(k[1])
@@ -121,13 +130,19 @@ def v_ssh2_pubkey(cfg, key):
             return False
         int_len = 4
         str_len = struct.unpack('>I', data[:int_len])[0] # this should return 7
-        if data[int_len:int_len+str_len] == k[0]:
-            return True
+        if DSA_KEY_ID in key:
+          if data[int_len:int_len+str_len] == DSA_KEY_ID:
+              return True
+          else:
+              return False
         else:
-            return False
+            if data[int_len:int_len+str_len] == RSA_KEY_ID:
+              return True
+            else:
+              return False
     else:
-        print "ssh key is empty!"
-        return False 
+       return False
+
 
 # Validates UNIX uids
 def v_uid(cfg, uid):
