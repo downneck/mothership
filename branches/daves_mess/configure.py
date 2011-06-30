@@ -50,9 +50,19 @@ class Configure:
         # Database related settings
         dbconfig = all_configs['db']
         try:
-            dbtuple = (dbconfig['user'], dbconfig['hostname'], dbconfig['dbname'])
-            engine = sqlalchemy.create_engine("postgres://%s@%s/%s" % dbtuple,
-                    echo=dbconfig['echo'])
+            engine = ''
+            # PostgreSQL
+            if dbconfig['engine'] == 'postgresql':
+                dbtuple = (dbconfig['user'], dbconfig['hostname'], dbconfig['dbname'])
+                engine = sqlalchemy.create_engine("postgres://%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
+            # MySql
+            elif dbconfig['engine'] == 'mysql':
+                dbtuple = (dbconfig['user'], dbconfig['pass'], dbconfig['hostname'], dbconfig['dbname'])
+                engine = sqlalchemy.create_engine("mysql://%s:%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
+            # uhhhh....
+            else:
+                print "DB section of /etc/mothership.yaml is misconfigured! Exiting"
+                sys.exit(1)
             Session = sqlalchemy.orm.sessionmaker(bind=engine)
             dbsession = Session()
             self.dbconfig = dbconfig
@@ -62,6 +72,8 @@ class Configure:
             self.dbnull = sqlalchemy.sql.expression.null()
         except:
             print 'Database configuration error'
+            print dbtuple
+            print engine 
 
         # Cobbler related settings
         cobconfig = all_configs['cobbler']

@@ -80,6 +80,7 @@ Mothership requires the following python libraries to be installed.
 * setuptools
 * pip
 * cmdln (for pip)
+* python-mysqldb (for mysql, installs as a separate package on some OSes)
 
 To install the latest version of these you can try: 
 
