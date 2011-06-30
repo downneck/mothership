@@ -339,19 +339,6 @@ ALTER SEQUENCE server_graveyard_id_seq OWNED BY server_graveyard.id;
 
 
 --
--- Name: server_kv; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE server_kv (
-    server_id integer NOT NULL,
-    key character varying(100) NOT NULL,
-    value character varying(200)
-);
-
-
-ALTER TABLE public.server_kv OWNER TO postgres;
-
---
 -- Name: servers; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -455,7 +442,7 @@ ALTER SEQUENCE user_group_mapping_id_seq OWNED BY user_group_mapping.id;
 CREATE TABLE users (
     first_name character varying(100) NOT NULL,
     last_name character varying(100) NOT NULL,
-    ssh_public_key character varying(1500),
+    ssh_public_key character varying(4096),
     username character varying(64) NOT NULL,
     site_id character varying(3) NOT NULL,
     realm character varying(10) NOT NULL,
@@ -464,7 +451,8 @@ CREATE TABLE users (
     type character varying(15),
     hdir character varying(100),
     shell character varying(100),
-    active boolean DEFAULT true
+    active boolean DEFAULT true,
+    email character varying(100)
 );
 
 
@@ -745,14 +733,6 @@ ALTER TABLE ONLY xen_pools
 
 ALTER TABLE ONLY zeus_cluster
     ADD CONSTRAINT zeus_cluster_pkey PRIMARY KEY (id);
-
-
---
--- Name: server_kv_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY server_kv
-    ADD CONSTRAINT server_kv_server_id_fkey FOREIGN KEY (server_id) REFERENCES servers(id);
 
 
 --
