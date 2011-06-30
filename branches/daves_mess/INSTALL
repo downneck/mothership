@@ -121,17 +121,17 @@ page above.
 
 2. INSTALL THE DATABASE ENGINE
 
+Mothership does not need its own database engine installation.
+If you already have postgresql or mysql installed, feel free to skip
+this section.
+
+After the DB engine install, you will have to import the mothership database 
+schema into your database, which is covered below in section 3.
+
 A. Postgresql
 
-  Postgresql is currently the only supported back-end database for mothership.
-  For a complete installation guide for Postgresql, you can go to the project
-  page here:
-  http://http://www.postgresql.org/
-
-  If you already have Postgresql installation on the system you are 
-  planning to run mothership on, you can use that installation.  
-  (You will have to import the mothership database schema into postgresql, 
-  which is covered below.)
+  For a complete installation guide to PostgreSQL, you can go to the project
+  page at http://www.postgresql.org or refer to your OS vendor documentation
 
   If you do not have postgresql installed at all, and wish to just 
   get up and running quickly, you can do the following:
@@ -153,7 +153,17 @@ A. Postgresql
 
 B. MySQL
 
-**********PLACEHOLDER FOR MYSQL INSTALL**************
+  For a complete installation guide to MySQL, you can go to the project page
+  at http://dev.mysql.com or refer to your OS vendor documentation
+
+  CentOS 5.3:
+  host#> sudo yum install mysql
+  host#> sudo yum install mysql-server
+
+  Ubuntu, Debian:
+  host#> sudo aptitude install mysql 
+  host#> sudo aptitude install mysql-server
+
 
 3. INITIALIZING THE DATABASE 
 Both the mothership database and its schema need to be added.
@@ -166,15 +176,28 @@ A. Postgresql
   2. Create a postgresql user:
   host#> /usr/bin/createuser mothership
 
-  3. Load the schema located in: 
-  /<mothership_base_dir>/db/mothership_schema_postgres.sql into the mothership
-  database:
-
-  host#> /usr/bin/psql -U mothership mothership < /mothership/db/mothership_schema_postgres.sql
+  3. Load the schema into the mothership database:
+  host#> /usr/bin/psql -U mothership mothership < /<mothership_base_dir>/db/mothership_schema_postgres.sql
 
 B. MySQL
+  
+  All instructions assume you've set a mysql root user password
+  (and that you remember it)
 
-******************PLACEHOLDER FOR MYSQL INSTALL******************
+  1. Create a database named 'mothership' in mysql:
+  host#> mysqladmin -u root -p create mothership
+
+  2. Create a mysql user:
+  host#> mysql -u root -p mysql
+  Enter password:
+  mysql> GRANT ALL ON mothership.* to 'mothership'@'localhost' IDENTIFIED BY 'mypassword';  
+
+  Add additional GRANT statements to allow access to the mothership database
+  from other hosts as needed
+
+  3. Load the schema into the database:
+  host#> mysql -u mothership -p mothership < /<mothership_base_dir>/db/mothership_schema_mysql.sql
+
 
 4. INSTALL SYSTEM MANAGEMENT TOOL
 Mothership functions best when used in conjunction with a system managment
