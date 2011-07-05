@@ -22,9 +22,6 @@ see INSTALL
 import sys
 import mothership
 
-# Zabbix API
-from zabbix_api2 import ZabbixAPI, ZabbixAPIException
-
 # Useful handy functions brought in from mothership
 from mothership.kv import collect as kv_collect
 from mothership.kv import select as kv_select
@@ -54,7 +51,8 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
       print "Zabbix is not active, skipping. Zabbix can be enabled in the mothership config file."
       return
     else:
-      pass
+      # Import Zabbix API
+      from zabbix_api2 import ZabbixAPI, ZabbixAPIException
 
     # stitch together some info about our host
     host,realm,site_id = mothership.split_fqdn(unqdn)
