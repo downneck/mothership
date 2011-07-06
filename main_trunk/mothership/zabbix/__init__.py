@@ -480,15 +480,6 @@ def display(cfg, unqdn, zs_unqdn):
     else:
        print "Templates goup id is empty, something went wrong"
 
-    # get role template id if exists
-    tname = "Gilt_Template_Linux_"+s.role
-    t = zapi.template.get({'host':tname})
-    if t:
-      for k in t:
-        tid = t[k]['templateid']
-      print "Template "+tname+" found, ID: "+tid
-    else:
-      print "Template not found: "+tname
    
     # get default template info 
     discard,zab_def_tmpl = str(kv_select(cfg, '', key="zabbix_default_template")).split('=')
@@ -499,6 +490,16 @@ def display(cfg, unqdn, zs_unqdn):
         print "Found default template: " + zab_def_tmpl + ", templateid: " + zab_tid
     else:
       print "No default template! Check mothership's KV"
+
+    # get role template id if exists
+    tname = zab_def_tmpl+s.role
+    t = zapi.template.get({'host':tname})
+    if t:
+      for k in t:
+        tid = t[k]['templateid']
+      print "Template "+tname+" found, ID: "+tid
+    else:
+      print "Template not found: "+tname
 
     # get host status 
     t = zapi.host.get({'filter':{'host':unqdn}, 'output':'extend'})
