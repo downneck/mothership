@@ -109,7 +109,7 @@ class ShipCli(cmdln.Cmdln):
     # Capistrano functions, this needs expansion
     @cmdln.alias("cap")
     def do_capistrano(self, subcmd, opts):
-        """${cmd_name}: manipulate capistrano data, default writes out a cap config 'role' section 
+        """${cmd_name}: manipulate capistrano data, default writes out a cap config 'tag' section 
 
         ${cmd_usage}
         ${cmd_option_list}
@@ -672,8 +672,8 @@ class ShipCli(cmdln.Cmdln):
                   help="print servers in one vlan")
     @cmdln.option("-s", "--site-id",
                   help="print servers in one site")
-    @cmdln.option("-r", "--role",
-                  help="print servers in one role")
+    @cmdln.option("-r", "--tag",
+                  help="print servers in one tag")
     @cmdln.option("-R", "--realm",
                   help="print servers in one realm")
     @cmdln.option("-m", "--manufacturer",
@@ -704,8 +704,8 @@ class ShipCli(cmdln.Cmdln):
             list_servers(self.cfg, listby='vlan', lookfor=opts.vlan)
         elif opts.site_id:
             list_servers(self.cfg, listby='site_id', lookfor=opts.site_id)
-        elif opts.role:
-            list_servers(self.cfg, listby='role', lookfor=opts.role)
+        elif opts.tag:
+            list_servers(self.cfg, listby='tag', lookfor=opts.tag)
         elif opts.realm:
             list_servers(self.cfg, listby='realm', lookfor=opts.realm)
         elif opts.manufacturer:
@@ -965,8 +965,8 @@ class ShipCli(cmdln.Cmdln):
                   help="identify hardware using specified management ip address")
     @cmdln.option("-d", "--drac",
                   help="identify hardware using specified drac ip address")
-    @cmdln.option("-r", "--role",
-                  help="primary role for hostname (default: hostname s/\d+$//)")
+    @cmdln.option("-r", "--tag",
+                  help="primary tag for hostname (default: hostname s/\d+$//)")
     @cmdln.option("-p", "--public_ip",
                   help="public ip address for eth1 hostname")
     def do_provision_server(self, subcmd, opts, hostname, vlan):
@@ -985,27 +985,27 @@ class ShipCli(cmdln.Cmdln):
         osdict = mothership.cobbler.CobblerAPI(self.cfg).get_os_dict(self.cfg)
         if opts.hwtag:
             added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict,
-                hwtag=opts.hwtag, role=opts.role, public_ip=opts.public_ip, osname=opts.osname)
+                hwtag=opts.hwtag, tag=opts.tag, public_ip=opts.public_ip, osname=opts.osname)
         elif opts.drac:
             added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict,
-                dracip=opts.drac, role=opts.role, public_ip=opts.public_ip, osname=opts.osname)
+                dracip=opts.drac, tag=opts.tag, public_ip=opts.public_ip, osname=opts.osname)
         elif opts.mgmt:
             added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict,
-                mgmtip=opts.mgmt, role=opts.role, public_ip=opts.public_ip, osname=opts.osname)
+                mgmtip=opts.mgmt, tag=opts.tag, public_ip=opts.public_ip, osname=opts.osname)
         else:
             added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict,
-                role=opts.role, public_ip=opts.public_ip, osname=opts.osname,
+                tag=opts.tag, public_ip=opts.public_ip, osname=opts.osname,
                 specs={ 'cpu':opts.cpu, 'ram':opts.memory, 'disk':opts.vdisk })
         if added:
             if self.cfg.zab_active:
                 # cloned portions of do_zabbix, to add when new servers are provisioned
                 zs_unqdn = '.'.join(mothership.get_unqdn(self.cfg, self.cfg.dbsess.query(Server).\
-                    filter(Server.role=="zabbix_server").first().hostname))
+                    filter(Server.tag=="zabbix_server").first().hostname))
                 mothership.zabbix.add(self.cfg, unqdn, zs_unqdn, zabbix_template=None)
 
     # DISABLED AS rename_server brought up a few points such as
     # * moving to server_graveyard 
-    # * What happens with roles
+    # * What happens with tags
     #@cmdln.alias("ren")
     #@cmdln.alias("rename")
     #@cmdln.alias("ren_serv")
@@ -1139,8 +1139,8 @@ class ShipCli(cmdln.Cmdln):
                     auth = dict([ (x.split('_')[-1], str(mothership.kv.select(self.cfg, zhost, key="zenoss_"+x)).split('=')[1])
                         for x in [ 'api_user', 'api_pass', 'default_arch' ] ], host=zhost)
                     z = mothership.zenoss.ZenossAPI(auth)
-                    role = self.cfg.dbsess.query(Server.role).filter(Server.hostname==hostname.split('.')[0]).one()[0]
-                    z.add_host(unqdn, role)
+                    tag = self.cfg.dbsess.query(Server.tag).filter(Server.hostname==hostname.split('.')[0]).one()[0]
+                    z.add_host(unqdn, tag)
             else:
                 if opts.sync:
                     cc.sync_cobbler(self.cfg)
@@ -1338,7 +1338,7 @@ class ShipCli(cmdln.Cmdln):
     def do_list_all_values(self, subcmd, opts, listing):
         """${cmd_name}: list all unique values for specified item
         
-        valid items are: ips, vlans, roles, users, groups
+        valid items are: ips, vlans, tags, users, groups
 
         ${cmd_usage}
         ${cmd_option_list}
@@ -1346,22 +1346,22 @@ class ShipCli(cmdln.Cmdln):
         mothership.list_values.list_all_values(self.cfg, listing, quiet=opts.quiet)
 
 
-    # manipulate the role table
-    @cmdln.alias("roles")
+    # manipulate the tag table
+    @cmdln.alias("tags")
     @cmdln.option("-a", "--add", action="store_true",
-                  help="add a role")
+                  help="add a tag")
     @cmdln.option("-r", "--remove", action="store_true",
-                  help="remove a role")
+                  help="remove a tag")
     @cmdln.option("-d", "--display", action="store_true",
-                  help="display a role")
+                  help="display a tag")
     @cmdln.option("-s", "--start_port", type="int",
-                  help="beginning of this role's port range")
+                  help="beginning of this tag's port range")
     @cmdln.option("-S", "--stop_port", type="int",
-                  help="ending of this role's port range")
+                  help="ending of this tag's port range")
     @cmdln.option("-l", "--security_level", type="int",
                   help="security level override (use with caution)")
-    def do_role(self, subcmd, opts, name):
-        """${cmd_name}: interact with roles in the mothership db 
+    def do_tag(self, subcmd, opts, name):
+        """${cmd_name}: interact with tags in the mothership db 
 
         ${cmd_usage}
         ${cmd_option_list}
@@ -1371,13 +1371,13 @@ class ShipCli(cmdln.Cmdln):
                 print "Pick one: -a -r -d"
                 sys.exit(1)
             elif opts.display:
-                mothership.display_role(self.cfg, name)
+                mothership.display_tag(self.cfg, name)
             elif opts.add:
-                mothership.add_role(self.cfg, name, opts.start_port, opts.stop_port, opts.security_level)
+                mothership.add_tag(self.cfg, name, opts.start_port, opts.stop_port, opts.security_level)
             elif opts.remove: 
-                mothership.rm_role(self.cfg, name)
+                mothership.rm_tag(self.cfg, name)
             else:
-                mothership.display_role(self.cfg, name)
+                mothership.display_tag(self.cfg, name)
         except (mothership.MothershipError), e:
             print 'Error: %s' % e
 
@@ -1400,8 +1400,8 @@ class ShipCli(cmdln.Cmdln):
                 for x in [ 'api_user', 'api_pass', 'default_arch' ] ], host=zhost)
             z = mothership.zenoss.ZenossAPI(auth)
             if opts.add:
-                role = self.cfg.dbsess.query(Server.role).filter(Server.hostname==host[0]).one()[0]
-                z.add_host(unqdn, role)
+                tag = self.cfg.dbsess.query(Server.tag).filter(Server.hostname==host[0]).one()[0]
+                z.add_host(unqdn, tag)
             elif opts.disable:
                 z.disable_host(unqdn)
 

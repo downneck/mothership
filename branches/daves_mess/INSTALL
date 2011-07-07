@@ -202,9 +202,9 @@ B. MySQL
 
 4. INSTALL SYSTEM MANAGEMENT TOOL
 Mothership functions best when used in conjunction with a system managment
-tool.  This allows the system managment tool to take advanteage of the roles
+tool.  This allows the system managment tool to take advanteage of the tags 
 assigned to systems in mothership, and the administrator to create rulesets
-that automatically configure systems based on these roles.
+that automatically configure systems based on these tags.
 
 Currently, the only system managment tool available to use with mothership
 is puppet. When plugins for other system management tools are created, we will

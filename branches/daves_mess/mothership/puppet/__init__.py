@@ -26,14 +26,14 @@ def classify(cfg, name):
     Puppet external node classifier.  Returns the hash to dump as yaml.
     """
     classes = []
-    roles = []
+    tags = []
     environment = ""
     parameters = {}
     groups = []
     security_level = 0
     server = None
     server_id = None
-    role = None
+    tag = None
     networks = []
     hostname, realm, site_id = mothership.get_unqdn(cfg, name)
 
@@ -50,7 +50,7 @@ def classify(cfg, name):
     # Server
     server = cfg.dbsess.query(Server).filter(Server.hostname==hostname).first()
     if server:
-        role = cfg.dbsess.query(Role).filter(Role.name==server.role).first()
+        tag = cfg.dbsess.query(Tag).filter(Tag.name==server.tag).first()
 
     if server and server.id:
         server_id = server.id
@@ -72,18 +72,18 @@ def classify(cfg, name):
                     bond_options = network.bond_options
                     parameters['bond_options'] = bond_options
 
-    # Role
-    if role and role.name:
-        roles.append(role.name)
-        classes.append("roles::%s" % role.name)
-        parameters['role'] = role.name
+    # Tag
+    if tag and tag.name:
+        tags.append(tag.name)
+        classes.append("tags::%s" % tag.name)
+        parameters['tag'] = tag.name
 
-    if server and server.role_index:
-        parameters['role_index'] = server.role_index
+    if server and server.tag_index:
+        parameters['tag_index'] = server.tag_index
 
     # Security
-    if role and role.security_level != None:
-        security_level = role.security_level
+    if tag and tag.security_level != None:
+        security_level = tag.security_level
 
     if server and server.security_level != None:
         security_level = server.security_level
@@ -99,9 +99,9 @@ def classify(cfg, name):
         value = kv.value
         if key == 'environment':
             environment = value
-        elif key == 'role':
-            roles.append(value)
-            classes.append("roles::%s" % value)
+        elif key == 'tag':
+            tags.append(value)
+            classes.append("tags::%s" % value)
         elif key == 'class':
             classes.append(value)
         elif key == 'group':
@@ -109,7 +109,7 @@ def classify(cfg, name):
         else:
             parameters[key] = value
 
-    parameters['roles'] = roles
+    parameters['tags'] = tags
     parameters['groups'] = groups
 
     node = {}

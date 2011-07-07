@@ -126,7 +126,7 @@ def all(cfg, host, realm, site_id):
       filter(Server.site_id==site_id).\
       filter(Hardware.hw_tag==Server.hw_tag):
         fqdn = '.'.join([host,realm,site_id])
-        kvs = mothership.kv.collect(cfg, fqdn, key='role')
+        kvs = mothership.kv.collect(cfg, fqdn, key='tag')
     except TypeError:
       raise ServerInfoError("host \"%s\" not found" % host)
     except:
@@ -137,8 +137,8 @@ def all(cfg, host, realm, site_id):
     print "hostname:\t\t%s.%s.%s" % (s.hostname, s.realm, s.site_id)
     print "provisioned:\t\t%s" % (s.provision_date)
     print "purchased:\t\t%s" % (h.purchase_date)
-    print "primary role, index:\t%s, %s" % (s.role, s.role_index)
-    print "ancillary roles:\t%s" % (', '.join([kv.value for kv in kvs]))
+    print "primary tag, index:\t%s, %s" % (s.tag, s.tag_index)
+    print "ancillary tags:\t%s" % (', '.join([kv.value for kv in kvs]))
     print "security level:\t\t%s" % s.security_level
     print "cobbler_profile:\t%s" % (s.cobbler_profile)
     print "manufacturer, model:\t%s, %s" % (h.manufacturer, h.model)

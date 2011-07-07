@@ -24,7 +24,7 @@ import mothership.kv
 from mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
-# list_servers takes a parameter to search by and, optionally a role
+# list_servers takes a parameter to search by and, optionally a tag
 # then prints all servers it finds in the db
 def list_servers(cfg, listby=None, lookfor=None):
     """
@@ -65,22 +65,22 @@ def list_servers(cfg, listby=None, lookfor=None):
         order_by(Server.hostname):
             print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
 
-    # list servers by role
-    elif listby == 'role':
+    # list servers by tag
+    elif listby == 'tag':
       if lookfor == None:
-        print "you must supply a role with the -r flag"
+        print "you must supply a tag with the -r flag"
         sys.exit(1)
       else:
         servers_primary = []
         for server in cfg.dbsess.query(Server).\
-        filter(Server.role==lookfor).\
+        filter(Server.tag==lookfor).\
         order_by(Server.hostname):
           servers_primary.append(server)
         servers_kv = []
-        kvs = mothership.kv.collect(cfg, None, key='role')
+        kvs = mothership.kv.collect(cfg, None, key='tag')
         for i in kvs:
            namespace,key = str(i).split(' ')
-           if key == "role="+lookfor:
+           if key == "tag="+lookfor:
              servers_kv.append(i.hostname+"."+i.realm+"."+i.site_id)
            else:
              pass
