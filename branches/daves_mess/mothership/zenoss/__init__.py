@@ -125,23 +125,23 @@ class ZenossAPI:
 
 ##### All mothership module-related functions will be below this line:
 
-    def add_role(self, role, arch=None):
+    def add_tag(self, tag, arch=None):
         if arch is None: arch = self.arch
-        test = self.test_role(role, arch)
+        test = self.test_tag(tag, arch)
         if test['type'] == 'exception':
         #    print 'Node does not exist, adding'
-            data = dict(type='organizer', contextUid=self.base+arch, id=role)
+            data = dict(type='organizer', contextUid=self.base+arch, id=tag)
             return self._router_request('DeviceRouter', 'addNode', [data])
         #else:
         #    print 'Node already exists'
 
-    def add_host(self, unqdn, role, arch=None):
+    def add_host(self, unqdn, tag, arch=None):
         if arch is None: arch = self.arch
-        # set state/role first, in case host already exists
+        # set state/tag first, in case host already exists
         self.set_host_state(unqdn)
-        self.set_host_role(unqdn, role=role, arch=arch)
+        self.set_host_tag(unqdn, tag=tag, arch=arch)
         # then proceed to addDevice, for new hosts
-        data = dict(deviceName=unqdn, deviceClass=arch+role, productionState=1000)
+        data = dict(deviceName=unqdn, deviceClass=arch+tag, productionState=1000)
         return self._router_request('DeviceRouter', 'addDevice', [data])
 
     def disable_host(self, unqdn):
@@ -154,12 +154,12 @@ class ZenossAPI:
                 data = dict(uids=[device['uid']], hashcheck=dev_list['hash'], ip=ip)
                 return self._router_request('DeviceRouter', 'resetIp', [data])
 
-    def set_host_role(self, unqdn, role='', arch=None):
+    def set_host_tag(self, unqdn, tag='', arch=None):
         if arch is None: arch = self.arch
         dev_list = self.get_devices()
         for device in dev_list['devices']:
             if device['name'] == unqdn:
-                data = dict(uids=[device['uid']], hashcheck=dev_list['hash'], target=self.base+arch+role)
+                data = dict(uids=[device['uid']], hashcheck=dev_list['hash'], target=self.base+arch+tag)
                 return self._router_request('DeviceRouter', 'moveDevices', [data])
 
     def set_host_state(self, unqdn, state=1000):
@@ -169,9 +169,9 @@ class ZenossAPI:
                 data = dict(uids=[device['uid']], hashcheck=dev_list['hash'], prodState=state)
                 return self._router_request('DeviceRouter', 'setProductionState', [data])
 
-    def test_role(self, role, arch=None):
+    def test_tag(self, tag, arch=None):
         if arch is None: arch = self.arch
-        return self._router_request('DeviceRouter', 'getInfo', [{'uid':self.base+arch+role}])
+        return self._router_request('DeviceRouter', 'getInfo', [{'uid':self.base+arch+tag}])
 
  
 ##### If this script is not run as a module:
