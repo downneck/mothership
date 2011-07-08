@@ -22,6 +22,7 @@ import datetime
 import socket
 
 # Extra modules
+sys.path.append("/usr/lib/python2.4/site-packages/SQLAlchemy-0.5.5-py2.4.egg/")
 import sqlalchemy
 from pprint import pprint
 import yaml

@@ -30,7 +30,7 @@ CREATE TABLE application_instances (
 );
 
 
-ALTER TABLE public.application_instances OWNER TO postgres;
+ALTER TABLE public.application_instances OWNER TO mothership;
 
 --
 -- Name: application_instances_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -44,7 +44,7 @@ CREATE SEQUENCE application_instances_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.application_instances_id_seq OWNER TO postgres;
+ALTER TABLE public.application_instances_id_seq OWNER TO mothership;
 
 --
 -- Name: application_instances_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -67,7 +67,7 @@ CREATE TABLE dns_addendum (
 );
 
 
-ALTER TABLE public.dns_addendum OWNER TO postgres;
+ALTER TABLE public.dns_addendum OWNER TO mothership;
 
 --
 -- Name: dns_addendum_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -81,7 +81,7 @@ CREATE SEQUENCE dns_addendum_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.dns_addendum_id_seq OWNER TO postgres;
+ALTER TABLE public.dns_addendum_id_seq OWNER TO mothership;
 
 --
 -- Name: dns_addendum_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -153,7 +153,7 @@ CREATE TABLE hardware (
 );
 
 
-ALTER TABLE public.hardware OWNER TO postgres;
+ALTER TABLE public.hardware OWNER TO mothership;
 
 --
 -- Name: hardware_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -167,7 +167,7 @@ CREATE SEQUENCE hardware_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.hardware_id_seq OWNER TO postgres;
+ALTER TABLE public.hardware_id_seq OWNER TO mothership;
 
 --
 -- Name: hardware_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -188,7 +188,7 @@ CREATE SEQUENCE kv_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.kv_id_seq OWNER TO postgres;
+ALTER TABLE public.kv_id_seq OWNER TO mothership;
 
 --
 -- Name: kv; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -204,7 +204,7 @@ CREATE TABLE kv (
 );
 
 
-ALTER TABLE public.kv OWNER TO postgres;
+ALTER TABLE public.kv OWNER TO mothership;
 
 --
 -- Name: network; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -229,7 +229,7 @@ CREATE TABLE network (
 );
 
 
-ALTER TABLE public.network OWNER TO postgres;
+ALTER TABLE public.network OWNER TO mothership;
 
 --
 -- Name: network_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -243,7 +243,7 @@ CREATE SEQUENCE network_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.network_id_seq OWNER TO postgres;
+ALTER TABLE public.network_id_seq OWNER TO mothership;
 
 --
 -- Name: network_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -265,7 +265,7 @@ CREATE TABLE tags (
 );
 
 
-ALTER TABLE public.tags OWNER TO postgres;
+ALTER TABLE public.tags OWNER TO mothership;
 
 --
 -- Name: tags_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -279,7 +279,7 @@ CREATE SEQUENCE tags_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.tags_id_seq OWNER TO postgres;
+ALTER TABLE public.tags_id_seq OWNER TO mothership;
 
 --
 -- Name: tags_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -315,7 +315,7 @@ CREATE TABLE server_graveyard (
 );
 
 
-ALTER TABLE public.server_graveyard OWNER TO postgres;
+ALTER TABLE public.server_graveyard OWNER TO mothership;
 
 --
 -- Name: server_graveyard_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -329,7 +329,7 @@ CREATE SEQUENCE server_graveyard_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.server_graveyard_id_seq OWNER TO postgres;
+ALTER TABLE public.server_graveyard_id_seq OWNER TO mothership;
 
 --
 -- Name: server_graveyard_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -365,7 +365,7 @@ CREATE TABLE servers (
 );
 
 
-ALTER TABLE public.servers OWNER TO postgres;
+ALTER TABLE public.servers OWNER TO mothership;
 
 --
 -- Name: servers_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -379,7 +379,7 @@ CREATE SEQUENCE servers_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.servers_id_seq OWNER TO postgres;
+ALTER TABLE public.servers_id_seq OWNER TO mothership;
 
 --
 -- Name: servers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -399,7 +399,7 @@ CREATE TABLE system_services (
 );
 
 
-ALTER TABLE public.system_services OWNER TO postgres;
+ALTER TABLE public.system_services OWNER TO mothership;
 
 --
 -- Name: user_group_mapping; Type: TABLE; Schema: public; Owner: mothership; Tablespace: 
@@ -490,7 +490,7 @@ CREATE TABLE xen_pools (
 );
 
 
-ALTER TABLE public.xen_pools OWNER TO postgres;
+ALTER TABLE public.xen_pools OWNER TO mothership;
 
 --
 -- Name: zeus_cluster; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
@@ -507,7 +507,7 @@ CREATE TABLE zeus_cluster (
 );
 
 
-ALTER TABLE public.zeus_cluster OWNER TO postgres;
+ALTER TABLE public.zeus_cluster OWNER TO mothership;
 
 --
 -- Name: zeus_cluster_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -521,7 +521,7 @@ CREATE SEQUENCE zeus_cluster_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.zeus_cluster_id_seq OWNER TO postgres;
+ALTER TABLE public.zeus_cluster_id_seq OWNER TO mothership;
 
 --
 -- Name: zeus_cluster_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres

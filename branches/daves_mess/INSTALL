@@ -78,9 +78,10 @@ Mothership requires the following python libraries to be installed.
 * sqlalchemy0.5
 * psycopg2 
 * setuptools
-* pip
-* cmdln (for pip)
-* python-mysqldb (for mysql, installs as a separate package on some OSes)
+* pip (to install cmdln)
+* cmdln
+* python-ldap (optional, install this if you plan on using ldap)
+* python-mysqldb (for mysql, installs as a separate package on some OSes, ymmv)
 
 To install the latest version of these you can try: 
 
@@ -89,7 +90,8 @@ host#> sudo yum install python-sqlalchemy0.5
 host#> sudo yum install python-psycopg2
 host#> sudo yum install python-setuptools
 host#> sudo yum install python-pip
-host#> sudo pip install cmdln
+host#> sudo pip-python install cmdln
+host#> sudo yum install python-ldap
 
 OS X:
 host#> sudo port install py26-yaml
