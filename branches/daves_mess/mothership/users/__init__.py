@@ -952,9 +952,9 @@ def gremove(cfg, groupname):
                         print "Error: %s" % e            
                 else:
                     print "LDAP update aborted by user input, skipping." 
-             elif not cfg.ldap_active:
+            elif not cfg.ldap_active:
                 print "LDAP not active, skipping"
-             else:
+            else:
                 print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
             cfg.dbsess.delete(g)
             cfg.dbsess.commit()
@@ -979,9 +979,9 @@ def gremove(cfg, groupname):
                         print "Error: %s" % e            
                 else:
                     print "LDAP update aborted by user input, skipping." 
-             elif not cfg.ldap_active:
+            elif not cfg.ldap_active:
                 print "LDAP not active, skipping"
-             else:
+            else:
                 print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
             cfg.dbsess.delete(g)
             cfg.dbsess.commit()
