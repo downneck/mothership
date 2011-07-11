@@ -1,0 +1,3 @@
+* updated all instances of "role(s)" to read "tag(s)" (including the DB schema)
+* stopped users module from prompting for ldap interaction if the realm doesn't have an active ldap_master
+
