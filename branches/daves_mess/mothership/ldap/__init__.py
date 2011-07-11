@@ -57,7 +57,7 @@ def get_master(cfg, realm_path):
     if len(serv) > 1:
         raise LDAPError("more than one master ldap server found for \"%s\", aborting.\nPlease fix your ldap tag indexes" % realm_path)
     elif not serv:
-        raise LDAPError("no ldap servers with tag index \"1\" found for \"%s\", aborting\nPlease elect an LDAP master server by giving it tag index \"1\"" % realm_path)
+        return None
 
     # i hate this so much...
     serv = serv[0]
