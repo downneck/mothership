@@ -38,28 +38,28 @@ class MothershipError(Exception):
     pass
 
 
-# Add a role
-def add_role(cfg, name, start_port=None, stop_port=None, security_level=None):
-    badrole = cfg.dbsess.query(Role).\
-              filter(Role.name==name).first()
+# Add a tag
+def add_tag(cfg, name, start_port=None, stop_port=None, security_level=None):
+    badtag = cfg.dbsess.query(Tag).\
+              filter(Tag.name==name).first()
 
-    if badrole:
-        raise MothershipError("role \"%s\" already exists, aborting" % name)
+    if badtag:
+        raise MothershipError("tag \"%s\" already exists, aborting" % name)
 
-    r = Role(name, start_port, stop_port, security_level)
+    r = Tag(name, start_port, stop_port, security_level)
     cfg.dbsess.add(r)
     cfg.dbsess.commit()
 
 
-# Remove a role
-def rm_role(cfg, name):
-    r = cfg.dbsess.query(Role).\
-        filter(Role.name==name).first()
+# Remove a tag
+def rm_tag(cfg, name):
+    r = cfg.dbsess.query(Tag).\
+        filter(Tag.name==name).first()
 
     if not r:
-        raise MothershipError("role \"%s\" not found, aborting" % name)
+        raise MothershipError("tag \"%s\" not found, aborting" % name)
 
-    ans = raw_input("to delete role \"%s\" please type \"delete_%s\": " % (name, name))
+    ans = raw_input("to delete tag \"%s\" please type \"delete_%s\": " % (name, name))
     if ans != "delete_%s" % name:
         raise MothershipError("aborted by user")
     else:
@@ -67,13 +67,13 @@ def rm_role(cfg, name):
         cfg.dbsess.commit()
 
 
-# display a role
-def display_role(cfg, name):
-    r = cfg.dbsess.query(Role).\
-        filter(Role.name==name).first()
+# display a tag
+def display_tag(cfg, name):
+    r = cfg.dbsess.query(Tag).\
+        filter(Tag.name==name).first()
 
     if not r:
-        raise MothershipError("role \"%s\" not found, aborting" % name)
+        raise MothershipError("tag \"%s\" not found, aborting" % name)
     else:
         print "name: %s\nstart_port: %s\nstop_port: %s\nsecurity level: %s" % (r.name, r.start_port, r.stop_port, r.security_level)
 
@@ -445,7 +445,7 @@ def modify_server_column(cfg, hostname, col, value):
         update_table_server(cfg, data)
     print 'Modification of "%s" column in server %s complete.' % (col, hostname)
 
-def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', role=None,
+def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', tag=None,
     hwtag=None, dracip=None, mgmtip=None, osname=None, specs=None):
     if specs is None:
         specs = {'cpu':None, 'ram':None, 'disk':None}
@@ -461,14 +461,14 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', role=None,
         # new = True
         pass
 
-    # set the primary role to be the hostname without the trailing integers
-    if not role:
-        role = re.sub('\d+$', '', hostname)
-    # check to make sure that the role is valid before proceeding
+    # set the primary tag to be the hostname without the trailing integers
+    if not tag:
+        tag = re.sub('\d+$', '', hostname)
+    # check to make sure that the tag is valid before proceeding
     try:
-        cfg.dbsess.query(Role).filter(Role.name==role).one()
+        cfg.dbsess.query(Tag).filter(Tag.name==tag).one()
     except:
-        print '%s is not a valid role, provisioning of %s aborted' % (role, hostname)
+        print '%s is not a valid tag, provisioning of %s aborted' % (tag, hostname)
         return
 
     virtual = False
@@ -542,7 +542,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', role=None,
             ip.append(retrieve_next_virtual_ip(cfg, v, autogen=True))
         sid,hwtag = update_table_server(cfg, { 'hostname':hostname, 'hw_tag':hwtag, 'realm':realm,
             'site_id':site_id, 'cobbler_profile':profile, 'os':osprofile, 'virtual':virtual,
-            'role':role, 'cores':specs['cpu'], 'ram':specs['ram'], 'disk':specs['disk'] }, when)
+            'tag':tag, 'cores':specs['cpu'], 'ram':specs['ram'], 'disk':specs['disk'] }, when)
         update_table_network(cfg, { 'server_id':sid,
             'static_route':network_mapper.remap(cfg, 'gw', nic='eth1', ip=ip[1], siteid=site_id),
             'netmask':network_mapper.remap(cfg, 'mask', nic='eth1', ip=ip[1], siteid=site_id),
@@ -556,7 +556,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', role=None,
             print '%s is marked for RMA so cannot be provisioned' % hwtag
             return
         # update server table and retrieve the server_id
-        sid,hwtag = update_table_server(cfg, { 'hostname':hostname, 'role':role,
+        sid,hwtag = update_table_server(cfg, { 'hostname':hostname, 'tag':tag,
             'hw_tag':hwtag, 'realm':realm, 'site_id':site_id, 'os':osprofile,
             'cobbler_profile':profile, 'virtual':virtual }, when)
         # update the server_id in the network table rows and return the id
@@ -1201,23 +1201,23 @@ def numSort(x,y):
 # writes out a capistrano config file
 def cap_write_config(cfg):
     # declarin'
-    role_map = {}
+    tag_map = {}
 
-    # Gather role info 
-    roles = cfg.dbsess.query(Role)
-    for role in roles:
+    # Gather tag info 
+    tags = cfg.dbsess.query(Tag)
+    for tag in tags:
       servers = []
       for serv in cfg.dbsess.query(Server).\
-      filter(Server.role==role.name):
+      filter(Server.tag==tag.name):
         servers.append(serv.hostname)
-      role_map[role.name] = servers
+      tag_map[tag.name] = servers
 
-    roles = role_map.keys()
-    roles.sort()
-    for role in roles:
+    tags = tag_map.keys()
+    tags.sort()
+    for tag in tags:
       collector = []
-      python_strings_suck_so_very_hard = "role :"+role
-      sorted_servers = role_map[role]
+      python_strings_suck_so_very_hard = "tag :"+tag
+      sorted_servers = tag_map[tag]
       sorted_servers.sort(numSort)
       for servers in sorted_servers:
         if servers:

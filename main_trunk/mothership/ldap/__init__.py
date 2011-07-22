@@ -49,15 +49,15 @@ def get_master(cfg, realm_path):
     realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
 
     serv = list(cfg.dbsess.query(Server).\
-    filter(Server.role=='ldap').\
+    filter(Server.tag=='ldap').\
     filter(Server.realm==realm).\
     filter(Server.site_id==site_id).\
-    filter(Server.role_index=='1').all())
+    filter(Server.tag_index=='1').all())
 
     if len(serv) > 1:
-        raise LDAPError("more than one master ldap server found for \"%s\", aborting.\nPlease fix your ldap role indexes" % realm_path)
+        raise LDAPError("more than one master ldap server found for \"%s\", aborting.\nPlease fix your ldap tag indexes" % realm_path)
     elif not serv:
-        raise LDAPError("no ldap servers with role index \"1\" found for \"%s\", aborting\nPlease elect an LDAP master server by giving it role index \"1\"" % realm_path)
+        return None
 
     # i hate this so much...
     serv = serv[0]

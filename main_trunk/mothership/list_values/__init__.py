@@ -36,7 +36,7 @@ def list_all_values(cfg, listing, quiet=False):
     returns an integer representing the next available UID
     """
 
-    avail = [ 'ip', 'ips', 'vlan', 'vlans', 'role', 'roles', 'group', 'groups', 'user', 'users' ]
+    avail = [ 'ip', 'ips', 'vlan', 'vlans', 'tag', 'tags', 'group', 'groups', 'user', 'users' ]
     if listing not in avail:
         print 'Unsupported listing for: %s' % listing
         print 'Please specify one of the following:\n\t%s' % '\n\t'.join(avail)
@@ -53,9 +53,9 @@ def list_all_values(cfg, listing, quiet=False):
         for net in cfg.dbsess.query(Network).order_by(Network.ip):
             if net.ip != '0.0.0.0' and net.ip != None:
                 print net.ip
-    elif listing == 'role' or listing == 'roles':
-        for role in cfg.dbsess.query(Role):
-          print role.name
+    elif listing == 'tag' or listing == 'tags':
+        for tag in cfg.dbsess.query(Tag):
+          print tag.name
     elif listing == 'group' or listing == 'groups':
         if not quiet:
             print "GID, Group Name, Location"

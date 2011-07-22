@@ -80,15 +80,15 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
     # get server info
     s, n, h = mothership.snh(cfg, host, realm, site_id)
 
-    # Construct the role template name.
+    # Construct the tag template name.
     # All templates descend from the default
     discard,zab_def_tmpl = str(kv_select(cfg, '', key="zabbix_default_template")).split('=')
     # uncomment to debug
     #print 'Default template is: ' + zab_def_tmpl
-    zab_role_tmpl = zab_def_tmpl + '_' + s.role
+    zab_tag_tmpl = zab_def_tmpl + '_' + s.tag
     # get the templateid from zabbix   
     zab_tid = None
-    t = zapi.template.get({'host':zab_role_tmpl})
+    t = zapi.template.get({'host':zab_tag_tmpl})
     if t:
       for k in t.keys():
         zab_tid = t[k]['templateid']
@@ -102,13 +102,13 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
         for k in t.keys():
           zab_tid = t[k]['templateid']
         print "Found template for: " + zabbix_template + ", templateid: " + zab_tid
-      # if template we were given doesn't exist, try the role template
+      # if template we were given doesn't exist, try the tag template
       elif zab_tid:
-        print "No template found for: " + zabbix_template + ", trying role template for \"" + zab_role_tmpl + "\""
-        print "Found role template for: " + zab_role_tmpl + ", templateid: " + zab_tid
+        print "No template found for: " + zabbix_template + ", trying tag template for \"" + zab_tag_tmpl + "\""
+        print "Found tag template for: " + zab_tag_tmpl + ", templateid: " + zab_tid
       else:
-        print "No template found for: " + zabbix_template + ", trying role template for \"" + zab_role_tmpl + "\""
-        print "No role template found for: " + zab_role_tmpl + ", creating one and linking to the default: "+zab_def_tmpl
+        print "No template found for: " + zabbix_template + ", trying tag template for \"" + zab_tag_tmpl + "\""
+        print "No tag template found for: " + zab_tag_tmpl + ", creating one and linking to the default: "+zab_def_tmpl
 
         # we'll need the hostgroup ID for the "Templates" group
         tgid = None
@@ -135,19 +135,19 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
           print "No default template! Check mothership's KV"
           return
          
-        # Create the role template, assign it to the default Templates group, link to the default template
-        t = zapi.template.create({'host':zab_role_tmpl, 'groups':{'groupid':tgid}, 'templates':{'templateid':zab_tid}})
-        print "Created template: "+zab_role_tmpl+" with template ID: "+t['templateids'][0]
+        # Create the tag template, assign it to the default Templates group, link to the default template
+        t = zapi.template.create({'host':zab_tag_tmpl, 'groups':{'groupid':tgid}, 'templates':{'templateid':zab_tid}})
+        print "Created template: "+zab_tag_tmpl+" with template ID: "+t['templateids'][0]
         zab_tid = t['templateids'][0]
 
-    # if no template is given and if one exists, use the role template
-    # this is constructed automatically from the role name
+    # if no template is given and if one exists, use the tag template
+    # this is constructed automatically from the tag name
     elif zab_tid:
-      print "No template supplied, trying role template for \"" + zab_role_tmpl + "\""
-      print "Found role template for: " + zab_role_tmpl + ", templateid: " + zab_tid
-    # if all else fails, create a role template linked to the default template
+      print "No template supplied, trying tag template for \"" + zab_tag_tmpl + "\""
+      print "Found tag template for: " + zab_tag_tmpl + ", templateid: " + zab_tid
+    # if all else fails, create a tag template linked to the default template
     else:
-        print "No role template found for: " + zab_role_tmpl + ", creating one and linking to the default: "+zab_def_tmpl
+        print "No tag template found for: " + zab_tag_tmpl + ", creating one and linking to the default: "+zab_def_tmpl
 
         # we'll need the hostgroup ID for the "Templates" group
         tgid = None
@@ -174,41 +174,41 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
           print "No default template! Check mothership's KV"
           return
          
-        # Create the role template, assign it to the default Templates group, link to the default template
-        t = zapi.template.create({'host':zab_role_tmpl, 'groups':{'groupid':tgid}, 'templates':{'templateid':zab_tid}})
-        print "Created template: "+zab_role_tmpl+" with template ID: "+t['templateids'][0]
+        # Create the tag template, assign it to the default Templates group, link to the default template
+        t = zapi.template.create({'host':zab_tag_tmpl, 'groups':{'groupid':tgid}, 'templates':{'templateid':zab_tid}})
+        print "Created template: "+zab_tag_tmpl+" with template ID: "+t['templateids'][0]
         zab_tid = t['templateids'][0]
 
 
-    # Check to see if the role has a group. if not, create it
-    zab_role_group = []
-    a_roles = kv_collect(cfg, unqdn, key='role')
-    t = zapi.hostgroup.get({'filter':{'name':s.role}})
+    # Check to see if the tag has a group. if not, create it
+    zab_tag_group = []
+    a_tags = kv_collect(cfg, unqdn, key='tag')
+    t = zapi.hostgroup.get({'filter':{'name':s.tag}})
     if t:
       for k in t:
-        print "Found group "+s.role+" adding "+unqdn+" to it"
-        zab_role_group.append(k)
+        print "Found group "+s.tag+" adding "+unqdn+" to it"
+        zab_tag_group.append(k)
     else:
-      print "No group found for "+s.role+", creating it and adding "+unqdn+" to it"
-      hgid = zapi.hostgroup.create({'name':s.role})['groupids'][0]
-      zab_role_group.append(hgid)
+      print "No group found for "+s.tag+", creating it and adding "+unqdn+" to it"
+      hgid = zapi.hostgroup.create({'name':s.tag})['groupids'][0]
+      zab_tag_group.append(hgid)
 
-    # check to see if the ancillary roles have groups. if not, create them
-    for role_kv in a_roles:
-      discard,r = str(role_kv).split('=')
+    # check to see if the ancillary tags have groups. if not, create them
+    for tag_kv in a_tags:
+      discard,r = str(tag_kv).split('=')
       t = zapi.hostgroup.get({'filter':{'name':r}})
       if t:
         for k in t:
           print "Found group "+r+" adding "+unqdn+" to it"
-          zab_role_group.append(k)
+          zab_tag_group.append(k)
       else:
         print "No group found for "+r+", creating it and adding "+unqdn+" to it"
         hgid = zapi.hostgroup.create({'name':r})['groupids'][0]
-        zab_role_group.append(hgid)
+        zab_tag_group.append(hgid)
 
     # Insert the host into zabbix
     try:
-      zapi.host.create({'host':unqdn, 'dns':fqdn, 'groups':zab_role_group, 'templates':[zab_tid], 'port':'10050'})
+      zapi.host.create({'host':unqdn, 'dns':fqdn, 'groups':zab_tag_group, 'templates':[zab_tid], 'port':'10050'})
     except ZabbixAPIException, e:
       sys.stderr.write(str(e) + '\n')
 
@@ -533,7 +533,7 @@ def get_default_server(cfg, realm, site_id):
     """
 
     serv = cfg.dbsess.query(Server).\
-    filter(Server.role=="zabbix_server").\
+    filter(Server.tag=="zabbix_server").\
     filter(Server.realm==realm).\
     filter(Server.site_id==site_id).\
     first()

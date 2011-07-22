@@ -198,8 +198,8 @@ class ShipCli(cmdln.Cmdln):
                   help="print servers in one vlan")
     @cmdln.option("-s", "--site-id",
                   help="print servers in one site")
-    @cmdln.option("-r", "--role",
-                  help="print servers in one role")
+    @cmdln.option("-r", "--tag",
+                  help="print servers in one tag")
     @cmdln.option("-R", "--realm",
                   help="print servers in one realm")
     @cmdln.option("-m", "--manufacturer",
@@ -230,8 +230,8 @@ class ShipCli(cmdln.Cmdln):
             list_servers(self.cfg, listby='vlan', lookfor=opts.vlan)
         elif opts.site_id:
             list_servers(self.cfg, listby='site_id', lookfor=opts.site_id)
-        elif opts.role:
-            list_servers(self.cfg, listby='role', lookfor=opts.role)
+        elif opts.tag:
+            list_servers(self.cfg, listby='tag', lookfor=opts.tag)
         elif opts.realm:
             list_servers(self.cfg, listby='realm', lookfor=opts.realm)
         elif opts.manufacturer:
@@ -334,7 +334,7 @@ class ShipCli(cmdln.Cmdln):
     def do_list_all_values(self, subcmd, opts, listing):
         """${cmd_name}: list all unique values for specified item
         
-        valid items are: ips, vlans, roles, users, groups
+        valid items are: ips, vlans, tags, users, groups
 
         ${cmd_usage}
         ${cmd_option_list}
@@ -342,16 +342,16 @@ class ShipCli(cmdln.Cmdln):
         mothership.list_values.list_all_values(self.cfg, listing, quiet=opts.quiet)
 
 
-    # display the role table
-    @cmdln.alias("roles")
-    def do_role(self, subcmd, opts, name):
-        """${cmd_name}: display roles/tags in the mothership db 
+    # display the tag table
+    @cmdln.alias("tags")
+    def do_tag(self, subcmd, opts, name):
+        """${cmd_name}: display tags/tags in the mothership db 
 
         ${cmd_usage}
         ${cmd_option_list}
         """
         try:
-            mothership.display_role(self.cfg, name)
+            mothership.display_tag(self.cfg, name)
         except (mothership.MothershipError), e:
             print 'Error: %s' % e
 

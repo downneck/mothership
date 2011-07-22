@@ -54,6 +54,9 @@ db:
   #must have write privileges on the db defined in 'dbname' below
   user: 'root'
 
+  # password to access the db
+  pass: 'rootpass'
+
   # hostname of the db
   hostname: 'localhost'
 

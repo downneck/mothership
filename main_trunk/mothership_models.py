@@ -41,8 +41,8 @@ class KV(Base):
         display = ".".join(namespace)
         return "%s %s=%s" % (display, self.key, self.value)
 
-class Role(Base):
-    __tablename__ = 'roles'
+class Tag(Base):
+    __tablename__ = 'tags'
 
     name = Column(String)
     start_port = Column(Integer)
@@ -64,8 +64,8 @@ class Server(Base):
     cores = Column(Integer)
     site_id = Column(String)
     realm = Column(String)
-    role = Column(String)
-    role_index = Column(Integer)
+    tag = Column(String)
+    tag_index = Column(Integer)
     cores = Column(Integer)
     ram = Column(Integer)
     disk = Column(Integer)
@@ -93,8 +93,8 @@ class ServerGraveyard(Base):
     cores = Column(Integer)
     site_id = Column(String)
     realm = Column(String)
-    role = Column(String)
-    role_index = Column(Integer)
+    tag = Column(String)
+    tag_index = Column(Integer)
     cores = Column(Integer)
     ram = Column(Integer)
     disk = Column(Integer)
@@ -176,9 +176,9 @@ class Network(Base):
     switch = Column(String)
     switch_port = Column(String)
     bond_options = Column(String)
-    ip = Column(String)             # ip is actually an inet
-    static_route = Column(String)   # static_route is actually an inet
-    public_ip = Column(String)      # public_ip is actually an inet
+    ip = Column(String)             # ip is actually an inet in PG
+    static_route = Column(String)   # static_route is actually an inet in PG
+    public_ip = Column(String)      # public_ip is actually an inet in PG
     hw_tag = Column(String)
     
     def __init__(self, ip, interface, netmask, mac):
@@ -194,26 +194,26 @@ class AppInstance(Base):
     __tablename__ = 'application_instances'
 
     id = Column(Integer, primary_key=True)
-    ip = Column(String)             # ip is actually an inet
+    ip = Column(String)             # ip is actually an inet in PG
     port = Column(Integer)
     created_at = Column(Date)
-    role = Column(String)
+    tag = Column(String)
     started_at = Column(Date)
     scms_version_id = Column(Integer)
     
-    def __init__(self, ip, port, role):
+    def __init__(self, ip, port, tag):
         self.ip = ip
         self.port = port
-        self.role = role
+        self.tag = tag
 
     def __repr__(self):
-       return "<AppInstance('%s', '%s', '%s')>" % (self.ip, self.port, self.role)
+       return "<AppInstance('%s', '%s', '%s')>" % (self.ip, self.port, self.tag)
 
 class SystemServices(Base):
     __tablename__ = 'system_services'
 
     name = Column(String, primary_key=True)
-    ip = Column(String)             # ip is actually an inet
+    ip = Column(String)             # ip is actually an inet in PG
     server_id = Column(Integer, ForeignKey(Server.id))
     
     def __init__(self, ip, name):
@@ -244,8 +244,8 @@ class ZeusCluster(Base):
     id = Column(Integer, primary_key=True)
     cluster_name = Column(String)
     vhost = Column(String, primary_key=True)
-    ip = Column(String)             # ip is actually an inet
-    public_ip = Column(String)      # public_ip is actually an inet
+    ip = Column(String)             # ip is actually an inet in PG
+    public_ip = Column(String)      # public_ip is actually an inet in PG
     port = Column(Integer)
     tg_name = Column(String)
     
