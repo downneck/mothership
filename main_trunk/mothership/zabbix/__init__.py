@@ -491,8 +491,8 @@ def display(cfg, unqdn, zs_unqdn):
     else:
       print "No default template! Check mothership's KV"
 
-    # get role template id if exists
-    tname = zab_def_tmpl+s.role
+    # get tag template id if exists
+    tname = zab_def_tmpl+s.tag
     t = zapi.template.get({'host':tname})
     if t:
       for k in t:
