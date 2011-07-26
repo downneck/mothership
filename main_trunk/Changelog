@@ -1,3 +1,6 @@
+revision 43 (dk):
+* fixed a bunch of bugs in LDAP integration with user module
+* modernized Changelog
 Revision 40 (dk):
 * updated all instances of "role(s)" to read "tag(s)" (including the DB schema)
 * stopped users module from prompting for ldap interaction if the realm doesn't have an active ldap_master
