@@ -252,15 +252,15 @@ def uclone(cfg, username, newfqn):
             print e
 
     # update ldap data
-    ldap_master = mothership.ldap.get_master(cfg, realm+'.'+site_id)
+    ldap_master = mothership.ldap.get_master(cfg, newu.realm+'.'+newu.site_id)
     if cfg.ldap_active and ldap_master:
         ans = raw_input('Do you want to add this user to LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
                 print "adding \"%s\" to LDAP" % fqun
-                mothership.ldap.uadd(cfg, username=fqun)
+                mothership.ldap.uadd(cfg, username=newu.username+'.'+newfqun)
                 for i in newgrouplist:
-                    print "updating \"%s\" in LDAP" % i+'.'+realm+'.'+site_id
+                    print "updating \"%s\" in LDAP" % i+'.'+newu.realm+'.'+newu.site_id
                     mothership.ldap.gupdate(cfg, groupname=i+'.'+realm+'.'+site_id)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
@@ -270,7 +270,7 @@ def uclone(cfg, username, newfqn):
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
-        print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
+        print "No LDAP master found for %s.%s, skipping" % (newu.realm, newu.site_id)
 
     # return the new user object
     return newu
@@ -454,7 +454,7 @@ def uremove(cfg, username):
         elif not cfg.ldap_active:
             print "LDAP not active, skipping"
         else:
-            print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
+            print "No LDAP master found for %s.%s, skipping" % (u.realm, u.site_id)
         cfg.dbsess.delete(u)
         cfg.dbsess.commit()
         print 'Removing user "%s" from location "%s.%s"' % (u.username, u.realm, u.site_id)
@@ -704,7 +704,7 @@ def utog(cfg, username, groupname):
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
-        print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
+        print "No LDAP master found for %s.%s, skipping" % (g.realm, g.site_id)
 
 
 def urmg(cfg, username, groupname):
@@ -762,7 +762,7 @@ def urmg(cfg, username, groupname):
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
-        print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
+        print "No LDAP master found for %s.%s, skipping" % (g.realm, g.site_id)
 
 
 
