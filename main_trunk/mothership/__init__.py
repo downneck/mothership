@@ -517,16 +517,6 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', tag=None,
             profile = osdict['default']['baremetal']
 
     if osname:
-        osprofile = osname
-        if osprofile not in osdict['profile'].values():
-            profile = None
-        else:
-            for k in osdict['profile'].keys():
-                if osprofile == osdict['profile'][k]:
-                    profile = k
-    else:
-        osprofile = osdict['profile'][profile]
-    if osname:
         if osname in osdict['profile'].keys():
             profile = osname
             osprofile = osdict['profile'][profile]
@@ -536,11 +526,13 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', tag=None,
                 if osprofile == osdict['profile'][k]:
                     profile = k
         else:
-            print 'Invalid profile or os specified! Valid values are:'
+            print 'Unknown profile or OS specified! Existing values are:'
             for k in osdict['profile'].keys():
                 if k != 'default':
                     print '\t%s\t\t%s' % (osdict['profile'][k], k)
-            return
+            print 'Disabling cobbler, setting OS to: %s' % osname
+            osprofile = osname
+            profile = None
     if virtual:
         # make sure the vlan specified is primary eth1
         if network_mapper.remap(cfg, 'nic', vlan=int(vlan), siteid=site_id) != 'eth1':
