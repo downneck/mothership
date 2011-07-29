@@ -953,7 +953,7 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("add_serv")
     @cmdln.alias("add_server")
     @cmdln.option("-o", "--osname",
-                  help="operating system name for hostname (default: CentOS 5.5)")
+                  help="os or profile name for hostname (default: CentOS 5.5)")
     @cmdln.option("-V", "--vdisk", default=None,
                   help="specify GB of memory used for virtual host")
     @cmdln.option("-M", "--memory", default=None,

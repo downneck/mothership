@@ -526,6 +526,21 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', tag=None,
                     profile = k
     else:
         osprofile = osdict['profile'][profile]
+    if osname:
+        if osname in osdict['profile'].keys():
+            profile = osname
+            osprofile = osdict['profile'][profile]
+        elif osname in osdict['profile'].values():
+            osprofile = osname
+            for k in osdict['profile'].keys():
+                if osprofile == osdict['profile'][k]:
+                    profile = k
+        else:
+            print 'Invalid profile or os specified! Valid values are:'
+            for k in osdict['profile'].keys():
+                if k != 'default':
+                    print '\t%s\t\t%s' % (osdict['profile'][k], k)
+            return
     if virtual:
         # make sure the vlan specified is primary eth1
         if network_mapper.remap(cfg, 'nic', vlan=int(vlan), siteid=site_id) != 'eth1':
@@ -916,13 +931,15 @@ def swap_server(cfg, when, hosts=[]):
                 'hw_tag':hwtag, 'server_id':sid })
 
 def update_table_hardware(cfg, info, when):
-    data = retrieve_hardware_dict(cfg, info['hw_tag'])
+    data = r etrieve_hardware_dict(cfg, info['hw_tag'])
     if not data['purchase_date']: info['purchase_date'] = when
     if not data['rma']: info['rma'] = False
     if not data['id']:
         # insert if it does not exist
+        print 'Inserting into hardware table'
         cfg.dbconn.execute(Hardware.__table__.insert(), [ info ])
     else:
+        print 'Updating hardware table'
         cfg.dbconn.execute(Hardware.__table__.update().\
             where(Hardware.id==data['id']), [ info ])
 
@@ -937,8 +954,10 @@ def update_table_network(cfg, info, noinsert=False):
         if noinsert:
             return
         # insert if it does not exist and noinsert=False
+        print 'Inserting into network table'
         cfg.dbconn.execute(Network.__table__.insert(), [ info ])
     else:
+        print 'Updating network table'
         cfg.dbconn.execute(Network.__table__.update().\
             where(Network.id==data['id']), [ info ])
 
@@ -948,8 +967,10 @@ def update_table_server(cfg, info, when=None, rename=None):
     if not data['provision_date']: info['provision_date'] = when
     if not data['id']:
         # insert if it does not exist
+        print 'Inserting into server table'
         cfg.dbconn.execute(Server.__table__.insert(), [ info ])
     else:
+        print 'Updating server table'
         cfg.dbconn.execute(Server.__table__.update().\
             where(Server.id==data['id']), [ info ])
     ans = retrieve_server_row(cfg, info['hostname'])
