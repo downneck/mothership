@@ -1119,8 +1119,12 @@ class ShipCli(cmdln.Cmdln):
                     if not xs.triple_check(sysdict):
                         return
                 except Exception, e:
-                    print str(e)
-                    return
+                    exec 'cluster = %s' % e
+                    if type(cluster) == types.ListType and cluster[0] == 'HOST_IS_SLAVE':
+                        sysdict['power_switch'] = cluster[1]
+                    else:
+                        print str(e)
+                        return
             if not cc.add_system(self.cfg, sysdict):
                 sys.exit(1)
             if opts.kick:
