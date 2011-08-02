@@ -529,7 +529,7 @@ def udeactivate(cfg, username):
         elif not cfg.ldap_active:
             print "LDAP not active, skipping"
         else:
-            print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
+            print "No LDAP master found for %s.%s, skipping" % (u.realm, u.site_id)
         print 'Deactivating user "%s" in location "%s.%s"' % (u.username, u.realm, u.site_id)
     else:
         print "User \"%s\" not found" % username
@@ -653,7 +653,7 @@ def umodify(cfg, username, first_name=None, last_name=None, keyfile=None, uid=No
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
-        print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
+        print "No LDAP master found for %s.%s, skipping" % (u.realm, u.site_id)
 
 def utog(cfg, username, groupname):
     """
@@ -955,7 +955,7 @@ def gremove(cfg, groupname):
             elif not cfg.ldap_active:
                 print "LDAP not active, skipping"
             else:
-                print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
+                print "No LDAP master found for %s.%s, skipping" % (g.realm, g.site_id)
             cfg.dbsess.delete(g)
             cfg.dbsess.commit()
     # if there are no users, go ahead and rm the group
@@ -982,7 +982,7 @@ def gremove(cfg, groupname):
             elif not cfg.ldap_active:
                 print "LDAP not active, skipping"
             else:
-                print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
+                print "No LDAP master found for %s.%s, skipping" % (g.realm, g.site_id)
             cfg.dbsess.delete(g)
             cfg.dbsess.commit()
 
@@ -1169,7 +1169,7 @@ def gmodify(cfg, groupname, gid=None, description=None):
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
-        print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
+        print "No LDAP master found for %s.%s, skipping" % (g.realm, g.site_id)
 
 
 def get_gid(cfg, groupname):
