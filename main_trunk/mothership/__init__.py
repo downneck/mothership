@@ -533,6 +533,9 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', tag=None,
             print 'Disabling cobbler, setting OS to: %s' % osname
             osprofile = osname
             profile = None
+    else:
+        osprofile = osdict['profile'][profile]
+
     if virtual:
         # make sure the vlan specified is primary eth1
         if network_mapper.remap(cfg, 'nic', vlan=int(vlan), siteid=site_id) != 'eth1':
