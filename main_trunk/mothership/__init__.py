@@ -923,7 +923,7 @@ def swap_server(cfg, when, hosts=[]):
                 'hw_tag':hwtag, 'server_id':sid })
 
 def update_table_hardware(cfg, info, when):
-    data = r etrieve_hardware_dict(cfg, info['hw_tag'])
+    data = retrieve_hardware_dict(cfg, info['hw_tag'])
     if not data['purchase_date']: info['purchase_date'] = when
     if not data['rma']: info['rma'] = False
     if not data['id']:
