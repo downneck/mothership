@@ -329,7 +329,7 @@ def enable(cfg, unqdn, zs_unqdn):
         sys.stderr.write(str(e) + '\n')
 
     # get host info
-    t = zapi.host.get(filter={'host':unqdn}, output='extend'})
+    t = zapi.host.get(filter={'host':unqdn}, output='extend')
     hid = None
     if t:
         hid = t['hostid']
@@ -343,7 +343,7 @@ def enable(cfg, unqdn, zs_unqdn):
       return
     else:
       print unqdn+" is disabled, enabling"
-      zapi.host.update(hostid=hid, status='0'}) 
+      zapi.host.update(hostid=hid, status='0') 
     
     
 def disable(cfg, unqdn, zs_unqdn):
@@ -394,7 +394,7 @@ def disable(cfg, unqdn, zs_unqdn):
         sys.stderr.write(str(e) + '\n')
 
     # get host info
-    t = zapi.host.get(filter={'host':unqdn}, output='extend'})
+    t = zapi.host.get(filter={'host':unqdn}, output='extend')
     hid = None
     if t:
         hid = t['hostid']
