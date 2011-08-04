@@ -88,7 +88,7 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
     zab_tag_tmpl = zab_def_tmpl + '_' + s.tag
     # get the templateid from zabbix   
     zab_tid = None
-    t = zapi.template.get({'host':zab_tag_tmpl})
+    t = zapi.template.get(host=zab_tag_tmpl)
     if t:
       for k in t.keys():
         zab_tid = t[k]['templateid']
@@ -97,7 +97,7 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
 
     # if we're given a template, try and use that
     if zabbix_template:
-      t = zapi.template.get({'host':zabbix_template})
+      t = zapi.template.get(host=zabbix_template)
       if t:
         for k in t.keys():
           zab_tid = t[k]['templateid']
@@ -112,7 +112,7 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
 
         # we'll need the hostgroup ID for the "Templates" group
         tgid = None
-        hg = zapi.hostgroup.get({'filter':{'name':'Templates'}})
+        hg = zapi.hostgroup.get(filter={'name':'Templates'})
         if hg:
           for k in hg:
             tgid = k['groupid']
@@ -126,7 +126,7 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
 
         # Get the template ID for the default template
         discard,zab_def_tmpl = str(kv_select(cfg, '', key="zabbix_default_template")).split('=')
-        t = zapi.template.get({'host':zab_def_tmpl})
+        t = zapi.template.get(host=zab_def_tmpl)
         if t:
           for k in t.keys():
             zab_tid = t[k]['templateid'] 
@@ -136,7 +136,7 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
           return
          
         # Create the tag template, assign it to the default Templates group, link to the default template
-        t = zapi.template.create({'host':zab_tag_tmpl, 'groups':{'groupid':tgid}, 'templates':{'templateid':zab_tid}})
+        t = zapi.template.create(host=zab_tag_tmpl, groups={'groupid':tgid}, templates={'templateid':zab_tid})
         print "Created template: "+zab_tag_tmpl+" with template ID: "+t['templateids'][0]
         zab_tid = t['templateids'][0]
 
@@ -151,10 +151,9 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
 
         # we'll need the hostgroup ID for the "Templates" group
         tgid = None
-        hg = zapi.hostgroup.get({'filter':{'name':'Templates'}})
+        hg = zapi.hostgroup.get(filter={'name':'Templates'})
         if hg:
-          for k in hg:
-            tgid = k['groupid']
+            tgid = hg['groupid']
         else:
           print "Templates group not found! Fix Zabbix"
     
@@ -165,7 +164,7 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
 
         # Get the template ID for the default template
         discard,zab_def_tmpl = str(kv_select(cfg, '', key="zabbix_default_template")).split('=')
-        t = zapi.template.get({'host':zab_def_tmpl})
+        t = zapi.template.get(host=zab_def_tmpl)
         if t:
           for k in t.keys():
             zab_tid = t[k]['templateid'] 
@@ -175,7 +174,7 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
           return
          
         # Create the tag template, assign it to the default Templates group, link to the default template
-        t = zapi.template.create({'host':zab_tag_tmpl, 'groups':{'groupid':tgid}, 'templates':{'templateid':zab_tid}})
+        t = zapi.template.create(host=zab_tag_tmpl, groups={'groupid':tgid}, templates={'templateid':zab_tid})
         print "Created template: "+zab_tag_tmpl+" with template ID: "+t['templateids'][0]
         zab_tid = t['templateids'][0]
 
@@ -183,32 +182,30 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
     # Check to see if the tag has a group. if not, create it
     zab_tag_group = []
     a_tags = kv_collect(cfg, unqdn, key='tag')
-    t = zapi.hostgroup.get({'filter':{'name':s.tag}})
+    t = zapi.hostgroup.get(filter={'name':s.tag})
     if t:
-      for k in t:
         print "Found group "+s.tag+" adding "+unqdn+" to it"
-        zab_tag_group.append(k)
+        zab_tag_group.append(t)
     else:
-      print "No group found for "+s.tag+", creating it and adding "+unqdn+" to it"
-      hgid = zapi.hostgroup.create({'name':s.tag})['groupids'][0]
-      zab_tag_group.append(hgid)
+        print "No group found for "+s.tag+", creating it and adding "+unqdn+" to it"
+        hgid = zapi.hostgroup.create(name=s.tag)['groupids'][0]
+        zab_tag_group.append(hgid)
 
     # check to see if the ancillary tags have groups. if not, create them
     for tag_kv in a_tags:
       discard,r = str(tag_kv).split('=')
-      t = zapi.hostgroup.get({'filter':{'name':r}})
+      t = zapi.hostgroup.get(filter={'name':r})
       if t:
-        for k in t:
           print "Found group "+r+" adding "+unqdn+" to it"
-          zab_tag_group.append(k)
+          zab_tag_group.append(t)
       else:
-        print "No group found for "+r+", creating it and adding "+unqdn+" to it"
-        hgid = zapi.hostgroup.create({'name':r})['groupids'][0]
-        zab_tag_group.append(hgid)
+          print "No group found for "+r+", creating it and adding "+unqdn+" to it"
+          hgid = zapi.hostgroup.create(name=r)['groupids'][0]
+          zab_tag_group.append(hgid)
 
     # Insert the host into zabbix
     try:
-      zapi.host.create({'host':unqdn, 'dns':fqdn, 'groups':zab_tag_group, 'templates':[zab_tid], 'port':'10050'})
+      zapi.host.create(host=unqdn, dns=fqdn, groups=zab_tag_group, templates=[zab_tid], port='10050')
     except ZabbixAPIException, e:
       sys.stderr.write(str(e) + '\n')
 
@@ -260,16 +257,15 @@ def remove(cfg, unqdn, zs_unqdn):
         sys.stderr.write(str(e) + '\n')
 
     try:
-      t = zapi.host.get({'filter':{'host':unqdn}})
+      t = zapi.host.get(filter={'host':unqdn})
     except ZabbixAPIException, e:
       sys.stderr.write(str(e) + '\n')
     hid = None
     if t:
-      for k in t:
-        hid = k['hostid']
+        hid = t['hostid']
         print unqdn+" found, host id is: " + hid
     else:
-      print "Host not found: " + unqdn
+        print "Host not found: " + unqdn
     
     if hid:
       print '\n********************************************************************'
@@ -333,14 +329,13 @@ def enable(cfg, unqdn, zs_unqdn):
         sys.stderr.write(str(e) + '\n')
 
     # get host info
-    t = zapi.host.get({'filter':{'host':unqdn}, 'output':'extend'})
+    t = zapi.host.get(filter={'host':unqdn}, output='extend'})
     hid = None
     if t:
-      for k in t:
-        hid = k['hostid']
-        hstatus = k['status']
+        hid = t['hostid']
+        hstatus = t['status']
     else:
-      print "Host not found: " + unqdn
+        print "Host not found: " + unqdn
 
     # enable only if it's disabled, let the user know
     if hstatus == '0': 
@@ -348,7 +343,7 @@ def enable(cfg, unqdn, zs_unqdn):
       return
     else:
       print unqdn+" is disabled, enabling"
-      zapi.host.update({'hostid':hid, 'status':'0'}) 
+      zapi.host.update(hostid=hid, status='0'}) 
     
     
 def disable(cfg, unqdn, zs_unqdn):
@@ -399,22 +394,21 @@ def disable(cfg, unqdn, zs_unqdn):
         sys.stderr.write(str(e) + '\n')
 
     # get host info
-    t = zapi.host.get({'filter':{'host':unqdn}, 'output':'extend'})
+    t = zapi.host.get(filter={'host':unqdn}, output='extend'})
     hid = None
     if t:
-      for k in t:
-        hid = k['hostid']
-        hstatus = k['status']
+        hid = t['hostid']
+        hstatus = t['status']
     else:
-      print "Host not found: " + unqdn
+        print "Host not found: " + unqdn
 
     # disable only if it's enabled, let the user know
     if hstatus != '0':
-      print unqdn+" is already disabled"
-      return
+        print unqdn+" is already disabled"
+        return
     else:
-      print "Disabling %s in zabbix. to completely delete all data use \"ship zbx -r\"" % unqdn
-      zapi.host.update({'hostid':hid, 'status':'1'}) 
+        print "Disabling %s in zabbix. to completely delete all data use \"ship zbx -r\"" % unqdn
+        zapi.host.update(hostid=hid, status='1') 
 
 
 # Display info about a host in zabbix
@@ -468,22 +462,21 @@ def display(cfg, unqdn, zs_unqdn):
  
     # get group id for group "Templates"
     tgid = None
-    hg = zapi.hostgroup.get({'filter':{'name':'Templates'}})
+    hg = zapi.hostgroup.get(filter={'name':'Templates'})
     if hg:
-      for k in hg:
-        tgid = k['groupid']
+        tgid = t['groupid']
     else:
       print "Templates group not found! Fix Zabbix"
 
     if tgid:
-       print "Templates group id: "+tgid
+      print "Templates group id: "+tgid
     else:
-       print "Templates goup id is empty, something went wrong"
+      print "Templates goup id is empty, something went wrong"
 
    
     # get default template info 
     discard,zab_def_tmpl = str(kv_select(cfg, '', key="zabbix_default_template")).split('=')
-    t = zapi.template.get({'host':zab_def_tmpl})
+    t = zapi.template.get(host=zab_def_tmpl)
     if t:
       for k in t.keys():
         zab_tid = t[k]['templateid'] 
@@ -493,7 +486,7 @@ def display(cfg, unqdn, zs_unqdn):
 
     # get tag template id if exists
     tname = zab_def_tmpl+s.tag
-    t = zapi.template.get({'host':tname})
+    t = zapi.template.get(host=tname)
     if t:
       for k in t:
         tid = t[k]['templateid']
@@ -502,18 +495,17 @@ def display(cfg, unqdn, zs_unqdn):
       print "Template not found: "+tname
 
     # get host status 
-    t = zapi.host.get({'filter':{'host':unqdn}, 'output':'extend'})
+    t = zapi.host.get(filter={'host':unqdn}, output='extend')
     hid = None
     if t:
-      for k in t:
-        hid = k['hostid']
-        hstatus = k['status']
+        hid = t['hostid']
+        hstatus = t['status']
         if hstatus == '0':
           print unqdn+" id: "+hid+" status: "+hstatus+" (enabled)"
         else:
           print unqdn+" id: "+hid+" status: "+hstatus+" (disabled)"
     else:
-      print "Host not found: " + unqdn
+        print "Host not found: " + unqdn
 
 
 def get_default_server(cfg, realm, site_id):
