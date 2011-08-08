@@ -19,6 +19,7 @@ import os
 import re
 import types
 import network_mapper
+import subprocess
 from transkey import transkey
 from xmlrpclib import Fault
 
@@ -305,6 +306,7 @@ class CobblerAPI:
                 return
             print 'Setting power "%s" for %s' % (state, hostname)
             handle = cfg.remote.get_system_handle(hostname, cfg.token)
+            self.check_known_hosts(cfg, hostname, '~root')
             try:
                 cfg.remote.power_system(handle, state, cfg.token)
             except Fault, err:
@@ -359,3 +361,24 @@ class CobblerAPI:
             print 'Failed to clear puppet ssl for %s (are you root?)' % host
             return False
 
+    def check_known_hosts(self, cfg, host, user='~'):
+        print 'Checking known_hosts for %s' % host
+        system = cfg.remote.get_system(host)
+        host = system['power_address']
+        # check for ssh host key
+        hasKey = False
+        userknownhosts = os.path.expanduser('%s/.ssh/known_hosts' % user)
+        for file in [ '/etc/ssh/ssh_known_hosts', userknownhosts ]:
+            if os.path.exists(file):
+                for line in open(file):
+                    if host in line:
+                        hasKey = True
+                        break
+        if not hasKey:
+            print '+=== Adding %s to known_hosts' % host
+            key = subprocess.Popen(['ssh-keyscan', host],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE).\
+                communicate()[0]
+            f = open(userknownhosts, 'a')
+            f.write(key)
+    
