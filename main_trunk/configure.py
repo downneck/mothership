@@ -40,7 +40,7 @@ class Configure:
             yaml_config = open(self.load_path(config_file)).read()
             all_configs = yaml.load(yaml_config)
         except:
-            print 'No config file found, copying defaults into your home directory'
+            sys.stderr.write('No config file found, copying defaults into your home directory')
             srccfgyaml = sys.path[0] + '/mothership.yaml.sample'
             dstcfgyaml = os.path.expanduser('~') + '/mothership.yaml'
             shutil.copyfile(srccfgyaml, dstcfgyaml)
@@ -61,7 +61,7 @@ class Configure:
                 engine = sqlalchemy.create_engine("mysql://%s:%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
             # uhhhh....
             else:
-                print "DB section of /etc/mothership.yaml is misconfigured! Exiting"
+                sys.stderr.write("DB section of /etc/mothership.yaml is misconfigured! Exiting")
                 sys.exit(1)
             Session = sqlalchemy.orm.sessionmaker(bind=engine)
             dbsession = Session()
@@ -71,9 +71,9 @@ class Configure:
             self.dbsess = dbsession
             self.dbnull = sqlalchemy.sql.expression.null()
         except:
-            print 'Database configuration error'
-            print dbtuple
-            print engine 
+            sys.stderr.write('Database configuration error')
+            sys.stderr.write(dbtuple)
+            sys.stderr.write(engine)
 
         # Cobbler related settings
         cobconfig = all_configs['cobbler']
@@ -86,7 +86,7 @@ class Configure:
                 self.remote = xmlrpclib.Server('http://%s/cobbler_api' % cobconfig['host'])
                 self.token = self.remote.login(cobconfig['user'], cobconfig['pass'])
             except:
-                print 'Cobbler configuration error.  Check cobbler API server'
+                sys.stderr.write('Cobbler configuration error.  Check cobbler API server')
         else:
             self.cobremote = 'API: set remote = xmlrpclib.Server(\'http://server/cobbler_api\')'
             self.cobtoken = 'API: set token = remote.login(user, pass)'
@@ -224,7 +224,7 @@ class Configure:
             else:
                 self.mgmt_vlan_community = 'public'
         else:
-            print "mgmt_vlan->facility has been set incorrectly in the config.\nplease edit /etc/mothership.yaml and set it to either 'snmp' or 'curl'"
+            sys.stderr.write("mgmt_vlan->facility has been set incorrectly in the config.\nplease edit /etc/mothership.yaml and set it to either 'snmp' or 'curl'")
 
         # Users and Groups settings
         ugconfig = all_configs['users_and_groups']
