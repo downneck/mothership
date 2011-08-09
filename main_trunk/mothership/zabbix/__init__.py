@@ -153,7 +153,7 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
         tgid = None
         hg = zapi.hostgroup.get(filter={'name':'Templates'})
         if hg:
-            tgid = hg['groupid']
+            tgid = hg[0]['groupid']
         else:
           print "Templates group not found! Fix Zabbix"
     

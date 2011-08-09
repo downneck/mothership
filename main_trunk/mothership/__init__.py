@@ -606,6 +606,18 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', tag=None,
         mothership.users.gadd(cfg, newgroupname+"."+realm+"."+site_id)
     return sid
 
+    # create a group for the new machine's sudoers
+    newsudogroup = newgroupname+'_sudo'
+    g = cfg.dbsess.query(Groups).\
+    filter(Groups.groupname==newsudogroup).\
+    filter(Groups.realm==realm).\
+    filter(Groups.site_id==site_id).first()
+    if g:
+        print "group exists, skipping: %s" % newsudogroup
+    else:
+        mothership.users.gadd(cfg, newsudogroup+"."+realm+"."+site_id)
+
+
 def remove_method_keys(dict, empty=False):
     for k in dict.keys():
         if empty: dict[k] = None
