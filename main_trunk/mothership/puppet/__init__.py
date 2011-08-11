@@ -26,14 +26,14 @@ def classify(cfg, name):
     Puppet external node classifier.  Returns the hash to dump as yaml.
     """
     classes = []
-    tags = []
+    mtags = []
     environment = ""
     parameters = {}
     groups = []
     security_level = 0
     server = None
     server_id = None
-    tag = None
+    mtag = None
     networks = []
     hostname, realm, site_id = mothership.get_unqdn(cfg, name)
 
@@ -50,7 +50,7 @@ def classify(cfg, name):
     # Server
     server = cfg.dbsess.query(Server).filter(Server.hostname==hostname).first()
     if server:
-        tag = cfg.dbsess.query(Tag).filter(Tag.name==server.tag).first()
+        mtag = cfg.dbsess.query(Tag).filter(Tag.name==server.tag).first()
 
     if server and server.id:
         server_id = server.id
@@ -73,17 +73,17 @@ def classify(cfg, name):
                     parameters['bond_options'] = bond_options
 
     # Tag
-    if tag and tag.name:
-        tags.append(tag.name)
-        classes.append("tags::%s" % tag.name)
-        parameters['tag'] = tag.name
+    if mtag and mtag.name:
+        mtags.append(mtag.name)
+        classes.append("tags::%s" % mtag.name)
+        parameters['mtag'] = mtag.name
 
     if server and server.tag_index:
-        parameters['tag_index'] = server.tag_index
+        parameters['mtag_index'] = server.tag_index
 
     # Security
-    if tag and tag.security_level != None:
-        security_level = tag.security_level
+    if mtag and mtag.security_level != None:
+        security_level = mtag.security_level
 
     if server and server.security_level != None:
         security_level = server.security_level
@@ -100,7 +100,7 @@ def classify(cfg, name):
         if key == 'environment':
             environment = value
         elif key == 'tag':
-            tags.append(value)
+            mtags.append(value)
             classes.append("tags::%s" % value)
         elif key == 'class':
             classes.append(value)
@@ -109,7 +109,7 @@ def classify(cfg, name):
         else:
             parameters[key] = value
 
-    parameters['tags'] = tags
+    parameters['mtags'] = mtags
     parameters['groups'] = groups
 
     node = {}
