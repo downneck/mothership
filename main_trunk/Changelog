@@ -1,3 +1,7 @@
+revision 59 (dk):
+* in order to avoid stepping on puppet's reserved keyword "tags", we changed
+  tags to mtags in the puppet module, added an example config in the
+  puppet_skeleton, and added some info in INSTALL
 revision 51 (dk):
 * modernized interaction with the newer version of the python port of the
   zabbix API

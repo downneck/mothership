@@ -216,6 +216,14 @@ A. Installing and Configuring Puppet
 
 ******PLACEHOLDER FOR PUPPET DOCUMENTATION*******
 
+Of important note when configuring puppet: 
+puppet reserves the keyword "tags" internally so we use the variable "mtags"
+both in the puppet module of mothership and in the puppet repository when 
+accessing mothership's tags from puppet as a variable.
+
+for an example, see: puppet_skeleton/modules/openssh/templates/sshd_config.erb
+and its attendant .pp file: puppet_skeleton/modules/openssh/manifests/server_config.pp
+
 
 5. CONFIGURATION TASKS
 
