@@ -345,6 +345,8 @@ class ShipCli(cmdln.Cmdln):
                   help="assign a particular GID to a group")
     @cmdln.option("-d", "--desc",
                   help="a description for the group")
+    @cmdln.option("-s", "--sudo_cmds",
+                  help="command restrictions for sudoers generation (ALL is valid here). an empty value will cause the group to be ignored by generate_sudoers")
     def do_add_group(self, subcmd, opts, groupname):
         """${cmd_name}: add a group to mothership 
 
@@ -352,7 +354,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_option_list}
         """
         try:
-            mothership.users.gadd(self.cfg, groupname, gid=opts.gid, description=opts.desc)
+            mothership.users.gadd(self.cfg, groupname, gid=opts.gid, description=opts.desc, sudo_cmds=opts.sudo_cmds)
         except (mothership.validate.ValidationError, mothership.users.UsersError), e:
             print 'Error: %s' % e
         

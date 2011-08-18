@@ -164,14 +164,14 @@ def uadd(cfg, username, first_name, last_name, keyfile=None, uid=None, hdir=None
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
                 print "Error: %s" % e
-    
+
         else:
             print "LDAP update aborted by user input, skipping." 
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
         print "No LDAP master found for %s.%s, skipping" % (realm, site_id)
-        
+
     return u
 
 
@@ -698,9 +698,9 @@ def utog(cfg, username, groupname):
                 mothership.ldap.gupdate(cfg, groupname=g.groupname+'.'+fqn)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
-                print "Error: %s" % e            
+                print "Error: %s" % e
         else:
-            print "LDAP update aborted by user input, skipping." 
+            print "LDAP update aborted by user input, skipping."
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
@@ -827,7 +827,7 @@ def udisplay(cfg, username, pubkey=False, compact=False, list=False):
         print "User \"%s\" not found." % (username)
 
 
-def gadd(cfg, groupname, gid=None, description=None):
+def gadd(cfg, groupname, gid=None, description=None, sudo_cmds=None):
     """
     [description]
     adds a group to the db
@@ -839,6 +839,7 @@ def gadd(cfg, groupname, gid=None, description=None):
     optional:
         gid: the gid we want to assign the group
         description: a short description of the group
+        sudo_cmds: commands to pass into sudoers entries
 
     [return value]
     no explicit return
@@ -866,9 +867,11 @@ def gadd(cfg, groupname, gid=None, description=None):
             gid = next_available_gid(cfg, realm, site_id)
         else:
             pass
+    if sudo_cmds == 'all' or sudo_cmd == 'All':
+        sudo_cmds = 'ALL'
 
     # create a new group object, jam it into the db
-    g = Groups(description, groupname, site_id, realm, gid)
+    g = Groups(description, groupname, site_id, realm, gid, sudo_cmds)
     cfg.dbsess.add(g)
     cfg.dbsess.commit()
     # debugging
@@ -885,9 +888,9 @@ def gadd(cfg, groupname, gid=None, description=None):
                 mothership.ldap.gadd(cfg, groupname=g.groupname+'.'+fqn)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
-                print "Error: %s" % e            
+                print "Error: %s" % e
         else:
-            print "LDAP update aborted by user input, skipping." 
+            print "LDAP update aborted by user input, skipping."
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
@@ -949,9 +952,9 @@ def gremove(cfg, groupname):
                         mothership.ldap.gremove(cfg, groupname=g.groupname+'.'+fqn)
                     except mothership.ldap.LDAPError, e:
                         print 'mothership encountered an error, skipping LDAP update'
-                        print "Error: %s" % e            
+                        print "Error: %s" % e
                 else:
-                    print "LDAP update aborted by user input, skipping." 
+                    print "LDAP update aborted by user input, skipping."
             elif not cfg.ldap_active:
                 print "LDAP not active, skipping"
             else:
@@ -976,9 +979,9 @@ def gremove(cfg, groupname):
                         mothership.ldap.gremove(cfg, groupname=g.groupname+'.'+fqn)
                     except mothership.ldap.LDAPError, e:
                         print 'mothership encountered an error, skipping LDAP update'
-                        print "Error: %s" % e            
+                        print "Error: %s" % e
                 else:
-                    print "LDAP update aborted by user input, skipping." 
+                    print "LDAP update aborted by user input, skipping."
             elif not cfg.ldap_active:
                 print "LDAP not active, skipping"
             else:
@@ -1015,6 +1018,7 @@ def gdisplay(cfg, groupname, list=False):
         print "groupname, gid: %s, %s" % (g.groupname, g.gid)
         print "location: %s.%s" % (g.realm, g.site_id)
         print "description: "+g.description
+        print "allowed sudo commands: "+g.sudo_cmds
         if not list:
             print "users: "+' '.join(userlist)
         else:
@@ -1055,7 +1059,7 @@ def gclone(cfg, groupname, newfqn):
         raise UsersError("Group \"%s\" exists in the target fqn\"%s.%s\", Aborting" % (g.groupname, newrealm, newsite_id))
 
     # create a new group in the new realm
-    newg = gadd(cfg, g.groupname+'.'+newrealm+'.'+newsite_id, g.gid, g.description)
+    newg = gadd(cfg, g.groupname+'.'+newrealm+'.'+newsite_id, g.gid, g.description, g.sudo_cmds)
 
     # get the list of users in the source group
     userlist = []
@@ -1095,15 +1099,15 @@ def gclone(cfg, groupname, newfqn):
                 mothership.ldap.gadd(cfg, groupname=newg.groupname+newfqn)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
-                print "Error: %s" % e            
+                print "Error: %s" % e
         else:
-            print "LDAP update aborted by user input, skipping." 
+            print "LDAP update aborted by user input, skipping."
 
     # return the new group object
     return newg
 
 
-def gmodify(cfg, groupname, gid=None, description=None):
+def gmodify(cfg, groupname, gid=None, description=None, sudo_cmds=None):
     """
     [description]
     modify group information
@@ -1122,8 +1126,8 @@ def gmodify(cfg, groupname, gid=None, description=None):
 
     g = mothership.validate.v_get_group_obj(cfg, groupname)
 
+    # if the group exists, modify its data
     if g:
-        # if the group exists, modify its data
         if gid:
             # check to see if the target gid exists
             badgid = cfg.dbsess.query(Groups).\
@@ -1141,6 +1145,10 @@ def gmodify(cfg, groupname, gid=None, description=None):
             g.description = description
         else:
             pass
+        if sudo_cmds:
+            g.sudo_cmds = sudo_cmds
+        else:
+            g.sudo_cmds = None
         # ask for verification before modification
         ans = raw_input("to modify this group please type \"modify_%s\": " % groupname)
         if ans != "modify_%s" % groupname:
@@ -1163,9 +1171,9 @@ def gmodify(cfg, groupname, gid=None, description=None):
                 mothership.ldap.gupdate(cfg, groupname=g.groupname+'.'+g.realm+'.'+g.site_id)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
-                print "Error: %s" % e            
+                print "Error: %s" % e
         else:
-            print "LDAP update aborted by user input, skipping." 
+            print "LDAP update aborted by user input, skipping."
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
@@ -1280,3 +1288,50 @@ def get_utog_map(cfg, username, groupname):
     else:
         print 'neither group nor user found in get_utog_map()'
         return False
+
+def gen_sudoers_groups(cfg, unqdn):
+    """
+    [description]
+    generates the group lines for sudoers
+
+    [parameter info]
+    required:
+        cfg: the config object. useful everywhere
+        unqdn: the unqualified domain name of the host we want to generate for
+
+    [return value]
+    no configured return (standard success/fail)
+    """
+
+    # get the server entry
+    s = mothership.validate.v_get_host_obj(cfg, unqdn)
+    unqdn = '.'.join([s.hostname,s.realm,s.site_id])
+    fqdn = '.'.join([unqdn,cfg.domain])
+
+    kvs = mothership.kv.collect(cfg, fqdn, key='tag')
+    groups = []
+
+    # get sudo groups for all tags in kv
+    for kv in kvs:
+        unqgn = kv.value+'_sudo.'+s.realm+'.'+s.site_id
+        g = mothership.validate.v_get_group_obj(cfg, unqgn)
+        if g:
+            groups.append(g)
+        else:
+            pass
+
+    # get sudo group for primary tag
+    g = mothership.validate.v_get_group_obj(cfg, s.tag+'sudo.'+s.realm+'.'+s.site_id)
+    if g:
+        groups.append(g)
+    else:
+        pass
+
+    # print it!
+    for g in groups:
+        if cfg.sudo_nopass and g.sudo_cmds:
+            print "%%%s ALL=(ALL) NOPASSWD:%s" % (g.groupname, g.sudo_cmds)
+        elif g.sudo_cmds:
+            print "%%%s ALL=(ALL) %s" % (g.groupname, g.sudo_cmds)
+        else:
+            pass

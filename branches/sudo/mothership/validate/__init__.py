@@ -664,7 +664,7 @@ def v_get_group_obj(cfg, groupname):
 def v_get_host_obj(cfg, hostname):
     """
     [description]
-    host names can be passed to functions in several ways, sometimes containing realm and/or site_id information. this function takes arbitrary input and parses it, then calls v_host_picker() to select a group object from the database and returns it.
+    host names can be passed to functions in several ways, sometimes containing realm and/or site_id information. this function takes arbitrary input and parses it, then calls v_host_picker() to select a server object from the database and returns it.
 
     [parameter info]
     required:
@@ -672,7 +672,7 @@ def v_get_host_obj(cfg, hostname):
         hostname: the hostname we want to parse
 
     [return value]
-    returns a Groups object
+    returns a Servers object
     """
     # create a list of all the hosts with this name in the db
     # we explicitly use the list function because the return behaves

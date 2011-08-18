@@ -96,6 +96,7 @@ ALTER SEQUENCE dns_addendum_id_seq OWNED BY dns_addendum.id;
 
 CREATE TABLE groups (
     description character varying(150),
+    sudo_cmds character varying(1000),
     groupname character varying(64) NOT NULL,
     site_id character varying(3) NOT NULL,
     realm character varying(10) NOT NULL,

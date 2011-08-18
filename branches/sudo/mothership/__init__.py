@@ -615,7 +615,8 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', tag=None,
     if g:
         print "group exists, skipping: %s" % newsudogroup
     else:
-        mothership.users.gadd(cfg, newsudogroup+"."+realm+"."+site_id)
+        print "creating sudo group (default commands = ALL, use gmodify to change): "+newsudogroup
+        mothership.users.gadd(cfg, newsudogroup+"."+realm+"."+site_id, sudo_cmds='ALL')
 
 
 def remove_method_keys(dict, empty=False):
