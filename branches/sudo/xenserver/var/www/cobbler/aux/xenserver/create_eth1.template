@@ -1,0 +1,29 @@
+#!/bin/bash
+# Copyright 2011 Gilt Groupe, INC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# This is a Cobbler/Cheetah template to configure just eth1
+#
+# Add this to your system with:
+#   cobbler system edit --name=$name --template-files="/var/www/cobbler/aux/xenserver/create_eth1.template=/eth1"
+#
+# Parse the template with:
+#   curl http://$server/cblr/svc/op/template/system/$name/path/_eth1
+#
+
+XE=/opt/xensource/bin/xe
+uuid_eth1=\$( \$XE pif-list device=eth1 params=uuid | sed 's/^.*: //' )
+#set $eth1 = $interfaces['eth1']
+\$XE pif-reconfigure-ip uuid=\$uuid_eth1 mode=static ip=$eth1['ip_address'] netmask=$eth1['subnet']
+
+
