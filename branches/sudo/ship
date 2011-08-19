@@ -392,6 +392,8 @@ class ShipCli(cmdln.Cmdln):
                   help="assign a particular GID to a group")
     @cmdln.option("-d", "--desc",
                   help="a description for the group")
+    @cmdln.option("-s", "--sudo_cmds",
+                  help="command restrictions for sudoers generation (ALL is valid here). an empty value will cause the group to be ignored by generate_sudoers")
     def do_modify_group(self, subcmd, opts, groupname):
         """${cmd_name}: modify a group within mothership
 
@@ -399,7 +401,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_option_list}
         """
         try:
-            mothership.users.gmodify(self.cfg, groupname, gid=opts.gid, description=opts.desc)
+            mothership.users.gmodify(self.cfg, groupname, gid=opts.gid, description=opts.desc, sudo_cmds=opts.sudo_cmds)
         except (mothership.validate.ValidationError, mothership.users.UsersError), e:
             print 'Error: %s' % e
 
@@ -676,7 +678,7 @@ class ShipCli(cmdln.Cmdln):
                   help="print servers in one vlan")
     @cmdln.option("-s", "--site-id",
                   help="print servers in one site")
-    @cmdln.option("-r", "--tag",
+    @cmdln.option("-t", "--tag",
                   help="print servers in one tag")
     @cmdln.option("-R", "--realm",
                   help="print servers in one realm")
@@ -794,7 +796,7 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("kv")
     @cmdln.option("-u", "--update", action="store_true",
             help="Update the value of the key.  Will overwrite any existing values.")
-    @cmdln.option("-d", "--delete", action="store_true",
+    @cmdln.option("-r", "--remove", action="store_true",
             help="Delete a key=value pair.")
     @cmdln.option("-a", "--add", action="store_true",
             help="Add a key=value pair.")
@@ -814,7 +816,7 @@ class ShipCli(cmdln.Cmdln):
             append: ship kv -a . key=global
                     ship kv -a name array=three
 
-            delete: ship kv -d name key=junk
+            remove: ship kv -r name key=junk
         """
         kvs = []
 
@@ -833,7 +835,7 @@ class ShipCli(cmdln.Cmdln):
         if key.find('=') > 0:
             key, value = key.split('=')
 
-        if opts.add and opts.delete or opts.add and opts.update or opts.delete and opts.update:
+        if opts.add and opts.removee or opts.add and opts.update or opts.remove and opts.update:
             print "Incompatible options."
             return
 
@@ -843,7 +845,7 @@ class ShipCli(cmdln.Cmdln):
         elif opts.update:
             # Update or insert the value for a key
             kvs = [mothership.kv.upsert(self.cfg, fqdn, key, value)]
-        elif opts.delete:
+        elif opts.remove:
             if key and value:
                 # Display the value
                 kvs = [mothership.kv.select(self.cfg, fqdn, key, value)]
@@ -1092,8 +1094,8 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("cobble")
     @cmdln.option("-x", "--xen", default=False,
                   help="specify a xen server to override automated vlan detection")
-    @cmdln.option("-d", "--delete", action="store_true",
-                  help="delete server from cobbler")
+    @cmdln.option("-r", "--remove", action="store_true",
+                  help="remove server from cobbler")
     @cmdln.option("-k", "--kick", action="store_true",
                   help="kick the system after adding/updating system")
     @cmdln.option("-s", "--sync", action="store_true",
@@ -1109,7 +1111,7 @@ class ShipCli(cmdln.Cmdln):
         cc = mothership.cobbler.CobblerAPI(self.cfg)
         if not self.cfg.coblive:
             print '%s\n%s' % (self.cfg.cobremote, self.cfg.cobtoken)
-        if opts.delete:
+        if opts.remove:
             cc.delete_system(self.cfg, host)
             if opts.sync:
                 cc.sync_cobbler(self.cfg)
@@ -1323,8 +1325,8 @@ class ShipCli(cmdln.Cmdln):
                   help="specify the updated cluster name")
     @cmdln.option("-u", "--update", action="store_true",
                   help="update zeus_cluster entry based on identifier (IP || PUBLIC_IP)")
-    @cmdln.option("-d", "--delete", action="store_true",
-                  help="delete zeus_cluster entry based on identifier (IP || PUBLIC_IP)")
+    @cmdln.option("-r", "--remove", action="store_true",
+                  help="remove zeus_cluster entry based on identifier (IP || PUBLIC_IP)")
     @cmdln.option("-a", "--add", action="store_true",
                   help="add zeus_cluster name based on identifier CLUSTER_NAME")
     def do_zeus_cluster(self, subcmd, opts, *args):
@@ -1424,6 +1426,11 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        print "\n\n---------------------------------------------------------------------------"
+        print "| ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG!          |"
+        print "| at the moment this does not validate input. you can break your sudoers  |"
+        print "| be VERY careful with this command                                       |"
+        print "---------------------------------------------------------------------------\n\n"
         mothership.users.gen_sudoers_groups(cfg, unqdn=hostname)
 
 

@@ -867,11 +867,11 @@ def gadd(cfg, groupname, gid=None, description=None, sudo_cmds=None):
             gid = next_available_gid(cfg, realm, site_id)
         else:
             pass
-    if sudo_cmds == 'all' or sudo_cmd == 'All':
+    if sudo_cmds == 'all' or sudo_cmds == 'All':
         sudo_cmds = 'ALL'
 
     # create a new group object, jam it into the db
-    g = Groups(description, groupname, site_id, realm, gid, sudo_cmds)
+    g = Groups(description, sudo_cmds, groupname, site_id, realm, gid)
     cfg.dbsess.add(g)
     cfg.dbsess.commit()
     # debugging
@@ -1158,7 +1158,7 @@ def gmodify(cfg, groupname, gid=None, description=None, sudo_cmds=None):
             cfg.dbsess.add(g)
             cfg.dbsess.commit()
             print "updated info:"
-            gdisplay(cfg, groupname=groupname+'.'+g.realm+'.'+g.site_id)
+            gdisplay(cfg, groupname=g.groupname+'.'+g.realm+'.'+g.site_id)
     else:
         raise UsersError("group \"%s\" not found, aborting" % groupname)
     # update ldap data
@@ -1305,8 +1305,11 @@ def gen_sudoers_groups(cfg, unqdn):
 
     # get the server entry
     s = mothership.validate.v_get_host_obj(cfg, unqdn)
-    unqdn = '.'.join([s.hostname,s.realm,s.site_id])
-    fqdn = '.'.join([unqdn,cfg.domain])
+    if s:
+        unqdn = '.'.join([s.hostname,s.realm,s.site_id])
+        fqdn = '.'.join([unqdn,cfg.domain])
+    else:
+        raise UsersError("Host does not exist: %s" % unqdn)
 
     kvs = mothership.kv.collect(cfg, fqdn, key='tag')
     groups = []
@@ -1321,7 +1324,7 @@ def gen_sudoers_groups(cfg, unqdn):
             pass
 
     # get sudo group for primary tag
-    g = mothership.validate.v_get_group_obj(cfg, s.tag+'sudo.'+s.realm+'.'+s.site_id)
+    g = mothership.validate.v_get_group_obj(cfg, s.tag+'_sudo.'+s.realm+'.'+s.site_id)
     if g:
         groups.append(g)
     else:
