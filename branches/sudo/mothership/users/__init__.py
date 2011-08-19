@@ -1018,7 +1018,7 @@ def gdisplay(cfg, groupname, list=False):
         print "groupname, gid: %s, %s" % (g.groupname, g.gid)
         print "location: %s.%s" % (g.realm, g.site_id)
         print "description: "+g.description
-        print "allowed sudo commands: "+g.sudo_cmds
+        print "allowed sudo commands: %s" % g.sudo_cmds
         if not list:
             print "users: "+' '.join(userlist)
         else:

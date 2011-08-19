@@ -1413,6 +1413,20 @@ class ShipCli(cmdln.Cmdln):
             elif opts.disable:
                 z.disable_host(unqdn)
 
+
+    @cmdln.alias("generate_sudoers_groups")
+    @cmdln.alias("gensudo")
+    @cmdln.alias("gen_sudo")
+    @cmdln.alias("gen_sudo_groups")
+    def do_gen_sudoers_groups(self, subcmd, opts, hostname):
+        """${cmd_name}: generate the group lines for inclusion in sudoers
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        mothership.users.gen_sudoers_groups(cfg, unqdn=hostname)
+
+
     @cmdln.alias("test")
     @cmdln.alias("compare")
     def do_verify(self, subcmd, opts, hostname):
