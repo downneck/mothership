@@ -1,0 +1,37 @@
+
+# By default, cobbler builds the kickstart tree for all systems
+# more reliably than the distro being attached to the interface
+#set treelist=$mgmt_parameters['tree'].split('/')
+
+#if $power_mode == 'on'
+ssh root@$power_address virtualhost_manager.sh \
+    -S "$server" -D "$treelist[-1]" \
+    -m "xenbr0=$interfaces['eth0']['mac_address'],xapi1=$interfaces['eth1']['mac_address']" \
+    -s "$virt_path" \
+    -V "$virt_file_size" \
+    -C "$virt_cpus" \
+    -M "$virt_ram" \
+    -c "$name"
+#end if
+
+# virtual_manager must exit 0 when VM exists, or poweroff will fail for new VMs
+#if $power_mode == 'off'
+ssh root@$power_address virtualhost_manager.sh \
+    -d \
+    -x "$name"
+#end if
+
+#if $power_mode == 'test'
+echo "  system name $name"
+echo " profile name $profile"
+echo "  distro name $treelist[-1]"
+echo "       server $server"
+echo "power_address $power_address"
+echo "  virtual cpu $virt_cpus"
+echo "  virtual ram $virt_ram"
+echo " virtual disk $virt_file_size"
+echo " storage disk $virt_path"
+echo "     ech1-mac $interfaces['eth1']['mac_address']"
+echo "     eth0-mac $interfaces['eth0']['mac_address']"
+#end if
+
