@@ -77,7 +77,8 @@ def uadd(cfg, username, first_name, last_name, keyfile=None, uid=None, hdir=None
     # ensure it's not empty or obviously incorrect
     if not first_name or not last_name:
         raise UsersError("You must specify both a first and last name when adding a new user")
-
+    if not mothership.validate.v_validate_name(cfg, name=username):
+        raise UsersError("invalid name, exiting!")
     # read in the ssh2 public key from a file and stuff it into the users
     # table entry object if it's (somewhat) valid
     if keyfile:
@@ -860,6 +861,8 @@ def gadd(cfg, groupname, gid=None, description=None, sudo_cmds=None):
         pass
     if not mothership.validate.v_site_id(cfg, site_id):
         raise UsersError("Invalid site_id, exiting!")
+    if not mothership.validate.v_validate_name(cfg, name=groupname):
+        raise UsersError("Invalid group name, exiting!")
     if get_gid(cfg, groupname=fqgn):
         raise UsersError("Duplicate group, exiting!")
     else:

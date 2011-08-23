@@ -22,6 +22,7 @@ for various types of data
 import base64
 import struct
 import types
+import re
 
 # All of the models and sqlalchemy are brought in
 # to simplify referencing
@@ -835,3 +836,24 @@ def v_host_picker(cfg, h):
             raise ValidationError('oops, something went wrong in v_host_picker()!')
     else:
         raise ValidationError('v_host_picker() called with zero-length host list')
+
+
+# VERY basic validation of user- group- or host-name input
+def v_validate_name(cfg, name):
+    """
+    [description]
+    VERY basic validation of user- group- or host-name input
+    """
+
+    if not name:
+        raise ValidationError('v_validate_name() called without a name!')
+
+    if re.search("[^A-Za-z0-9_\-.]", name):
+        print 'name contains illegal characters! allowed characters are: A-Z a-z 0-9 _ - .'
+        return False
+
+    if len(name) < 4:
+        print 'too short! name must have more than 3 characters'
+        return False
+
+    return True
