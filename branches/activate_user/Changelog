@@ -1,7 +1,8 @@
-revision 67 (mo):
+revision 68 (mo):
 * adding activate user command
 * command activates a user, setting true in the enabled colum in the mothership DB
-* dose not add the user to any groups by default. :wq
+* dose not add the user to any groups by default.
+* Also, screwed up merging this something awful because now i'm use to git
 revision 59 (dk):
 * in order to avoid stepping on puppet's reserved keyword "tags", we changed
   tags to mtags in the puppet module, added an example config in the
