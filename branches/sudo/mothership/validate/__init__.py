@@ -303,13 +303,13 @@ def v_get_fqn(cfg, name):
         d = sub[2]+'.'+sub[3]
         # check to see if the domain is valid
         if not v_domain(cfg, d):
-            raise ValidationError('invalid domain "d", aborting' % d)
+            raise ValidationError("invalid domain \"%s\", aborting" % d)
         # check to see if the site_id is valid
         if not v_site_id(cfg, s):
-            raise ValidationError('invalid site_id "%s", aborting' % s)
+            raise ValidationError("invalid site_id \"%s\", aborting" % s)
         # check to see if the realm is valid
         if not v_realm(cfg, r):
-            raise ValidationError('invalid realm "%s", aborting' % r)
+            raise ValidationError("invalid realm \"%s\", aborting" % r)
         # if everything is valid, fire back realm.site_id.domain
         return r+'.'+s+'.'+d
     # 3 items could be either site_id.domain.tld or name.realm.site_id
@@ -324,7 +324,7 @@ def v_get_fqn(cfg, name):
         if not v_domain(cfg, d):
             # if the domain is invalid, maybe it's a realm.site_id
             if not v_realm(cfg, r) and not v_site_id(cfg, sid):
-                raise ValidationError('invalid domain "%s" or realm.site_id "%s.%s", aborting' % (d, r, s))
+                raise ValidationError("invalid domain \"%s\" or realm.site_id \"%s.%s\", aborting" % (d, r, s))
             # check both again to make sure both are valid
             elif v_realm(cfg, r) and v_site_id(cfg, sid):
                 # we only have one domain configured, tack it on and
@@ -332,11 +332,11 @@ def v_get_fqn(cfg, name):
                 return n+'.'+r+'.'+sid+'.'+cfg.domain
             # both domain and one of either realm or site_id is bad
             else:
-                raise ValidationError('site_id "%s" or realm "%s" info is bad, aborting' % (s, r))
+                raise ValidationError("site_id \"%s\" or realm \"%s\" info is bad, aborting" % (s, r))
         # if we got site_id.domain.tld, and the domain checks out
         # validate the site_id
         elif not v_site_id(cfg, s):
-            raise ValidationError('invalid site_id "%s", aborting' % s)
+            raise ValidationError("invalid site_id \"%s\", aborting" % s)
         # if the site_id and domain check out, present the user with a
         # menu to pick the realm 
         else:
@@ -348,7 +348,7 @@ def v_get_fqn(cfg, name):
             menu += "Please select the one you would like to use: "
             ans = raw_input(menu)
             if not ans or int(ans) < 1 or int(ans) > count:
-                raise ValidationError('selection aborted')
+                raise ValidationError("selection aborted")
             else:
                 # return the fqn without the name 
                 return select[int(ans)]
@@ -378,7 +378,7 @@ def v_get_fqn(cfg, name):
             menu += "Please select the one you would like to use: "
             ans = raw_input(menu)
             if not ans or int(ans) < 1 or int(ans) > count:
-                raise ValidationError('selection aborted')
+                raise ValidationError("selection aborted")
             else:
                 return select[int(ans)]
     # if we only got one item, it's gotta be a name/hostname.
@@ -393,7 +393,7 @@ def v_get_fqn(cfg, name):
         menu += "Please select the one you would like to use: "
         ans = raw_input(menu)
         if not ans or int(ans) < 1 or int(ans) > count:
-            raise ValidationError('selection aborted')
+            raise ValidationError("selection aborted")
         else:
             # return the fully-qualified name, only if we were supplied
             # a name to begin with
@@ -606,14 +606,14 @@ def v_get_user_obj(cfg, username):
         filter(Users.realm==realm).\
         filter(Users.site_id==site_id))
     else:
-        raise ValidationError('v_get_user_obj() called incorrectly')
+        raise ValidationError("v_get_user_obj() called incorrectly")
 
     if u:
         u = v_user_picker(cfg, u)
         if u:
             return u
         else:
-            raise ValidationError('something has gone terribly wrong in the v_get_user_obj() function')
+            raise ValidationError("something has gone terribly wrong in the v_get_user_obj() function")
     else:
         return False
 
