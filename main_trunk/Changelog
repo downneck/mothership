@@ -1,5 +1,6 @@
-revision 71 (dk):
+revision 74 (dk):
 * fixed passing of variables in users module in gmodify()
+* normalizing revisions in Changelog
 revision 70 (dk):
 * fixing bad quotes in validation module error raising messages
 revision 68 (mo):
