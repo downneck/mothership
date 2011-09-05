@@ -1,0 +1,38 @@
+#!/bin/bash
+# Copyright 2011 Gilt Groupe, INC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# This is a Cobbler/Cheetah template to configure bond0 for eth1+eth2
+#
+# Add this to your system with:
+#   cobbler system edit --name=$name --template-files="/var/www/cobbler/aux/xenserver/create_bond0.template=/bond0"
+#
+# Parse the template with:
+#   curl http://$server/cblr/svc/op/template/system/$name/path/_bond0
+#
+
+XE=/opt/xensource/bin/xe
+uuid_bond0=\$( \$XE pif-list device=bond0 params=uuid | sed 's/^.*: //' )
+if [ -z $uuid_bond0 ]; then
+    uuid_net=\$( \$XE network-create name-label=bond0 )
+    for net in eth1 eth2; do
+        eval \$( \$XE pif-list device=\$net params=uuid | sed -ne 's/ (.*: /_'\$net'=/p;' )
+    done
+    uuid_pif=\$( \$XE bond-create network-uuid=\$uuid_net pif-uuids=\$uuid_eth1,\$uuid_eth2 )
+    uuid_bond0=\$( \$XE pif-list device=bond0 params=uuid | sed 's/^.*: //' )
+    #set $bond = $interfaces['bond0']
+    \$XE pif-reconfigure-ip uuid=\$uuid_bond0 mode=static ip=$bond['ip_address'] netmask=$bond['subnet']
+    \$XE pif-param-set uuid=\$uuid_bond0 disallow-unplug="true" other-config:management_purpose="Interface 1"
+fi
+\$XE pif-plug uuid=\$uuid_bond0 
+
