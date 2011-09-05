@@ -287,13 +287,13 @@ def v_get_fqn(cfg, name):
         d = sub[3]+'.'+sub[4]
         # check to see if the domain is valid
         if not v_domain(cfg, d):
-            raise ValidationError('invalid domain "d", aborting' % d)
+            raise ValidationError("invalid domain \"%s\", aborting" % d)
         # check to see if the site_id is valid
         if not v_site_id(cfg, s):
-            raise ValidationError('invalid site_id "%s", aborting' % s)
+            raise ValidationError("invalid site_id \"%s\", aborting" % s)
         # check to see if the realm is valid
         if not v_realm(cfg, r):
-            raise ValidationError('invalid realm "%s", aborting' % r)
+            raise ValidationError("invalid realm \"%s\", aborting" % r)
         # if everything is valid, fire back name.realm.site_id.domain
         return n+'.'+r+'.'+s+'.'+d
     # if we got everything but the name

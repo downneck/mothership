@@ -286,13 +286,13 @@ def v_get_fqn(cfg, name):
         d = sub[3]+'.'+sub[4]
         # check to see if the domain is valid
         if not v_domain(cfg, d):
-            raise ValidationError('invalid domain "d", aborting' % d)
+            raise ValidationError("invalid domain \"%s\", aborting" % d)
         # check to see if the site_id is valid
         if not v_site_id(cfg, s):
-            raise ValidationError('invalid site_id "%s", aborting' % s)
+            raise ValidationError("invalid site_id \"%s\", aborting" % s)
         # check to see if the realm is valid
         if not v_realm(cfg, r):
-            raise ValidationError('invalid realm "%s", aborting' % r)
+            raise ValidationError("invalid realm \"%s\", aborting" % r)
         # if everything is valid, fire back name.realm.site_id.domain
         return n+'.'+r+'.'+s+'.'+d
     # if we got everything but the name
@@ -302,13 +302,13 @@ def v_get_fqn(cfg, name):
         d = sub[2]+'.'+sub[3]
         # check to see if the domain is valid
         if not v_domain(cfg, d):
-            raise ValidationError('invalid domain "d", aborting' % d)
+            raise ValidationError("invalid domain \"%s\", aborting" % d)
         # check to see if the site_id is valid
         if not v_site_id(cfg, s):
-            raise ValidationError('invalid site_id "%s", aborting' % s)
+            raise ValidationError("invalid site_id \"%s\", aborting'" % s)
         # check to see if the realm is valid
         if not v_realm(cfg, r):
-            raise ValidationError('invalid realm "%s", aborting' % r)
+            raise ValidationError("invalid realm \"%s\", aborting" % r)
         # if everything is valid, fire back realm.site_id.domain
         return r+'.'+s+'.'+d
     # 3 items could be either site_id.domain.tld or name.realm.site_id
@@ -323,7 +323,7 @@ def v_get_fqn(cfg, name):
         if not v_domain(cfg, d):
             # if the domain is invalid, maybe it's a realm.site_id
             if not v_realm(cfg, r) and not v_site_id(cfg, sid):
-                raise ValidationError('invalid domain "%s" or realm.site_id "%s.%s", aborting' % (d, r, s))
+                raise ValidationError("invalid domain \"%s\" or realm.site_id \"%s.%s\", aborting" % (d, r, s))
             # check both again to make sure both are valid
             elif v_realm(cfg, r) and v_site_id(cfg, sid):
                 # we only have one domain configured, tack it on and
@@ -331,11 +331,11 @@ def v_get_fqn(cfg, name):
                 return n+'.'+r+'.'+sid+'.'+cfg.domain
             # both domain and one of either realm or site_id is bad
             else:
-                raise ValidationError('site_id "%s" or realm "%s" info is bad, aborting' % (s, r))
+                raise ValidationError("site_id \"%s\" or realm \"%s\" info is bad, aborting" % (s, r))
         # if we got site_id.domain.tld, and the domain checks out
         # validate the site_id
         elif not v_site_id(cfg, s):
-            raise ValidationError('invalid site_id "%s", aborting' % s)
+            raise ValidationError("invalid site_id \"%s\", aborting" % s)
         # if the site_id and domain check out, present the user with a
         # menu to pick the realm 
         else:
