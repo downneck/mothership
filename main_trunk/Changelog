@@ -1,3 +1,5 @@
+revision 71 (dk):
+* fixed passing of variables in users module in gmodify()
 revision 70 (dk):
 * fixing bad quotes in validation module error raising messages
 revision 68 (mo):

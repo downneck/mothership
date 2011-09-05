@@ -1190,7 +1190,7 @@ def gmodify(cfg, groupname, gid=None, description=None):
             cfg.dbsess.add(g)
             cfg.dbsess.commit()
             print "updated info:"
-            gdisplay(cfg, groupname=groupname+'.'+g.realm+'.'+g.site_id)
+            gdisplay(cfg, groupname=g.groupname+'.'+g.realm+'.'+g.site_id)
     else:
         raise UsersError("group \"%s\" not found, aborting" % groupname)
     # update ldap data
@@ -1203,7 +1203,7 @@ def gmodify(cfg, groupname, gid=None, description=None):
                 mothership.ldap.gupdate(cfg, groupname=g.groupname+'.'+g.realm+'.'+g.site_id)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
-                print "Error: %s" % e            
+                print "Error: %s" % e
         else:
             print "LDAP update aborted by user input, skipping." 
     elif not cfg.ldap_active:
