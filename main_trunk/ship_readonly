@@ -198,7 +198,7 @@ class ShipCli(cmdln.Cmdln):
                   help="print servers in one vlan")
     @cmdln.option("-s", "--site-id",
                   help="print servers in one site")
-    @cmdln.option("-r", "--tag",
+    @cmdln.option("-t", "--tag",
                   help="print servers in one tag")
     @cmdln.option("-R", "--realm",
                   help="print servers in one realm")
