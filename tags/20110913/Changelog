@@ -1,0 +1,29 @@
+revision 83 (dk):
+* modernizing Changelog
+revision 78 (dk):
+* merged in sudo_cmds functionality to add sudo command sets to groups
+revision 74 (dk):
+* fixed passing of variables in users module in gmodify()
+* normalizing revisions in Changelog
+revision 70 (dk):
+* fixing bad quotes in validation module error raising messages
+revision 68 (mo):
+* adding activate user command
+* command activates a user, setting true in the enabled colum in the
+  mothership DB
+* does not add the user to any groups by default.
+* Also, screwed up merging this something awful because now i'm use to git
+revision 59 (dk):
+* in order to avoid stepping on puppet's reserved keyword "tags", we changed
+  tags to mtags in the puppet module, added an example config in the
+  puppet_skeleton, and added some info in INSTALL
+revision 51 (dk):
+* modernized interaction with the newer version of the python port of the
+  zabbix API
+revision 43 (dk):
+* fixed a bunch of bugs in LDAP integration with user module
+* modernized Changelog
+Revision 40 (dk):
+* updated all instances of "role(s)" to read "tag(s)" (including the DB schema)
+* stopped users module from prompting for ldap interaction if the realm 
+  doesn't have an active ldap_master
