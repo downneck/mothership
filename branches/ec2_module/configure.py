@@ -279,6 +279,25 @@ class Configure:
         else:
             self.ldap_default_gid = '401'
 
+
+        ec2config = all_configs['amazon_ec2']
+        if 'region_list' in ec2config and ec2config['region_list']:
+            self.ec2_region_list = ec2config['region_list']
+        else:
+            self.ec2_region_list = None
+        if 'default_region' in ec2config and ec2config['default_region']:
+            self.ec2_default_region = ec2config['default_region']
+        else:
+            self.ec2_default_region = None
+        if 'aws_access_key_id' in ec2config and ec2config['aws_access_key_id']:
+            self.aws_access_key_id = ec2config['aws_access_key_id']
+        else:
+            self.aws_access_key_id = None
+        if 'aws_secret_access_key' in ec2config and ec2config['aws_secret_access_key']:
+            self.aws_secret_access_key = ec2config['aws_secret_access_key']
+        else:
+            aws_secret_access_key = None
+
     def close_connections(self):
         """
             Close out connections

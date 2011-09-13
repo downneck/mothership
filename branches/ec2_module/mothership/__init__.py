@@ -471,6 +471,10 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', role=None,
         print '%s is not a valid role, provisioning of %s aborted' % (role, hostname)
         return
 
+    ## This is an ec2 instance, call the ec2_provision_server function for now. There are 
+    ## do many differences and dependencies to add ec2 into the provision_server function
+    ##  we can do this later
+
     virtual = False
 
     if not hwtag:
@@ -502,6 +506,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', role=None,
             virtual = True
             profile = osdict['default']['virtual']
 
+
     if not virtual:
         try:    # check to see if hwtag already belongs to a server
             check = retrieve_network_row_by_ifname(cfg, 'eth0', hwtag=hwtag)
@@ -526,6 +531,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, public_ip='', role=None,
                     profile = k
     else:
         osprofile = osdict['profile'][profile]
+
     if virtual:
         # make sure the vlan specified is primary eth1
         if network_mapper.remap(cfg, 'nic', vlan=int(vlan), siteid=site_id) != 'eth1':

@@ -78,6 +78,7 @@ class Server(Base):
     security_level = Column(Integer)
     cost = Column(Integer)
     active = Column(Boolean)
+    ec2 = Column(Boolean)
 
     def __init__(self, hostname):
         self.name = hostname
@@ -107,6 +108,7 @@ class ServerGraveyard(Base):
     deprovision_date = Column(Date)
     security_level = Column(Integer)
     cost = Column(Integer)
+    ec2 = Column(Boolean)
 
     def __init__(self, hostname):
         self.name = hostname
@@ -326,3 +328,117 @@ class UserGroupMapping(Base):
 
     def __repr__(self):
         return "<UserGroupMapping('%s', '%s')>" % (self.groups_id, self.users_id)
+
+class Ec2Instance(Base):
+    __tablename__ = 'ec2_instance'
+
+    id = Column(Integer, primary_key=True)
+    security_group = Column(String)
+    ami_id = Column(String)
+    public_dns = Column(String)
+    private_dns = Column(String)
+    state = Column(String)
+    zone = Column(String)
+    aki = Column(String)
+    ari = Column(String)
+    monitoring_enabled = Column(Boolean)
+    elastic_ip = Column(String)
+    private_ip = Column(String)
+    public_ip = Column(String)
+    ebs_backed = Column(Boolean)
+    provision_date = Column(Date)
+    instance_type = Column(String)
+    reservation_id = Column(String)
+    key_name = Column(String)
+    ami_launch_index = Column(Integer)
+    virtualization_type = Column(String)
+    ec2_tags = Column(String)
+    hypervisor_type = Column(String)
+    instance_id = Column(String)
+    server_id = Column(Integer, ForeignKey(Server.id))
+    def __init__(self, instance_id):
+        self.instance_id = instance_id
+
+    def __repr__(self):
+        return "<Ec2Instance('%s', '%s', '%s')>" % (self.instance_id, self.ami_id, self.provision_date)
+
+
+class Ec2InstanceGraveyard(Base):
+    __tablename__ = 'ec2_instance_graveyard'
+
+    id = Column(Integer, primary_key=True)
+    security_group = Column(String)
+    ami_id = Column(String)
+    public_dns = Column(String)
+    private_dns = Column(String)
+    state = Column(String)
+    zone = Column(String)
+    aki = Column(String)
+    ari = Column(String)
+    monitoring_enabled = Column(Boolean)
+    elastic_ip = Column(String)
+    private_ip = Column(String)
+    public_ip = Column(String)
+    ebs_backed = Column(Boolean)
+    provision_date = Column(Date)
+    deprovision_date = Column(Date)
+    instance_type = Column(String)
+    reservation_id = Column(String)
+    key_name = Column(String)
+    ami_launch_index = Column(Integer)
+    virtualization_type = Column(String)
+    ec2_tags = Column(String)
+    hypervisor_type = Column(String)
+    instance_id = Column(String)
+    server_id = Column(Integer)
+
+    def __init__(self, instance_id):
+        self.instance_id = instance_id
+
+    def __repr__(self):
+        return "<Ec2InstanceGraveyard('%s', '%s', '%s')>" % (self.instance_id, self.ami_id, self.deprovision_date)
+
+class Ec2Volumes(Base):
+    __tablename__ = 'ec2_volumes'
+
+    id = Column(Integer, primary_key=True)
+    volume_id = Column(String)
+    size = Column(Integer)
+    snapshot_id = Column(String)
+    zone = Column(String)
+    status = Column(String)
+    provision_date = Column(Date)
+    ec2_tags = Column(String)
+    device = Column(String)
+    attached = Column(Boolean)
+    attached_time = Column(Date)
+
+    def __init__(self, volume_id):
+        self.volume_id = volume_id
+
+    def __repr__(self):
+        return "<Ec2Volumes('%s', '%s', '%s')" (self.volume_id, self.status, self_provision_date)
+
+
+class Ec2VolumesGraveyard(Base):
+    __tablename__ = 'ec2_volumes_graveyard'
+
+    id = Column(Integer, primary_key=True)
+    volume_id = Column(String)
+    size = Column(Integer)
+    snapshot_id = Column(String)
+    zone = Column(String)
+    status = Column(String)
+    provision_date = Column(Date)
+    deprovision_date = Column(Date)
+    ec2_tags = Column(String)
+    device = Column(String)
+    attached = Column(Boolean)
+    attached_time = Column(Date)
+    unattached_time = Column(Date)
+
+    def __init__(self, volume_id):
+        self.volume_id = volume_id
+
+    def __repr__(self):
+        return "<Ec2Volumes('%s', '%s', '%s')" (self.volume_id, self.status, self_deprovision_date)

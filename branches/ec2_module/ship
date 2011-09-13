@@ -44,6 +44,7 @@ from mothership.list_servers import *
 from mothership_models import *
 from configure import Configure
 import mothership.zabbix
+import mothership.ec2
 
 class ShipCli(cmdln.Cmdln):
     def __init__(self, cfg):
@@ -1002,6 +1003,37 @@ class ShipCli(cmdln.Cmdln):
                 zs_unqdn = '.'.join(mothership.get_unqdn(self.cfg, self.cfg.dbsess.query(Server).\
                     filter(Server.role=="zabbix_server").first().hostname))
                 mothership.zabbix.add(self.cfg, unqdn, zs_unqdn, zabbix_template=None)
+
+    @cmdln.alias("ec2add")
+    @cmdln.alias("ec2_add_serv")
+
+    def do_ec2_provision_server(self, subcmd, opts, hostname, instance_id):
+        """${cmd_name}:
+        Provision a new server in Amazon Ec2.  This command requires that the provided
+        instance_id be a currintly existing, running instance.
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        ec2_conn = mothership.ec2.connect_ec2(self.cfg)
+
+    @cmdln.alias("ec2instance")
+    @cmdln.option("-d", "--describe", action="store_true",
+            help="preform various taskes with Amazon Ec2 instances")
+
+    def do_ec2_instance(self, subcmd, opts, instance_id):
+        """${cmd_name}:
+        Various tasks to work with EC2 instances
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        if opts.describe:
+            ec2_conn = mothership.ec2.connect_ec2(self.cfg)
+            print ec2_conn
+
+
+
 
     # DISABLED AS rename_server brought up a few points such as
     # * moving to server_graveyard 

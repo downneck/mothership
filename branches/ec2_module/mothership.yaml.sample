@@ -240,3 +240,19 @@ ldap:
   # Default gidNumber for posixGroup , should match value
   # associated to the first entry of default_groups array
   default_gid: '401'
+
+
+# Amazon Ec2 configurations
+amazon_ec2:
+
+  # Ec2 Regions List
+  region_list: ['eu-west-1', 'us-east-1', 'ap-northeast-1', 'us-west-1', 'ap-southeast-1']
+
+  # Region to use by default.  This can be changed to any of the regions listed above
+  # Default region will be used for all ec2 connections.  
+  default_region: 'us-east-1'
+
+  aws_access_key_id: 'AKIAIR4LKD5NAN3ZNGOA'
+  aws_secret_access_key: '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'
+
+
