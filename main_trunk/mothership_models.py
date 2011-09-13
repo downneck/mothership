@@ -297,21 +297,23 @@ class Groups(Base):
     __tablename__ = 'groups'
 
     description = Column(String)
+    sudo_cmds = Column(String)
     groupname = Column(String, primary_key=True)
     site_id = Column(String, primary_key=True)
     realm = Column(String, primary_key=True)
     gid = Column(Integer)
     id = Column(Integer, primary_key=True)
 
-    def __init__(self, description, groupname, site_id, realm, gid):
+    def __init__(self, description, sudo_cmds, groupname, site_id, realm, gid):
         self.description = description
+        self.sudo_cmds = sudo_cmds
         self.groupname = groupname
         self.site_id = site_id
         self.realm = realm
         self.gid = gid
 
     def __repr__(self):
-        return "<Groups('%s', '%s', '%s', '%s')>" % (self.description, self.groupname, self.site_id, self.realm)
+        return "<Groups('%s', '%s', '%s', '%s', '%s')>" % (self.description, self.groupname, self.site_id, self.realm, self.sudo_cmds)
 
 class UserGroupMapping(Base):
     __tablename__ = 'user_group_mapping'

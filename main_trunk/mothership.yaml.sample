@@ -44,6 +44,11 @@ general:
   # this would be the public address
   publicip: '123.123.123.123'
 
+  # configurable sudo passwords.
+  # if you use ssh keys and don't want to use passwords
+  # on user accounts for security reasons, set this to "true"
+  sudo_nopass: true
+
 # Database options
 db:
 

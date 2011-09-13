@@ -1,3 +1,5 @@
+revision 78 (dk):
+* merged in sudo_cmds functionality to add sudo command sets to groups
 revision 74 (dk):
 * fixed passing of variables in users module in gmodify()
 * normalizing revisions in Changelog

@@ -60,6 +60,7 @@ DROP TABLE IF EXISTS `groups`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `groups` (
   `description` varchar(150) DEFAULT NULL,
+  `sudo_cmds` varchar(1000) DEFAULT NULL,
   `groupname` varchar(64) NOT NULL,
   `site_id` varchar(3) NOT NULL,
   `realm` varchar(10) NOT NULL,

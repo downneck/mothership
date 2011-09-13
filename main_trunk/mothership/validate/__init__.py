@@ -22,6 +22,7 @@ for various types of data
 import base64
 import struct
 import types
+import re
 
 # All of the models and sqlalchemy are brought in
 # to simplify referencing
@@ -305,7 +306,7 @@ def v_get_fqn(cfg, name):
             raise ValidationError("invalid domain \"%s\", aborting" % d)
         # check to see if the site_id is valid
         if not v_site_id(cfg, s):
-            raise ValidationError("invalid site_id \"%s\", aborting'" % s)
+            raise ValidationError("invalid site_id \"%s\", aborting" % s)
         # check to see if the realm is valid
         if not v_realm(cfg, r):
             raise ValidationError("invalid realm \"%s\", aborting" % r)
@@ -347,7 +348,7 @@ def v_get_fqn(cfg, name):
             menu += "Please select the one you would like to use: "
             ans = raw_input(menu)
             if not ans or int(ans) < 1 or int(ans) > count:
-                raise ValidationError('selection aborted')
+                raise ValidationError("selection aborted")
             else:
                 # return the fqn without the name 
                 return select[int(ans)]
@@ -377,7 +378,7 @@ def v_get_fqn(cfg, name):
             menu += "Please select the one you would like to use: "
             ans = raw_input(menu)
             if not ans or int(ans) < 1 or int(ans) > count:
-                raise ValidationError('selection aborted')
+                raise ValidationError("selection aborted")
             else:
                 return select[int(ans)]
     # if we only got one item, it's gotta be a name/hostname.
@@ -392,7 +393,7 @@ def v_get_fqn(cfg, name):
         menu += "Please select the one you would like to use: "
         ans = raw_input(menu)
         if not ans or int(ans) < 1 or int(ans) > count:
-            raise ValidationError('selection aborted')
+            raise ValidationError("selection aborted")
         else:
             # return the fully-qualified name, only if we were supplied
             # a name to begin with
@@ -605,14 +606,14 @@ def v_get_user_obj(cfg, username):
         filter(Users.realm==realm).\
         filter(Users.site_id==site_id))
     else:
-        raise ValidationError('v_get_user_obj() called incorrectly')
+        raise ValidationError("v_get_user_obj() called incorrectly")
 
     if u:
         u = v_user_picker(cfg, u)
         if u:
             return u
         else:
-            raise ValidationError('something has gone terribly wrong in the v_get_user_obj() function')
+            raise ValidationError("something has gone terribly wrong in the v_get_user_obj() function")
     else:
         return False
 
@@ -664,7 +665,7 @@ def v_get_group_obj(cfg, groupname):
 def v_get_host_obj(cfg, hostname):
     """
     [description]
-    host names can be passed to functions in several ways, sometimes containing realm and/or site_id information. this function takes arbitrary input and parses it, then calls v_host_picker() to select a group object from the database and returns it.
+    host names can be passed to functions in several ways, sometimes containing realm and/or site_id information. this function takes arbitrary input and parses it, then calls v_host_picker() to select a server object from the database and returns it.
 
     [parameter info]
     required:
@@ -672,7 +673,7 @@ def v_get_host_obj(cfg, hostname):
         hostname: the hostname we want to parse
 
     [return value]
-    returns a Groups object
+    returns a Servers object
     """
     # create a list of all the hosts with this name in the db
     # we explicitly use the list function because the return behaves
@@ -835,3 +836,24 @@ def v_host_picker(cfg, h):
             raise ValidationError('oops, something went wrong in v_host_picker()!')
     else:
         raise ValidationError('v_host_picker() called with zero-length host list')
+
+
+# VERY basic validation of user- group- or host-name input
+def v_validate_name(cfg, name):
+    """
+    [description]
+    VERY basic validation of user- group- or host-name input
+    """
+
+    if not name:
+        raise ValidationError('v_validate_name() called without a name!')
+
+    if re.search("[^A-Za-z0-9_\-.]", name):
+        print 'name contains illegal characters! allowed characters are: A-Z a-z 0-9 _ - .'
+        return False
+
+    if len(name) < 4:
+        print 'too short! name must have more than 3 characters'
+        return False
+
+    return True

@@ -176,6 +176,10 @@ class Configure:
             self.def_public_ip = genconfig['publicip']
         else:
             self.def_public_ip = '123.123.123.123'
+        if 'sudo_nopass' in genconfig and genconfig['sudo_nopass']:
+            self.sudo_nopass = genconfig['sudo_nopass']
+        else:
+            self.sudo_nopass = True
 
         # Virtual Machine settings
         vmconfig = all_configs['vm']
