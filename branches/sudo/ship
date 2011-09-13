@@ -229,6 +229,27 @@ class ShipCli(cmdln.Cmdln):
         except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
             print 'Error: %s' % e
 
+    # enable/activate users
+    @cmdln.alias("en_user")
+    @cmdln.alias("act_user")
+    @cmdln.alias("enable_user")
+    @cmdln.alias("enable_users")
+    @cmdln.alias("activate_user")
+    @cmdln.alias("activate_users")
+    @cmdln.alias("enuser")
+    @cmdln.alias("actuser")
+    @cmdln.alias("enusers")
+    @cmdln.alias("actusers")
+    def do_en_users(self, subcmd, opts, username):
+        """${cmd_name}: enable users stored within mothership.
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.uactivate(self.cfg, username)
+        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+            print 'Error: %s' % e
 
     # Modify users
     @cmdln.alias("moduser")

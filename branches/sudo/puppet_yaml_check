@@ -9,7 +9,7 @@ import socket
 test = os.popen("%s/ship puppet %s" % (
     os.path.dirname(sys.argv[0]),
     socket.gethostname()),"r").read()
-ry:
+try:
     data = yaml.load(test)
 except:
     print 'ERROR: Node classifier YAML failed to load!'

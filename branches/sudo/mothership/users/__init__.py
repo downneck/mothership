@@ -539,7 +539,9 @@ def udeactivate(cfg, username):
 def uactivate(cfg, username):
     """
     [description]
-    sets a user inactive, first removing it from any groups
+    sets a user active, will add user to any groups in LDAP currently assigned to it
+    but will NOT add user to default groups. (if 'ship du' shows no groups, this will not
+    add any.)
 
     [parameter info]
     required:
@@ -549,8 +551,46 @@ def uactivate(cfg, username):
     [return value]
     no explicit return
     """
-    print "someone please write this function"
 
+    u = mothership.validate.v_get_user_obj(cfg, username)
+    fqun = u.username+'.'+u.realm+'.'+u.site_id+'.'+cfg.domain
+    fqn = u.realm+'.'+u.site_id+'.'+cfg.domain
+
+    if u:
+        if u.active:
+            raise UsersError("User is already active")
+        # get group data associated with the user
+        grouplist = []
+        for g in cfg.dbsess.query(UserGroupMapping).\
+        filter(UserGroupMapping.users_id==u.id):
+            group = cfg.dbsess.query(Groups).\
+            filter(Groups.id==g.groups_id).first()
+            grouplist.append(group.groupname)
+
+        # This is where me make the user active again
+        u.active = True
+        cfg.dbsess.add(u)
+        cfg.dbsess.commit()
+        # if we're running ldap, remove the user from ldap
+        ldap_master = mothership.ldap.get_master(cfg, fqn)
+        if cfg.ldap_active and ldap_master:
+            print "Activating user to LDAP..."
+            print "Adding \"%s\" user entry from LDAP" % username
+            mothership.ldap.uadd(cfg, username=fqun)
+            try:
+                for groupname in grouplist:
+                    print "adding \"%s\" to LDAP group \"%s\"" % (username, groupname)
+                    mothership.ldap.gupdate(cfg, groupname+"."+fqn)
+            except mothership.ldap.LDAPError, e:
+                print 'mothership encountered an error, skipping LDAP update'
+                print "Error: %s" % e            
+        elif not cfg.ldap_active:
+            print "LDAP not active, skipping"
+        else:
+            print "No LDAP master found for %s.%s, skipping" % (u.realm, u.site_id)
+        print 'Activating user "%s" in location "%s.%s"' % (u.username, u.realm, u.site_id)
+    else:
+        print "User \"%s\" not found" % username
 
 def umodify(cfg, username, first_name=None, last_name=None, keyfile=None, uid=None, hdir=None, shell=None, email=None, user_type=None):
     """
