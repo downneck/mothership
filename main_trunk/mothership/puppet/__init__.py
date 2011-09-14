@@ -19,6 +19,7 @@ module controlling various puppet interactions
 
 import mothership
 import mothership.kv
+import mothership.users
 from mothership_models import *
 
 def classify(cfg, name):
@@ -35,6 +36,7 @@ def classify(cfg, name):
     server_id = None
     mtag = None
     networks = []
+    sudoers = []
     hostname, realm, site_id = mothership.get_unqdn(cfg, name)
 
     # Unique or unqualified domain name
@@ -109,8 +111,13 @@ def classify(cfg, name):
         else:
             parameters[key] = value
 
+    # sudoers
+    sudoers = mothership.users.gen_sudoers_groups(cfg, unqdn)
+
     parameters['mtags'] = mtags
     parameters['groups'] = groups
+    if sudoers:
+        parameters['sudoers_groups'] = sudoers
 
     node = {}
     node['classes'] = classes

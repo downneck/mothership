@@ -1373,11 +1373,16 @@ def gen_sudoers_groups(cfg, unqdn):
     else:
         pass
 
-    # print it!
+    # stitch it all together
+    sudoers = []
     for g in groups:
         if cfg.sudo_nopass and g.sudo_cmds:
-            print "%%%s ALL=(ALL) NOPASSWD:%s" % (g.groupname, g.sudo_cmds)
+            sudoers.append("%%%s ALL=(ALL) NOPASSWD:%s" % (g.groupname, g.sudo_cmds))
         elif g.sudo_cmds:
-            print "%%%s ALL=(ALL) %s" % (g.groupname, g.sudo_cmds)
+            sudoers.append("%%%s ALL=(ALL) %s" % (g.groupname, g.sudo_cmds))
         else:
             pass
+    if sudoers:
+        return sudoers
+    else:
+        return None

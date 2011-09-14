@@ -1447,13 +1447,9 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        print "\n\n---------------------------------------------------------------------------"
-        print "| ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG!          |"
-        print "| at the moment this does not validate input. you can break your sudoers  |"
-        print "| be VERY careful with this command                                       |"
-        print "---------------------------------------------------------------------------\n\n"
-        mothership.users.gen_sudoers_groups(cfg, unqdn=hostname)
-
+        sudoers = mothership.users.gen_sudoers_groups(cfg, unqdn=hostname)
+        for group in sudoers:
+            print group
 
     @cmdln.alias("test")
     @cmdln.alias("compare")
