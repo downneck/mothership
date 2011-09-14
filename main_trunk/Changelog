@@ -1,3 +1,6 @@
+revision 89 (dk):
+* sys.exit -> raise ConfigError
+* idrac6.py -> mothership/idrac6/__init__.py
 revision 83 (dk):
 * modernizing Changelog
 revision 78 (dk):

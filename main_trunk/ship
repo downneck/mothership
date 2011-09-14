@@ -1193,9 +1193,9 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        import idrac6
+        import mothership.idrac6
         if opts.show or opts.insert:
-            drac_info = idrac6.sysinfo(idrac6.query_idrac(self.cfg, drac_ip))
+            drac_info = mothership.idrac6.sysinfo(mothership.idrac6.query_idrac(self.cfg, drac_ip))
             if opts.show:
                 pprint(drac_info)
             elif opts.insert:
@@ -1204,7 +1204,7 @@ class ShipCli(cmdln.Cmdln):
                 mothership.convert_drac_dict_to_network(self.cfg, drac_info, drac_ip)
                 mothership.import_multiple_table_info(self.cfg, {'hardware':[drac_info]}, today)
         elif opts.prep or opts.telnet:
-            idrac6.prep_idrac(self.cfg, drac_ip, debug=opts.debug,
+            mothership.idrac6.prep_idrac(self.cfg, drac_ip, debug=opts.debug,
                 basics=opts.prep, telnet=int(opts.telnet))
 
     @cmdln.alias("import")
@@ -1234,8 +1234,8 @@ class ShipCli(cmdln.Cmdln):
         if opts.yaml:
             info = yaml.load(open(source).read())
         elif opts.drac:
-            import idrac6
-            data = idrac6.sysinfo(idrac6.query_idrac(self.cfg, source))
+            import mothership.idrac6
+            data = mothership.idrac6.sysinfo(mothership.idrac6.query_idrac(self.cfg, source))
             host,realm,site_id = mothership.get_unqdn(self.cfg, 'localhost')
             drac.update({'power_switch':source, 'site_id':site_id, 'realm':realm})
             mothership.convert_drac_dict_to_network(self.cfg, data, source)
