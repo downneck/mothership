@@ -1,1 +1,1 @@
-ALTER TABLE groups ADD COLUMN `sudo_cmds` varchar(1000) DEFAULT NULL;
+ALTER TABLE groups ADD COLUMN `sudo_cmds` varchar(2000) DEFAULT NULL;

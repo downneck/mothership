@@ -1,1 +1,1 @@
-ALTER TABLE groups ADD COLUMN sudo_cmds varchar(1000);
+ALTER TABLE groups ADD COLUMN sudo_cmds varchar(2000);
