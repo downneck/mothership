@@ -25,6 +25,10 @@ import yaml
 import xmlrpclib
 import sqlalchemy
 
+# our error class
+class ConfigureError(Exception):
+    pass
+
 # This is the set of paths Configure will look for
 # a config_file (mothership.yaml)
 load_paths = ['.', '~', '/etc', '/usr/local/etc']
@@ -40,12 +44,14 @@ class Configure:
             yaml_config = open(self.load_path(config_file)).read()
             all_configs = yaml.load(yaml_config)
         except:
-            sys.stderr.write('No config file found, copying defaults into your home directory')
-            srccfgyaml = sys.path[0] + '/mothership.yaml.sample'
-            dstcfgyaml = os.path.expanduser('~') + '/mothership.yaml'
-            shutil.copyfile(srccfgyaml, dstcfgyaml)
-            yaml_config = open(self.load_path(config_file)).read()
-            all_configs = yaml.load(yaml_config)
+            # we discovered this was more annoying than helpful, so we stopped
+            #sys.stderr.write('No config file found, copying defaults into your home directory')
+            #@srccfgyaml = sys.path[0] + '/mothership.yaml.sample'
+            #dstcfgyaml = os.path.expanduser('~') + '/mothership.yaml'
+            #shutil.copyfile(srccfgyaml, dstcfgyaml)
+            #yaml_config = open(self.load_path(config_file)).read()
+            #all_configs = yaml.load(yaml_config)
+            raise ConfigureError("Config file mothership.yaml not found in path: %s" % load_paths)
 
         # Database related settings
         dbconfig = all_configs['db']
@@ -61,8 +67,7 @@ class Configure:
                 engine = sqlalchemy.create_engine("mysql://%s:%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
             # uhhhh....
             else:
-                sys.stderr.write("DB section of /etc/mothership.yaml is misconfigured! Exiting")
-                sys.exit(1)
+                raise ConfigureError("DB section of /etc/mothership.yaml is misconfigured! Exiting")
             Session = sqlalchemy.orm.sessionmaker(bind=engine)
             dbsession = Session()
             self.dbconfig = dbconfig
@@ -71,9 +76,8 @@ class Configure:
             self.dbsess = dbsession
             self.dbnull = sqlalchemy.sql.expression.null()
         except:
-            sys.stderr.write('Database configuration error')
-            sys.stderr.write(dbtuple)
-            sys.stderr.write(engine)
+            print "dbtuple: %s\nengine: %s" % (dbtuple, engine)
+            raise ConfigureError('Database configuration error')
 
         # Cobbler related settings
         cobconfig = all_configs['cobbler']
