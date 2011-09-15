@@ -856,7 +856,7 @@ class ShipCli(cmdln.Cmdln):
         if key.find('=') > 0:
             key, value = key.split('=')
 
-        if opts.add and opts.removee or opts.add and opts.update or opts.remove and opts.update:
+        if opts.add and opts.remove or opts.add and opts.update or opts.remove and opts.update:
             print "Incompatible options."
             return
 
