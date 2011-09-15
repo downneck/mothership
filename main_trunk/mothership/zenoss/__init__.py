@@ -98,8 +98,8 @@ class ZenossAPI:
 
     def get_devices(self, deviceClass='/zport/dmd/Devices'):
         return self._router_request('DeviceRouter', 'getDevices',
-                                    data=[{'uid': deviceClass,
-                                    'limit': None}])['result']
+            data=[{'uid': deviceClass, 'params': {}, 'limit': None}])['result']
+
 
     def get_events(self, device=None, component=None, eventClass=None):
         data = dict(start=0, limit=100, dir='DESC', sort='severity')
