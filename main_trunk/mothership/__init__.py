@@ -95,8 +95,12 @@ def calculate_next_baremetal_vlan_ipaddress(cfg, vlan):
         filter(Network.vlan==vlan).\
         filter(Network.ip!=cfg.dbnull).\
         filter(Network.hw_tag!=cfg.dbnull)
-    first = data.order_by(Network.ip).first().ip
-    last = data.order_by(Network.ip.desc()).first().ip
+    try:
+        first = data.order_by(Network.ip).first().ip
+        last = data.order_by(Network.ip.desc()).first().ip
+    except:
+        first = network_mapper.remap(cfg, '1st_static_ip', vlan=int(vlan))
+        last = first
 
     # compare the sequential list to the shiplist
     shiplist = []

@@ -177,7 +177,8 @@ network:
     gw: '1.2.3.1'               # the gateway address for this subnet
     nic: 'eth0'                 # the interface name for this subnet
     dom: '.realm.siteid.tld'    # the domain suffix to be appended to short-hostnames
-    1st_dyn_ip: '10.0.0.10'     # the first dynamic ip address for virtual instances
+    1st_static_ip: '10.0.0.10'  # the first static ip address for baremetal hosts
+    1st_dyn_ip: '10.0.50.10'    # the first dynamic ip address for virtual instances
 
 # User and Group options
 users_and_groups:
