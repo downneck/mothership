@@ -1415,7 +1415,7 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("xen")
     @cmdln.option("-r", "--resize",
                   help="resize xenserver client")
-    @cmdln.option("-l", "--license",
+    @cmdln.option("-l", "--license", action="store_true",
                   help="check xenserver license")
     def do_xenserver(self, subcmd, opts, xenserver):
         """${cmd_name}: manage xenserver features using API
@@ -1423,8 +1423,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root',
-            str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')[1])
+        xs = mothership.xen.XenServerAPI(xenserver, 'root', 'sashimi911')
         if opts.license:
             xs.check_license(xenserver)
 

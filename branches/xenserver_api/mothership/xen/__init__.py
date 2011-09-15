@@ -20,8 +20,10 @@ http://community.citrix.com/cdn/xs/sdks/
 """
 
 import sys
+import time
 import socket
 import XenAPI
+from pprint import pprint
 
 class XenServerAPI:
     def __init__(self, host, user, passwd):
@@ -35,7 +37,9 @@ class XenServerAPI:
             self.session.xenapi.login_with_password(user, passwd)
         except socket.error, e:
             # Try unqdn if connection refused
-            self.session = XenAPI.Session('https://%s:443' % host.split('.')[0])
+            self.session = XenAPI.Session('https://%s.mgmt:443' % host)
+            # Try unqdn if connection refused
+#            self.session = XenAPI.Session('https://%s:443' % host.split('.')[0])
             self.session.xenapi.login_with_password(user, passwd)
         except Exception, e:
             print str(e)
@@ -122,11 +126,12 @@ class XenServerAPI:
     def check_license(self, host):
         hosts = self.session.xenapi.host.get_all()
         for h in hosts:
-            print self.session.xenapi.host.get_license_params(h)
+            #print self.session.xenapi.host.get_license_params(h)
             if host in self.session.xenapi.host.get_hostname(h):
-                pprint(self.session.xenapi.host.get_license_params(h))
+                #pprint(self.session.xenapi.host.get_license_params(h))
                 expires = self.session.xenapi.host.get_license_params(h)['expiry']
-                print (int(time.strftime('%s', time.strptime(expires, '%Y%m%dT%H:%M:%SZ')))-int(time.time()))/86400
+                print '%s license expires in %d days' % (host, (int(time.strftime('%s',
+                    time.strptime(expires, '%Y%m%dT%H:%M:%SZ')))-int(time.time()))/86400)
 
     def triple_check(self, info):
         info['storage'] = self.choose_storage()
