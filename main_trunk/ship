@@ -1139,16 +1139,6 @@ class ShipCli(cmdln.Cmdln):
         else:
             sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, host, opts.xen)
             if 'xen' in sysdict['power_type']:
-                try:
-                    xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root',
-                        str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')[1])
-                except Exception, e:
-                    exec 'cluster = %s' % e
-                    if type(cluster) == types.ListType and cluster[0] == 'HOST_IS_SLAVE':
-                        sysdict['power_switch'] = cluster[1]
-                    else:
-                        print str(e)
-                        return
                 xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root',
                     str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')[1])
                 if not xs.triple_check(sysdict):
