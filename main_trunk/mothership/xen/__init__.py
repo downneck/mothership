@@ -45,30 +45,42 @@ class XenServerAPI:
         srs = self.session.xenapi.SR.get_all_records()
         storage = {}
         for s in srs:
-            if 'storage' in srs[s]['name_label'] and \
-                'Removable' not in srs[s]['name_label'] \
-                and srs[s]['name_label'] not in storage:
-                storage[srs[s]['name_label']] = {
+            key = srs[s]['name_label']
+            if 'Local' in srs[s]['name_label']:
+                block = self.session.xenapi.SR.get_PBDs(s)
+                if block:
+                    key += ':%s' % self.session.xenapi.host.get_name_label(
+			self.session.xenapi.PBD.get_host(block[0]))
+                else:
+                    continue
+            if 'Removable' not in srs[s]['name_label'] and \
+                'storage' in key and key not in storage:
+                storage[key] = {
                     'size': long(srs[s]['physical_size']),
                     'used': long(srs[s]['physical_utilisation']),
                     'free': long(srs[s]['physical_size']) \
                           - long(srs[s]['physical_utilisation']),
                     }
-    
         if len(storage.keys()) == 1:
-            return storage.keys()[0]
+            return storage[0]
         if len(storage.keys()) > 1:
             print 'There are multiple storage resources available:'
-            for s in storage.keys():
-                print '%d) %-35s (%5d GB free)' % (storage.keys().index(s),
-                    s, storage[s]['free']/1024/1024/1024)
+            skeys = sorted(storage.keys())
+            svals = map(storage.get, skeys)
+            storage = zip(skeys, svals)
+            for s in storage:
+                print '%d) %-35s (%5d GB free)' % (storage.index(s),
+                    s[0], s[1]['free']/1024/1024/1024)
             ans = raw_input('Which one do you want to use: ')
-            if int(ans) < 0 or int(ans) >= len(storage.keys()):
+            if int(ans) < 0 or int(ans) >= len(storage):
                 print 'Storage selection aborted.'
                 return False
             else:
-                print 'User selected "%s"' % storage.keys()[int(ans)]
-                return storage.keys()[int(ans)]
+                print 'User selected "%s"' % storage[int(ans)][0]
+                if len(storage[int(ans)][0].split(':')) > 1:
+                    return tuple(storage[int(ans)][0].split(':'))
+                else:
+                    return tuple([storage[int(ans)][0], None])
         else:
             return False
     
@@ -121,7 +133,9 @@ class XenServerAPI:
             return maxfree
 
     def triple_check(self, info):
-        info['storage'] = self.choose_storage()
+        info['storage'], xenhost = self.choose_storage()
+        if xenhost:
+            info['power_switch'] = xenhost
         freecores = self.check_vcpus()
         if freecores < info['cores']:
             print '%s does not have enough VCPUs for %d cores (%d available)!' \
@@ -137,4 +151,4 @@ class XenServerAPI:
             print '%s does not have enough storage for %d GB (%d available)!' \
                 % (info['power_switch'], info['disk'], freedisk)
             return False
-        return True
+        return info['power_switch']

@@ -1141,8 +1141,11 @@ class ShipCli(cmdln.Cmdln):
             if 'xen' in sysdict['power_type']:
                 xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root',
                     str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')[1])
-                if not xs.triple_check(sysdict):
+                xenhost = xs.triple_check(sysdict)
+                if not xenhost:
                     return
+                else:
+                    sysdict['power_switch'] = xenhost
             if not cc.add_system(self.cfg, sysdict):
                 sys.exit(1)
             if opts.kick:
@@ -1478,6 +1481,9 @@ class ShipCli(cmdln.Cmdln):
 #        mothership.console_hostname(self.cfg, hostname)
 
 if __name__ == "__main__":
+    if os.getuid() > 0:
+        print "You are not privileged enough to run this ship!"
+        sys.exit(1)
     # the global config. useful everywhere
     cfgfile = 'mothership.yaml'
     cfg = Configure(cfgfile)
@@ -1491,6 +1497,7 @@ if __name__ == "__main__":
         # Properly close DB connection
         cfg.close_connections()
         sys.exit(retval)
-    except IOError:
+    except IOError, e:
         print "Missing file named %s" % cfgfile
+        print "ERROR: %s" % e
         sys.exit(1)
