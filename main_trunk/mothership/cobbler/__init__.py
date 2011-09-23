@@ -40,6 +40,7 @@ class CobblerAPI:
             'virt_cpus'     : 'cores',
             'virt_ram'      : 'ram',
             'virt_file_size': 'disk',
+            'virt_path'     : 'storage',
 #            'site_id'      : 'site_id',
 #            'realm'        : 'realm',
 #            'hw_tag'       : 'hw_tag',
@@ -144,7 +145,6 @@ class CobblerAPI:
                         sysdict[k] = int(sysdict[k]) * 1024
                     #print 'Modifying %s system values: %s' % (hostname, k)
                     cfg.remote.modify_system(handle, k, sysdict[k], cfg.token)
-                    
         else:
             from pprint import pprint
             print 'API: sysdict = { \'key\':\'value\', }'

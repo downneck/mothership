@@ -1142,8 +1142,6 @@ class ShipCli(cmdln.Cmdln):
                 try:
                     xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root',
                         str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')[1])
-                    if not xs.triple_check(sysdict):
-                        return
                 except Exception, e:
                     exec 'cluster = %s' % e
                     if type(cluster) == types.ListType and cluster[0] == 'HOST_IS_SLAVE':
@@ -1151,6 +1149,10 @@ class ShipCli(cmdln.Cmdln):
                     else:
                         print str(e)
                         return
+                xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root',
+                    str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')[1])
+                if not xs.triple_check(sysdict):
+                    return
             if not cc.add_system(self.cfg, sysdict):
                 sys.exit(1)
             if opts.kick:
