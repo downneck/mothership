@@ -1127,6 +1127,10 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        # remove root restirction when xenapi replaces ssh xenprovision
+        if opts.kick and os.getuid() > 0:
+            print "You are not privileged enough to cobbler kick using ship!"
+            sys.exit(1)
         unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
         host,realm,site_id = unqdn.split('.')
         cc = mothership.cobbler.CobblerAPI(self.cfg)
@@ -1188,6 +1192,9 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if opts.prep and os.getuid() > 0:
+            print "You are not privileged enough to prep the drac using ship!"
+            sys.exit(1)
         import mothership.idrac6
         if opts.show or opts.insert:
             drac_info = mothership.idrac6.sysinfo(mothership.idrac6.query_idrac(self.cfg, drac_ip))
@@ -1481,9 +1488,6 @@ class ShipCli(cmdln.Cmdln):
 #        mothership.console_hostname(self.cfg, hostname)
 
 if __name__ == "__main__":
-    if os.getuid() > 0:
-        print "You are not privileged enough to run this ship!"
-        sys.exit(1)
     # the global config. useful everywhere
     cfgfile = 'mothership.yaml'
     cfg = Configure(cfgfile)
