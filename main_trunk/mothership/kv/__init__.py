@@ -22,6 +22,9 @@ from sqlalchemy import or_, desc, MetaData
 import mothership
 from mothership_models import *
 
+class KVError(Exception):
+    pass
+
 def new(fqdn, key, value):
     """
     Constructor that takes a host.realm.site style fqdn.
@@ -70,6 +73,10 @@ def add(cfg, fqdn, key, value):
     """
     Add a new value with set semantics.
     """
+    # make sure we have a value
+    if value=None:
+        raise KVError('No value specified!')
+
     # Check for duplicate key=value.
     kv = select(cfg, fqdn, key, value)
     if kv:

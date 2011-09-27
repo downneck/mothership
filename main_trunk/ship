@@ -859,32 +859,35 @@ class ShipCli(cmdln.Cmdln):
         if opts.add and opts.remove or opts.add and opts.update or opts.remove and opts.update:
             print "Incompatible options."
             return
+ 
+        try:
+            if opts.add:
+                # Add another value for a key
+                kvs = [mothership.kv.add(self.cfg, fqdn, key, value)]
+            elif opts.update:
+                # Update or insert the value for a key
+                kvs = [mothership.kv.upsert(self.cfg, fqdn, key, value)]
+            elif opts.remove:
+                if key and value:
+                    # Display the value
+                    kvs = [mothership.kv.select(self.cfg, fqdn, key, value)]
+                    # Delete the value
+                    mothership.kv.delete(self.cfg, fqdn, key, value)
+                else:
+                    print "Delete requires key=value parameter."
+            else:   # everything else should be collect
+                if key == '%':
+                    # Query all values for a host
+                    kvs = mothership.kv.collect(self.cfg, fqdn)
+                else:
+                    # Query all values for a key
+                    kvs = mothership.kv.collect(self.cfg, fqdn, key=key, value=value)
+            if kvs:
+                for kv in kvs:
+                    print kv
+        except (mothership.KVError), e:
+            print 'Error: %s' % e
 
-        if opts.add:
-            # Add another value for a key
-            kvs = [mothership.kv.add(self.cfg, fqdn, key, value)]
-        elif opts.update:
-            # Update or insert the value for a key
-            kvs = [mothership.kv.upsert(self.cfg, fqdn, key, value)]
-        elif opts.remove:
-            if key and value:
-                # Display the value
-                kvs = [mothership.kv.select(self.cfg, fqdn, key, value)]
-                # Delete the value
-                mothership.kv.delete(self.cfg, fqdn, key, value)
-            else:
-                print "Delete requires key=value parameter."
-        else:   # everything else should be collect
-            if key == '%':
-                # Query all values for a host
-                kvs = mothership.kv.collect(self.cfg, fqdn)
-            else:
-                # Query all values for a key
-                kvs = mothership.kv.collect(self.cfg, fqdn, key=key, value=value)
-
-        if kvs:
-            for kv in kvs:
-                print kv
 
     @cmdln.alias("p")
     @cmdln.alias("puppet")
