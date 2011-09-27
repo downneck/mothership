@@ -54,7 +54,7 @@ class XenServerAPI:
                 else:
                     continue
             if 'Removable' not in srs[s]['name_label'] and \
-                'storage' in key and key not in storage:
+                'torage' in key and key not in storage:
                 storage[key] = {
                     'size': long(srs[s]['physical_size']),
                     'used': long(srs[s]['physical_utilisation']),
@@ -62,7 +62,7 @@ class XenServerAPI:
                           - long(srs[s]['physical_utilisation']),
                     }
         if len(storage.keys()) == 1:
-            return storage[0]
+            return storage.keys()[0].split(':')
         if len(storage.keys()) > 1:
             print 'There are multiple storage resources available:'
             skeys = sorted(storage.keys())
