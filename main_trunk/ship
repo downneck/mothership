@@ -1068,6 +1068,9 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if os.getuid() > 0:
+            print "You are not privileged enough to expire servers! Please sudo"
+            sys.exit(1)
         cc = mothership.cobbler.CobblerAPI(self.cfg)
         expired = False
         host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
