@@ -1131,8 +1131,8 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_option_list}
         """
         # remove root restirction when xenapi replaces ssh xenprovision
-        if opts.kick and os.getuid() > 0:
-            print "You are not privileged enough to cobbler kick using ship!"
+        if os.getuid() > 0:
+            print "You are not privileged enough to run cobbler from ship!"
             sys.exit(1)
         unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
         host,realm,site_id = unqdn.split('.')
