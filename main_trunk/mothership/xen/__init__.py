@@ -83,13 +83,13 @@ class XenServerAPI:
                     return tuple([storage[int(ans)][0], None])
         else:
             return False
-    
+
     def check_memory(self, need=None, xenhost=None):
         maxfree = 0
         hosts = self.session.xenapi.host.get_all()
         for h in hosts:
             free = long(self.session.xenapi.host.compute_free_memory(h))/1024/1024
-            print '%-20s: %5d MB Memory Free' % (self.session.xenapi.host.get_hostname(h), free)
+            #print '%-20s: %5d MB Memory Free' % (self.session.xenapi.host.get_hostname(h), free)
             if (free > maxfree):
                 maxfree = free
             if xenhost and xenhost == self.session.xenapi.host.get_hostname(h):
