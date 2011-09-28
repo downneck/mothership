@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-mothership.xen 
+mothership.xen
 for interacting with the Citrix XenAPI
 
 requires the XenServer Python module:
@@ -26,7 +26,7 @@ import XenAPI
 class XenServerAPI:
     def __init__(self, host, user, passwd):
         self.session = XenAPI.Session('https://%s:443' % host)
-        try: 
+        try:
             self.session.xenapi.login_with_password(user, passwd)
         except XenAPI.Failure, e:
             # If slave host from pool chosed, contact master
@@ -50,7 +50,7 @@ class XenServerAPI:
                 block = self.session.xenapi.SR.get_PBDs(s)
                 if block:
                     key += ':%s' % self.session.xenapi.host.get_name_label(
-			self.session.xenapi.PBD.get_host(block[0]))
+                        self.session.xenapi.PBD.get_host(block[0]))
                 else:
                     continue
             if 'Removable' not in srs[s]['name_label'] and \
@@ -84,7 +84,7 @@ class XenServerAPI:
         else:
             return False
     
-    def check_memory(self, need=None):
+    def check_memory(self, need=None, xenhost=None):
         maxfree = 0
         hosts = self.session.xenapi.host.get_all()
         for h in hosts:
@@ -92,6 +92,8 @@ class XenServerAPI:
             #print '%-20s: %5d MB Memory Free' % (self.session.xenapi.host.get_hostname(h), free)
             if (free > maxfree):
                 maxfree = free
+            if xenhost and xenhost == self.session.xenapi.host.get_hostname(h):
+                return free
         if need:
             return maxfree>=need
         else:
@@ -141,7 +143,7 @@ class XenServerAPI:
             print '%s does not have enough VCPUs for %d cores (%d available)!' \
                 % (info['power_switch'], info['cores'], freecores)
             return False
-        freeram = self.check_memory()
+        freeram = self.check_memory(xenhost)
         if freeram < (info['ram']*1024):
             print '%s does not have enough memory for %d MB (%d available)!' \
                 % (info['power_switch'], info['ram']*1024, freeram)
