@@ -89,7 +89,7 @@ class XenServerAPI:
         hosts = self.session.xenapi.host.get_all()
         for h in hosts:
             free = long(self.session.xenapi.host.compute_free_memory(h))/1024/1024
-            #print '%-20s: %5d MB Memory Free' % (self.session.xenapi.host.get_hostname(h), free)
+            print '%-20s: %5d MB Memory Free' % (self.session.xenapi.host.get_hostname(h), free)
             if (free > maxfree):
                 maxfree = free
             if xenhost and xenhost == self.session.xenapi.host.get_hostname(h):
@@ -143,7 +143,7 @@ class XenServerAPI:
             print '%s does not have enough VCPUs for %d cores (%d available)!' \
                 % (info['power_switch'], info['cores'], freecores)
             return False
-        freeram = self.check_memory(xenhost)
+        freeram = self.check_memory(xenhost=xenhost)
         if freeram < (info['ram']*1024):
             print '%s does not have enough memory for %d MB (%d available)!' \
                 % (info['power_switch'], info['ram']*1024, freeram)
