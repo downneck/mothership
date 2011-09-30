@@ -292,8 +292,12 @@ def expire_server(cfg, hostname, when, delete_entry=True):
             # Remove server from servers table and related tables
             delete_server(cfg, hostname, relatives)
             # remove the server's group
-            server_groupname = hostname+"_"+cols['realm']+"_"+cols['site_id']+"."+cols['realm']+"."+cols['site_id']
-            mothership.users.gremove(cfg, server_groupname)
+            try:
+                server_groupname = hostname+"_"+cols['realm']+"_"+cols['site_id'] \
+                    +"."+cols['realm']+"."+cols['site_id']
+                mothership.users.gremove(cfg, server_groupname)
+            except Exception, e:
+                print e
             if cols['virtual']: return 'virtual'
             return True
     else:

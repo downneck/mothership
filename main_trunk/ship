@@ -1511,3 +1511,7 @@ if __name__ == "__main__":
         print "Missing file named %s" % cfgfile
         print "ERROR: %s" % e
         sys.exit(1)
+    except Exception, e:
+        print e
+        sys.exit(1)
+
