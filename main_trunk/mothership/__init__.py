@@ -287,17 +287,14 @@ def expire_server(cfg, hostname, when, delete_entry=True):
         insert_server_into_graveyard(cfg, cols) # Insert into server graveyard
         # Check hostname exists in server_graveyard and continue only if found
         if count_graveyard_server_by_date(cfg, hostname, when) > 0:
+            # remove the server's group
+            server_groupname = hostname+"_"+cols['realm']+"_"+cols['site_id'] \
+                +"."+cols['realm']+"."+cols['site_id']
+            mothership.users.gremove(cfg, server_groupname)
             # clear server info from network table
             clear_serverinfo_from_network(cfg, cols['delid'])
             # Remove server from servers table and related tables
             delete_server(cfg, hostname, relatives)
-            # remove the server's group
-            try:
-                server_groupname = hostname+"_"+cols['realm']+"_"+cols['site_id'] \
-                    +"."+cols['realm']+"."+cols['site_id']
-                mothership.users.gremove(cfg, server_groupname)
-            except Exception, e:
-                print e
             if cols['virtual']: return 'virtual'
             return True
     else:
