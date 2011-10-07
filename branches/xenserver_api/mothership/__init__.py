@@ -410,7 +410,7 @@ def modify_network_column(cfg, hostname, interface, col, value):
     else:
         print "Nothing confirmed. Nothing modified"
 
-def modify_server_column(cfg, hostname, col, value):
+def modify_server_column(cfg, hostname, col, value, force=False):
     data = retrieve_server_dict(cfg, hostname)
     # Since public+ip is not in the servers table, retrieve it from network
     data['public_ip'] = retrieve_network_dict_by_ifname(cfg,
@@ -428,16 +428,17 @@ def modify_server_column(cfg, hostname, col, value):
         print 'No change needed.  For %s, %s is already %s' \
             % (hostname, col, data[col])
         return
-    print 'Please confirm the following change:\n'
-    for k in data.keys():
-        if k == col:
-            print '%15s: %-20s --> %15s: %-20s' % (k, data[k], k, value)
-        else:
-            print '%15s: %-20s     %15s: %-20s' % (k, data[k], k, data[k])
-    ans = raw_input('\nTo confirm this change, type "modify_%s": ' % col)
-    if ans != 'modify_%s' % col:
-        print 'Modification of "%s" column in server %s aborted.' % (col, hostname)
-        return
+    if not force:
+        print 'Please confirm the following change:\n'
+        for k in data.keys():
+            if k == col:
+                print '%15s: %-20s --> %15s: %-20s' % (k, data[k], k, value)
+            else:
+                print '%15s: %-20s     %15s: %-20s' % (k, data[k], k, data[k])
+        ans = raw_input('\nTo confirm this change, type "modify_%s": ' % col)
+        if ans != 'modify_%s' % col:
+            print 'Modification of "%s" column in server %s aborted.' % (col, hostname)
+            return
     data[col] = value
     if col == 'public_ip':
         update_table_network(cfg, { 'server_id':data['id'], 'interface':'eth1', col:value })
@@ -641,7 +642,7 @@ def retrieve_cobbler_system_dict(cfg, hostname, xen=False):
         netdict[ifname] = convert_table_objects_to_dict(net)
     sysdict['interfaces'] = netdict
     if sysdict['virtual']:
-        sysdict['power_type'] = 'xenserver'
+        sysdict['power_type'] = 'xenapi'
         power = cfg.dbsess.query(Server,Network).\
             filter(Network.vlan==netdict['eth1']['vlan']).\
             filter(Server.id==Network.server_id).\
@@ -649,7 +650,7 @@ def retrieve_cobbler_system_dict(cfg, hostname, xen=False):
         if xen:
             power = power.filter(Server.hostname==xen)
         try:
-            sysdict['power_switch'] = power.first().Server.hostname + '.mgmt'
+            sysdict['power_switch'] = power.first().Server.hostname
         except:
             print "Server %s not found or not part of vlan %s" % (xen,netdict['eth1']['vlan'])
             sys.exit(1)

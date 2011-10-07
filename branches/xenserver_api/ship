@@ -859,32 +859,35 @@ class ShipCli(cmdln.Cmdln):
         if opts.add and opts.remove or opts.add and opts.update or opts.remove and opts.update:
             print "Incompatible options."
             return
+ 
+        try:
+            if opts.add:
+                # Add another value for a key
+                kvs = [mothership.kv.add(self.cfg, fqdn, key, value)]
+            elif opts.update:
+                # Update or insert the value for a key
+                kvs = [mothership.kv.upsert(self.cfg, fqdn, key, value)]
+            elif opts.remove:
+                if key and value:
+                    # Display the value
+                    kvs = [mothership.kv.select(self.cfg, fqdn, key, value)]
+                    # Delete the value
+                    mothership.kv.delete(self.cfg, fqdn, key, value)
+                else:
+                    print "Delete requires key=value parameter."
+            else:   # everything else should be collect
+                if key == '%':
+                    # Query all values for a host
+                    kvs = mothership.kv.collect(self.cfg, fqdn)
+                else:
+                    # Query all values for a key
+                    kvs = mothership.kv.collect(self.cfg, fqdn, key=key, value=value)
+            if kvs:
+                for kv in kvs:
+                    print kv
+        except (mothership.KVError), e:
+            print 'Error: %s' % e
 
-        if opts.add:
-            # Add another value for a key
-            kvs = [mothership.kv.add(self.cfg, fqdn, key, value)]
-        elif opts.update:
-            # Update or insert the value for a key
-            kvs = [mothership.kv.upsert(self.cfg, fqdn, key, value)]
-        elif opts.remove:
-            if key and value:
-                # Display the value
-                kvs = [mothership.kv.select(self.cfg, fqdn, key, value)]
-                # Delete the value
-                mothership.kv.delete(self.cfg, fqdn, key, value)
-            else:
-                print "Delete requires key=value parameter."
-        else:   # everything else should be collect
-            if key == '%':
-                # Query all values for a host
-                kvs = mothership.kv.collect(self.cfg, fqdn)
-            else:
-                # Query all values for a key
-                kvs = mothership.kv.collect(self.cfg, fqdn, key=key, value=value)
-
-        if kvs:
-            for kv in kvs:
-                print kv
 
     @cmdln.alias("p")
     @cmdln.alias("puppet")
@@ -1065,6 +1068,9 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if os.getuid() > 0:
+            print "You are not privileged enough to expire servers! Please sudo"
+            sys.exit(1)
         cc = mothership.cobbler.CobblerAPI(self.cfg)
         expired = False
         host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
@@ -1127,6 +1133,10 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        # remove root restirction when xenapi replaces ssh xenprovision
+        if os.getuid() > 0:
+            print "You are not privileged enough to run cobbler from ship!"
+            sys.exit(1)
         unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
         host,realm,site_id = unqdn.split('.')
         cc = mothership.cobbler.CobblerAPI(self.cfg)
@@ -1138,24 +1148,22 @@ class ShipCli(cmdln.Cmdln):
                 cc.sync_cobbler(self.cfg)
         else:
             sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, host, opts.xen)
-            if 'xen' in sysdict['power_type']:
-                try:
-                    xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root',
-                        str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')[1])
-                    if not xs.triple_check(sysdict):
-                        return
-                except Exception, e:
-                    exec 'cluster = %s' % e
-                    if type(cluster) == types.ListType and cluster[0] == 'HOST_IS_SLAVE':
-                        sysdict['power_switch'] = cluster[1]
-                    else:
-                        print str(e)
-                        return
-            if not cc.add_system(self.cfg, sysdict):
-                sys.exit(1)
             if opts.kick:
                 if cc.abort_kick(self.cfg, self.name, unqdn):
                     return
+                if 'xen' in sysdict['power_type']:
+                    cc.set_system_power(self.cfg, host, 'off')
+                    xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root',
+                        str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')[1])
+                    xenhost, storage = xs.triple_check(sysdict)
+                    sysdict['storage'] = storage
+                    if not xenhost:
+                        return
+                    else:
+                        sysdict['power_switch'] = xenhost
+            if not cc.add_system(self.cfg, sysdict):
+                sys.exit(1)
+            if opts.kick:
                 if self.cfg.coblive:
                     if not cc.clear_puppetca(mothership.retrieve_fqdn(self.cfg, host)):
                         print 'Kick aborted.'
@@ -1193,6 +1201,9 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if opts.prep and os.getuid() > 0:
+            print "You are not privileged enough to prep the drac using ship!"
+            sys.exit(1)
         import mothership.idrac6
         if opts.show or opts.insert:
             drac_info = mothership.idrac6.sysinfo(mothership.idrac6.query_idrac(self.cfg, drac_ip))
@@ -1413,19 +1424,64 @@ class ShipCli(cmdln.Cmdln):
             print 'Error: %s' % e
 
     @cmdln.alias("xen")
-    @cmdln.option("-r", "--resize",
-                  help="resize xenserver client")
-    @cmdln.option("-l", "--license", action="store_true",
-                  help="check xenserver license")
-    def do_xenserver(self, subcmd, opts, xenserver):
+    @cmdln.option("-V", "--disk", default=None,
+                  help="specify GB of memory for virtual machine")
+    @cmdln.option("-M", "--ram", default=None,
+                  help="specify GB of memory for virtual machine")
+    @cmdln.option("-C", "--cores", default=None,
+                  help="specify number of cpu cores for virtual machine")
+    @cmdln.option("-r", "--resize_vm",
+                  help="resize virtual machine")
+    @cmdln.option("-f", "--force", action="store_true",
+                  help="force Yes on any xenserver prompts")
+    @cmdln.option("-d", "--delete_vm",
+                  help="delete virtual machine")
+    @cmdln.option("-R", "--storage",
+                  help="specify storage repository OpaqueRef to install_vm")
+    @cmdln.option("-x", "--xenhost", default=False,
+                  help="""specify xenhost to override vlan selection
+                  (for use with --install_vm)""")
+    @cmdln.option("-i", "--install_vm",
+                  help="install new virtual machine")
+    @cmdln.option("-S", "--shutdown_vm",
+                  help="shutdown virtual machine")
+    @cmdln.option("-s", "--start_vm",
+                  help="start virtual machine")
+    @cmdln.option("-l", "--license",
+                  help="check LICENSE xenserver expiration")
+    def do_xenserver(self, subcmd, opts):
         """${cmd_name}: manage xenserver features using API
 
         ${cmd_usage}
         ${cmd_option_list}
         """
-        xs = mothership.xen.XenServerAPI(xenserver, 'root', 'sashimi911')
+        xenpw = str(mothership.kv.select(self.cfg,
+            '', 'xen_api_pass')).split('=')[1]
         if opts.license:
-            xs.check_license(xenserver)
+            xs = mothership.xen.XenServerAPI(opts.license, 'root', xenpw)
+            xs.check_license(opts.license)
+        else:
+            cc = mothership.cobbler.CobblerAPI(self.cfg)
+            for o in ['install_vm', 'resize_vm', 'start_vm',
+                'shutdown_vm', 'delete_vm']:
+                if getattr(opts, o):
+                    exec '''host = opts.%s''' % o
+                    try:
+                        info = cc.extract_system_by_hostname(self.cfg, host)
+                        if o == 'install_vm':
+                            info = cc.append_kickstart_info(self.cfg, info)
+                    except:
+                        sys.stderr.write('!! %s does not appear to have been provisioned by mothership/cobbler !!\n' % host)
+                        return
+                    exec '''status = mothership.xen.XenServerAPI(
+                        info["hardware"][0]["power_switch"], "root",
+                        xenpw).%s(info, opts)''' % o
+                    if status and o == 'resize_vm':
+                        # update mothership server values
+                        for key in ['cores', 'ram', 'disk']:
+                            mothership.modify_server_column(self.cfg, host,
+                                key, getattr(opts, key), force=True)
+                    return
 
     @cmdln.alias("zen")
     @cmdln.option("-d", "--disable", action="store_true",
@@ -1508,12 +1564,20 @@ if __name__ == "__main__":
     # useful global values
     today = datetime.date.today()
 
+    ship = ShipCli(cfg)
+    retval = ship.main()
+    cfg.close_connections()
+    sys.exit(retval)
+
     try:
         ship = ShipCli(cfg)
         retval = ship.main()
         # Properly close DB connection
         cfg.close_connections()
         sys.exit(retval)
-    except IOError:
+    except IOError, e:
         print "Missing file named %s" % cfgfile
+        print "ERROR: %s" % e
         sys.exit(1)
+    except Exception, e:
+        print e
