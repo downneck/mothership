@@ -74,7 +74,7 @@ def add(cfg, fqdn, key, value):
     Add a new value with set semantics.
     """
     # make sure we have a value
-    if value=None:
+    if not value:
         raise KVError('No value specified!')
 
     # Check for duplicate key=value.
