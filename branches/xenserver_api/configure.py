@@ -191,15 +191,15 @@ class Configure:
         'min_ram' in vmconfig and vmconfig['min_ram'] and \
         'min_disk' in vmconfig and vmconfig['min_disk']:
             self.vm_spec = {
-                'cpu': vmconfig['min_cpu'],
+                'cores': vmconfig['min_cpu'],
                 'ram': vmconfig['min_ram'],
                 'disk': vmconfig['min_disk']
             }
         else:
             self.vm_spec = {
-                'cpu': 1,
-                'min_ram': 1,
-                'min_disk': 25
+                'cores': 1,
+                'ram': 1,
+                'disk': 25
             }
 
         # Zabbix settings
