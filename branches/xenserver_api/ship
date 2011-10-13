@@ -1013,8 +1013,7 @@ class ShipCli(cmdln.Cmdln):
         added = False
         unqdn = ".".join(mothership.get_unqdn(self.cfg, hostname))
         osdict = mothership.cobbler.CobblerAPI(self.cfg).get_os_dict(self.cfg)
-        added = mothership.provision_server(self.cfg, unqdn, vlan, today,
-                osdict, opts)
+        added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict, opts)
         if added:
             if self.cfg.zab_active:
                 # cloned portions of do_zabbix, to add when new servers are provisioned

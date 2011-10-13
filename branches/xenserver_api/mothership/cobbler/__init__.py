@@ -243,7 +243,7 @@ class CobblerAPI:
     def delete_system(self, cfg, hostname):
         if cfg.coblive:
             if not self.find_system_by_hostname(cfg, hostname):
-                print 'Skipping delete, system does not exist: %s' % hostname
+                print 'Skipping cobbler delete, system does not exist: %s' % hostname
                 return
             print 'Deleting cobbler system: %s' % hostname
             cfg.remote.remove_system(hostname, cfg.token)

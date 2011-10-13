@@ -175,26 +175,6 @@ def convert_table_objects_to_dict(tables):
             d[k] = getattr(tables,table).__dict__[k]
     return d
 
-#def count_nonempty_args(obj, boolean=False):
-#    count = 0
-#    if type(obj) is types.ListType or type(obj) is types.TupleType:
-#        for arg in obj:
-#            if boolean:
-#                if type(arg) is types.BooleanType and arg:
-#                    count += 1
-#            else:
-#                if arg != None:
-#                    count += 1
-#    elif type(obj) is types.DictType:
-#        for key in obj:
-#            if boolean:
-#                if type(obj[key]) is types.BooleanType and obj[key]:
-#                    count += 1
-#            else:
-#                if obj[key] != None:
-#                    count += 1
-#    return count
-
 def count_graveyard_server_by_date(cfg, hostname, when):
     try:
         return cfg.dbsess.query(ServerGraveyard).\
@@ -215,7 +195,6 @@ def delete_server(cfg, hostname, relatives=None):
     print 'Deleting %s (id=%d) from servers' % (hostname, s.id)
     cfg.dbsess.delete(s)
     cfg.dbsess.commit()
-#    return cfg.dbconn.execute(Server.__table__.delete().where(Server.hostname==hostname))
 
 def expire_server(cfg, hostname, when, delete_entry=True):
     cols = retrieve_server_dict(cfg, hostname)
@@ -255,9 +234,9 @@ def expire_server(cfg, hostname, when, delete_entry=True):
         # Check hostname exists in server_graveyard and continue only if found
         if count_graveyard_server_by_date(cfg, hostname, when) > 0:
             # remove the server's group
-#            server_groupname = hostname+"_"+cols['realm']+"_"+cols['site_id'] \
-#                +"."+cols['realm']+"."+cols['site_id']
-#            mothership.users.gremove(cfg, server_groupname)
+            server_groupname = hostname+"_"+cols['realm']+"_"+cols['site_id'] \
+                +"."+cols['realm']+"."+cols['site_id']
+            mothership.users.gremove(cfg, server_groupname)
             # clear server info from network table
             clear_serverinfo_from_network(cfg, cols['delid'])
             # Remove server from servers table and related tables
@@ -327,7 +306,6 @@ def insert_server_into_graveyard(cfg, values):
         setattr(g, k, values[k])
     cfg.dbsess.add(g)
     cfg.dbsess.commit()
-#    return cfg.dbconn.execute(ServerGraveyard.__table__.insert(), [ values ])
 
 def merge_dictlists(master, slave, key):
     for m in master:
@@ -373,8 +351,6 @@ def modify_network_vlan(cfg, hostname, vlan, interface='eth1', force=False):
     for k in new.keys():
         setattr(data, k, new[k])
     cfg.dbsess.commit()
-#    update_table_network(cfg, { 'ip':ip, 'server_id':data.server_id,
-#        'interface':interface, 'vlan':vlan, 'static_route':gw, 'netmask':mask })
 
 def modify_network_column(cfg, hostname, interface, col, value):
     """
@@ -409,41 +385,6 @@ def modify_server_column(cfg, hostname, col, value, force=False):
         print "Changes committed.  %s is now %s" % (col, value)
     else:
         print "Nothing confirmed. Nothing modified"
-
-#    data = retrieve_server_dict(cfg, hostname)
-#    # Since public+ip is not in the servers table, retrieve it from network
-#    data['public_ip'] = retrieve_network_dict_by_ifname(cfg,
-#            'eth1', 'server_id', data['id'])['public_ip']
-#    if not data['id']:
-#        print 'The server "%s" does not exist' % hostname
-#        return
-#    if col not in data:
-#        print 'The column "%s" does not exist' % col
-#        print 'This is the current layout of %s:\n' % hostname
-#        for k in data.keys():
-#            print '%15s: %-20s' % (k, data[k])
-#        return
-#    if data[col] == value:
-#        print 'No change needed.  For %s, %s is already %s' \
-#            % (hostname, col, data[col])
-#        return
-#    if not force:
-#        print 'Please confirm the following change:\n'
-#        for k in data.keys():
-#            if k == col:
-#                print '%15s: %-20s --> %15s: %-20s' % (k, data[k], k, value)
-#            else:
-#                print '%15s: %-20s     %15s: %-20s' % (k, data[k], k, data[k])
-#        ans = raw_input('\nTo confirm this change, type "modify_%s": ' % col)
-#        if ans != 'modify_%s' % col:
-#            print 'Modification of "%s" column in server %s aborted.' % (col, hostname)
-#            return
-#    data[col] = value
-#    if col == 'public_ip':
-#        update_table_network(cfg, { 'server_id':data['id'], 'interface':'eth1', col:value })
-#    else:
-#        update_table_server(cfg, data)
-#    print 'Modification of "%s" column in server %s complete.' % (col, hostname)
 
 def get_hwtag_from_dracip(cfg, dracip):
     return cfg.dbsess.query(Network).filter(Network.interface=='drac').\
@@ -502,35 +443,26 @@ def get_os_configs(osdict, profile, osname=None):
         osprofile = osdict['profile'][profile]
     return profile, osprofile
 
+def build_model_dict(model, obj, vars, nullobj=False, nullvar=False):
+    info = {}
+    for s in dir(model):
+        if not s.startswith('_'):
+            if s in dir(obj):
+                if getattr(obj, s) or nullobj:
+                    info[s] = getattr(obj, s)
+            elif vars.has_key(s):
+                if vars[s] or nullvar:
+                    info[s] = vars[s]
+    return info
+
 def provision_server(cfg, fqdn, vlan, when, osdict, opts):
-#public_ip='', tag=None, hwtag=None, dracip=None, mgmtip=None, osname=None, specs=None):
-#    if specs is None:
-#        specs = {'cpu':None, 'ram':None, 'disk':None}
     if not is_unqdn(cfg, fqdn):
         print 'fqdn MUST contain hostname.realm.site_id'
         return
     hostname,realm,site_id = split_fqdn(fqdn)
 
-#    try:    # check to see if server hostname exists
-#        retrieve_server_row(cfg, hostname)
-#        print '%s already provisioned, skipping' % hostname
-#        return
-#    except:
-#        # new = True
-#        pass
-
     if check_server_exists(cfg, hostname): return
     if not check_server_tag(cfg, hostname, opts.tag): return
-
-#    # set the primary tag to be the hostname without the trailing integers
-#    if not tag:
-#        tag = re.sub('\d+$', '', hostname)
-#    # check to make sure that the tag is valid before proceeding
-#    try:
-#        cfg.dbsess.query(Tag).filter(Tag.name==tag).one()
-#    except:
-#        print '%s is not a valid tag, provisioning of %s aborted' % (tag, hostname)
-#        return
 
     setattr(opts, 'vlan', vlan)
     virtual = False
@@ -541,40 +473,9 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
                 if o == 'vlan':
                     virtual = True
                     profile = osdict['default']['virtual']
-#                print 'Found hardware found with %s = %s' % (o, getattr(opts, o))
                 break
             except:
                 pass
-#                print 'No hardware found with %s = %s' % (o, getattr(opts, o))
-
-#    if not hwtag:
-#        # see which identifier was passed to us
-#        if dracip:
-#            try:
-#                hwtag = cfg.dbsess.query(Network).\
-#                    filter(Network.interface=='drac').\
-#                    filter(Network.ip==dracip).one().hw_tag
-#            except:
-#                print 'No hardware found with drac ip = %s' % dracip
-#        elif mgmtip:
-#            try:
-#                hwtag = cfg.dbsess.query(Network).\
-#                    filter(Network.interface=='eth0').\
-#                    filter(Network.ip==mgmtip).one().hw_tag
-#            except:
-#                print 'No hardware found with management ip = %s' % mgmtip
-#        elif vlan:
-#            try:
-#                hwtag = cfg.dbsess.query(Server,Network).\
-#                    filter(Network.vlan==vlan).\
-#                    filter(Server.id==Network.server_id).\
-#                    filter(Server.cobbler_profile.like('xenserver%')).\
-#                    first().Server.hw_tag
-#            except:
-#                print 'No xenserver on vlan %s to add virtual host' % vlan
-#                return
-#            virtual = True
-#            profile = osdict['default']['virtual']
 
     if not virtual:
         try:    # check to see if hwtag already belongs to a server
@@ -590,30 +491,9 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
             profile = osdict['default']['xenserver']
         else:                             # default
             profile = osdict['default']['baremetal']
-
-    profile, osprofile = get_os_configs(osdict, profile, opts.osname)
-#    if osname:
-#        if osname in osdict['profile'].keys():
-#            profile = osname
-#            osprofile = osdict['profile'][profile]
-#        elif osname in osdict['profile'].values():
-#            osprofile = osname
-#            for k in osdict['profile'].keys():
-#                if osprofile == osdict['profile'][k]:
-#                    profile = k
-#        else:
-#            print 'Unknown profile or OS specified! Existing values are:'
-#            for k in osdict['profile'].keys():
-#                if k != 'default':
-#                    print '\t%s\t\t%s' % (osdict['profile'][k], k)
-#            print 'Disabling cobbler, setting OS to: %s' % osname
-#            osprofile = osname
-#            profile = None
-#    else:
-#        osprofile = osdict['profile'][profile]
+    opts.cobbler_profile, opts.os = get_os_configs(osdict, profile, opts.osname)
 
     if virtual:
-#        print 'virtual: %s' % opts
         # make sure the vlan specified is primary eth1
         if network_mapper.remap(cfg, 'nic', vlan=int(vlan), siteid=site_id) != 'eth1':
             print 'Please specify the primary vlan for eth1 for virtual hosts'
@@ -625,58 +505,61 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
                 setattr(opts, key, cfg.vm_spec[key])
 
         # check eth1 and eth0 for valid ips before continuing
-        ip = []
+        iplist = []
         vlist = [ network_mapper.remap(cfg, 'vlan', nic='eth0', siteid=site_id), vlan ]
         for v in vlist:
-            ip.append(retrieve_next_virtual_ip(cfg, v, autogen=True))
-        sid,hwtag = update_table_server(cfg, { 'hostname':hostname, 'hw_tag':opts.hw_tag, 'realm':realm,
-            'site_id':site_id, 'cobbler_profile':profile, 'os':osprofile, 'virtual':virtual,
-            'tag':opts.tag, 'cores':opts.cores, 'ram':opts.ram, 'disk':opts.disk}, when)
-#            'tag':tag, 'cores':specs['cores'], 'ram':specs['ram'], 'disk':specs['disk'] }, when)
-        update_table_network(cfg, { 'server_id':sid,
-            'static_route':network_mapper.remap(cfg, 'gw', nic='eth1', ip=ip[1], siteid=site_id),
-            'netmask':network_mapper.remap(cfg, 'mask', nic='eth1', ip=ip[1], siteid=site_id),
-            'interface':'eth1', 'ip':ip[1] })
-        update_table_network(cfg, {'server_id':sid, 'interface':'eth0', 'ip':ip[0]})
+            iplist.append(retrieve_next_virtual_ip(cfg, v, autogen=True))
+
+        # build dict for server insert
+        virtual = False
+        svr_info = build_model_dict(Server(''), opts, locals(), nullvar=True)
+        server_id, opts.hw_tag = update_table_server(cfg, svr_info, when)
+
+        # build dict for eth1 network insert
+        ip = iplist[1]
+        interface = 'eth1'
+        static_route, netmask = network_mapper.remap(cfg, ['gw', 'mask'],
+            nic=interface, ip=iplist[1], siteid=site_id)
+        static_route = None
+        if not opts.public_ip or network_mapper.remap(
+            cfg, 'ip', ip=opts.public_ip):
+            print 'Invalid public_ip %s, using default %s' \
+                % (opts.public_ip, cfg.def_public_ip)
+            opts.public_ip = cfg.def_public_ip
+        net_info = build_model_dict(Network('','','',''), opts, locals())
+        update_table_network(cfg, net_info)
+
+        # update network for eth0
+        mgmt_info = {'server_id': server_id, 'interface':'eth0', 'ip':iplist[0]}
+        update_table_network(cfg, mgmt_info)
         print 'Added virtual host %s to mothership' % hostname
     else:
-#        print 'not virtual: %s' % opts
         # check to make sure that hardware is not marked for RMA
-#        data = retrieve_hardware_row(cfg, hwtag)
         data = retrieve_hardware_row(cfg, opts.hw_tag)
         if data.rma:
-#            print '%s is marked for RMA so cannot be provisioned' % hwtag
             print '%s is marked for RMA so cannot be provisioned' % opts.hw_tag
             return
-        # update server table and retrieve the server_id
-#        sid,hwtag = update_table_server(cfg, { 'hostname':hostname, 'tag':tag,
-        sid,opts.hw_tag = update_table_server(cfg, { 'hostname':hostname, 'tag':tag,
-            'hw_tag':opts.hw_tag, 'realm':realm, 'site_id':site_id, 'os':osprofile,
-            'cobbler_profile':profile, 'virtual':virtual }, when)
+
+        # build dict for server insert
+        svr_info = build_model_dict(Server(''), opts, locals(), nullvar=True)
+        server_id, opts.hw_tag = update_table_server(cfg, svr_info, when)
+
         # update the server_id in the network table rows and return the id
         for net in retrieve_network_rows(cfg, hwtag=opts.hw_tag):
             ip = None
-            if net.interface == 'eth1':
+            interface = net.interface
+            if interface == 'eth1':
                 ip = calculate_next_baremetal_vlan_ipaddress(cfg, vlan)
             # never retrieve the gw without ip=, especially when eth1
-            gw = network_mapper.remap(cfg, 'gw', ip=ip, nic=net.interface, siteid=site_id)
-            mask = network_mapper.remap(cfg, 'mask', ip=ip, nic=net.interface, siteid=site_id)
-            if not mask: mask = cfg.dbnull
-            if not gw: gw = cfg.dbnull
-            if not ip: ip = cfg.dbnull
-            update_table_network(cfg, { 'interface':net.interface, 'ip': ip,
-                'hw_tag':opts.hw_tag, 'server_id':sid, 'static_route':gw, 'netmask':mask })
-            if re.match('eth[12]', net.interface):
-                update_table_network(cfg, { 'interface':net.interface,
-                    'hw_tag':opts.hw_tag, 'bond_options':'mode=active-backup miimon=10' })
+            static_route, netmask = network_mapper.remap(cfg, ['gw', 'mask'],
+                nic=interface, ip=ip, siteid=site_id)
+            net_info = build_model_dict(Network('','','',''), opts, locals())
+            update_table_network(cfg, net_info)
+            if re.match('eth[12]', interface):
+                bond_options = 'mode=active-backup miimon=10'
+                net_info = build_model_dict(Network('','','',''), opts, locals())
+                update_table_network(cfg, net_info)
         print 'Added baremetal host %s to mothership' % hostname
-
-    # insert vlan public_ip into network table
-    if not opts.public_ip or network_mapper.remap(cfg, 'ip', ip=opts.public_ip):
-        print 'Invalid public_ip %s, using default %s' % (opts.public_ip, cfg.def_public_ip)
-        opts.public_ip = cfg.def_public_ip
-    update_table_network(cfg, { 'server_id':sid, 'vlan': vlan,
-        'interface':'eth1', 'public_ip':opts.public_ip })
 
     # create a group for the new machine
     newgroupname = hostname+"_"+realm+"_"+site_id
@@ -688,7 +571,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         print "group exists, skipping: %s" % newgroupname
     else:
         mothership.users.gadd(cfg, newgroupname+"."+realm+"."+site_id)
-    return sid
+    return server_id
 
     # create a group for the new machine's sudoers
     newsudogroup = newgroupname+'_sudo'
@@ -755,77 +638,12 @@ def retrieve_fqdn(cfg, hostname, interface='eth1'):
     append = network_mapper.remap(cfg, 'dom', nic=interface, siteid=q['site_id'])
     return hostname + append
 
-#def retrieve_hardware_dict(cfg, hwtag):
-#    empty = False
-#    try:
-#        values = retrieve_hardware_row(cfg, hwtag).__dict__.copy()
-#    except:
-#        values = Hardware.__dict__.copy()
-#        empty = True
-#    return remove_method_keys(values, empty)
-
 def retrieve_hardware_row(cfg, hwtag):
     try:
         return cfg.dbsess.query(Hardware).filter(Hardware.hw_tag==hwtag).one()
     except:
         print "hwtag %s not found in database" % hwtag
         sys.exit(1)
-
-#def retrieve_network_dict_by_hwtag(cfg, hwtag, ifname):
-#    empty = False
-#    try:
-#        values = retrieve_network_row_by_ifname(cfg, ifname, hwtag=hwtag).\
-#            __dict__.copy()
-#    except:
-#        values = Network.__dict__.copy()
-#        empty = True
-#    return remove_method_keys(values, empty)
-#
-#def retrieve_network_dict_by_ipaddress(cfg, ip, ifname):
-#    empty = False
-#    try:
-#        values = retrieve_network_row_by_ifname(cfg, ifname, ip=ip).\
-#            __dict__.copy()
-#    except:
-#        values = Network.__dict__.copy()
-#        empty = True
-#    return remove_method_keys(values, empty)
-#
-#def retrieve_network_dict_by_serverid(cfg, serverid, ifname):
-#    empty = False
-#    try:
-#        values = retrieve_network_row_by_ifname(cfg, ifname, serverid=serverid).\
-#            __dict__.copy()
-#    except:
-#        values = Network.__dict__.copy()
-#        empty = True
-#    for k in values.keys():
-#        if empty: values[k] = None
-#        if k.startswith('_'): del values[k]
-#    return values
-#
-#def retrieve_network_dict_by_ifname(cfg, ifname, key, value):
-#    empty = False
-#    try:
-#        if key == 'mac':
-#            values = retrieve_network_row_by_ifname(cfg, ifname,
-#                mac=value).__dict__.copy()
-#        elif key == 'ip':
-#            values = retrieve_network_row_by_ifname(cfg, ifname,
-#                ip=value).__dict__.copy()
-#        elif key == 'hw_tag':
-#            values = retrieve_network_row_by_ifname(cfg, ifname,
-#                hwtag=value).__dict__.copy()
-#        elif key == 'server_id':
-#            values = retrieve_network_row_by_ifname(cfg, ifname,
-#                serverid=value).__dict__.copy()
-#    except:
-#        values = Network.__dict__.copy()
-#        empty = True
-#    for k in values.keys():
-#        if empty: values[k] = None
-#        if k.startswith('_'): del values[k]
-#    return values
 
 def retrieve_network_rows_by_unqdn(cfg, unqdn, interface = None):
     """
@@ -857,15 +675,10 @@ def retrieve_network_rows_by_servername(cfg, hostname):
     else:
         return []
 
-#def retrieve_network_row_by_ifname(cfg, ifname, hwtag=None, ip=None, mac=None, serverid=None):
 def retrieve_network_row_by_ifname(cfg, ifname, filter):
     data = cfg.dbsess.query(Network).filter(Network.interface==ifname)
     for k in filter.keys():
         exec 'data = data.filter(Network.%s==filter["%s"])' % (k,k)
-#    if hwtag:       data = data.filter(Network.hw_tag==hwtag)
-#    if ip:          data = data.filter(Network.ip==ip)
-#    if mac:         data = data.filter(Network.mac==mac)
-#    if serverid:    data = data.filter(Network.server_id==serverid)
     return data.one()
 
 def retrieve_network_rows(cfg, hwtag=None, serverid=None):
@@ -924,13 +737,6 @@ def retrieve_server_row(cfg, hostname):
     except:
         return []
 
-#def retrieve_server_rows(cfg, hostname):
-#    try:
-#        return cfg.dbsess.query(Server).filter(Server.hostname==hostname).all()
-#    except:
-#        #print "Server %s not found in database" % hostname
-#        sys.exit(1)
-
 def retrieve_server_row_by_unqdn(cfg, unqdn):
     hostname,realm,site_id  = mothership.get_unqdn(cfg, unqdn)
     row = cfg.dbsess.query(Server).\
@@ -941,8 +747,8 @@ def retrieve_server_row_by_unqdn(cfg, unqdn):
 
 def retrieve_ssh_data(results, cmd, virtual=False):
     parsers = [
-#        r'(^core\sid\s+:\s(?P<coreid>\d+))',
-#        r'(^siblings\s+:\s+(?P<threads>\d+))',
+        #r'(^core\sid\s+:\s(?P<coreid>\d+))',
+        #r'(^siblings\s+:\s+(?P<threads>\d+))',
         r'(^processor\s+:\s+(?P<cpus>\d+))',
         r'(^physical\sid\s+:\s(?P<chips>\d+))',
         r'(^cpu\scores\s+:\s(?P<cores>\d+))',
@@ -950,8 +756,8 @@ def retrieve_ssh_data(results, cmd, virtual=False):
         r'(^MemTotal:\s+(?P<ram>\d+)\skB)',
         r'(\s+memory-total.+:\s(?P<xeram>\d+))',
         r'(^Disk.+,\s(?P<disk>\d+))',
-#        r'(^Disk\s\/dev\/\w+:.+,\s(?P<disk>\d+)\sbytes)',
-#        r'(^\sgeometry.+sectors\s=\s(?P<disk>\d+))',
+        #r'(^Disk\s\/dev\/\w+:.+,\s(?P<disk>\d+)\sbytes)',
+        #r'(^\sgeometry.+sectors\s=\s(?P<disk>\d+))',
         ]
 
     stat = {}
@@ -1026,10 +832,6 @@ def swap_server(cfg, when, hosts=[]):
                 'hw_tag':hwtag, 'server_id':sid })
 
 def update_table_hardware(cfg, info, when):
-#    data = retrieve_hardware_dict(cfg, info['hw_tag'])
-#    if not data['purchase_date']: info['purchase_date'] = when
-#    if not data['rma']: info['rma'] = False
-#    if not data['id']:
     data = retrieve_hardware_row(cfg, info['hw_tag'])
     if not data.purchase_date: info['purchase_date'] = when
     if not data.rma: info['rma'] = False
@@ -1037,11 +839,8 @@ def update_table_hardware(cfg, info, when):
         # insert if it does not exist
         print 'Inserting into hardware table'
         data = Hardware(info['hw_tag'])
-#        cfg.dbconn.execute(Hardware.__table__.insert(), [ info ])
     else:
         print 'Updating hardware table'
-#        cfg.dbconn.execute(Hardware.__table__.update().\
-#            where(Hardware.id==data['id']), [ info ])
     for k in info.keys():
         setattr(data, k, info[k])
     if not data.id:
@@ -1049,17 +848,11 @@ def update_table_hardware(cfg, info, when):
     cfg.dbsess.commit()
 
 def update_table_network(cfg, info, noinsert=False):
-#    data = { 'id':None }
-#    info = clear_empty_keys_from_dict(info)
     data = None
     for key in ['mac', 'ip', 'hw_tag', 'server_id']:
         if not data and key in info:
             data = retrieve_network_row_by_ifname(cfg,
                 info['interface'], filter={key:info[key]})
-#        if not data['id'] and key in info:
-#            data = retrieve_network_dict_by_ifname(cfg,
-#                info['interface'], key, info[key])
-#    if not data['id']:
     if not data.id:
         if noinsert:
             return
@@ -1067,11 +860,8 @@ def update_table_network(cfg, info, noinsert=False):
         print 'Inserting into network table'
         data = Network(info['ip'], info['interface'],
                info['netmask'], info['mac'])
-#        cfg.dbconn.execute(Network.__table__.insert(), [ info ])
     else:
         print 'Updating network table'
-#        cfg.dbconn.execute(Network.__table__.update().\
-#            where(Network.id==data['id']), [ info ])
     for k in info.keys():
         setattr(data, k, info[k])
     if not data.id:
@@ -1079,22 +869,14 @@ def update_table_network(cfg, info, noinsert=False):
     cfg.dbsess.commit()
 
 def update_table_server(cfg, info, when=None, rename=None):
-#    print 'update table server'
     if rename: info['hostname'] = rename
-#    data = retrieve_server_dict(cfg, info['hostname'])
-#    if not data['provision_date']: info['provision_date'] = when
-#    if not data['id']:
     data = retrieve_server_row(cfg, info['hostname'])
-#    print data
     if not data:
         # insert if it does not exist
         print 'Inserting into server table'
         data = Server(info['hostname'])
-#        cfg.dbconn.execute(Server.__table__.insert(), [ info ])
     else:
         print 'Updating server table'
-#        cfg.dbconn.execute(Server.__table__.update().\
-#            where(Server.id==data['id']), [ info ])
     if 'purchase_date' not in dir(data):
         setattr(data, 'purchase_date', when)
     for k in info.keys():
