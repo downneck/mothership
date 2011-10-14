@@ -119,13 +119,6 @@ def calculate_next_baremetal_vlan_ipaddress(cfg, vlan):
         nextip = network_mapper.next_ip(last)
     return nextip
 
-def clear_empty_keys_from_dict(dict):
-    clean = dict.copy()
-    for k in dict.keys():
-        if dict[k] == '':
-            del clean[k]
-    return clean
-
 def clear_serverinfo_from_network(cfg, server_id):
     for row in retrieve_network_rows(cfg, serverid=server_id):
         intf = getattr(row, 'interface')
@@ -135,7 +128,6 @@ def clear_serverinfo_from_network(cfg, server_id):
                 setattr(row, col, cfg.dbnull)
         setattr(row, 'server_id', cfg.dbnull)
     cfg.dbsess.commit()
-
 
 def confirm_column_change(curr_val, new_val, colname, tblname):
     print 'Please confirm the following change to:\n'
@@ -277,10 +269,11 @@ def generate_ipaddress_range(cfg, first, count=None, last=None, realm=None, site
        e.g. generate_ips('10.50.50.15','10.50.50.30')
     """
     for ip in network_mapper.generate_ipaddress_list(first, count=count, last=last):
-        vlan,mask,nic = network_mapper.remap(cfg, ['vlan','mask','nic'], ip=ip, siteid=site_id)
-        update_table_network(cfg, { 'ip':ip, 'realm':realm, 'site_id':site_id,
-            'mac':network_mapper.ip_to_mac(ip),
-            'vlan':vlan, 'netmask':mask, 'interface':nic })
+        vlan, netmask, interface = network_mapper.remap(cfg,
+            ['vlan','mask','nic'], ip=ip, siteid=site_id)
+        mac = network_mapper.ip_to_mac(ip)
+        net_info = build_model_dict(Network('','','',''), opts, locals())
+        update_table_network(cfg, net_info)
 
 def import_multiple_table_info(cfg, info, when):
     sid = None
