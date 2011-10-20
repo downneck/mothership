@@ -1,3 +1,5 @@
+revision 121 (dk)
+* removed realm-path guessing from kv command
 revision 94 (mo)
 * fixed typo in ./ship
 revision 90 (dk):

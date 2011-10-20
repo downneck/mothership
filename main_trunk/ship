@@ -826,10 +826,13 @@ class ShipCli(cmdln.Cmdln):
 
         ${cmd_option_list}
         examples:
-            select: ship kv host.realm.site key
-                    ship kv . key       # the . is global
-                    ship kv host key    # guess realm.site
-                    ship kv host %      # all keys for host
+            select: ship kv host.realm.site key    # specific key for host.realm.site
+                    ship kv realm.site key         # specific key for realm.site
+                    ship kv site key               # specific key for site
+                    ship kv host.realm.site %      # all keys for host.realm.site
+                    ship kv realm.site %           # all keys for realm.site
+                    ship kv site %                 # all keys for site
+                    ship kv . key                  # the . is global
 
             update: ship kv -u . key=global
                     ship kv -u name key=specific
@@ -849,7 +852,9 @@ class ShipCli(cmdln.Cmdln):
             fqdn = None
         # Parse name parts
         else:
-            fqdn = ".".join(mothership.get_unqdn(self.cfg, name))
+            # this causes much grief.
+            # fqdn = ".".join(mothership.get_unqdn(self.cfg, name))
+            fqdn = name 
 
         # Parse key=value argument
         value = None
