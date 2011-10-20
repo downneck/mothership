@@ -1,5 +1,8 @@
 revision 121 (dk)
 * removed realm-path guessing from kv command
+revision 120 (kl)
+* update puppet_yaml_check to discover empty vital key-values
+* add catch for missing xen password in do_cobbler
 revision 113 (kl)
 * fix expire server abort sequencing
 * remove sys.exit from global exception causing unknown problems
