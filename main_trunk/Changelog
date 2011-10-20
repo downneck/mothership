@@ -1,5 +1,18 @@
 revision 121 (dk)
 * removed realm-path guessing from kv command
+revision 113 (kl)
+* fix expire server abort sequencing
+* remove sys.exit from global exception causing unknown problems
+revision 110 (kl)
+* fix check free memory for when Local storage is used on xenhost
+revision 106 (kl)
+* fix xenserver SR name-label issues
+* forcie all sudo-necessary ship commands to be run sudo
+* remove faulty xen slave exception
+revision 100 (kl)
+* query user for storage when multiple storage repositories
+* fix provisioning baremetal bug on new vlan
+* minor change to support zenoss 3.2.0 changes to api
 revision 94 (mo)
 * fixed typo in ./ship
 revision 90 (dk):
