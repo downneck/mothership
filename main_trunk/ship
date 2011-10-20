@@ -1149,8 +1149,12 @@ class ShipCli(cmdln.Cmdln):
         else:
             sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, host, opts.xen)
             if 'xen' in sysdict['power_type']:
-                xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root',
-                    str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')[1])
+                xenpass = str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')
+                if not xenpass or len(xenpass) < 2:
+                    sys.stderr.write('Xenserver password was not configured, please update with:\n')
+                    sys.stderr.write('\tship kv -a % xen_api_pass=<passwd>\n')
+                    sys.exit()
+                xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root', xenpass[1])
                 xenhost = xs.triple_check(sysdict)
                 if not xenhost:
                     return
