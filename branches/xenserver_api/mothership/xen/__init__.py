@@ -170,9 +170,12 @@ class XenServerAPI:
                     item = '%-35s (%s)' % (host['disk'][s]['name'], item)
                 if not s in storage.keys():
                     storage[s] = item
-        for s in storage.values():
-            print '%d) %s' % (storage.values().index(s), s)
-        ans = raw_input('Which do you want to use: ')
+        if len(storage) > 1:
+            for s in storage.values():
+                print '%d) %s' % (storage.values().index(s), s)
+            ans = raw_input('Which do you want to use: ')
+        else:
+            ans = 0
         if int(ans) < 0 or int(ans) >= len(storage.values()):
             print 'Storage selection aborted.'
             return False, None
@@ -423,3 +426,10 @@ class XenServerAPI:
                 'status_code': '0', 'status_detail': ''}
             self.session.xenapi.VIF.create(data)
         return True
+
+
+# CLI: xe vm-import sr-uuid=<SR-UID> filename=<PATH-TO-XVA>
+#    def import_xva(self, filename):
+#        self.session.xenapi.VM.import()
+# apparently, the XMLRPC API has no import or export methods
+

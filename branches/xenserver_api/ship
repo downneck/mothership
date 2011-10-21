@@ -1116,8 +1116,12 @@ class ShipCli(cmdln.Cmdln):
                     return
                 if 'xen' in sysdict['power_type']:
                     cc.set_system_power(self.cfg, host, 'off')
-                    xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root',
-                        str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')[1])
+                    xenpass = str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')
+                    if not xenpass or len(xenpass) < 2:
+                        sys.stderr.write('Xenserver password was not configured, please update with:\n')
+                        sys.stderr.write('\tship kv -a % xen_api_pass=<passwd>\n')
+                        sys.exit()
+                    xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root', xenpass[1])
                     xenhost, storage = xs.triple_check(sysdict)
                     sysdict['storage'] = storage
                     if not xenhost:
@@ -1438,9 +1442,12 @@ class ShipCli(cmdln.Cmdln):
                     except:
                         sys.stderr.write('!! %s does not appear to have been provisioned by mothership/cobbler !!\n' % host)
                         return
-                    exec '''status = mothership.xen.XenServerAPI(
-                        info["hardware"][0]["power_switch"], "root",
-                        xenpw).%s(info, opts)''' % o
+                    if opts.xenhost:
+                        xenhost = opts.xenhost
+                    else:
+                        xenhost = info["hardware"][0]["power_switch"]
+                    xs = mothership.xen.XenServerAPI(xenhost, "root", xenpw)
+                    exec 'xs.%s(info, opts)' % o
                     if status and o == 'resize_vm':
                         # update mothership server values
                         for key in ['cores', 'ram', 'disk']:
