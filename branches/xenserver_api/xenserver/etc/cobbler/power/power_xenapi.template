@@ -1,0 +1,11 @@
+# Calling ship xenserver to complete the cobbler kickstart
+
+#if $power_mode == 'on'
+/usr/local/mothership/ship xen -i $name
+#end if
+
+# Make sure that if vm not running, the exit code is 0
+#if $power_mode == 'off'
+/usr/local/mothership/ship xen -d $name -f
+#end if
+
