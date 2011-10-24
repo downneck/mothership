@@ -372,7 +372,7 @@ def modify_server_column(cfg, hostname, col, value, force=False):
     """
     row = retrieve_server_row(cfg, hostname)
     curr_val = getattr(row, col)
-    if confirm_column_change(curr_val, value, col, row.__tablename__):
+    if force or confirm_column_change(curr_val, value, col, row.__tablename__):
         setattr(row, col, value)
         cfg.dbsess.commit()
         print "Changes committed.  %s is now %s" % (col, value)

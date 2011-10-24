@@ -228,6 +228,8 @@ class XenServerAPI:
         setattr(opts, 'force', True)
         self.shutdown_vm(info, opts)
         for i in ['cores', 'ram', 'disk']:
+            if not getattr(opts, i):
+                continue
             if i == 'disk':
                 vref = vdi
             else:

@@ -1447,12 +1447,13 @@ class ShipCli(cmdln.Cmdln):
                     else:
                         xenhost = info["hardware"][0]["power_switch"]
                     xs = mothership.xen.XenServerAPI(xenhost, "root", xenpw)
-                    exec 'xs.%s(info, opts)' % o
+                    exec 'status = xs.%s(info, opts)' % o
                     if status and o == 'resize_vm':
                         # update mothership server values
                         for key in ['cores', 'ram', 'disk']:
-                            mothership.modify_server_column(self.cfg, host,
-                                key, getattr(opts, key), force=True)
+                            if getattr(opts, key):
+                                mothership.modify_server_column(self.cfg, host,
+                                    key, getattr(opts, key), force=True)
                     return
 
     @cmdln.alias("zen")
