@@ -1,3 +1,5 @@
+revision 127 (kl)
+* update the firstboot.d scripts for xenserver kickstart
 revision 121 (dk)
 * removed realm-path guessing from kv command
 revision 120 (kl)

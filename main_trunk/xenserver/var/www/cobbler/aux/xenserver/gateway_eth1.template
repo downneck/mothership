@@ -1,17 +1,4 @@
 #!/bin/bash
-# Copyright 2011 Gilt Groupe, INC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 # This is a Cobbler/Cheetah template to configure default gateway for eth1
 # Why eth1? Because eth1 will be valid regardless of if you create bond0=eth1+eth2 or not
 #
@@ -26,9 +13,13 @@
 #set $defroute = $interfaces['eth1']['static_routes'][0].replace(':','/')
 #set $gateway = $defroute.split('/')[-1]
 
+# Use XE to create a persistent change after reboot
+BOND=\${1:-bond0}
 XE=/opt/xensource/bin/xe
 uuid_eth1=\$( \$XE network-list bridge=xenbr1 params=uuid | sed 's/^.*: //' )
 \$XE network-param-set uuid=\$uuid_eth1 other-config:static-routes=$defroute
+uuid_bond=\$( \$XE network-list name-label=\$BOND params=uuid | sed 's/^.*: //' )
+\$XE network-param-set uuid=\$uuid_bond other-config:static-routes=$defroute
 # Use route to add for current use prior to reboot
 route add default gw $gateway
 

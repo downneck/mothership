@@ -1,18 +1,4 @@
 #!/bin/bash
-# Copyright 2011 Gilt Groupe, INC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 #
 # Author: ikenticus
 #
@@ -22,8 +8,8 @@
 
 SELF=${0##*/}
 
-# Global settings
-TPL="Default OS Template Name (#-bit)" 
+# Global settings (gilt)
+TPL="CentOS 5.4 (64-bit)" 
 
 
 # Default VM settings
@@ -43,13 +29,13 @@ Destroy a VM:
     $SELF -x vmtest1
 
 Create a default VM, specify mac address:
-    $SELF -S 10.10.10.10 -D primaryos -c vmtest2 -m 00:11:22:33:44:55
+    $SELF -S 10.10.10.10 -D centos55 -c vmtest2 -m 00:11:22:33:44:55
 
 Create VM with multiple mac/interfaces defined:
-    $SELF -S 10.10.10.10 -D primaryos -c vmtest3 -m xenbr0=00:11:22:33:44:55,xapi1=66:77:88:99:AA:BB
+    $SELF -S 10.10.10.10 -D centos55 -c vmtest3 -m xenbr0=00:11:22:33:44:55,bond0=66:77:88:99:AA:BB
 
 Kickstart VM on eth1 with 2 CPUs, 16GB disk and 2GB memory
-    $SELF -S 10.10.10.10 -D primaryos -c vmtest4 -m 00:11:22:33:44:55 -N1 -M2048 -V16 -C2
+    $SELF -S 10.10.10.10 -D centos55 -c vmtest4 -m 00:11:22:33:44:55 -N1 -M2048 -V16 -C2
 
 Other Switches:
     -h          Help, this usage screen
@@ -107,6 +93,15 @@ virtual_nic() {
     local nic=$1    ; shift
     local mac=$1
 
+    if [[ -z ${nic##bond*} ]]; then
+        nicname=$nic
+        nic=$(xe network-list name-label=$nicname params=bridge | awk '{ print $NF }')
+        if [[ -z $nic ]]; then
+            bondname=$(xe pif-list device=$nicname params=network-name-label 2>/dev/null|head -1|sed 's/^.*: //')
+            nic=$(xe network-list name-label="$bondname" params=bridge | awk '{ print $NF }')
+        fi
+    fi
+
     if [[ -z $(xe network-list bridge=$nic) ]]; then
         echo "Network Bridge $nic does not exist, skipping"
         return
@@ -119,13 +114,13 @@ virtual_nic() {
 
 
 create_vm() {
-    local vm_name=$1  ; shift
-    local net_num=$1  ; shift
-    local cpu_num=$1  ; shift
-    local mem_num=$1  ; shift
-    local vdi_num=$1  ; shift
-    local mac=$1      ; shift
-    local storage=$1  ; shift
+    local vm_name=$1        ; shift
+    local net_num=$1        ; shift
+    local cpu_num=$1        ; shift
+    local mem_num=$1        ; shift
+    local vdi_num=$1        ; shift
+    local mac=$1            ; shift
+    local storage=${1//__/ }; shift
     local template=$*
 
     if [[ -n $(xe vm-list name-label=$vm_name) ]]; then
@@ -134,10 +129,11 @@ create_vm() {
     fi
 
     echo "Acquiring SR uuid for $storage"
-    sr_uuid=$(xe sr-list name-label="$storage" | grep ^uuid | awk '{ print $NF }')
+    [[ -z ${storage//*Local*} ]] && sr_opts="host=$HOSTNAME"
+    sr_uuid=$(xe sr-list name-label="$storage" $sr_opts|grep ^uuid|awk '{ print $NF }')
     if [[ -z $sr_uuid ]]; then
         # attempt wildcard match
-        sr_name=$(xe sr-list|grep $storage|grep -v Removable|head -1|sed 's/^.*: //')
+        sr_name=$(xe sr-list|grep $storage $sr_opts|grep -v Removable|head -1|sed 's/^.*: //')
         sr_uuid=$(xe sr-list name-label="$sr_name"|grep ^uuid|awk '{ print $NF }')
     fi
     if [[ -z $sr_uuid ]]; then
@@ -221,7 +217,7 @@ if [[ -n $VM ]]; then
         echo "MAC Address not specified!"
         usage
     else
-        create_vm $VM $NIC $CPU $MEM $VDI $MAC "$STORAGE" $TPL
+        create_vm $VM $NIC $CPU $MEM $VDI $MAC ${STORAGE// /__} $TPL
         exit 0
     fi
 fi
