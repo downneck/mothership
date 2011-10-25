@@ -115,7 +115,7 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
             raise UsersError("Invalid user type, please use one of the following: " + ', '.join(cfg.user_types))
     else:
         if copy_user:
-            user_type = copy_user.user_type
+            user_type = copy_user.type
         else:
             print 'No type supplied, using default: ' + cfg.def_user_type
             user_type = cfg.def_user_type
