@@ -1,12 +1,12 @@
+#!/usr/bin/python
+
 from bottle import Bottle, run
-
 from shipd import configure
-
-httpship = Bottle()
 
 import bottle
 bottle.debug(True)
 
+httpship = Bottle()
 shipd = configure.Shipd('/etc/mothership.yaml')
 
 @httpship.route('/')
