@@ -180,7 +180,7 @@ class Network(Base):
     static_route = Column(String)   # static_route is actually an inet in PG
     public_ip = Column(String)      # public_ip is actually an inet in PG
     hw_tag = Column(String)
-    
+ 
     def __init__(self, ip, interface, netmask, mac):
         self.ip = ip
         self.interface = interface

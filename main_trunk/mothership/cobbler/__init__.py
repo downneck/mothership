@@ -242,7 +242,7 @@ class CobblerAPI:
     def delete_system(self, cfg, hostname):
         if cfg.coblive:
             if not self.find_system_by_hostname(cfg, hostname):
-                print 'Skipping delete, system does not exist: %s' % hostname
+                print 'Skipping cobbler delete, system does not exist: %s' % hostname
                 return
             print 'Deleting cobbler system: %s' % hostname
             cfg.remote.remove_system(hostname, cfg.token)
@@ -267,6 +267,17 @@ class CobblerAPI:
             if sysif[k]['static_routes']:
                 sysif[k]['static_route'] = sysif[k]['static_routes'][0].split(':')[1]
             info['network'].append(transkey(system['interfaces'][k], self.map_network, True))
+        return info
+
+    def append_kickstart_info(self, cfg, info):
+        profile = cfg.remote.get_profile(info['server'][0]['cobbler_profile'])
+        while profile['parent'] != '':
+            profile = cfg.remote.get_profile(profile['parent'])
+        distro = cfg.remote.get_distro(profile['distro'])['name']
+        cobblerip = cfg.remote.get_settings()['server']
+        info['kick'] = {}
+        info['kick']['repo'] = 'http://%s/cblr/links/%s/' % (cobblerip, distro)
+        info['kick']['ks'] = 'http://%s/cblr/svc/op/ks/system' % cobblerip
         return info
 
     def find_system_by_hostname(self, cfg, hostname):
@@ -306,7 +317,7 @@ class CobblerAPI:
                 return
             print 'Setting power "%s" for %s' % (state, hostname)
             handle = cfg.remote.get_system_handle(hostname, cfg.token)
-            self.check_known_hosts(cfg, hostname, '~root')
+            #self.check_known_hosts(cfg, hostname, '~root')
             try:
                 cfg.remote.power_system(handle, state, cfg.token)
             except Fault, err:
@@ -330,12 +341,15 @@ class CobblerAPI:
 
     def abort_kick(self, cfg, name, host):
         # abort kick if host.realm.site_id not defined for current system
-        if str(self.extract_system_by_hostname(cfg,
-            host.split('.')[0])).find(host) < 0:
-            print '!! IP Address for %s not defined' % host
-            print 'Please run: %s mod_vlan %s <vlan#>' % (name, host)
-            print 'or equivalent command before kickstarting'
-            return True
+        try:
+            if str(self.extract_system_by_hostname(cfg,
+                host.split('.')[0])).find(host) < 0:
+                print '!! IP Address for %s not defined' % host
+                print 'Please run: %s mod_vlan %s <vlan#>' % (name, host)
+                print 'or equivalent command before kickstarting'
+                return True
+        except:
+            return False
         # confirm kick if host.realm.site_id responds to pings
         pingcheck = os.popen("ping -q -c2 -t2 "+host,"r")
         while 1:

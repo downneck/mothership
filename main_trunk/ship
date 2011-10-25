@@ -18,9 +18,9 @@
 import os
 import sys
 import cmdln
-import datetime
 import socket
 import types
+import datetime
 
 # Extra modules
 sys.path.append("/usr/lib/python2.4/site-packages/SQLAlchemy-0.5.5-py2.4.egg/")
@@ -990,17 +990,17 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("add_server")
     @cmdln.option("-o", "--osname",
                   help="os or profile name for hostname (default: CentOS 5.5)")
-    @cmdln.option("-V", "--vdisk", default=None,
+    @cmdln.option("-V", "--disk", default=None,
                   help="specify GB of memory used for virtual host")
-    @cmdln.option("-M", "--memory", default=None,
+    @cmdln.option("-M", "--ram", default=None,
                   help="specify GB of memory used for virtual host")
-    @cmdln.option("-C", "--cpu", default=None,
+    @cmdln.option("-C", "--cores", default=None,
                   help="specify number of cpu cores used for virtual host")
-    @cmdln.option("-t", "--hwtag",
+    @cmdln.option("-t", "--hw_tag",
                   help="identify hardware using hardware tag (hw_tag)")
-    @cmdln.option("-m", "--mgmt",
+    @cmdln.option("-m", "--mgmtip",
                   help="identify hardware using specified management ip address")
-    @cmdln.option("-d", "--drac",
+    @cmdln.option("-d", "--dracip",
                   help="identify hardware using specified drac ip address")
     @cmdln.option("-r", "--tag",
                   help="primary tag for hostname (default: hostname s/\d+$//)")
@@ -1020,50 +1020,13 @@ class ShipCli(cmdln.Cmdln):
         added = False
         unqdn = ".".join(mothership.get_unqdn(self.cfg, hostname))
         osdict = mothership.cobbler.CobblerAPI(self.cfg).get_os_dict(self.cfg)
-        if opts.hwtag:
-            added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict,
-                hwtag=opts.hwtag, tag=opts.tag, public_ip=opts.public_ip, osname=opts.osname)
-        elif opts.drac:
-            added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict,
-                dracip=opts.drac, tag=opts.tag, public_ip=opts.public_ip, osname=opts.osname)
-        elif opts.mgmt:
-            added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict,
-                mgmtip=opts.mgmt, tag=opts.tag, public_ip=opts.public_ip, osname=opts.osname)
-        else:
-            added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict,
-                tag=opts.tag, public_ip=opts.public_ip, osname=opts.osname,
-                specs={ 'cpu':opts.cpu, 'ram':opts.memory, 'disk':opts.vdisk })
+        added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict, opts)
         if added:
             if self.cfg.zab_active:
                 # cloned portions of do_zabbix, to add when new servers are provisioned
                 zs_unqdn = '.'.join(mothership.get_unqdn(self.cfg, self.cfg.dbsess.query(Server).\
                     filter(Server.tag=="zabbix_server").first().hostname))
                 mothership.zabbix.add(self.cfg, unqdn, zs_unqdn, zabbix_template=None)
-
-    # DISABLED AS rename_server brought up a few points such as
-    # * moving to server_graveyard 
-    # * What happens with tags
-    #@cmdln.alias("ren")
-    #@cmdln.alias("rename")
-    #@cmdln.alias("ren_serv")
-    #@cmdln.option("-c", "--cobbler", action="store_true",
-    #              help="perform cobbler delete/add after updating database")
-    #def do_rename_server(self, subcmd, opts, oldhostname, newhostname):
-    #    """${cmd_name}: Rename only the hostname of a particular server without
-    #    affecting any of the other mothership tables
-
-    #    ${cmd_usage}
-    #    ${cmd_option_list}
-    #    """
-    #    oldhostname = mothership.get_unqdn(self.cfg, oldhostname)[0]
-    #    newhostname = mothership.get_unqdn(self.cfg, newhostname)[0]
-    #    mothership.update_table_server(self.cfg,
-    #        {'hostname':oldhostname}, today, rename=newhostname)
-    #    if opts.cobbler:
-    #        cc = mothership.cobbler.CobblerAPI(self.cfg)
-    #        cc.delete_system(self.cfg, oldhostname)
-    #        cc.add_system(self.cfg,
-    #            mothership.retrieve_cobbler_system_dict(self.cfg, newhostname))
 
     @cmdln.alias("swap")
     @cmdln.alias("rms")
@@ -1155,23 +1118,26 @@ class ShipCli(cmdln.Cmdln):
                 cc.sync_cobbler(self.cfg)
         else:
             sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, host, opts.xen)
-            if 'xen' in sysdict['power_type']:
-                xenpass = str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')
-                if not xenpass or len(xenpass) < 2:
-                    sys.stderr.write('Xenserver password was not configured, please update with:\n')
-                    sys.stderr.write('\tship kv -a % xen_api_pass=<passwd>\n')
-                    sys.exit()
-                xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root', xenpass[1])
-                xenhost = xs.triple_check(sysdict)
-                if not xenhost:
-                    return
-                else:
-                    sysdict['power_switch'] = xenhost
-            if not cc.add_system(self.cfg, sysdict):
-                sys.exit(1)
             if opts.kick:
                 if cc.abort_kick(self.cfg, self.name, unqdn):
                     return
+                if 'xen' in sysdict['power_type']:
+                    cc.set_system_power(self.cfg, host, 'off')
+                    xenpass = str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')
+                    if not xenpass or len(xenpass) < 2:
+                        sys.stderr.write('Xenserver password was not configured, please update with:\n')
+                        sys.stderr.write('\tship kv -a % xen_api_pass=<passwd>\n')
+                        sys.exit()
+                    xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root', xenpass[1])
+                    xenhost, storage = xs.triple_check(sysdict)
+                    sysdict['storage'] = storage
+                    if not xenhost:
+                        return
+                    else:
+                        sysdict['power_switch'] = xenhost
+            if not cc.add_system(self.cfg, sysdict):
+                sys.exit(1)
+            if opts.kick:
                 if self.cfg.coblive:
                     if not cc.clear_puppetca(mothership.retrieve_fqdn(self.cfg, host)):
                         print 'Kick aborted.'
@@ -1283,7 +1249,7 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("mod_network")
     def do_modify_network(self, subcmd, opts, hostname, interface, colname, colval):
         """${cmd_name}:
-            Modify a column named colname to colval for a particular row 
+            Modify a column named colname to colval for a particular row
             in the network table based on HOSTNAME & INTERFACE parameters
 
             ex. ship modify_network spare3 eth1 netmask 255.255.255.0
@@ -1291,20 +1257,22 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        mothership.modify_network_column(self.cfg, hostname, interface, colname, colval)
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        mothership.modify_network_column(self.cfg, host, interface, colname, colval)
 
     @cmdln.alias("mod_serv")
-    def do_modify_server(self, subcmd, opts, hostname, key, value):
+    def do_modify_server(self, subcmd, opts, hostname, colname, colval):
         """${cmd_name}:
-            for server hostname, modify the column(key) to the specified value
-            Before the change is made, the user MUST confirm.  Currently, there
-            is no --force feature enabled for this.
+            Modify a column named colname to colval for a particular row
+            in the servers table based on HOSTNAME parameters
+
+            ex. ship modify_network spare3 cores 2
 
         ${cmd_usage}
         ${cmd_option_list}
         """
         host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
-        mothership.modify_server_column(self.cfg, host, key, value)
+        mothership.modify_server_column(self.cfg, host, colname, colval)
 
     @cmdln.alias("vlan")
     @cmdln.alias("mod_vlan")
@@ -1431,6 +1399,75 @@ class ShipCli(cmdln.Cmdln):
         except (mothership.MothershipError), e:
             print 'Error: %s' % e
 
+    @cmdln.alias("xen")
+    @cmdln.option("-V", "--disk", default=None,
+                  help="specify GB of memory for virtual machine")
+    @cmdln.option("-M", "--ram", default=None,
+                  help="specify GB of memory for virtual machine")
+    @cmdln.option("-C", "--cores", default=None,
+                  help="specify number of cpu cores for virtual machine")
+    @cmdln.option("-r", "--resize_vm",
+                  help="resize virtual machine")
+    @cmdln.option("-f", "--force", action="store_true",
+                  help="force Yes on any xenserver prompts")
+    @cmdln.option("-d", "--delete_vm",
+                  help="delete virtual machine")
+    @cmdln.option("-R", "--storage",
+                  help="specify storage repository OpaqueRef to install_vm")
+    @cmdln.option("-x", "--xenhost", default=False,
+                  help="""specify xenhost to override vlan selection
+                  (for use with --install_vm)""")
+    @cmdln.option("-i", "--install_vm",
+                  help="install new virtual machine")
+    @cmdln.option("-S", "--shutdown_vm",
+                  help="shutdown virtual machine")
+    @cmdln.option("-s", "--start_vm",
+                  help="start virtual machine")
+    @cmdln.option("-v", "--viewpool",
+                  help="view xenserver/pool layout")
+    @cmdln.option("-l", "--license",
+                  help="check LICENSE xenserver expiration")
+    def do_xenserver(self, subcmd, opts):
+        """${cmd_name}: manage xenserver features using API
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        xenpw = str(mothership.kv.select(self.cfg,
+            '', 'xen_api_pass')).split('=')[1]
+        if opts.license:
+            xs = mothership.xen.XenServerAPI(opts.license, 'root', xenpw)
+            xs.check_license(opts.license)
+        elif opts.viewpool:
+            xs = mothership.xen.XenServerAPI(opts.viewpool, 'root', xenpw)
+            xs.view_layout()
+        else:
+            cc = mothership.cobbler.CobblerAPI(self.cfg)
+            for o in ['install_vm', 'resize_vm', 'start_vm',
+                'shutdown_vm', 'delete_vm']:
+                if getattr(opts, o):
+                    exec '''host = opts.%s''' % o
+                    try:
+                        info = cc.extract_system_by_hostname(self.cfg, host)
+                        if o == 'install_vm':
+                            info = cc.append_kickstart_info(self.cfg, info)
+                    except:
+                        sys.stderr.write('!! %s does not appear to have been provisioned by mothership/cobbler !!\n' % host)
+                        return
+                    if opts.xenhost:
+                        xenhost = opts.xenhost
+                    else:
+                        xenhost = info["hardware"][0]["power_switch"]
+                    xs = mothership.xen.XenServerAPI(xenhost, "root", xenpw)
+                    exec 'status = xs.%s(info, opts)' % o
+                    if status and o == 'resize_vm':
+                        # update mothership server values
+                        for key in ['cores', 'ram', 'disk']:
+                            if getattr(opts, key):
+                                mothership.modify_server_column(self.cfg, host,
+                                    key, getattr(opts, key), force=True)
+                    return
+
     @cmdln.alias("zen")
     @cmdln.option("-d", "--disable", action="store_true",
                   help="disable server from zenoss")
@@ -1480,29 +1517,6 @@ class ShipCli(cmdln.Cmdln):
         """
         mothership.verify_host_data(self.cfg, hostname)
 
-#    @cmdln.alias("sshscan")
-#    def do_ssh_keycan(self, subcmd, opts):
-#        """${cmd_name}: build up the host aliases and ip and ssh-keyscan them
-#
-#        ${cmd_usage}
-#        ${cmd_option_list}
-#        """
-#        for host in mothership.retrieve_ssh_hostname_ip_list(self.cfg):
-#            print ','.join(host)
-#            #os.system('ssh-keyscan -t rsa %s' % ','.join(host))
-#        ### TODO: use it for known_hosts?  or delete and do it in puppet
-
-#    @cmdln.alias("cons")
-#    @cmdln.alias("console")
-#    def do_console_server(self, subcmd, opts, hostname):
-#        """${cmd_name}: automatically determine hostname (virtual/baremetal)
-#            and attempt to console to the host appropriately
-#
-#        ${cmd_usage}
-#        ${cmd_option_list}
-#        """
-#        ### TODO: fix python invoking ssh ipmi-sol call and xencons features
-#        mothership.console_hostname(self.cfg, hostname)
 
 if __name__ == "__main__":
     # the global config. useful everywhere
@@ -1511,6 +1525,11 @@ if __name__ == "__main__":
 
     # useful global values
     today = datetime.date.today()
+
+    ship = ShipCli(cfg)
+    retval = ship.main()
+    cfg.close_connections()
+    sys.exit(retval)
 
     try:
         ship = ShipCli(cfg)
@@ -1524,4 +1543,3 @@ if __name__ == "__main__":
         sys.exit(1)
     except Exception, e:
         print e
-
