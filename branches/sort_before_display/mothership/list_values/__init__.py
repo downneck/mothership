@@ -48,6 +48,7 @@ def list_all_values(cfg, listing, quiet=False):
             order_by(Network.vlan).\
             distinct().all():
                 vlist.append(result.vlan)
+        vlist = sorted(vlist, key=lambda v:v[1])
         print '\n'.join(map(str, vlist))
     elif listing == 'ip' or listing == 'ips':
         for net in cfg.dbsess.query(Network).order_by(Network.ip):
