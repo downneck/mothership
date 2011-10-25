@@ -152,6 +152,8 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("add_user")
     @cmdln.alias("user_add")
     @cmdln.alias("adduser")
+    @cmdln.option("-c", "--copy_from",
+                  help="copy type, shell, and groups from a user")
     @cmdln.option("-k", "--keyfile",
                   help="ssh2 public key file to read")
     @cmdln.option("-u", "--uid", type="int",
@@ -173,7 +175,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_option_list}
         """
         try:
-            mothership.users.uadd(self.cfg, username, first_name, last_name, keyfile=opts.keyfile, uid=opts.uid, hdir=opts.homedir, shell=opts.shell, email=opts.email, user_type=opts.type)
+            mothership.users.uadd(self.cfg, username, first_name, last_name, copy_from=opts.copy_from, keyfile=opts.keyfile, uid=opts.uid, hdir=opts.homedir, shell=opts.shell, email=opts.email, user_type=opts.type)
         except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
             print "Error: %s" % e
 

@@ -1,3 +1,8 @@
+revision 132 (dk)
+* merge copy_from_user branch to main_trunk, release
+revision 129 (dk)
+* (branch) add a copy_from switch to uadd to allow operators to
+  copy group, shell, and type info from another user
 revision 127 (kl)
 * update the firstboot.d scripts for xenserver kickstart
 revision 121 (dk)

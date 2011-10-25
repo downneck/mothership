@@ -36,7 +36,7 @@ from mothership_models import *
 class UsersError(Exception):
     pass
 
-def uadd(cfg, username, first_name, last_name, keyfile=None, uid=None, hdir=None, shell=None, email=None, user_type=None):
+def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid=None, hdir=None, shell=None, email=None, user_type=None):
     """
     [description]
     for the adding of users.
@@ -48,6 +48,7 @@ def uadd(cfg, username, first_name, last_name, keyfile=None, uid=None, hdir=None
         first_name: user's first name (make something up if it's not a real person)
         last_name: user's last name (see above)
     optional:
+        copy_from: the user to clone type, shell, and groups from
         keyfile: path to a file containing a valid ssh2 public key
         uid: the uid we want to assign this user
         hdir: user's home dir, if different from default
@@ -69,6 +70,9 @@ def uadd(cfg, username, first_name, last_name, keyfile=None, uid=None, hdir=None
         raise UsersError("User exists, exiting!")
     else:
         pass
+
+    if copy_from:
+        copy_user = mothership.validate.v_get_user_obj(cfg, copy_from)
 
     # debugging
     #print username, realm, site_id, first_name, last_name, keyfile, uid, hdir, shell, email, user_type
@@ -93,7 +97,6 @@ def uadd(cfg, username, first_name, last_name, keyfile=None, uid=None, hdir=None
     else:
         ssh_public_key = None
 
-
     # if we're supplied a uid, validate and use it, otherwise find the
     # next available uid and use that
     if uid:
@@ -111,8 +114,11 @@ def uadd(cfg, username, first_name, last_name, keyfile=None, uid=None, hdir=None
         if user_type not in cfg.user_types:
             raise UsersError("Invalid user type, please use one of the following: " + ', '.join(cfg.user_types))
     else:
-        print 'No type supplied, using default: ' + cfg.def_user_type
-        user_type = cfg.def_user_type
+        if copy_user:
+            user_type = copy_user.type
+        else:
+            print 'No type supplied, using default: ' + cfg.def_user_type
+            user_type = cfg.def_user_type
 
     # make sure the user's home dir is set correctly
     if not hdir:
@@ -122,11 +128,14 @@ def uadd(cfg, username, first_name, last_name, keyfile=None, uid=None, hdir=None
 
     # make sure the user's shell is set correctly
     if not shell:
-        shell = cfg.shell
+        if copy_user:
+            shell = copy_user.shell
+        else:
+            shell = cfg.shell
     else:
-        pass
+        pass 
 
-    # make sure the user's shell is set correctly
+    # make sure the user's email is set correctly
     if not email:
         email = username + '@' + cfg.email_domain
     else:
@@ -139,18 +148,56 @@ def uadd(cfg, username, first_name, last_name, keyfile=None, uid=None, hdir=None
     # debugging
     #print u
 
-    print "assigning default groups: %s" % (' '.join(cfg.default_groups))
-    for i in cfg.default_groups:
-        gid = get_gid(cfg, groupname=i+'.'+realm+'.'+site_id)
-        if gid:
-            utog(cfg, username=fqun, groupname=i)
-        else:
-            ans = raw_input('No group found for %s, would you like to create it? (y/n): ' % i)
-            if ans != 'y' and ans != 'Y':
-                raise UsersError("unable to add user %s to default group %s because it doesn't exist" % (username, i))
+    # clone groups from a user to our new user
+    if copy_user:
+        # get group data associated with the user
+        grouplist = []
+        newgrouplist = []
+        for g in cfg.dbsess.query(UserGroupMapping).\
+        filter(UserGroupMapping.users_id==copy_user.id):
+            group = cfg.dbsess.query(Groups).\
+            filter(Groups.id==g.groups_id).first()
+            grouplist.append(group.groupname)
+
+            ng = None
+            ng = cfg.dbsess.query(Groups).\
+                 filter(Groups.groupname==group.groupname).\
+                 filter(Groups.realm==u.realm).\
+                 filter(Groups.site_id==u.site_id).first()
+
+            # if the group does not exist in the new fqn, ask the user if we
+            # should create it. if no, skip adding the new user to it
+            if not ng:
+                ans = raw_input("\"%s\" does not exist in \"%s.%s\", create it? (y/n): " % (group.groupname, realm, site_id))
+                if ans == 'y' or ans == 'Y':
+                    ng = gclone(cfg, group.groupname+'.'+group.realm+'.'+group.site_id, u.realm+'.'+u.site_id)
+                    newgrouplist.append(ng.groupname)
+                else:
+                    print "aborted by user input, skipping group \"%s\"" % group.groupname
             else:
-                gadd(cfg, groupname=i+'.'+realm+'.'+site_id)
+                newgrouplist.append(ng.groupname)
+
+        for groupname in newgrouplist:
+            print 'adding user "%s" to group "%s"' % (u.username+'.'+u.realm+'.'+u.site_id, groupname)
+            try:
+                utog(cfg, u.username+'.'+u.realm+'.'+u.site_id, groupname)
+            except (mothership.validate.ValidationError, UsersError), e:
+                print e
+    else:
+        # if we're not cloning groups from another user, just assign the defaults
+        print "assigning default groups: %s" % (' '.join(cfg.default_groups))
+        for i in cfg.default_groups:
+            gid = get_gid(cfg, groupname=i+'.'+realm+'.'+site_id)
+            if gid:
                 utog(cfg, username=fqun, groupname=i)
+            else:
+                ans = raw_input('No group found for %s, would you like to create it? (y/n): ' % i)
+                if ans != 'y' and ans != 'Y':
+                    raise UsersError("unable to add user %s to default group %s because it doesn't exist" % (username, i))
+                else:
+                    gadd(cfg, groupname=i+'.'+realm+'.'+site_id)
+                    utog(cfg, username=fqun, groupname=i)
+
     # update ldap data
     ldap_master = mothership.ldap.get_master(cfg, realm+'.'+site_id)
     if cfg.ldap_active and ldap_master:
