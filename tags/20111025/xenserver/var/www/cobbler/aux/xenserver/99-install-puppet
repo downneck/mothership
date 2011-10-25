@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -eu
+
+start() {
+    # Set up the necessary yum repos and install puppet
+    cp /etc/firstboot.d/data/xen.repo /etc/yum.repos.d/
+    yum clean all 
+    yum --disablerepo=citrix -y install puppet
+    
+    # Obtain the puppet.conf from the server and authorize this node
+    wget -qO /etc/puppet/puppet.conf 10.10.0.74/cblr/aux/xenserver/puppet.conf
+    /usr/sbin/puppetd -o -v --waitforcert 600
+}
+
+case $1 in
+  start) start ;;
+esac
+
+

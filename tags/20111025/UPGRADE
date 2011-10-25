@@ -1,0 +1,5 @@
+NOTE: if you are updating from a release before 20110913, please run one of
+the following sql scripts (whichever is appropriate for your database) 
+against your database server:
+- mysql: db/mothership_schema_mysql_update_to_rev_78.sql 
+- postgres: mothership_schema_postgres_update_to_rev_78.sql
