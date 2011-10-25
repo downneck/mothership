@@ -1,0 +1,95 @@
+#!/bin/bash
+# XenServer post-install:
+#   Hacked together from the standard ks
+#   WARNING: post-install items are chrooted
+
+
+# define the chroot prefix for use below
+CHROOT=/tmp/root
+
+
+
+# Extract the necessary variables
+server=$( grep DHCPACK /var/log/messages  | tail -1 | awk '{ print $NF }' )
+system=$( hostname )
+system=${system%%.*}
+xenpath=cblr/aux/xenserver
+
+
+### Prepare firstboot scripts for things that cannot be done with chroot
+
+# xenserver script and license file:
+echo "xenserver license" >> $CHROOT/etc/firstboot.d/data/post
+wget "http://$server/$xenpath/99-install-license" \
+    -O $CHROOT/etc/firstboot.d/99-install-license
+wget "http://$server/$xenpath/license.xslic" \
+    -O $CHROOT/etc/firstboot.d/data/license.xslic
+
+# network configuration script and cobbler-retrieved interface scripts
+echo "network config" >> $CHROOT/etc/firstboot.d/data/post
+wget "http://$server/$xenpath/99-configure-network" \
+    -O $CHROOT/etc/firstboot.d/99-configure-network
+# Nov2010: bonding is disabled because it "gunks up" the pool according to AH, configure eth1 instead
+wget "http://$server/cblr/svc/op/template/system/$system/path/_bond0" \
+    -O $CHROOT/etc/firstboot.d/data/configure_bond0.sh
+chmod +x $CHROOT/etc/firstboot.d/data/configure_bond0.sh
+#wget "http://$server/cblr/svc/op/template/system/$system/path/_eth1" \
+#    -O $CHROOT/etc/firstboot.d/data/configure_eth1.sh
+wget "http://$server/cblr/svc/op/template/system/$system/path/_defgw" \
+    -O $CHROOT/etc/firstboot.d/data/default_gateway.sh
+
+# add i386 yum repos and have puppet installed/configured:
+echo "puppet yum" >> $CHROOT/etc/firstboot.d/data/post
+wget "http://$server/$xenpath/99-install-puppet" \
+    -O $CHROOT/etc/firstboot.d/99-install-puppet
+wget "http://$server/cblr/svc/op/yum/system/$system" \
+    -O $CHROOT/etc/firstboot.d/data/xen.repo
+echo "$server puppet" >> $CHROOT/etc/hosts
+
+# all firstboot scripts should be executable
+chmod +x $CHROOT/etc/firstboot.d/99-*
+
+
+# Retrieve the virtual host manager used to dynamically provision virtual hosts
+# using cobbler power template
+wget "http://$server/$xenpath/virtualhost_manager.sh" \
+    -O $CHROOT/usr/local/bin/virtualhost_manager.sh
+chmod +x $CHROOT/usr/local/bin/virtualhost_manager.sh
+
+
+# Configure trusted root login
+echo "root login" >> $CHROOT/etc/firstboot.d/data/post
+mkdir -m700 $CHROOT/root/.ssh
+wget "http://$server/$xenpath/authorized_keys" 
+cp authorized_keys $CHROOT/root/.ssh/
+# End trusted login
+
+# Configure ntp servers
+echo "update ntp" >> $CHROOT/etc/firstboot.d/data/post
+wget "http://$server/$xenpath/ntp.conf" 
+cp ntp.conf $CHROOT/etc/ntp.conf
+# End configure ntp servers
+
+
+# Replace the insecure root password from the answerfile with the DRAC root md5
+echo "root passwd" >> $CHROOT/etc/firstboot.d/data/post
+sed -i -e 's!^root:[^:]*:!root:$1$Br1FsS5/$i3Z5UFPJdB2eV7Vv8vJ3I.:!' $CHROOT/etc/passwd
+
+
+# Lastly, disable pxe (disable netboot) for this host
+echo "netlogin disable" >> $CHROOT/etc/firstboot.d/data/post
+wget -O /dev/null "http://$server/cblr/svc/op/nopxe/system/$system"
+
+
+# Download the join_pool scripts
+echo "pool script" >> $CHROOT/etc/firstboot.d/data/post
+cd $CHROOT/etc/firstboot.d/data
+wget "http://$server/$xenpath/join_pool.sh" 
+wget "http://$server/$xenpath/remove_bond.sh" 
+wget "http://$server/$xenpath/change_mgmt.sh" 
+chmod +x $CHROOT/etc/firstboot.d/data/*.sh
+
+# Backup the post-install script for reference
+echo "clone post" >> $CHROOT/etc/firstboot.d/data/post
+wget "http://$server/$xenpath/post-install" \
+    -O $CHROOT/etc/firstboot.d/data/post-install

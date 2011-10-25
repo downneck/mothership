@@ -1,0 +1,26 @@
+#!/bin/bash
+# This is a Cobbler/Cheetah template to configure default gateway for eth1
+# Why eth1? Because eth1 will be valid regardless of if you create bond0=eth1+eth2 or not
+#
+# Add this to your system with:
+#   cobbler system edit --name=$name --template-files="/var/www/cobbler/aux/xenserver/gateway_eth1.template=/defgw"
+#
+# Parse the template with:
+#   curl http://$server/cblr/svc/op/template/system/$name/path/_defgw
+#
+
+# retrieve cobbler variables
+#set $defroute = $interfaces['eth1']['static_routes'][0].replace(':','/')
+#set $gateway = $defroute.split('/')[-1]
+
+# Use XE to create a persistent change after reboot
+BOND=\${1:-bond0}
+XE=/opt/xensource/bin/xe
+uuid_eth1=\$( \$XE network-list bridge=xenbr1 params=uuid | sed 's/^.*: //' )
+\$XE network-param-set uuid=\$uuid_eth1 other-config:static-routes=$defroute
+uuid_bond=\$( \$XE network-list name-label=\$BOND params=uuid | sed 's/^.*: //' )
+\$XE network-param-set uuid=\$uuid_bond other-config:static-routes=$defroute
+# Use route to add for current use prior to reboot
+route add default gw $gateway
+
+
