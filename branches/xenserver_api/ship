@@ -1416,6 +1416,8 @@ class ShipCli(cmdln.Cmdln):
                   help="shutdown virtual machine")
     @cmdln.option("-s", "--start_vm",
                   help="start virtual machine")
+    @cmdln.option("-v", "--viewpool",
+                  help="view xenserver/pool layout")
     @cmdln.option("-l", "--license",
                   help="check LICENSE xenserver expiration")
     def do_xenserver(self, subcmd, opts):
@@ -1429,6 +1431,9 @@ class ShipCli(cmdln.Cmdln):
         if opts.license:
             xs = mothership.xen.XenServerAPI(opts.license, 'root', xenpw)
             xs.check_license(opts.license)
+        elif opts.viewpool:
+            xs = mothership.xen.XenServerAPI(opts.viewpool, 'root', xenpw)
+            xs.view_layout()
         else:
             cc = mothership.cobbler.CobblerAPI(self.cfg)
             for o in ['install_vm', 'resize_vm', 'start_vm',

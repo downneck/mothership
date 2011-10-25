@@ -53,6 +53,28 @@ class XenServerAPI:
     def byte_unit(self, value, multiplier):
         return int(float(value) * (1024 ** multiplier))
 
+    def view_layout(self):
+        if not self.specs:
+            self.get_specs()
+        s = self.specs  # to make dict expansion smaller
+        for h in s.keys():
+            if h == 'off': continue
+            print '===== %s =====\tfree\ttotal' % s[h]['name']
+            for i in ['cores', 'ram']:
+                print '%20s\t%4d\t%4d' % (i, s[h][i]['free'], s[h][i]['total'])
+            for d in s[h]['disk']:
+                if d.startswith('OpaqueRef'):
+                    print '%20s\t%4d\t%4d' % (s[h]['disk'][d]['name'],
+                        s[h]['disk'][d]['free'], s[h]['disk'][d]['total'])
+            print '  VMs:'
+            for v in s[h]['vm']:
+                print '%20s\t%2d core(s)' % (
+                    s[h]['vm'][v]['name'], s[h]['vm'][v]['cores'])
+        if 'off' in s.keys():
+            print '===== halted VMs ====='
+            for v in s['off']['vm']:
+                print '%20s' % s['off']['vm'][v]['name']
+
     def get_specs(self):
         sys.stderr.write('Retrieving host specifications\n')
         self.get_pool_hosts()
@@ -61,14 +83,26 @@ class XenServerAPI:
         self.get_disk()
 
     def get_pool_hosts(self):
+        vms = []
         for h in self.session.xenapi.host.get_all():
             self.specs[h] = {'name': self.session.xenapi.host.get_hostname(h)}
             self.specs[h]['vm'] = {}
             for vm in self.session.xenapi.host.get_resident_VMs(h):
                 self.specs[h]['vm'][vm] = {}
+                vms.append(vm)
+        all = self.session.xenapi.VM.get_all_records()
+        for vm in all:
+            if vm in vms or all[vm]['is_a_template'] \
+                or all[vm]['is_control_domain']:
+                continue
+            if 'off' not in self.specs.keys():
+                self.specs['off'] = {'name': 'halted'}
+                self.specs['off']['vm'] = {}
+            self.specs['off']['vm'][vm] = {'name': all[vm]['name_label']}
 
     def get_license_expiration(self):
         for h in self.specs.keys():
+            if h == 'off': continue
             self.specs[h]['expires'] = \
                 (int(time.strftime('%s', time.strptime(
                     self.session.xenapi.host.get_license_params(h)['expiry'],
@@ -76,6 +110,7 @@ class XenServerAPI:
 
     def get_ram(self):
         for h in self.specs.keys():
+            if h == 'off': continue
             m = self.session.xenapi.host.get_metrics(h)
             self.specs[h]['ram'] = {
                 'free': self.byte_unit(
@@ -86,6 +121,7 @@ class XenServerAPI:
 
     def get_cores(self):
         for h in self.specs.keys():
+            if h == 'off': continue
             used = 0
             for v in self.specs[h]['vm'].keys():
                 name = self.session.xenapi.VM.get_record(v)['name_label']
@@ -103,6 +139,7 @@ class XenServerAPI:
 
     def get_disk(self):
         for h in self.specs.keys():
+            if h == 'off': continue
             self.specs[h]['disk'] = {}
             self.specs[h]['disk']['free'] = 0
             for p in self.session.xenapi.host.get_PBDs(h):
@@ -125,6 +162,7 @@ class XenServerAPI:
         if not key:
             return
         for h in self.specs.keys():
+            if h == 'off': continue
             if self.specs[h][key]['free'] < need:
                 del self.specs[h]
 
@@ -133,6 +171,7 @@ class XenServerAPI:
             self.get_pool_hosts()
             self.get_license_expiration()
         for h in self.specs.keys():
+            if h == 'off': continue
             if self.specs[h]['name'] == host:
                 print 'License for %s expires in %s day(s)' % (
                     host, self.specs[h]['expires'])
@@ -155,6 +194,7 @@ class XenServerAPI:
         " Checks all disks for available space and returns OpaqueRef, xenhost"
         storage = {}
         for h in self.specs.keys():
+            if h == 'off': continue
             host = self.specs[h]
             for s in host['disk'].keys():
                 if not s.startswith('OpaqueRef'):
@@ -311,12 +351,16 @@ class XenServerAPI:
                 sys.exit(1)
         xenhost, vmhost = self.get_refs(info['hostname'])
         xenapi = self.session.xenapi
-        vdi = xenapi.VBD.get_VDI(xenapi.VM.get_VBDs(vmhost)[0])
+        try:
+            vdi = xenapi.VBD.get_VDI(xenapi.VM.get_VBDs(vmhost)[0])
+        except:
+            vdi = False
         self.shutdown_vm(info, opts)
         sys.stderr.write('Destroying %s VM\n' % info['hostname'])
         xenapi.VM.destroy(vmhost)
-        sys.stderr.write('Destroying %s VDI\n' % info['hostname'])
-        xenapi.VDI.destroy(vdi)
+        if vdi:
+            sys.stderr.write('Destroying %s VDI\n' % info['hostname'])
+            xenapi.VDI.destroy(vdi)
 
     def install_vm(self, info, opts):
         if not self.specs:
