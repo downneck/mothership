@@ -1,0 +1,50 @@
+from bottle import Bottle, run
+
+from shipd import configure
+
+httpship = Bottle()
+
+import bottle
+bottle.debug(True)
+
+shipd = configure.Shipd('/etc/mothership.yaml')
+
+@httpship.route('/')
+def index():
+    redirect('/login')
+
+@httpship.route('/login')
+def do_login():
+    pass
+
+@httpship.route('/tags')
+def tags():
+    from shipd import tags
+    tag = tags.Tag(shipd)
+    return tag.return_tags()
+
+@httpship.route('/tag/:tag')
+def tag(tag):
+    from shipd import tags
+    tags = tags.Tag(shipd)
+    return tags.return_tag(tag)
+
+@httpship.route('/servers')
+def servers():
+    from shipd import servers
+    servers = servers.Server(shipd)
+    return servers.return_servers()
+
+@httpship.route('/server_tag/:tag')
+def servertag(tag):
+    from shipd import servers
+    servers = servers.Server(shipd)
+    return servers.return_servertag(tag)  
+
+@httpship.route('/server/:server')
+def server(server):
+    from shipd import servers
+    servers = servers.Server(shipd)
+    return servers.return_server(server)
+
+run(httpship, host='localhost', port=8080, reloader=True)
