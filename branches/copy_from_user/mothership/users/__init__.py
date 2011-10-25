@@ -73,7 +73,6 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
 
     if copy_from:
         copy_user = mothership.validate.v_get_user_obj(cfg, copy_from)
-        
 
     # debugging
     #print username, realm, site_id, first_name, last_name, keyfile, uid, hdir, shell, email, user_type
@@ -97,7 +96,6 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
             raise UsersError("a problem occurred in unpacking the ssh public key, aborting")
     else:
         ssh_public_key = None
-
 
     # if we're supplied a uid, validate and use it, otherwise find the
     # next available uid and use that
