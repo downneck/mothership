@@ -1385,6 +1385,8 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("list_all")
     @cmdln.option("-q", "--quiet", action="store_true",
                   help="suppress printing of informational header")
+    @cmdln.option("-s", "--sort",
+                  help="use 'id` or 'name` to sort the output")
     def do_list_all_values(self, subcmd, opts, listing):
         """${cmd_name}: list all unique values for specified item
         
@@ -1393,7 +1395,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        mothership.list_values.list_all_values(self.cfg, listing, quiet=opts.quiet)
+        mothership.list_values.list_all_values(self.cfg, listing, quiet=opts.quiet, sort=opts.sort)
 
 
     # manipulate the tag table
