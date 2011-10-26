@@ -922,8 +922,9 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        host,realm,site_id = mothership.get_unqdn(self.cfg, '')
         mothership.generate_ipaddress_range(self.cfg, first,
-            last=opts.last, count=opts.count)
+            last=opts.last, count=opts.count, realm=realm, site_id=site_id)
 
     @cmdln.alias("rm_dns")
     @cmdln.alias("deldns")
@@ -1038,16 +1039,17 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        if os.getuid() > 0:
-            print "You are not privileged enough to expire servers! Please sudo"
-            sys.exit(1)
         cc = mothership.cobbler.CobblerAPI(self.cfg)
         expired = False
         host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
         expired = mothership.expire_server(self.cfg, host, today)
         if expired == 'virtual':
             # for virtual servers, xenserver instance must be purged
-            cc.set_system_power(self.cfg, host, 'off')
+            try:
+                cc.set_system_power(self.cfg, host, 'off')
+            except:
+                sys.stderr.write('Failed to destroy virtual host, aborting\n')
+                sys.exit()
         if expired:
             unqdn = '.'.join([host,realm,site_id])
             # cobbler system MUST be removed upon expire to avoid future duplicate errors
@@ -1103,10 +1105,6 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        # remove root restirction when xenapi replaces ssh xenprovision
-        if os.getuid() > 0:
-            print "You are not privileged enough to run cobbler from ship!"
-            sys.exit(1)
         unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
         host,realm,site_id = unqdn.split('.')
         cc = mothership.cobbler.CobblerAPI(self.cfg)

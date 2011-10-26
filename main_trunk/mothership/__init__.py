@@ -276,8 +276,8 @@ def generate_ipaddress_range(cfg, first, count=None, last=None, realm=None, site
         vlan, netmask, interface = network_mapper.remap(cfg,
             ['vlan','mask','nic'], ip=ip, siteid=site_id)
         mac = network_mapper.ip_to_mac(ip)
-        net_info = build_model_dict(Network('','','',''), opts, locals())
-        update_table_network(cfg, net_info)
+        update_table_network(cfg, { 'ip':ip, 'realm':realm, 'site_id':site_id,
+            'mac':mac, 'vlan':vlan, 'netmask':netmask, 'interface':interface })
 
 def import_multiple_table_info(cfg, info, when):
     sid = None
@@ -508,7 +508,6 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
             iplist.append(retrieve_next_virtual_ip(cfg, v, autogen=True))
 
         # build dict for server insert
-        virtual = False
         svr_info = build_model_dict(Server(''), opts, locals(), nullvar=True)
         server_id, opts.hw_tag = update_table_server(cfg, svr_info, when)
 
@@ -676,7 +675,10 @@ def retrieve_network_row_by_ifname(cfg, ifname, filter):
     data = cfg.dbsess.query(Network).filter(Network.interface==ifname)
     for k in filter.keys():
         exec 'data = data.filter(Network.%s==filter["%s"])' % (k,k)
-    return data.one()
+    if data.count() > 0:
+        return data.one()
+    else:
+        return False
 
 def retrieve_network_rows(cfg, hwtag=None, serverid=None):
     data = cfg.dbsess.query(Network)
@@ -850,7 +852,7 @@ def update_table_network(cfg, info, noinsert=False):
         if not data and key in info:
             data = retrieve_network_row_by_ifname(cfg,
                 info['interface'], filter={key:info[key]})
-    if not data.id:
+    if not data:
         if noinsert:
             return
         # insert if it does not exist and noinsert=False
