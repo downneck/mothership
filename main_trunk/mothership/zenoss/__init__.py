@@ -140,6 +140,7 @@ class ZenossAPI:
         # set state/tag first, in case host already exists
         self.set_host_state(unqdn)
         self.set_host_tag(unqdn, tag=tag, arch=arch)
+        self.add_tag(tag=tag, arch=arch)
         # then proceed to addDevice, for new hosts
         data = dict(deviceName=unqdn, deviceClass=arch+tag, productionState=1000)
         return self._router_request('DeviceRouter', 'addDevice', [data])
