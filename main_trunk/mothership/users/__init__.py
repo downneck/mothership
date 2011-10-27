@@ -73,7 +73,9 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
 
     if copy_from:
         copy_user = mothership.validate.v_get_user_obj(cfg, copy_from)
-
+    else:
+        copy_user = None
+ 
     # debugging
     #print username, realm, site_id, first_name, last_name, keyfile, uid, hdir, shell, email, user_type
 
