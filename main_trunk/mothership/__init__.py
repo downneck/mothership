@@ -894,26 +894,31 @@ def walk_snmp_dict_oid_match(cfg, snmp_dict, oid, inkey, outkey, debug=False):
     if not snmp_dict['switch']: snmp_dict['switch'] = info['switch']
     return snmp_dict
 
+def walk_snmp_for_network(cfg, ifobj, debug=False):
+    if not ifobj.vlan:
+        sys.stderr.write(' interface: %s (empty vlan)\n' % ifobj.interface)
+        return False
+    # pinging the interface first, helps with the mac snmpwalk
+    subprocess.Popen(['ping', '-qc1', ifobj.ip],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    snmp_dict = walk_snmp_for_mac_port_name(cfg, ifobj.vlan, ifobj.mac, debug=debug)
+    snmp_dict['nic'] = ifobj.interface
+    return snmp_dict
+
 def walk_snmp_for_ifname(cfg, hostname, ifname=None, debug=False):
     print '\n  hostname: %s' % hostname
     data = []
     if ifname:
-        i = retrieve_network_row_by_ifname(cfg, ifname,
-            filter={'server_id':retrieve_server_row(cfg, hostname).id})
-        snmp_dict = walk_snmp_for_mac_port_name(cfg, i.vlan, i.mac, debug=debug)
-        snmp_dict['nic'] = ifname
-        data.append(snmp_dict)
-        # pinging the interface first, helps with the mac snmpwalk
-        subprocess.Popen(['ping', '-qc1', i.ip],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        snmp_dict = walk_snmp_for_network(cfg, retrieve_network_row_by_ifname(
+            cfg, ifname, serverid=retrieve_server_row(cfg, hostname).id), debug)
+        if snmp_dict:
+            data.append(snmp_dict)
     else:
         for i in retrieve_network_rows(cfg,
             serverid=retrieve_server_row(cfg, hostname).id):
-            snmp_dict = walk_snmp_for_mac_port_name(cfg, i.vlan, i.mac, debug=debug)
-            snmp_dict['nic'] = i.interface
-            data.append(snmp_dict)
-            subprocess.Popen(['ping', '-qc1', i.ip],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            snmp_dict = walk_snmp_for_network(cfg, i,  debug=debug)
+            if snmp_dict:
+                data.append(snmp_dict)
     return data
 
 def walk_snmp_for_mac_port_list(cfg, vlist, snmplist=[]):

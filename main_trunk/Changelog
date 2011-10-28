@@ -1,5 +1,7 @@
+revision 148 (kl)
+* fix snmp logic for empty vlans
 revision 147 (dk)
-* fixing a bug in variable assignment for copy_user 
+* fixing a bug in variable assignment for copy_user
 revision 141 (kl)
 * merge xenserver_api branch to main_trunk
 revision 132 (dk)
