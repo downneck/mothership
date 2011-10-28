@@ -1,0 +1,8 @@
+# this section is for setting up sudoers locally using puppet
+# ie. outside mothership
+#
+# the main inspiration for this is the case where LDAP goes down
+# and you need local sudoers to fix it
+#
+# normal sudoers entry rules apply:
+# jqpublic ALL=(ALL) NOPASSWD:ALL
