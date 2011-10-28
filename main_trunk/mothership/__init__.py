@@ -899,8 +899,9 @@ def walk_snmp_for_network(cfg, ifobj, debug=False):
         sys.stderr.write(' interface: %s (empty vlan)\n' % ifobj.interface)
         return False
     # pinging the interface first, helps with the mac snmpwalk
-    subprocess.Popen(['ping', '-qc1', ifobj.ip],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if ifobj.ip:
+        subprocess.Popen(['ping', '-qc1', ifobj.ip],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     snmp_dict = walk_snmp_for_mac_port_name(cfg, ifobj.vlan, ifobj.mac, debug=debug)
     snmp_dict['nic'] = ifobj.interface
     return snmp_dict

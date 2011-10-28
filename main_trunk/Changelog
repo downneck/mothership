@@ -1,4 +1,4 @@
-revision 148 (kl)
+revision 149 (kl)
 * fix snmp logic for empty vlans
 revision 147 (dk)
 * fixing a bug in variable assignment for copy_user
