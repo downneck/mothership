@@ -20,7 +20,7 @@ supports the listing of various types of DB data
 from sqlalchemy import or_, desc, MetaData
 from mothership_models import *
 
-def list_all_values(cfg, listing, quiet=False):
+def list_all_values(cfg, listing, quiet=False, sort=False):
     """
     [description]
     lists all values of a given type 
@@ -48,23 +48,58 @@ def list_all_values(cfg, listing, quiet=False):
             order_by(Network.vlan).\
             distinct().all():
                 vlist.append(result.vlan)
-        print '\n'.join(map(str, vlist))
+        return vlist
+        # print '\n'.join(map(str, vlist))
     elif listing == 'ip' or listing == 'ips':
         for net in cfg.dbsess.query(Network).order_by(Network.ip):
+            ips = []
             if net.ip != '0.0.0.0' and net.ip != None:
-                print net.ip
+                ips.append(net.ip)
+            return ips
+                # print net.ip
     elif listing == 'tag' or listing == 'tags':
+        tags = []
         for tag in cfg.dbsess.query(Tag):
-          print tag.name
+          tags.append(tag.name)
+	tags = sorted(tags)
+        return tags
+        # for tag in tags:
+	#   print tag
     elif listing == 'group' or listing == 'groups':
-        if not quiet:
-            print "GID, Group Name, Location"
-            print "--------------------------------------------------"
-        for g in cfg.dbsess.query(Groups):
-            print "%s %s %s.%s" % (g.gid, g.groupname, g.realm, g.site_id)
+        groups = []
+	for g in cfg.dbsess.query(Groups):
+            groupid = []
+            groupid.append(g.gid)
+            groupid.append(g.groupname)
+            groupid.append(g.realm)
+            groupid.append(g.site_id)
+	    groups.append(groupid)
+        return groups
+	# if sort == 'id':
+	#   groups = sorted(groups, key=lambda group:group[0])
+        # elif sort == 'name':
+	#   groups = sorted(groups, key=lambda group:group[1])
+	# if not quiet:
+        #     print "GID, Group Name, Location"
+        #     print "--------------------------------------------------"
+        # for g in groups:
+    	#     print "%-5s\t%-26s\t%s.%s" % (g[0], g[1], g[2], g[3]) 
     elif listing == 'user' or listing == 'users':
-        if not quiet:
-            print "UID, User Name, Location"
-            print "--------------------------------------------------"
+        users = []
         for u in cfg.dbsess.query(Users):
-            print "%s %s %s.%s" % (u.uid, u.username, u.realm, u.site_id)
+            user = []
+            user.append(u.uid)
+            user.append(u.username)
+            user.append(u.realm)
+            user.append(u.site_id)
+            users.append(user)
+        return users
+        # if not quiet:
+        #     print "UID, User Name, Location"
+        #     print "--------------------------------------------------"
+        # if sort == 'id':
+	#     users = sorted(users, key=lambda user:user[0])
+	# elif sort == 'name':
+	#     users = sorted(users, key=lambda user:user[1])
+        # for u in users:    
+	#     print "%-5s\t%-26s\t%s.%s" % (u[0], u[1], u[2], u[3])
