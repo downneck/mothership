@@ -13,6 +13,32 @@ class Tag(object):
             tags['tag'].append(tag[0])
         return tags
 
+    def return_filtered_tags(self,filter=None):
+        q = self.tags.select().execute()
+        res = q.fetchall()
+        tags = {'tag' : [] }
+        for tag in res:
+            if filter:
+                try:
+                    if tag[0].index(filter) or tag[0].startswith(filter):
+                        tags['tag'].append(tag[0])
+                except:
+                    continue
+        return tags
+
+    def return_excluded_tags(self,exclude=None):
+        q = self.tags.select().execute()
+        res = q.fetchall()
+        tags = {'tag' : [] }
+        for tag in res:
+            if exclude:
+                try:
+                    if tag[0].index(exclude) or tag[0].startswith(exclude):
+                        continue
+                except ValueError:
+                    tags['tag'].append(tag[0])
+        return tags
+
     def return_tag(self, tag):
         class TG(object):
             pass

@@ -29,6 +29,18 @@ def tag(tag):
     tags = tags.Tag(shipd)
     return tags.return_tag(tag)
 
+@httpship.route('/tags/filter_by/:tag')
+def tag(tag):
+    from shipd import tags
+    tags = tags.Tag(shipd)
+    return tags.return_filtered_tags(tag)
+
+@httpship.route('/tags/exclude/:tag')
+def tag(tag):
+    from shipd import tags
+    tags = tags.Tag(shipd)
+    return tags.return_excluded_tags(exclude=tag)
+
 @httpship.route('/servers')
 def servers():
     from shipd import servers
