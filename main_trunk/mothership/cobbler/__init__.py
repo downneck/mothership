@@ -212,7 +212,7 @@ class CobblerAPI:
                 del x['bond_options']
 
             # modify system interface 'k'
-            if cfg.coblive:
+            if cfg.coblive and host_dict['interfaces'][k]['mac']:
                 try:
                     cfg.remote.modify_system(handle, 'modify_interface', 
                         self.append_value_to_keyname(cfg, transkey(host_dict['interfaces'][k],
