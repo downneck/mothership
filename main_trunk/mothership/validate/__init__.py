@@ -117,10 +117,8 @@ def v_ssh2_pubkey(cfg, key):
     DSA_KEY_ID="ssh-dss"
     RSA_KEY_ID="ssh-rsa"
 
-    if DSA_KEY_ID in key:
-        k = key.split(DSA_KEY_ID)
-    elif RSA_KEY_ID in key:
-        k = key.split(RSA_KEY_ID)
+    if re.match(DSA_KEY_ID+'|'+RSA_KEY_ID, key):
+        k = key.split(' ')
     else:
         return False
 
