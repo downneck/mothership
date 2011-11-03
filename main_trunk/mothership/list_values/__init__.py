@@ -36,7 +36,7 @@ def list_all_values(cfg, listing, quiet=False):
     returns an integer representing the next available UID
     """
 
-    avail = [ 'ip', 'ips', 'vlan', 'vlans', 'tag', 'tags', 'group', 'groups', 'user', 'users' ]
+    avail = [ 'available_hardware', 'free_hardware', 'ip', 'ips', 'vlan', 'vlans', 'tag', 'tags', 'group', 'groups', 'user', 'users' ]
     if listing not in avail:
         print 'Unsupported listing for: %s' % listing
         print 'Please specify one of the following:\n\t%s' % '\n\t'.join(avail)
@@ -68,3 +68,20 @@ def list_all_values(cfg, listing, quiet=False):
             print "--------------------------------------------------"
         for u in cfg.dbsess.query(Users):
             print "%s %s %s.%s" % (u.uid, u.username, u.realm, u.site_id)
+    elif listing == 'available_hardware' or listing == 'free_hardware':
+        # setting up some vars
+        all_hw = []
+        alloc_hw = []
+        unalloc_hw = []
+        # fetch list of all hardware tags
+        for h in cfg.dbsess.query(Hardware):
+            all_hw.append(h.hw_tag)
+        # fetch list of all hardware tags assigned to servers
+        for s in cfg.dbsess.query(Server):
+            alloc_hw.append(s.hw_tag)
+        # diff 'em
+        unalloc_hw = [item for item in all_hw if not item in alloc_hw]
+        # display the diff
+        if not quiet:
+            print "unallocated hardware tags:"
+        print '\n'.join(unalloc_hw)
