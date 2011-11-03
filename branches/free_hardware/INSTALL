@@ -1,0 +1,304 @@
+Welcome to Mothership!
+==================
+
+Mothership is a  utilitiy designed to ease the burden of everyday
+system administration tasks.  Below is everything you need to install
+mothership.
+
+TABLE OF CONTENTS
+=====================
+1. INSTALLING CORE DEPENDENCIES
+    A. Python
+    B. Checking For Core Dependencies
+    C. Python Libraries
+    D. Cobbler
+2. INSTALL THE DATABASE ENGINE
+    A. Postgresql
+    B. MySQL
+3. INITIALIZING THE DATABASE
+    A. Postgresql
+    B. MySQL
+4. INSTALL SYSTEM MANAGEMENT TOOL
+    A. Puppet
+5. CONFIGURATION TASKS
+    A. Cobbler
+    B. Mothership
+6. INSTALLING OPTIONAL SUBCOMPONENTS
+    A. Zabbix API Support
+
+
+1. CORE DEPENDENCIES
+=========================
+
+A. Python
+
+Mothership is written in Python and thus, requires Python to be installed.
+All other tasks assume that you have Python installed.  To install the latest
+version of python you can try:
+
+CentOS 5.x: 
+host#> sudo yum install python
+
+
+OS X:
+Ensure you have Xcode and Macports installed.  The following will setup
+mothership core dependencies using Python 2.6. This setup assumes
+that you have both Xcode and Macports installed.
+
+To install Xcode please see the apple developer site here: 
+http://http://developer.apple.com/technologies/tools/xcode.html
+
+To install Macports see the Macports project page here:
+http://http://www.macports.org/
+
+Once you have Macports and Xcode installed, you can do the following:
+host#> sudo port install python26
+host#> sudo port install python_select  
+(python_select allows the override of the default python installation in OSX)
+
+
+B. Checking for Core Dependencies
+
+Mothership provides a python script that checks for the core dependencies,
+depcheck.py. This script is located in the directory you unpacked the 
+mothership files into.  To run the script you can do:
+
+host#> python depchecker.py
+
+This script will check if the dependencies necessary for mothership are
+installed on your system.  If any are not installed, the script will note which
+dependencies are not present.  You can skip to the subsection below for
+information on how to install those dependencies.
+
+
+C. Python Libraries
+
+Mothership requires the following python libraries to be installed.
+
+* sqlalchemy0.5
+* psycopg2 
+* setuptools
+* pip (to install cmdln)
+* cmdln
+* python-ldap (optional, install this if you plan on using ldap)
+* python-mysqldb (for mysql, installs as a separate package on some OSes, ymmv)
+
+To install the latest version of these you can try: 
+
+CentOS 5.x:
+host#> sudo yum install python-sqlalchemy0.5
+host#> sudo yum install python-psycopg2
+host#> sudo yum install python-setuptools
+host#> sudo yum install python-pip
+host#> sudo pip-python install cmdln
+host#> sudo yum install python-ldap
+
+OS X:
+host#> sudo port install py26-yaml
+host#> sudo port install py26-sqlalchemy
+host#> sudo port install py26-pip
+host#> sudo port install py26-psycopg2
+host#> sudo pip-2.6 install cmdln
+
+
+D. Cobbler
+
+Cobbler is an automation framework that aids in system installations. For more
+information go to the Cobbler project site here:
+http://https://fedorahosted.org/cobbler/
+
+To install the latest version you can try:
+
+CentOS 5.x:
+host#> sudo yum install cobbler
+
+(Note: This will install the latest available rpm.  If you would like to
+install cobbler from source, or just want more information on configuration
+options please refer to the project page above.)
+
+OS X:
+To install cobbler for OS X, please refer to the documentation on the project
+page above.
+
+
+
+2. INSTALL THE DATABASE ENGINE
+
+Mothership does not need its own database engine installation.
+If you already have postgresql or mysql installed, feel free to skip
+this section.
+
+After the DB engine install, you will have to import the mothership database 
+schema into your database, which is covered below in section 3.
+
+A. Postgresql
+
+  For a complete installation guide to PostgreSQL, you can go to the project
+  page at http://www.postgresql.org or refer to your OS vendor documentation
+
+  If you do not have postgresql installed at all, and wish to just 
+  get up and running quickly, you can do the following:
+
+  CentOS 5.3:
+  host#> sudo yum install postgresql
+  host#> sudo yum install postgresql-server
+
+  (NOTE: This is a very minimal install, but still useful for testing.  
+  If you are planning on using mothership and postgresql in a production 
+  environment, it might be best to refer to the postgresql documentation 
+  listed above.)
+
+  OS X:
+  Postgresql currently maintains a binary installer for OS X.  It can be found
+  here:
+  http://http://www.postgresql.org/download/
+
+
+B. MySQL
+
+  For a complete installation guide to MySQL, you can go to the project page
+  at http://dev.mysql.com or refer to your OS vendor documentation
+
+  CentOS 5.3:
+  host#> sudo yum install mysql
+  host#> sudo yum install mysql-server
+
+  Ubuntu, Debian:
+  host#> sudo aptitude install mysql 
+  host#> sudo aptitude install mysql-server
+
+
+3. INITIALIZING THE DATABASE 
+Both the mothership database and its schema need to be added.
+
+A. Postgresql
+
+  1. Create a database named 'mothership' in postgresql:
+  host#> /usr/bin/createdb mothership
+
+  2. Create a postgresql user:
+  host#> /usr/bin/createuser mothership
+
+  3. Load the schema into the mothership database:
+  host#> /usr/bin/psql -U mothership mothership < /<mothership_base_dir>/db/mothership_schema_postgres.sql
+
+B. MySQL
+  
+  All instructions assume you've set a mysql root user password
+  (and that you remember it)
+
+  1. Create a database named 'mothership' in mysql:
+  host#> mysqladmin -u root -p create mothership
+
+  2. Create a mysql user:
+  host#> mysql -u root -p mysql
+  Enter password:
+  mysql> GRANT ALL ON mothership.* to 'mothership'@'localhost' IDENTIFIED BY 'mypassword';  
+
+  Add additional GRANT statements to allow access to the mothership database
+  from other hosts as needed
+
+  3. Load the schema into the database:
+  host#> mysql -u mothership -p mothership < /<mothership_base_dir>/db/mothership_schema_mysql.sql
+
+
+4. INSTALL SYSTEM MANAGEMENT TOOL
+Mothership functions best when used in conjunction with a system managment
+tool.  This allows the system managment tool to take advanteage of the tags 
+assigned to systems in mothership, and the administrator to create rulesets
+that automatically configure systems based on these tags.
+
+Currently, the only system managment tool available to use with mothership
+is puppet. When plugins for other system management tools are created, we will
+add setup instructions accordingly.
+
+A. Installing and Configuring Puppet
+
+******PLACEHOLDER FOR PUPPET DOCUMENTATION*******
+
+Of important note when configuring puppet: 
+puppet reserves the keyword "tags" internally so we use the variable "mtags"
+both in the puppet module of mothership and in the puppet repository when 
+accessing mothership's tags from puppet as a variable.
+
+for an example, see: puppet_skeleton/modules/openssh/templates/sshd_config.erb
+and its attendant .pp file: puppet_skeleton/modules/openssh/manifests/server_config.pp
+
+
+5. CONFIGURATION TASKS
+
+This section describes the tasks needed to preform a basic configuration of
+mothership.
+
+
+A. Cobbler
+
+  The following Settings should be configured in cobblers configuration file,
+  usually located in /etc/cobbler/settings:
+
+  * manage_dhcp - Set this value to 1
+  * manage_dns - Set this value to 1
+  * next_server - Set this to the IP address of mothership
+  * server - Set this to the IP address of mothership
+  * manage_forward_zones - Add dns zones to be managed here
+     ex. If you have DNS zone named 'example.com' then you would
+     add an entry named 'example.com'
+  * manage_reverse_zones - Add reverse DNS zones to be managed here
+     ex. If you have an IP subnet 192.168.1.0/24 then you would add
+     an entry named '192.168.1'
+
+B. Mothership
+
+  A sample configuration file is included in the mothership base directory,
+  called "mothership.yaml.sample".  This can be used as a baseline to 
+  create the configuration file for your site.
+
+  By default mothership looks for its configuration file as:
+  /etc/mothership.yaml
+
+  The configuration file is ment to be self documenting. You should take a 
+  look through this file and adjust any of the configuration settings 
+  you need for your installation.
+
+
+
+6. INSTALLING OPTIONAL SUBCOMPONENTS
+
+The components below add functionality to mothership, but are not required for
+a basic mothership installation.  If you do not require the functionality of a
+subcomponent, you can safely skip its installation.
+
+A. Zabbix
+
+  This subcomponent provides a way to interface with the Zabbix monitoring
+  solution.  By default, the use of this subcomponent is turned off in
+  mothership, so that this subcomponent not required. For more information on
+  installing and configuring Zabbix itself, consult the Zabbix web site here:
+  http://www.zabbix.com/
+
+  To install The Zabix module in mothership, you do the following:
+
+  1. Install the Pyton hashlib library
+
+  CentOS 5.x:
+  host#> sudo yum install python-hashlib
+
+  OS X:
+  hashlib should be included by default in python 2.6.  For information on
+  installing python26, please see the OS X python section above.
+
+
+  2. Download and install the Zabbix API
+  The Zabbix API suite is not maintained or provided by mothership.  It is
+  provided and maintained by Zabbix. The current version can be downloaded here:
+  https://www.zulukilo.com/svn/pub/zabbix-api/trunk/zabbix_api2.py
+
+  That file should be copied into the mothership base directory as
+  "zabbix_api.py"  Permissions should be set to "-rw-rw-r--" (664).
+
+  3. Enable zabbix integration in mothership.yaml config
+  Edit your mothership configuration file. (in either /etc/mothership.yaml for
+  global configurations, or ~/.mothership.yaml for local user configurations)
+  In the section under "Zabbix Options" set:
+
+  active:true
