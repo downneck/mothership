@@ -59,7 +59,7 @@ class Configure:
             engine = ''
             # PostgreSQL
             if dbconfig['engine'] == 'postgresql':
-                if dbconfif['socket'] == '1':
+                if dbconfig['socket'] == '1':
                     dbtuble =  (dbconfig['dbname'], dbconfig['user'], dbconfig['password'])
                     engine = sqlalchemy.create_engine("postgres:/%s?user=%s&password=%s/")
                 else:
