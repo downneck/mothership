@@ -59,4 +59,4 @@ def server(server):
     servers = servers.Server(shipd)
     return servers.return_server(server)
 
-run(httpship, host='localhost', port=8080, reloader=True)
+run(httpship, host='127.0.0.1', port=8080, reloader=True)
