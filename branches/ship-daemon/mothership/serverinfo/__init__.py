@@ -21,7 +21,7 @@
 import sys
 import mothership
 import mothership.kv
-from mothership_models import *
+from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
 class ServerInfoError(Exception):

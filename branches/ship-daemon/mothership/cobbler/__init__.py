@@ -18,7 +18,7 @@ cobbler functionality
 import os
 import re
 import types
-import network_mapper
+import mothership.network_mapper
 import subprocess
 from transkey import transkey
 from xmlrpclib import Fault

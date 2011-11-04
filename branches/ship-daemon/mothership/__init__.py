@@ -17,7 +17,7 @@
    be easily encapsulated within the sqlalchemy models
 """
 # imports
-import network_mapper
+import mothership.network_mapper
 import os
 import re
 import subprocess
@@ -29,7 +29,7 @@ import mothership.list_values
 import mothership.users
 import mothership.validate
 
-from mothership_models import *
+from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
 

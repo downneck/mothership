@@ -18,7 +18,7 @@ supports the listing of various types of DB data
 # imports 
 
 from sqlalchemy import or_, desc, MetaData
-from mothership_models import *
+from mothership.mothership_models import *
 
 def list_all_values(cfg, listing, quiet=False, sort=False):
     """

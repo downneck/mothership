@@ -20,9 +20,9 @@ with zeus zxtm clusters
 
 # imports
 import mothership
-import network_mapper
+import mothership.network_mapper
 from sqlalchemy import or_, desc, MetaData
-from mothership_models import *
+from mothership.mothership_models import *
 
 def list_zeus_cluster_records_via_ip(cfg, ip, port=False):
     """
