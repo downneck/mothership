@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+mothership's ORM
+"""
 
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Boolean, Date
 from sqlalchemy.ext.declarative import declarative_base
@@ -35,6 +38,9 @@ class KV(Base):
         self.realm = realm
         self.site_id = site_id
 
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
     def __repr__(self):
         namespace = [self.hostname, self.realm, self.site_id]
         namespace = filter(None, namespace)
@@ -49,6 +55,9 @@ class Tag(Base):
     stop_port = Column(Integer)
     id = Column(Integer, primary_key=True)
     security_level = Column(Integer)
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
 
     def __init__(self, name, start_port, stop_port, security_level):
         self.name = name
@@ -79,6 +88,9 @@ class Server(Base):
     cost = Column(Integer)
     active = Column(Boolean)
 
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
     def __init__(self, hostname):
         self.name = hostname
 
@@ -108,6 +120,9 @@ class ServerGraveyard(Base):
     security_level = Column(Integer)
     cost = Column(Integer)
 
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
     def __init__(self, hostname):
         self.name = hostname
 
@@ -136,6 +151,9 @@ class Hardware(Base):
     cpu_speed  = Column(String)
     rma = Column(Boolean)
 
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
     def __init__(self, hw_tag):
         self.hw_tag = hw_tag
 
@@ -151,6 +169,9 @@ class DnsAddendum(Base):
     host = Column(String)
     target = Column(String)
     record_type = Column(String)
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
 
     def __init__(self, host, record_type, realm, site_id, target):
         self.site_id = hw_tag
@@ -180,7 +201,10 @@ class Network(Base):
     static_route = Column(String)   # static_route is actually an inet in PG
     public_ip = Column(String)      # public_ip is actually an inet in PG
     hw_tag = Column(String)
- 
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
     def __init__(self, ip, interface, netmask, mac):
         self.ip = ip
         self.interface = interface
@@ -200,7 +224,10 @@ class AppInstance(Base):
     tag = Column(String)
     started_at = Column(Date)
     scms_version_id = Column(Integer)
-    
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
     def __init__(self, ip, port, tag):
         self.ip = ip
         self.port = port
@@ -215,7 +242,10 @@ class SystemServices(Base):
     name = Column(String, primary_key=True)
     ip = Column(String)             # ip is actually an inet in PG
     server_id = Column(Integer, ForeignKey(Server.id))
-    
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
     def __init__(self, ip, name):
         self.ip = ip
         self.name = name
@@ -230,7 +260,10 @@ class XenPools(Base):
     pool_id = Column(Integer, primary_key=True)
     server_id = Column(Integer, ForeignKey(Server.id))
     server = relation(Server)
-    
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
     def __init__(self, realm, pool_id):
         self.realm = realm
         self.pool_id = pool_id
@@ -248,7 +281,10 @@ class ZeusCluster(Base):
     public_ip = Column(String)      # public_ip is actually an inet in PG
     port = Column(Integer)
     tg_name = Column(String)
-    
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
     def __init__(self, ip, cluster_name, vhost):
         self.cluster_name = cluster_name
         self.vhost = vhost
@@ -290,6 +326,10 @@ class Users(Base):
         self.email = email
         self.active = active
 
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
+
     def __repr__(self):
         return "<Users('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')>" % (self.first_name, self.last_name, self.ssh_public_key, self.username, self.site_id, self.realm, self.uid, self.type, self.hdir, self.shell, self.email, self.active)
 
@@ -303,6 +343,9 @@ class Groups(Base):
     realm = Column(String, primary_key=True)
     gid = Column(Integer)
     id = Column(Integer, primary_key=True)
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
 
     def __init__(self, description, sudo_cmds, groupname, site_id, realm, gid):
         self.description = description
@@ -321,6 +364,9 @@ class UserGroupMapping(Base):
     groups_id = Column(Integer, ForeignKey(Groups.id))
     users_id = Column(Integer, ForeignKey(Users.id))
     id = Column(Integer, primary_key=True)
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
 
     def __init__(self, groups_id, users_id):
         self.groups_id = groups_id
