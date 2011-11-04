@@ -9,5 +9,5 @@ setup(name='Mothership',
       author_email='sa@gilt.com',
       url='http://mothership.sf.net',
       packages=find_packages(),
-      scripts=['ship']
+      scripts=['ship', 'ship-daemon']
      )

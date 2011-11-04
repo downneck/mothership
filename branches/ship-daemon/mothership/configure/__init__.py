@@ -24,6 +24,7 @@ import yaml
 # Extra modules
 import xmlrpclib
 import sqlalchemy
+from sqlalchemy import MetaData
 
 # our error class
 class ConfigureError(Exception):
@@ -75,6 +76,9 @@ class Configure:
             Session = sqlalchemy.orm.sessionmaker(bind=engine)
             dbsession = Session()
             self.dbconfig = dbconfig
+            self.metadata = MetaData()
+            self.metadata.bind = engine
+            self.metadata.create_all()
             self.dbconn = engine.connect()
             self.dbengine = engine
             self.dbsess = dbsession
