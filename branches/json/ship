@@ -695,6 +695,8 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("ls_servers")
     @cmdln.option("-c", "--config",
                   help="use db config file")
+    @cmdln.option("-j", "--json", action="store_true",
+                  help="return output in JSON format")
     @cmdln.option("-v", "--verbose", action="store_true",
                   help="print verbose output")
     @cmdln.option("-V", "--vlan", type="int",
@@ -730,33 +732,33 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_option_list}
         """
         if opts.vlan:
-            list_servers(self.cfg, listby='vlan', lookfor=opts.vlan)
+            list_servers(self.cfg, listby='vlan', lookfor=opts.vlan, json=opts.json)
         elif opts.site_id:
-            list_servers(self.cfg, listby='site_id', lookfor=opts.site_id)
+            list_servers(self.cfg, listby='site_id', lookfor=opts.site_id, json=opts.json)
         elif opts.tag:
-            list_servers(self.cfg, listby='tag', lookfor=opts.tag)
+            list_servers(self.cfg, listby='tag', lookfor=opts.tag, json=opts.json)
         elif opts.realm:
-            list_servers(self.cfg, listby='realm', lookfor=opts.realm)
+            list_servers(self.cfg, listby='realm', lookfor=opts.realm, json=opts.json)
         elif opts.manufacturer:
-            list_servers(self.cfg, listby='manufacturer', lookfor=opts.manufacturer)
+            list_servers(self.cfg, listby='manufacturer', lookfor=opts.manufacturer, json=opts.json)
         elif opts.model:
-            list_servers(self.cfg, listby='model', lookfor=opts.model)
+            list_servers(self.cfg, listby='model', lookfor=opts.model, json=opts.json)
         elif opts.cores:
-            list_servers(self.cfg, listby='cores', lookfor=opts.cores)
+            list_servers(self.cfg, listby='cores', lookfor=opts.cores, json=opts.json)
         elif opts.ram:
-            list_servers(self.cfg, listby='ram', lookfor=opts.ram)
+            list_servers(self.cfg, listby='ram', lookfor=opts.ram, json=opts.json)
         elif opts.disk:
-            list_servers(self.cfg, listby='disk', lookfor=opts.disk)
+            list_servers(self.cfg, listby='disk', lookfor=opts.disk, json=opts.json)
         elif opts.hw_tag:
-            list_servers(self.cfg, listby='hw_tag', lookfor=opts.hw_tag)
+            list_servers(self.cfg, listby='hw_tag', lookfor=opts.hw_tag, json=opts.json)
         elif opts.virtual:
-            list_servers(self.cfg, listby='virtual')
+            list_servers(self.cfg, listby='virtual', json=opts.json)
         elif opts.physical:
-            list_servers(self.cfg, listby='physical')
+            list_servers(self.cfg, listby='physical', json=opts.json)
         elif opts.name:
-            list_servers(self.cfg, listby='name', lookfor=opts.name)
+            list_servers(self.cfg, listby='name', lookfor=opts.name, json=opts.json)
         else:
-            list_servers(self.cfg)
+            list_servers(self.cfg, json=opts.json)
 
     @cmdln.alias("sinfo")
     @cmdln.alias("si")

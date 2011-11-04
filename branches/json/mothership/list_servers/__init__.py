@@ -24,52 +24,73 @@ import mothership.kv
 from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
+# for >=2.6 use json, >2.6 use simplejson
+try:
+    import json as myjson
+except ImportError:
+    import simplejson as myjson
+
+
+class lssError(Exception):
+        pass
+
 # list_servers takes a parameter to search by and, optionally a tag
 # then prints all servers it finds in the db
-def list_servers(cfg, listby=None, lookfor=None):
+def list_servers(cfg, listby=None, lookfor=None, json=None):
     """
     [description]
-    prints a list of all servers found for a given parameter 
+    prints a list of all servers found for a given parameter
 
     [parameter info]
     required:
         cfg: the config object. useful everywhere
         listby: what parameter to list by (vlan, site_id, etc.)
-        lookfor: filter to apply to the parameter 
-        (ie. to look in vlan 105, listby=vlan lookfor=105) 
+        lookfor: filter to apply to the parameter
+        (ie. to look in vlan 105, listby=vlan lookfor=105)
 
     [return value]
-    no explicit return 
+    no explicit return
     """
+
+    server_list = []
 
     # list servers by vlan
     if listby == 'vlan':
       if lookfor == None:
-        print "you must supply a name with the -n flag"
-        sys.exit(1)
+        raise lssError("you must supply a vlan with the -V flag")
       else:
         for serv, net in cfg.dbsess.query(Server, Network).\
         filter(Network.vlan==lookfor).\
         filter(Server.id==Network.server_id).\
         order_by(Server.hostname):
-          print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
     # list servers by site_id
     elif listby == 'site_id':
       if lookfor == None:
-        print "you must supply a name with the -n flag"
-        sys.exit(1)
+        raise lssError("you must supply a name with the -n flag")
       else:
         for serv in cfg.dbsess.query(Server).\
         filter(Server.site_id==lookfor).\
         order_by(Server.hostname):
-            print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
     # list servers by tag
     elif listby == 'tag':
       if lookfor == None:
-        print "you must supply a tag with the -r flag"
-        sys.exit(1)
+        raise lssError("you must supply a tag with the -r flag")
       else:
         servers_primary = []
         for server in cfg.dbsess.query(Server).\
@@ -86,123 +107,188 @@ def list_servers(cfg, listby=None, lookfor=None):
              pass
         if servers_primary:
           for serv in servers_primary:
-            print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
         elif servers_kv:
           for serv in servers_kv:
-            print serv
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
         else:
           pass
+        # output
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
-    # list servers by realm 
+    # list servers by realm
     elif listby == 'realm':
       if lookfor == None:
-        print "you must supply a realm with the -R flag"
-        sys.exit(1)
+        raise lssError("you must supply a realm with the -R flag")
       else:
         for serv in cfg.dbsess.query(Server).\
         filter(Server.realm==lookfor).\
         order_by(Server.hostname):
-          print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
 
     # list servers by manufacturer
-    elif listby == 'manufacturer': 
+    elif listby == 'manufacturer':
       if lookfor == None:
-        print "you must supply a manufacturer with the -m flag"
-        sys.exit(1)
+        raise lssError("you must supply a manufacturer with the -m flag")
       else:
         search_string = '%' + lookfor + '%'
         for serv, hw in cfg.dbsess.query(Server, Hardware).\
         filter(Hardware.manufacturer.like(search_string)).\
         filter(Server.hw_tag==Hardware.hw_tag).\
         order_by(Server.hostname):
-            print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
     # list servers by model name
     elif listby == 'model':
       if lookfor == None:
-        print "you must supply a model with the -M flag"
-        sys.exit(1)
+        raise lssError("you must supply a model with the -M flag")
       else:
         search_string = '%' + lookfor + '%'
         for serv, hw in cfg.dbsess.query(Server, Hardware).\
         filter(Hardware.model.like(search_string)).\
         filter(Server.hw_tag==Hardware.hw_tag).\
         order_by(Server.hostname):
-            print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
     # list servers by cores
     elif listby == 'cores':
-      if lookfor.isdigit():
-        print "you must supply a number with the -C flag"
-        sys.exit(1)
+      if lookfor == None:
+        raise lssError("you must supply a number with the -C flag")
       else:
         for serv in cfg.dbsess.query(Server).\
         filter(Server.cores==lookfor).\
         order_by(Server.hostname):
-            print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
     # list servers by ram
     elif listby == 'ram':
-      if lookfor.isdigit():
-        print "you must supply a number with the -a flag"
-        sys.exit(1)
+      if lookfor == None:
+        raise lssError("you must supply a number with the -a flag")
       else:
         for serv in cfg.dbsess.query(Server).\
         filter(Server.ram==lookfor).\
         order_by(Server.hostname):
-            print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
     # list servers by disk
     elif listby == 'disk':
-      if lookfor.isdigit():
-        print "you must supply a number with the -d flag"
-        sys.exit(1)
+      if lookfor == None:
+        raise lssError("you must supply a number with the -d flag")
       else:
         for serv in cfg.dbsess.query(Server).\
         filter(Server.disk==lookfor).\
         order_by(Server.hostname):
-            print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
     # list servers by hw_tag
     elif listby == 'hw_tag':
       if lookfor == None:
-        print "you must supply a hardware tag with the -H flag"
-        sys.exit(1)
+        raise lssError("you must supply a hardware tag with the -H flag")
       else:
         for serv in cfg.dbsess.query(Server).\
         filter(Server.hw_tag==lookfor):
-          print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
 
     # list servers by virtual
     elif listby == 'virtual':
-      for serv in cfg.dbsess.query(Server).\
-      filter(Server.virtual==True).\
-      order_by(Server.hostname):
-          print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+        for serv in cfg.dbsess.query(Server).\
+        filter(Server.virtual==True).\
+        order_by(Server.hostname):
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
     # list servers by physical
     elif listby == 'physical':
-      for serv in cfg.dbsess.query(Server).\
-      filter(Server.virtual==False).\
-      order_by(Server.hostname):
-          print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+        for serv in cfg.dbsess.query(Server).\
+        filter(Server.virtual==False).\
+        order_by(Server.hostname):
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
-    # list servers by name 
+    # list servers by name
     elif listby == 'name':
       if lookfor == None:
-        print "you must supply a name with the -n flag"
-        sys.exit(1) 
+        raise lssError("you must supply a name with the -n flag")
       else:
         search_string = '%' + lookfor + '%'
         for serv in cfg.dbsess.query(Server).\
         filter(Server.hostname.like(search_string)).\
         order_by(Server.hostname):
-            print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 
     # list all servers by default
     else:
-      for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
-          print "%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id)
+        for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
+            server_list.append([serv.hostname, serv.realm, serv.site_id])
+        if not json:
+            for row in server_list:
+                print "%s.%s.%s" % (row[0], row[1], row[2])
+        else:
+            newlist = [row[0]+'.'+row[1]+'.'+row[2] for row in server_list]
+            print myjson.JSONEncoder(indent=4).encode(newlist)
 

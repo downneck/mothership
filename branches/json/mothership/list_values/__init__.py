@@ -117,7 +117,7 @@ def list_all_values(cfg, listing, quiet=None, json=None):
         # fetch list of all hardware tags assigned to servers
         for s in cfg.dbsess.query(Server):
             alloc_hw.append(s.hw_tag)
-        # diff 'em (thanks, stackoverflow)
+        # diff 'em
         unalloc_hw = [item for item in all_hw if not item in alloc_hw]
         # display the diff
         if not quiet and not json:
