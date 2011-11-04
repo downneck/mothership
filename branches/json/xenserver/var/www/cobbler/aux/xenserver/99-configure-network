@@ -1,0 +1,36 @@
+#!/bin/sh
+
+set -eu
+
+BOND_SCRIPT="${FIRSTBOOT_DATA_DIR}/configure_bond0.sh"
+ETH1_SCRIPT="${FIRSTBOOT_DATA_DIR}/configure_eth1.sh"
+GATEWAY_SCRIPT="${FIRSTBOOT_DATA_DIR}/default_gateway.sh"
+
+start() {
+    # if you want to reconfigure eth0 to be static instead of DHCP, uncomment the following block:
+    #eval $(grep -v ^\; /etc/resolv.conf | sed 's/ /=/g')
+    #static=$( netstat -rn | grep ^0.0 | awk '{ print $2 }' )
+    #eval $($XE pif-list device=eth0 params=IP,netmask,uuid,network-uuid | sed -ne 's/-uuid/uuid/; s/ (.*: /=/p;')
+    ### then set static, add the default route and the resolv.conf entries --- all in one line!
+    #$XE pif-reconfigure-ip uuid=$uuid mode=static IP=$IP netmask=$netmask gateway=$static DNS=$nameserver domain=$search
+
+    # configure eth1
+    if [ -f "$ETH1_SCRIPT" ]; then
+        bash $ETH1_SCRIPT
+    fi
+
+    # configure bond0
+    if [ -f "$BOND_SCRIPT" ]; then
+        bash $BOND_SCRIPT
+    fi
+
+    # configure gateway
+    if [ -f "$GATEWAY_SCRIPT" ]; then
+        bash $GATEWAY_SCRIPT
+    fi
+}
+
+case $1 in
+  start) start ;;
+esac
+
