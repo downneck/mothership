@@ -20,7 +20,7 @@ import re
 import types
 import mothership.network_mapper
 import subprocess
-from transkey import transkey
+from mothership.transkey import transkey
 from xmlrpclib import Fault
 
 class CobblerAPI:
