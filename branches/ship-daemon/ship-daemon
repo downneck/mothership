@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
 from bottle import Bottle, run
-from shipd import configure
+from mothership import configure
 
 import bottle
 bottle.debug(True)
 
 httpship = Bottle()
-shipd = configure.Shipd('/etc/mothership.yaml')
+shipd = configure.Configure('/etc/mothership.yaml')
 
 @httpship.route('/')
 def index():
