@@ -39,7 +39,9 @@ class KV(Base):
         self.site_id = site_id
 
     def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        kvdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        kvdict['table_name'] = 'kv'
+        return kvdict
 
     def __repr__(self):
         namespace = [self.hostname, self.realm, self.site_id]
@@ -57,7 +59,9 @@ class Tag(Base):
     security_level = Column(Integer)
 
     def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        tagdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        tagdict['table_name'] = 'tags'
+        return tagdict
 
     def __init__(self, name, start_port, stop_port, security_level):
         self.name = name
@@ -89,7 +93,10 @@ class Server(Base):
     active = Column(Boolean)
 
     def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        servdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        servdict['provision_date'] = str(servdict['provision_date'])
+        servdict['table_name'] = 'servers'
+        return servdict
 
     def __init__(self, hostname):
         self.name = hostname
@@ -121,7 +128,11 @@ class ServerGraveyard(Base):
     cost = Column(Integer)
 
     def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        servgdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        servgdict['provision_date'] = str(servgdict['provision_date'])
+        servgdict['deprovision_date'] = str(servgdict['deprovision_date'])
+        servgdict['table_name'] = 'server_graveyard'
+        return servgdict
 
     def __init__(self, hostname):
         self.name = hostname
@@ -152,7 +163,10 @@ class Hardware(Base):
     rma = Column(Boolean)
 
     def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        hwdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        hwdict['purchase_date'] = str(hwdict['purchase_date'])
+        hwdict['table_name'] = 'hardware'
+        return hwdict
 
     def __init__(self, hw_tag):
         self.hw_tag = hw_tag
@@ -171,7 +185,9 @@ class DnsAddendum(Base):
     record_type = Column(String)
 
     def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        dnsdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        dnsdict['table_name'] = 'dns_addendum'
+        return dnsdict
 
     def __init__(self, host, record_type, realm, site_id, target):
         self.site_id = hw_tag
@@ -203,7 +219,9 @@ class Network(Base):
     hw_tag = Column(String)
 
     def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        netdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        netdict['table_name'] = 'network'
+        return netdict
 
     def __init__(self, ip, interface, netmask, mac):
         self.ip = ip
@@ -226,7 +244,9 @@ class AppInstance(Base):
     scms_version_id = Column(Integer)
 
     def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        appinstancedict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        appinstancedict['table_name'] = 'application_instances'
+        return appinstancedict
 
     def __init__(self, ip, port, tag):
         self.ip = ip
@@ -235,23 +255,6 @@ class AppInstance(Base):
 
     def __repr__(self):
        return "<AppInstance('%s', '%s', '%s')>" % (self.ip, self.port, self.tag)
-
-class SystemServices(Base):
-    __tablename__ = 'system_services'
-
-    name = Column(String, primary_key=True)
-    ip = Column(String)             # ip is actually an inet in PG
-    server_id = Column(Integer, ForeignKey(Server.id))
-
-    def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
-
-    def __init__(self, ip, name):
-        self.ip = ip
-        self.name = name
-
-    def __repr__(self):
-       return "<SystemServices('%s', '%s')>" % (self.ip, self.name)
 
 class XenPools(Base):
     __tablename__ = 'xen_pools'
@@ -262,7 +265,9 @@ class XenPools(Base):
     server = relation(Server)
 
     def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        xenpooldict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        xenpooldict['table_name'] = 'xen_pools'
+        return xenpooldict
 
     def __init__(self, realm, pool_id):
         self.realm = realm
@@ -270,30 +275,6 @@ class XenPools(Base):
 
     def __repr__(self):
        return "<XenPools('%s', '%s')>" % (self.realm, self.pool_id)
-
-class ZeusCluster(Base):
-    __tablename__ = 'zeus_cluster'
-
-    id = Column(Integer, primary_key=True)
-    cluster_name = Column(String)
-    vhost = Column(String, primary_key=True)
-    ip = Column(String)             # ip is actually an inet in PG
-    public_ip = Column(String)      # public_ip is actually an inet in PG
-    port = Column(Integer)
-    tg_name = Column(String)
-
-    def to_dict(self):
-        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
-
-    def __init__(self, ip, cluster_name, vhost):
-        self.cluster_name = cluster_name
-        self.vhost = vhost
-        self.ip = ip
-        self.port = port
-        self.tg_name = tg_name
-
-    def __repr__(self):
-       return "<ZeusCluster('%s', '%s', '%s', '%s', '%s')>" % (self.cluster_name, self.vhost, self.ip, self.port, self.tg_name)
 
 class Users(Base):
     __tablename__ = 'users'

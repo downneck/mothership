@@ -775,6 +775,8 @@ class ShipCli(cmdln.Cmdln):
                   help="print ip addresses only")
     @cmdln.option("-M", "--printmac", action="store_true",
                   help="print mac addresses only")
+    @cmdln.option("-j", "--json", action="store_true",
+                  help="return output in JSON format")
     def do_serverinfo(self, subcmd, opts):
         """${cmd_name}: get information about a server
 
@@ -812,7 +814,7 @@ class ShipCli(cmdln.Cmdln):
             elif opts.printmac:
                 mothership.serverinfo.mac_only(self.cfg, host, realm, site_id)
             else:
-                mothership.serverinfo.all(self.cfg, host, realm, site_id)
+                mothership.serverinfo.all(self.cfg, host, realm, site_id, json=opts.json)
 
         except mothership.serverinfo.ServerInfoError, e:
             print 'Error: %s' % e
@@ -1408,13 +1410,13 @@ class ShipCli(cmdln.Cmdln):
                   help="specify GB of memory for virtual machine")
     @cmdln.option("-C", "--cores", default=None,
                   help="specify number of cpu cores for virtual machine")
-    @cmdln.option("-r", "--resize_vm",
+    @cmdln.option("-R", "--resize_vm",
                   help="resize virtual machine")
     @cmdln.option("-f", "--force", action="store_true",
                   help="force Yes on any xenserver prompts")
-    @cmdln.option("-d", "--delete_vm",
-                  help="delete virtual machine")
-    @cmdln.option("-R", "--storage",
+    @cmdln.option("-r", "--remove_vm",
+                  help="remove/delete virtual machine")
+    @cmdln.option("-o", "--storage",
                   help="specify storage repository OpaqueRef to install_vm")
     @cmdln.option("-x", "--xenhost", default=False,
                   help="""specify xenhost to override vlan selection
