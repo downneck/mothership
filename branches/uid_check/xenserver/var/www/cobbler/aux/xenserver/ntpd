@@ -1,0 +1,9 @@
+# Drop root to id 'ntp:ntp' by default.
+OPTIONS="-u ntp:ntp -p /var/run/ntpd.pid -x"
+
+# Set to 'yes' to sync hw clock after successful ntpdate
+SYNC_HWCLOCK=yes
+
+# Additional options for ntpdate
+NTPDATE_OPTIONS=""
+

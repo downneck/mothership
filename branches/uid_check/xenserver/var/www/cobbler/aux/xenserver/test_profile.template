@@ -1,0 +1,7 @@
+----------------------------------
+name: $name
+    distro is $distro
+    system is system
+    profile is $profile
+----------------------------------
+

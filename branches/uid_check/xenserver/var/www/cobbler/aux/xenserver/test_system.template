@@ -1,0 +1,15 @@
+----------------------------------
+name: $name
+    distro is $distro
+    system is $system
+    profile is $profile
+#for $i in $interfaces:
+----------------------------------
+for interface $i:
+    #set $idata = $interfaces[$i]
+    #for $d in $idata:
+         $d = $idata[$d]   
+    #end for
+#end for
+----------------------------------
+
