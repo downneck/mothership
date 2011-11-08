@@ -1524,11 +1524,6 @@ if __name__ == "__main__":
     # useful global values
     today = datetime.date.today()
 
-    ship = ShipCli(cfg)
-    retval = ship.main()
-    cfg.close_connections()
-    sys.exit(retval)
-
     try:
         ship = ShipCli(cfg)
         retval = ship.main()
