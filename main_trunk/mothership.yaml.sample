@@ -249,3 +249,22 @@ ldap:
   # Default gidNumber for posixGroup , should match value
   # associated to the first entry of default_groups array
   default_gid: '401'
+
+
+# Workflow options
+workflow:
+
+  # Workflow options to control various aspects of mothership
+  #
+
+  # time lockout
+  # window in which we don't allow mothership to be run
+  #
+  active: True
+  lockout_start_hour:  '16'
+  lockout_start_min:  '30'
+  lockout_end_hour: '19'
+  lockout_end_min: '59'
+  lockout_timezone: 'GMT'
+  lockout_alerts: True
+  lockout_alerts_mailto: 'email@email.com'
