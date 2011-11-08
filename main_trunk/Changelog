@@ -1,3 +1,7 @@
+revision 202 (dk)
+* added lockout to prevent running as root (from console)
+* added audit log (defaults to /var/log/mothership_audit.log)
+* cleaned up some stuff in mothership.yaml.sample
 revision 149 (kl)
 * fix snmp logic for empty vlans
 revision 147 (dk)
