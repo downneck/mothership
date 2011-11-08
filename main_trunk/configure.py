@@ -25,10 +25,6 @@ import yaml
 import xmlrpclib
 import sqlalchemy
 
-# our error class
-class ConfigureError(Exception):
-    pass
-
 # This is the set of paths Configure will look for
 # a config_file (mothership.yaml)
 load_paths = ['.', '~', '/etc', '/usr/local/etc']
@@ -44,30 +40,19 @@ class Configure:
             yaml_config = open(self.load_path(config_file)).read()
             all_configs = yaml.load(yaml_config)
         except:
-            # we discovered this was more annoying than helpful, so we stopped
-            #sys.stderr.write('No config file found, copying defaults into your home directory')
-            #@srccfgyaml = sys.path[0] + '/mothership.yaml.sample'
-            #dstcfgyaml = os.path.expanduser('~') + '/mothership.yaml'
-            #shutil.copyfile(srccfgyaml, dstcfgyaml)
-            #yaml_config = open(self.load_path(config_file)).read()
-            #all_configs = yaml.load(yaml_config)
-            raise ConfigureError("Config file mothership.yaml not found in path: %s" % load_paths)
+            print 'No config file found, copying defaults into your home directory'
+            srccfgyaml = sys.path[0] + '/mothership.yaml.sample'
+            dstcfgyaml = os.path.expanduser('~') + '/mothership.yaml'
+            shutil.copyfile(srccfgyaml, dstcfgyaml)
+            yaml_config = open(self.load_path(config_file)).read()
+            all_configs = yaml.load(yaml_config)
 
         # Database related settings
         dbconfig = all_configs['db']
         try:
-            engine = ''
-            # PostgreSQL
-            if dbconfig['engine'] == 'postgresql':
-                dbtuple = (dbconfig['user'], dbconfig['hostname'], dbconfig['dbname'])
-                engine = sqlalchemy.create_engine("postgres://%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
-            # MySql
-            elif dbconfig['engine'] == 'mysql':
-                dbtuple = (dbconfig['user'], dbconfig['pass'], dbconfig['hostname'], dbconfig['dbname'])
-                engine = sqlalchemy.create_engine("mysql://%s:%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
-            # uhhhh....
-            else:
-                raise ConfigureError("DB section of /etc/mothership.yaml is misconfigured! Exiting")
+            dbtuple = (dbconfig['user'], dbconfig['hostname'], dbconfig['dbname'])
+            engine = sqlalchemy.create_engine("postgres://%s@%s/%s" % dbtuple,
+                    echo=dbconfig['echo'])
             Session = sqlalchemy.orm.sessionmaker(bind=engine)
             dbsession = Session()
             self.dbconfig = dbconfig
@@ -76,8 +61,7 @@ class Configure:
             self.dbsess = dbsession
             self.dbnull = sqlalchemy.sql.expression.null()
         except:
-            print "dbtuple: %s\nengine: %s" % (dbtuple, engine)
-            raise ConfigureError('Database configuration error')
+            print 'Database configuration error'
 
         # Cobbler related settings
         cobconfig = all_configs['cobbler']
@@ -90,7 +74,7 @@ class Configure:
                 self.remote = xmlrpclib.Server('http://%s/cobbler_api' % cobconfig['host'])
                 self.token = self.remote.login(cobconfig['user'], cobconfig['pass'])
             except:
-                sys.stderr.write('Cobbler configuration error.  Check cobbler API server')
+                print 'Cobbler configuration error.  Check cobbler API server'
         else:
             self.cobremote = 'API: set remote = xmlrpclib.Server(\'http://server/cobbler_api\')'
             self.cobtoken = 'API: set token = remote.login(user, pass)'
@@ -180,10 +164,6 @@ class Configure:
             self.def_public_ip = genconfig['publicip']
         else:
             self.def_public_ip = '123.123.123.123'
-        if 'sudo_nopass' in genconfig and genconfig['sudo_nopass']:
-            self.sudo_nopass = genconfig['sudo_nopass']
-        else:
-            self.sudo_nopass = True
 
         # Virtual Machine settings
         vmconfig = all_configs['vm']
@@ -191,15 +171,15 @@ class Configure:
         'min_ram' in vmconfig and vmconfig['min_ram'] and \
         'min_disk' in vmconfig and vmconfig['min_disk']:
             self.vm_spec = {
-                'cores': vmconfig['min_cpu'],
+                'cpu': vmconfig['min_cpu'],
                 'ram': vmconfig['min_ram'],
                 'disk': vmconfig['min_disk']
             }
         else:
             self.vm_spec = {
-                'cores': 1,
-                'ram': 1,
-                'disk': 25
+                'cpu': 1,
+                'min_ram': 1,
+                'min_disk': 25
             }
 
         # Zabbix settings
@@ -232,7 +212,7 @@ class Configure:
             else:
                 self.mgmt_vlan_community = 'public'
         else:
-            sys.stderr.write("mgmt_vlan->facility has been set incorrectly in the config.\nplease edit /etc/mothership.yaml and set it to either 'snmp' or 'curl'")
+            print "mgmt_vlan->facility has been set incorrectly in the config.\nplease edit /etc/mothership.yaml and set it to either 'snmp' or 'curl'"
 
         # Users and Groups settings
         ugconfig = all_configs['users_and_groups']
@@ -298,6 +278,42 @@ class Configure:
             self.ldap_default_gid = ldconfig['default_gid']
         else:
             self.ldap_default_gid = '401'
+
+
+	# Workflow settings
+        wfconfig = all_configs['workflow']
+        if 'active' in ldconfig and ldconfig['active']:
+                self.workflow_active = ldconfig['active']
+        else:
+            self.workflow_active = False
+        if 'locakout_start_hour' in ugconfig and ugconfig['lockout_start_hour']:
+            self.lockout_start_hour = ugconfig['lockout_start_hour']
+        else:
+            self.lockout_start_hour = '16'
+        if 'lockout_start_min' in ugconfig and ugconfig['lockout_start_min']:
+            self.lockout_start_min = ugconfig['lockout_start_min']
+        else:
+            self.lockout_start_min = '30'
+        if 'locakout_end_hour' in ugconfig and ugconfig['lockout_end_hour']:
+            self.lockout_end_hour = ugconfig['lockout_end_hour']
+        else:
+            self.lockout_end_hour = '19'
+        if 'locakout_end_min' in ugconfig and ugconfig['lockout_end_min']:
+            self.lockout_end_min = ugconfig['lockout_end_min']
+        else:
+            self.lockout_end_min = '59'
+        if 'locakout_timezone' in ugconfig and ugconfig['lockout_timezone']:
+            self.lockout_timezone = ugconfig['lockout_timezone']
+        else:  
+            self.lockout_timezone = 'GMT'
+        if 'locakout_alerts' in ugconfig and ugconfig['lockout_alerts']:
+            self.lockout_alerts = ugconfig['lockout_alerts']
+        else: 
+            self.lockout_alerts = False
+        if 'locakout_alerts_mailto' in ugconfig and ugconfig['lockout_alerts_mailto']:
+            self.lockout_alerts_mailto = ugconfig['lockout_alerts_mailto']
+        else:  
+            self.lockout_alerts_mailto = 'root@localhost'
 
     def close_connections(self):
         """
