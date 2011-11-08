@@ -261,19 +261,21 @@ lockout:
 
   # Hour and Minute to start lockout (where no serious
   # changes are allowed to be made) default: 0900
+  # NOTE: uses 24-hour clock
   lockout_start_hour:  '9'
   lockout_start_min:  '00'
 
   # Hour and Minute to end lockout (where no serious changes
   # are allowed to be made) default: 1700
+  # NOTE: uses 24-hour clock
   lockout_end_hour: '17'
   lockout_end_min: '00'
 
-  # Don't depend on the 
+  # Don't depend on the system timezone 
   lockout_timezone: 'GMT'
 
   # Send alerts if someone tries something forbidden during lockout
-  lockout_alerts: True
+  lockout_alerts: True 
 
   # Who to notify. This will default to the same contact in the general
   # config above (and root@localhost if neither are set). You only really

@@ -289,19 +289,19 @@ class Configure:
         if 'locakout_start_hour' in lockconfig and lockconfig['lockout_start_hour']:
             self.lockout_start_hour = lockconfig['lockout_start_hour']
         else:
-            self.lockout_start_hour = '16'
+            self.lockout_start_hour = '9'
         if 'lockout_start_min' in lockconfig and lockconfig['lockout_start_min']:
             self.lockout_start_min = lockconfig['lockout_start_min']
         else:
-            self.lockout_start_min = '30'
+            self.lockout_start_min = '00'
         if 'locakout_end_hour' in lockconfig and lockconfig['lockout_end_hour']:
             self.lockout_end_hour = lockconfig['lockout_end_hour']
         else:
-            self.lockout_end_hour = '19'
+            self.lockout_end_hour = '17'
         if 'locakout_end_min' in lockconfig and lockconfig['lockout_end_min']:
             self.lockout_end_min = lockconfig['lockout_end_min']
         else:
-            self.lockout_end_min = '59'
+            self.lockout_end_min = '00'
         if 'locakout_timezone' in lockconfig and lockconfig['lockout_timezone']:
             self.lockout_timezone = lockconfig['lockout_timezone']
         else:
