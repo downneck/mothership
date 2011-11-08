@@ -251,20 +251,31 @@ ldap:
   default_gid: '401'
 
 
-# Workflow options
-workflow:
+# time lockout options
+# this is the window in which we don't allow potentially dangerous
+# mothership commands to be run
+lockout:
 
-  # Workflow options to control various aspects of mothership
-  #
+  # To enable lockout, set this to True
+  active: False
 
-  # time lockout
-  # window in which we don't allow mothership to be run
-  #
-  active: True
-  lockout_start_hour:  '16'
-  lockout_start_min:  '30'
-  lockout_end_hour: '19'
-  lockout_end_min: '59'
+  # Hour and Minute to start lockout (where no serious
+  # changes are allowed to be made) default: 0900
+  lockout_start_hour:  '9'
+  lockout_start_min:  '00'
+
+  # Hour and Minute to end lockout (where no serious changes
+  # are allowed to be made) default: 1700
+  lockout_end_hour: '17'
+  lockout_end_min: '00'
+
+  # Don't depend on the 
   lockout_timezone: 'GMT'
+
+  # Send alerts if someone tries something forbidden during lockout
   lockout_alerts: True
+
+  # Who to notify. This will default to the same contact in the general
+  # config above (and root@localhost if neither are set). You only really
+  # need to set this if it's different from the general contact
   lockout_alerts_mailto: 'email@email.com'

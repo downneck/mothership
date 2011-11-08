@@ -280,38 +280,38 @@ class Configure:
             self.ldap_default_gid = '401'
 
 
-	# Workflow settings
-        wfconfig = all_configs['workflow']
-        if 'active' in wfconfig and wfconfig['active']:
-                self.workflow_active = wfconfig['active']
+	    # time lockout settings
+        lockconfig = all_configs['lockout']
+        if 'active' in lockconfig and lockconfig['active']:
+                self.workflow_active = lockconfig['active']
         else:
             self.workflow_active = False
-        if 'locakout_start_hour' in wfconfig and wfconfig['lockout_start_hour']:
-            self.lockout_start_hour = wfconfig['lockout_start_hour']
+        if 'locakout_start_hour' in lockconfig and lockconfig['lockout_start_hour']:
+            self.lockout_start_hour = lockconfig['lockout_start_hour']
         else:
             self.lockout_start_hour = '16'
-        if 'lockout_start_min' in wfconfig and wfconfig['lockout_start_min']:
-            self.lockout_start_min = wfconfig['lockout_start_min']
+        if 'lockout_start_min' in lockconfig and lockconfig['lockout_start_min']:
+            self.lockout_start_min = lockconfig['lockout_start_min']
         else:
             self.lockout_start_min = '30'
-        if 'locakout_end_hour' in wfconfig and wfconfig['lockout_end_hour']:
-            self.lockout_end_hour = wfconfig['lockout_end_hour']
+        if 'locakout_end_hour' in lockconfig and lockconfig['lockout_end_hour']:
+            self.lockout_end_hour = lockconfig['lockout_end_hour']
         else:
             self.lockout_end_hour = '19'
-        if 'locakout_end_min' in wfconfig and wfconfig['lockout_end_min']:
-            self.lockout_end_min = wfconfig['lockout_end_min']
+        if 'locakout_end_min' in lockconfig and lockconfig['lockout_end_min']:
+            self.lockout_end_min = lockconfig['lockout_end_min']
         else:
             self.lockout_end_min = '59'
-        if 'locakout_timezone' in wfconfig and wfconfig['lockout_timezone']:
-            self.lockout_timezone = wfconfig['lockout_timezone']
-        else:  
+        if 'locakout_timezone' in lockconfig and lockconfig['lockout_timezone']:
+            self.lockout_timezone = lockconfig['lockout_timezone']
+        else:
             self.lockout_timezone = 'GMT'
-        if 'locakout_alerts' in wfconfig and wfconfig['lockout_alerts']:
-            self.lockout_alerts = wfconfig['lockout_alerts']
-        else: 
+        if 'locakout_alerts' in lockconfig and lockconfig['lockout_alerts']:
+            self.lockout_alerts = lockconfig['lockout_alerts']
+        else:
             self.lockout_alerts = False
-        if 'locakout_alerts_mailto' in wfconfig and wfconfig['lockout_alerts_mailto']:
-            self.lockout_alerts_mailto = wfconfig['lockout_alerts_mailto']
+        if 'locakout_alerts_mailto' in lockconfig and lockconfig['lockout_alerts_mailto']:
+            self.lockout_alerts_mailto = lockconfig['lockout_alerts_mailto']
         elif genconfig and 'contact' in genconfig and genconfig['contact']:
             # if we don't have anything set for our contact, use
             # the one from general config
