@@ -21,6 +21,7 @@ import cmdln
 import socket
 import types
 import datetime
+import time
 
 # Extra modules
 sys.path.append("/usr/lib/python2.4/site-packages/SQLAlchemy-0.5.5-py2.4.egg/")
@@ -1523,6 +1524,31 @@ if __name__ == "__main__":
 
     # useful global values
     today = datetime.date.today()
+
+    # prevent root from running ship
+    if os.geteuid() == 0:
+        print "Please do not run ship as root"
+        print "Your effective uid: " + os.geteuid()
+        sys.exit(1)
+
+    # write out the command line we were called with to an audit log
+    try:
+        alog = open(cfg.audit_log_file, 'a')
+        ltz = time.tzname[time.daylight] 
+        tformat = "%Y-%m-%d %H:%M:%S"
+        timestamp = datetime.datetime.now()
+        username = os.getlogin()
+        command_run = ' '.join(sys.argv)
+        buffer = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, command_run)
+        alog.write(buffer)        
+        alog.close()
+    except Exception, e:
+        print "Exception: " + str(e)
+        print "Problem writing to audit log file!"
+        print "Audit file configured as: " + cfg.audit_log_file
+        print "logline dump:"
+        print "%s %s: %s: %s" % (ltz, timestamp, username, command_run)
+        alog.close()
 
     try:
         ship = ShipCli(cfg)
