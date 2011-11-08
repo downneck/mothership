@@ -46,8 +46,13 @@ general:
 
   # configurable sudo passwords.
   # if you use ssh keys and don't want to use passwords
-  # on user accounts for security reasons, set this to "true"
-  sudo_nopass: true
+  # on user accounts for security reasons, set this to "True"
+  sudo_nopass: True
+
+  # set this to True to prevent root (uid 0) from running
+  # mothership. mostly useful for auditing purposes
+  root_lockout: True
+
 
 # Database options
 db:
@@ -76,12 +81,20 @@ db:
 
 # Cobbler-specific info
 cobbler:
-  # user and pass are added via: htdigest /etc/cobbler/users.digest "Cobbler" <user>
+  
+  # to enable Cobbler integration, set this to True
+  active: False
+
+  # user and pass are added via: 
+  # htdigest /etc/cobbler/users.digest "Cobbler" <user>
   user: 'api'
   pass: 'api'
+
+  # Cobbler host
   host: 'localhost'
-  active: true
-  # for profiles, the following fields MUST be defined in order for provisioning to work:
+
+  # for profiles, the following fields MUST be defined in order
+  # for provisioning to work:
   #    Name       : <cobbler_profile>   # the cobbler_profile name
   #    Comment    : <os>                # the operating system name
   #    DHCP Tag   : <default-arch>      # baremetal | virtual | xenserver 
@@ -127,6 +140,7 @@ kv:
 
 # options for virtual machines
 vm:
+
   # minimum number of cpu cores
   min_cpu: 1
   # minimum size of memory ram in GB
