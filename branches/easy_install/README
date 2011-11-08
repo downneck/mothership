@@ -1,0 +1,45 @@
+QUICKSTART
+==========
+
+Read Install Dependencies section
+Read Bootstrap section
+Read INSTALL file
+Read UPGRADE file (if upgrading)
+
+Install Dependencies
+==========================
+  * Dependencies:  SQLAlchemy
+  *                PyYAML
+  *                psycopg2
+  * Centos:
+  *       sudo yum install python-sqlalchemy0.5
+  *       sudo yum install python-psycopg2
+  *       sudo yum install python-setuptools
+  *       sudo yum install python-cmdln     # You need to 1.2.0 for manpage generation
+  *       sudo yum install python-hashlib   # For zabbix_agent
+
+  * OSX:
+  *       sudo port install python26
+  *       sudo port install python_select  # In order to override system installed python
+  *       sudo port install py26-yaml
+  *       sudo port install py26-sqlalchemy
+  *       sudo port install py26-pip
+  *       sudo port install py26-psycopg2  # Need to use pip if using postgresql8.5 or higher
+  *       sudo pip-2.6 install cmdln
+
+Bootstrap for OSX
+==========================
+
+* sudo python_select python26    # Or use -l and select whatever python you want
+* sudo -u postgres createuser <your user id>   # Say yes to superuser unless you want to spend forever on perms
+* sudo -u postgres /opt/local/lib/postgresql84/bin/pg_ctl -D /opt/local/var/db/postgresql84/defaultdb start (If you need to start postgres)
+* Ensure you have some sort of postgresql based database lying around
+
+Contributors - Main Team
+==========================
+Alain Hoang
+Andres Pereira
+David Kovach
+Jared Brothers
+Kent Lee
+Matt Osterhaus

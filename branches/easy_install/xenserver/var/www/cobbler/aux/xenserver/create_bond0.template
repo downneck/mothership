@@ -1,0 +1,32 @@
+#!/bin/bash
+# This is a Cobbler/Cheetah template to configure bond for eth1+eth2
+#
+# Add this to your system with:
+#   cobbler system edit --name=$name --template-files="/var/www/cobbler/aux/xenserver/create_bond0.template=/bond0"
+#
+# Parse the template with:
+#   curl http://$server/cblr/svc/op/template/system/$name/path/_bond0
+#
+
+BOND=\${1:-bond0}
+XE=/opt/xensource/bin/xe
+uuid_host=\$( \$XE host-list name-label=\$HOSTNAME params=uuid | sed 's/^.*: //' )
+uuid_bond=\$( \$XE network-list name-label=\$BOND params=uuid | sed 's/^.*: //' )
+if [[ -z $uuid_bond ]]; then
+    uuid_net=\$( \$XE network-create name-label=\$BOND )
+else
+    uuid_net=\$( \$XE network-list name-label=\$BOND params=uuid | sed 's/^.*: //' )
+fi
+for net in eth1 eth2; do
+    eval \$( \$XE pif-list device=\$net host-uuid=\$uuid_host params=uuid | sed -ne 's/ (.*: /_'\$net'=/p;' )
+done
+uuid_pif=\$( \$XE pif-list device=\$BOND host-uuid=\$uuid_host params=uuid | sed 's/^.*: //' )
+if [[ -z $uuid_pif ]]; then
+    \$XE bond-create network-uuid=\$uuid_net pif-uuids=\$uuid_eth1,\$uuid_eth2
+    uuid_pif=\$( \$XE pif-list device=\$BOND host-uuid=\$uuid_host params=uuid | sed 's/^.*: //' )
+fi
+#set $bond = $interfaces['bond0']
+\$XE pif-reconfigure-ip uuid=\$uuid_pif mode=static ip=$bond['ip_address'] netmask=$bond['subnet']
+\$XE pif-param-set uuid=\$uuid_pif disallow-unplug="true" other-config:management_purpose="Interface 1" other-config:domain="prod.iad.gilt.local"
+\$XE pif-plug uuid=\$uuid_pif 
+
