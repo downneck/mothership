@@ -20,9 +20,9 @@ with zeus zxtm clusters
 
 # imports
 import mothership
-import network_mapper
+import mothership.network_mapper
 from sqlalchemy import or_, desc, MetaData
-from mothership_models import *
+from mothership.mothership_models import *
 
 def list_zeus_cluster_records_via_ip(cfg, ip, port=False):
     """
@@ -175,7 +175,7 @@ def manage_conflicts(cfg, args):
     # Ensure that the public_ip, if specified, does not match multiple
     # ips
     if len(args) > 5:
-        if network_mapper.remap(cfg, 'ip', ip=args[5]):
+        if mothership.network_mapper.remap(cfg, 'ip', ip=args[5]):
             print 'Invalid RFC1918 public_ip specified: %s' % args[5]
             return False
         for d in cfg.dbsess.query(ZeusCluster).\

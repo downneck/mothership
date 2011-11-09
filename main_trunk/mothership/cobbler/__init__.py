@@ -18,21 +18,21 @@ cobbler functionality
 import os
 import re
 import types
-import network_mapper
+import mothership.network_mapper
 import subprocess
-from transkey import transkey
+from mothership.transkey import transkey
 from xmlrpclib import Fault
 
 class CobblerAPI:
     def __init__(self, cfg):
 
-        # transkey map for cobbler interface to mothership hardware
+        # mothership.transkey map for cobbler interface to mothership hardware
         self.map_hardware = {
             'power_address': 'power_switch',
 #            'hw_tag'       : 'hw_tag',
             }
 
-        # transkey map for cobbler interface to mothership servers
+        # mothership.transkey map for cobbler interface to mothership servers
         self.map_server = {
             'name'          : 'hostname',
             'profile'       : 'cobbler_profile',
@@ -46,7 +46,7 @@ class CobblerAPI:
 #            'hw_tag'       : 'hw_tag',
             }
 
-        # transkey map for cobbler interface to mothership network
+        # mothership.transkey map for cobbler interface to mothership network
         self.map_network = {
             'mac_address'  : 'mac',
             'dhcp_tag'     : 'vlan',
@@ -62,7 +62,7 @@ class CobblerAPI:
 #            'hw_tag'       : 'hw_tag',
             }
 
-        # transkey map for mothership to cobbler interface
+        # mothership.transkey map for mothership to cobbler interface
         self.map_interface = {
             'mac'           : 'macaddress',
             'ip'            : 'ipaddress',
@@ -76,7 +76,7 @@ class CobblerAPI:
             'static_routes' : 'staticroutes',
             }
 
-        # transkey map for mothership to cobbler system
+        # mothership.transkey map for mothership to cobbler system
         self.map_system =  {
             'hostname'            :'hostname',
             'netboot_enabled'     : False,
@@ -126,8 +126,8 @@ class CobblerAPI:
             print 'API: if found: remote.remove_system(hostname, token)'
             print 'API: set new handle = remote.new_system(token)'
 
-        sysdict = transkey(host_dict, self.map_system)
-        # Adjust power management values after transkey
+        sysdict = mothership.transkey(host_dict, self.map_system)
+        # Adjust power management values after mothership.transkey
         if sysdict['virtual']:
             sysdict['power_user'] = 'root'
             sysdict['power_pass'] = ''
@@ -172,7 +172,7 @@ class CobblerAPI:
             # add appropriate dns_names for each interface
             domain = None
             if x['ip']:
-                domain = network_mapper.remap(cfg, 'dom', nic=x['interface'], siteid=x['site_id'], ip=x['ip'])
+                domain = mothership.network_mapper.remap(cfg, 'dom', nic=x['interface'], siteid=x['site_id'], ip=x['ip'])
             if domain:
                 x['dns_name'] = '%s%s' % (hostname, domain)
 
@@ -186,7 +186,7 @@ class CobblerAPI:
                 if cfg.coblive:
                     #print 'Modifying %s network values: %s' % (hostname, ifbond)
                     cfg.remote.modify_system(handle, 'modify_interface', 
-                        self.append_value_to_keyname(cfg, transkey(ifdict,
+                        self.append_value_to_keyname(cfg, mothership.transkey(ifdict,
                         self.map_interface, True), '-'+ifbond), cfg.token)
                 else:
                     print 'API: since bond_options are set:'
@@ -215,7 +215,7 @@ class CobblerAPI:
             if cfg.coblive and host_dict['interfaces'][k]['mac']:
                 try:
                     cfg.remote.modify_system(handle, 'modify_interface', 
-                        self.append_value_to_keyname(cfg, transkey(host_dict['interfaces'][k],
+                        self.append_value_to_keyname(cfg, mothership.transkey(host_dict['interfaces'][k],
                         self.map_interface, True), '-'+k), cfg.token)
                 except Fault, err:
                     print 'Aborting cobbler add, failed to modify %s %s' % (hostname, k)
@@ -257,8 +257,8 @@ class CobblerAPI:
             system['virtual'] = True
         else:
             system['virtual'] = False
-        info['server'] = [ transkey(system, self.map_server) ] 
-        info['hardware'] = [ transkey(system, self.map_hardware) ]
+        info['server'] = [ mothership.transkey(system, self.map_server) ] 
+        info['hardware'] = [ mothership.transkey(system, self.map_hardware) ]
         info['network'] = []
         sysif = system['interfaces']
         for k in sysif.keys():
@@ -266,7 +266,7 @@ class CobblerAPI:
             sysif[k]['interface'] = k
             if sysif[k]['static_routes']:
                 sysif[k]['static_route'] = sysif[k]['static_routes'][0].split(':')[1]
-            info['network'].append(transkey(system['interfaces'][k], self.map_network, True))
+            info['network'].append(mothership.transkey(system['interfaces'][k], self.map_network, True))
         return info
 
     def append_kickstart_info(self, cfg, info):

@@ -20,7 +20,7 @@
 from sqlalchemy import or_, desc, MetaData
 
 import mothership
-from mothership_models import *
+from mothership.mothership_models import *
 
 class KVError(Exception):
     pass

@@ -44,8 +44,8 @@ import mothership.zenoss
 import mothership.zeus_cluster
 import mothership.ldap
 from mothership.list_servers import *
-from mothership_models import *
-from configure import Configure
+from mothership.mothership_models import *
+from mothership.configure import Configure
 import mothership.zabbix
 
 class ShipCli(cmdln.Cmdln):
