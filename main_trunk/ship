@@ -1538,7 +1538,10 @@ if __name__ == "__main__":
         ltz = time.tzname[time.daylight] 
         tformat = "%Y-%m-%d %H:%M:%S"
         timestamp = datetime.datetime.now()
-        username = os.getlogin()
+        if sys.stdin.isatty():
+            username = os.getlogin()
+        else:
+            username = "nottyUID=" + str(os.geteuid())
         command_run = ' '.join(sys.argv)
         buffer = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, command_run)
         alog.write(buffer)        
