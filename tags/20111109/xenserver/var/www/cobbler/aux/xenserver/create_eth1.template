@@ -1,0 +1,16 @@
+#!/bin/bash
+# This is a Cobbler/Cheetah template to configure just eth1
+#
+# Add this to your system with:
+#   cobbler system edit --name=$name --template-files="/var/www/cobbler/aux/xenserver/create_eth1.template=/eth1"
+#
+# Parse the template with:
+#   curl http://$server/cblr/svc/op/template/system/$name/path/_eth1
+#
+
+XE=/opt/xensource/bin/xe
+uuid_eth1=\$( \$XE pif-list device=eth1 params=uuid | sed 's/^.*: //' )
+#set $eth1 = $interfaces['eth1']
+\$XE pif-reconfigure-ip uuid=\$uuid_eth1 mode=static ip=$eth1['ip_address'] netmask=$eth1['subnet']
+
+
