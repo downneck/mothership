@@ -17,7 +17,7 @@ join if mapped to a list, recurse if mapped to a dict
 
 Run module as main script to see sample
 
-transkey is a key translator between the source_dict and the target_dict desired
+mothership.transkey is a key translator between the source_dict and the target_dict desired
 controlled my the map_dict specified.  For example, say the source is a database
 with the following columns:
 
@@ -38,7 +38,7 @@ translate you would build a map_dict like the following:
 
 The translation:
 
-    target_dict = transkey(source_dict, map_dict, empty=True)
+    target_dict = mothership.transkey(source_dict, map_dict, empty=True)
 
 would yield:
    
@@ -80,9 +80,9 @@ def transkey (olddict, mapdict, empty=False):
                 newkey = k
             if k == '*':
                 for x in olddict.keys():
-                    newdict[x] = transkey(olddict[x],mapdict[k], empty)
+                    newdict[x] = mothership.transkey(olddict[x],mapdict[k], empty)
             else:
-                newdict[newkey] = transkey(olddict[k],mapdict[k], empty)
+                newdict[newkey] = mothership.transkey(olddict[k],mapdict[k], empty)
         elif type(mapdict[k]) is types.ListType:
             delempty = []
             maplist = mapdict[k][:]
@@ -175,11 +175,11 @@ def transkey_sample ():
     print "=== Translation dict ==="
     pprint (mapdict)
     print "=== Translated dict ==="
-    pprint (transkey(olddict, mapdict))
+    pprint (mothership.transkey(olddict, mapdict))
 
 
 if __name__ == "__main__":
-    transkey_sample()  # if not called as a module, execute example
+    mothership.transkey_sample()  # if not called as a module, execute example
 
 
 

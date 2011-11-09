@@ -44,8 +44,8 @@ import mothership.zenoss
 import mothership.zeus_cluster
 import mothership.ldap
 from mothership.list_servers import *
-from mothership_models import *
-from configure import Configure
+from mothership.mothership_models import *
+from mothership.configure import Configure
 import mothership.zabbix
 
 class ShipCli(cmdln.Cmdln):
@@ -1526,11 +1526,10 @@ if __name__ == "__main__":
     today = datetime.date.today()
 
     # prevent root from running ship
-    if sys.stdin.isatty():
-        if os.getlogin() == 'root':
-            print "Please do not run ship as root"
-            print "Your effective uid: " + os.geteuid()
-            sys.exit(1)
+    if os.getlogin() == 'root':
+        print "Please do not run ship as root"
+        print "Your effective uid: " + os.geteuid()
+        sys.exit(1)
 
     # write out the command line we were called with to an audit log
     try:
@@ -1538,10 +1537,7 @@ if __name__ == "__main__":
         ltz = time.tzname[time.daylight] 
         tformat = "%Y-%m-%d %H:%M:%S"
         timestamp = datetime.datetime.now()
-        if sys.stdin.isatty():
-            username = os.getlogin()
-        else:
-            username = "nottyUID=" + str(os.geteuid())
+        username = os.getlogin()
         command_run = ' '.join(sys.argv)
         buffer = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, command_run)
         alog.write(buffer)        

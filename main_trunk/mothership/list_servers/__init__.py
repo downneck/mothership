@@ -21,7 +21,7 @@
 import mothership
 import sys
 import mothership.kv
-from mothership_models import *
+from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
 # list_servers takes a parameter to search by and, optionally a tag

@@ -28,7 +28,7 @@ from mothership.kv import select as kv_select
 
 # All of the models and sqlalchemy are brought in
 # to simplify referencing
-from mothership_models import *
+from mothership.mothership_models import *
 
 def add(cfg, unqdn, zs_unqdn, zabbix_template):
     """

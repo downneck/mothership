@@ -25,7 +25,7 @@ import mothership.users
 import mothership.kv
 
 # db imports
-from mothership_models import *
+from mothership.mothership_models import *
 
 class LDAPError(Exception):
     pass

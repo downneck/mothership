@@ -17,7 +17,7 @@
    be easily encapsulated within the sqlalchemy models
 """
 # imports
-import network_mapper
+import mothership.network_mapper
 import os
 import re
 import subprocess
@@ -29,7 +29,7 @@ import mothership.list_values
 import mothership.users
 import mothership.validate
 
-from mothership_models import *
+from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
 
@@ -87,7 +87,7 @@ def calculate_last_virtual_ipaddress(cfg, vlan):
         return data.ip, data.realm, data.site_id
     else:
         # Assuming that all prod virtuals start on 1st_dyn_ip 
-        ip,site_id = network_mapper.remap(cfg, ['1st_dyn_ip','siteid'], vlan=int(vlan))
+        ip,site_id = mothership.network_mapper.remap(cfg, ['1st_dyn_ip','siteid'], vlan=int(vlan))
         return ip, 'prod', site_id
 
 def calculate_next_baremetal_vlan_ipaddress(cfg, vlan):
@@ -99,7 +99,7 @@ def calculate_next_baremetal_vlan_ipaddress(cfg, vlan):
         first = data.order_by(Network.ip).first().ip
         last = data.order_by(Network.ip.desc()).first().ip
     except:
-        first = network_mapper.remap(cfg, '1st_static_ip', vlan=int(vlan))
+        first = mothership.network_mapper.remap(cfg, '1st_static_ip', vlan=int(vlan))
         last = first
 
     # compare the sequential list to the shiplist
@@ -109,7 +109,7 @@ def calculate_next_baremetal_vlan_ipaddress(cfg, vlan):
 
     # determine the next free ip and return it
     nextip = None
-    for i in network_mapper.generate_ipaddress_list(first, last=last):
+    for i in mothership.network_mapper.generate_ipaddress_list(first, last=last):
         if i not in shiplist:
             pingcheck = os.popen("ping -q -c2 -t2 "+i,"r")
             while 1:
@@ -120,7 +120,7 @@ def calculate_next_baremetal_vlan_ipaddress(cfg, vlan):
                     if int(match[0][0]) == 0:
                         return i
     if not nextip:
-        nextip = network_mapper.next_ip(last)
+        nextip = mothership.network_mapper.next_ip(last)
     return nextip
 
 def clear_serverinfo_from_network(cfg, server_id):
@@ -152,8 +152,8 @@ def convert_drac_dict_to_network(cfg, drac_sysinfo, ip):
     for k in drac_sysinfo.keys():
         netdrac_sysinfo = drac_sysinfo.copy()
         if not k.startswith('eth') and k != 'drac': continue
-        net = network_mapper.remap(cfg, ['vlan','mask','ip'], nic=k, siteid=siteid)
-        dracip = network_mapper.remap(cfg, 'ip', nic='drac', siteid=siteid)
+        net = mothership.network_mapper.remap(cfg, ['vlan','mask','ip'], nic=k, siteid=siteid)
+        dracip = mothership.network_mapper.remap(cfg, 'ip', nic='drac', siteid=siteid)
         if net:
             if k!='eth1': # due to multiple vlans
                 if ip.startswith(dracip):
@@ -272,10 +272,10 @@ def generate_ipaddress_range(cfg, first, count=None, last=None, realm=None, site
        determines the vlan, netmask and interface and inserts into network
        e.g. generate_ips('10.50.50.15','10.50.50.30')
     """
-    for ip in network_mapper.generate_ipaddress_list(first, count=count, last=last):
-        vlan, netmask, interface = network_mapper.remap(cfg,
+    for ip in mothership.network_mapper.generate_ipaddress_list(first, count=count, last=last):
+        vlan, netmask, interface = mothership.network_mapper.remap(cfg,
             ['vlan','mask','nic'], ip=ip, siteid=site_id)
-        mac = network_mapper.ip_to_mac(ip)
+        mac = mothership.network_mapper.ip_to_mac(ip)
         update_table_network(cfg, { 'ip':ip, 'realm':realm, 'site_id':site_id,
             'mac':mac, 'vlan':vlan, 'netmask':netmask, 'interface':interface })
 
@@ -337,9 +337,9 @@ def modify_network_vlan(cfg, hostname, vlan, interface='eth1', force=False):
                 return
     new = {'ip':ip, 'vlan':vlan,
             'netmask':cfg.dbnull, 'static_route':cfg.dbnull}
-    mask = network_mapper.remap(cfg, 'mask', ip=ip,
+    mask = mothership.network_mapper.remap(cfg, 'mask', ip=ip,
             nic=interface, siteid=data.site_id)
-    gw = network_mapper.remap(cfg, 'gw', ip=ip,
+    gw = mothership.network_mapper.remap(cfg, 'gw', ip=ip,
             nic=interface, siteid=data.site_id)
     if mask:    new['netmask'] = mask
     if gw:      new['static_route'] = gw
@@ -492,7 +492,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
 
     if virtual:
         # make sure the vlan specified is primary eth1
-        if network_mapper.remap(cfg, 'nic', vlan=int(vlan), siteid=site_id) != 'eth1':
+        if mothership.network_mapper.remap(cfg, 'nic', vlan=int(vlan), siteid=site_id) != 'eth1':
             print 'Please specify the primary vlan for eth1 for virtual hosts'
             return
 
@@ -503,7 +503,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
 
         # check eth1 and eth0 for valid ips before continuing
         iplist = []
-        vlist = [ network_mapper.remap(cfg, 'vlan', nic='eth0', siteid=site_id), vlan ]
+        vlist = [ mothership.network_mapper.remap(cfg, 'vlan', nic='eth0', siteid=site_id), vlan ]
         for v in vlist:
             iplist.append(retrieve_next_virtual_ip(cfg, v, autogen=True))
 
@@ -514,10 +514,10 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         # build dict for eth1 network insert
         ip = iplist[1]
         interface = 'eth1'
-        static_route, netmask = network_mapper.remap(cfg, ['gw', 'mask'],
+        static_route, netmask = mothership.network_mapper.remap(cfg, ['gw', 'mask'],
             nic=interface, ip=iplist[1], siteid=site_id)
         static_route = None
-        if not opts.public_ip or network_mapper.remap(
+        if not opts.public_ip or mothership.network_mapper.remap(
             cfg, 'ip', ip=opts.public_ip):
             print 'Invalid public_ip %s, using default %s' \
                 % (opts.public_ip, cfg.def_public_ip)
@@ -547,7 +547,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
             if interface == 'eth1':
                 ip = calculate_next_baremetal_vlan_ipaddress(cfg, vlan)
             # never retrieve the gw without ip=, especially when eth1
-            static_route, netmask = network_mapper.remap(cfg, ['gw', 'mask'],
+            static_route, netmask = mothership.network_mapper.remap(cfg, ['gw', 'mask'],
                 nic=interface, ip=ip, siteid=site_id)
             net_info = build_model_dict(Network('','','',''), opts, locals())
             update_table_network(cfg, net_info)
@@ -631,7 +631,7 @@ def retrieve_cobbler_system_row(cfg, hostname):
 
 def retrieve_fqdn(cfg, hostname, interface='eth1'):
     q = retrieve_server_dict(cfg, hostname)
-    append = network_mapper.remap(cfg, 'dom', nic=interface, siteid=q['site_id'])
+    append = mothership.network_mapper.remap(cfg, 'dom', nic=interface, siteid=q['site_id'])
     return hostname + append
 
 def retrieve_hardware_row(cfg, hwtag):
@@ -946,7 +946,7 @@ def walk_snmp_for_mac_port_list(cfg, vlist, snmplist=[]):
     return snmplist
 
 def walk_snmp_for_mac_port_name(cfg, vlan, mac, debug=False):
-    data = { 'mac':mac, 'mac_oid':network_mapper.mac_to_oid(mac),
+    data = { 'mac':mac, 'mac_oid':mothership.network_mapper.mac_to_oid(mac),
         'vlan':vlan, 'switch':False }
     try:
         oid = '.1.3.6.1.2.1.17.4.3.1.2' # OID: dot1dTpFdbPort
@@ -976,8 +976,8 @@ def walk_snmp_for_vlan_ip_mac_list(cfg):
                 'mac':mac, 'vlan':vlan,
                 'switch':line['switch'],
                 'ip':match.group('ip'), 'mac':mac,
-                'mac_oid':network_mapper.mac_to_oid(mac),
-                'interface':network_mapper.remap(cfg, 'nic', vlan=vlan)
+                'mac_oid':mothership.network_mapper.mac_to_oid(mac),
+                'interface':mothership.network_mapper.remap(cfg, 'nic', vlan=vlan)
             })
     return snmplist
 
