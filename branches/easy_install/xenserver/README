@@ -1,0 +1,79 @@
+OVERVIEW
+================================================================================
+The mothership/xenserver directory is intended to maintain the modifications
+that were made to the default cobbler directories that allow mothership to
+function with cobbler.
+
+
+MODIFICATIONS
+================================================================================
+* Modification to invoke the creation of a new xen client during the cobbler
+  system reboot call:
+  -  etc/xenserver/power/power_xenserver.template
+
+* Modified xenserver automated installation XML into cobbler kickstart script:
+  -  var/lib/cobbler/kickstarts/xenserver.ks
+
+* Post-sync trigger to modify the pxeboot lines of the RedHat configuration to
+  confirm to the specific LILO syntax required by xenserver pxeboot:
+  -  var/lib/cobbler/triggers/sync/post/xenserver.sh
+
+All post-installation script that need to be retrieved reside in the
+  var/www/cobbler/aux/xenserver subdirectory for clarity
+
+* The main post-install script that handles all chroot capable changes:
+  -  var/www/cobbler/aux/xenserver/post-install
+
+* The firstboot.d scripts that handle all the changes that chroot could not
+  and needed to be reconfigured after the first reboot:
+  -  var/www/cobbler/aux/xenserver/99-configure-network
+  -  var/www/cobbler/aux/xenserver/99-install-license
+
+* Static files necessary for either chroot or firstboot changes:
+  -  var/www/cobbler/aux/xenserver/license.xslic
+  -  var/www/cobbler/aux/xenserver/authorized_keys
+  -  var/www/cobbler/aux/xenserver/ntpd
+
+* Script(s) that needs to be psuhed out to all xenservers to be able to
+  manage automated cobbler installations of xen clients:
+  -  var/www/cobbler/aux/xenserver/virtualhost_manager.sh
+
+* Templates used for retrieving information from cobbler remotely:
+  -  var/www/cobbler/aux/xenserver/create_bond0.template
+  -  var/www/cobbler/aux/xenserver/gateway_eth1.template 
+  -  var/www/cobbler/aux/xenserver/test_profile.template
+  -  var/www/cobbler/aux/xenserver/test_system.template
+
+
+
+BOOTSTRAP
+================================================================================
+Ensure cobbler package is installed
+Run the ./xenserver_mod.sh script as root
+
+
+
+NOTES
+================================================================================
+
+* In order to utilize yum/puppet for xenserver, the cobbler must have i386 repos
+
+    # cobbler profile list | grep xen
+       xenserverXXX
+
+    # cobbler repo list | grep i386
+       primaryos-i386
+       primaryos-i386-extras
+
+    # cobbler profile edit --name=xenserverXXX --repos="primaryos-i386 primaryos-i386-extras"
+
+    # cobbler profile report --name xenserverXXX | grep ^Repos
+    Repos                          : ['primaryos-i386', 'primaryos-i386-extras']
+
+    # repos can be generated from cobbler via:
+    wget -qO /etc/yum.repos.d/xen.repo $COBBLERHOST/cblr/svc/op/yum/system/$XENHOSTNAME
+
+* To avoid flooding xenserver with all CentOS/RedHat modules, use the $lsbdistid facter:
+    lsbdistid => XenServer
+    lsbdistid => PrimaryOS
+
