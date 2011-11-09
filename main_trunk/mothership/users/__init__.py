@@ -31,7 +31,7 @@ import mothership.ldap
 
 # All of the models and sqlalchemy are brought in
 # to simplify referencing
-from mothership.mothership_models import *
+from mothership_models import *
 
 class UsersError(Exception):
     pass

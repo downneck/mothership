@@ -1,5 +1,3 @@
-revision 212 (dk)
-* merged rsetti's easy_install branch into main_trunk
 revision 202 (dk)
 * added lockout to prevent running as root (from console)
 * added audit log (defaults to /var/log/mothership_audit.log)

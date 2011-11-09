@@ -21,7 +21,7 @@ import os
 import shutil
 import sys
 import time
-from mothership.mothership_models import *
+from mothership_models import *
 
 
 def filter_domain_query(query, table, domain):

@@ -20,7 +20,7 @@ module controlling various puppet interactions
 import mothership
 import mothership.kv
 import mothership.users
-from mothership.mothership_models import *
+from mothership_models import *
 
 def classify(cfg, name):
     """

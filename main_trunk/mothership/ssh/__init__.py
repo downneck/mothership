@@ -23,7 +23,7 @@ import os
 import mothership.validate
 
 # db imports
-from mothership.mothership_models import *
+from mothership_models import *
 
 # create an error class
 class SSHError(Exception):

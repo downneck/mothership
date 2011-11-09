@@ -26,7 +26,7 @@ import re
 
 # All of the models and sqlalchemy are brought in
 # to simplify referencing
-from mothership.mothership_models import *
+from mothership_models import *
 
 class ValidationError(Exception):
     pass

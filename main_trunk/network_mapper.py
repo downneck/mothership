@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-   The mothership.network_mapper module
+   The network_mapper module
 """
 
 import re
