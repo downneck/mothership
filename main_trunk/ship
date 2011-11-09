@@ -1526,10 +1526,11 @@ if __name__ == "__main__":
     today = datetime.date.today()
 
     # prevent root from running ship
-    if os.getlogin() == 'root':
-        print "Please do not run ship as root"
-        print "Your effective uid: " + os.geteuid()
-        sys.exit(1)
+    if sys.stdin.isatty():
+        if os.getlogin() == 'root':
+            print "Please do not run ship as root"
+            print "Your effective uid: " + os.geteuid()
+            sys.exit(1)
 
     # write out the command line we were called with to an audit log
     try:
