@@ -16,44 +16,6 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: application_instances; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE application_instances (
-    ip inet,
-    port integer,
-    created_at timestamp with time zone,
-    tag character varying(100),
-    started_at timestamp with time zone,
-    scms_version_id integer,
-    id integer NOT NULL
-);
-
-
-ALTER TABLE public.application_instances OWNER TO mothership;
-
---
--- Name: application_instances_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE application_instances_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.application_instances_id_seq OWNER TO mothership;
-
---
--- Name: application_instances_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE application_instances_id_seq OWNED BY application_instances.id;
-
-
---
 -- Name: dns_addendum; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
 --
 
@@ -390,19 +352,6 @@ ALTER SEQUENCE servers_id_seq OWNED BY servers.id;
 
 
 --
--- Name: system_services; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE system_services (
-    name character varying(200),
-    ip inet,
-    server_id integer
-);
-
-
-ALTER TABLE public.system_services OWNER TO mothership;
-
---
 -- Name: user_group_mapping; Type: TABLE; Schema: public; Owner: mothership; Tablespace: 
 --
 
@@ -494,51 +443,6 @@ CREATE TABLE xen_pools (
 ALTER TABLE public.xen_pools OWNER TO mothership;
 
 --
--- Name: zeus_cluster; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
---
-
-CREATE TABLE zeus_cluster (
-    cluster_name character varying(50),
-    vhost character varying(300),
-    ip inet,
-    public_ip inet,
-    id integer NOT NULL,
-    port integer,
-    tg_name character varying(200)
-);
-
-
-ALTER TABLE public.zeus_cluster OWNER TO mothership;
-
---
--- Name: zeus_cluster_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE zeus_cluster_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MAXVALUE
-    NO MINVALUE
-    CACHE 1;
-
-
-ALTER TABLE public.zeus_cluster_id_seq OWNER TO mothership;
-
---
--- Name: zeus_cluster_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE zeus_cluster_id_seq OWNED BY zeus_cluster.id;
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE application_instances ALTER COLUMN id SET DEFAULT nextval('application_instances_id_seq'::regclass);
-
-
---
 -- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -599,21 +503,6 @@ ALTER TABLE user_group_mapping ALTER COLUMN id SET DEFAULT nextval('user_group_m
 --
 
 ALTER TABLE users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE zeus_cluster ALTER COLUMN id SET DEFAULT nextval('zeus_cluster_id_seq'::regclass);
-
-
---
--- Name: application_instances_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY application_instances
-    ADD CONSTRAINT application_instances_pkey PRIMARY KEY (id);
 
 
 --
@@ -726,22 +615,6 @@ ALTER TABLE ONLY users
 
 ALTER TABLE ONLY xen_pools
     ADD CONSTRAINT xen_pools_pkey PRIMARY KEY (server_id);
-
-
---
--- Name: zeus_cluster_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
---
-
-ALTER TABLE ONLY zeus_cluster
-    ADD CONSTRAINT zeus_cluster_pkey PRIMARY KEY (id);
-
-
---
--- Name: system_services_server_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY system_services
-    ADD CONSTRAINT system_services_server_id_fkey FOREIGN KEY (server_id) REFERENCES servers(id);
 
 
 --

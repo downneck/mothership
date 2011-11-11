@@ -41,7 +41,6 @@ import mothership.dns
 import mothership.users
 import mothership.list_values
 import mothership.zenoss
-import mothership.zeus_cluster
 import mothership.ldap
 from mothership.list_servers import *
 from mothership.mothership_models import *
@@ -1316,36 +1315,6 @@ class ShipCli(cmdln.Cmdln):
                 if info['switch_port'] == 'disconnected': continue
                 info['interface'] = info['nic']
                 mothership.update_table_network(self.cfg, info, noinsert=True)
-
-    @cmdln.alias("zc")
-    @cmdln.option("-I", "--public_ip",
-                  help="specify the updated public ip address")
-    @cmdln.option("-i", "--ip",
-                  help="specify the updated traffic group ip address")
-    @cmdln.option("-t", "--tg_name",
-                  help="specify the updated traffic group name")
-    @cmdln.option("-p", "--port",
-                  help="specify the updated port")
-    @cmdln.option("-v", "--vhost",
-                  help="specify the updated virtual host name")
-    @cmdln.option("-c", "--cluster_name",
-                  help="specify the updated cluster name")
-    @cmdln.option("-u", "--update", action="store_true",
-                  help="update zeus_cluster entry based on identifier (IP || PUBLIC_IP)")
-    @cmdln.option("-r", "--remove", action="store_true",
-                  help="remove zeus_cluster entry based on identifier (IP || PUBLIC_IP)")
-    @cmdln.option("-a", "--add", action="store_true",
-                  help="add zeus_cluster name based on identifier CLUSTER_NAME")
-    def do_zeus_cluster(self, subcmd, opts, *args):
-        """${cmd_name}: Zeus Cluster Management
-            ship zc -a CLUSTER_NAME VHOST_NAME PORT TRAFFIC_GROUP_NAME IP [PUBLIC_IP]
-            ship zc -d ( IP | PUBLIC_IP ) PORT
-            ship zc -u ( IP | PUBLIC_IP ) ( -c CLUSTER_NAME | -v VHOST_NAME | -p PORT | -t TRAFFIC_GROUP_NAME | -i IP | -I PUBLIC_IP )
-
-        ${cmd_usage}
-        ${cmd_option_list}
-        """
-        mothership.zeus_cluster.manage(self.cfg, opts, args)
 
     @cmdln.alias("ls")
     @cmdln.alias("list")

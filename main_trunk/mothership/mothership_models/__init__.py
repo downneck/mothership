@@ -190,39 +190,6 @@ class Network(Base):
     def __repr__(self):
        return "<Network('%s', '%s', '%s', '%s', '%s')>" % (self.ip, self.mac, self.interface, self.site_id, self.realm)
 
-class AppInstance(Base):
-    __tablename__ = 'application_instances'
-
-    id = Column(Integer, primary_key=True)
-    ip = Column(String)             # ip is actually an inet in PG
-    port = Column(Integer)
-    created_at = Column(Date)
-    tag = Column(String)
-    started_at = Column(Date)
-    scms_version_id = Column(Integer)
-    
-    def __init__(self, ip, port, tag):
-        self.ip = ip
-        self.port = port
-        self.tag = tag
-
-    def __repr__(self):
-       return "<AppInstance('%s', '%s', '%s')>" % (self.ip, self.port, self.tag)
-
-class SystemServices(Base):
-    __tablename__ = 'system_services'
-
-    name = Column(String, primary_key=True)
-    ip = Column(String)             # ip is actually an inet in PG
-    server_id = Column(Integer, ForeignKey(Server.id))
-    
-    def __init__(self, ip, name):
-        self.ip = ip
-        self.name = name
-
-    def __repr__(self):
-       return "<SystemServices('%s', '%s')>" % (self.ip, self.name)
-
 class XenPools(Base):
     __tablename__ = 'xen_pools'
 
@@ -237,27 +204,6 @@ class XenPools(Base):
 
     def __repr__(self):
        return "<XenPools('%s', '%s')>" % (self.realm, self.pool_id)
-
-class ZeusCluster(Base):
-    __tablename__ = 'zeus_cluster'
-
-    id = Column(Integer, primary_key=True)
-    cluster_name = Column(String)
-    vhost = Column(String, primary_key=True)
-    ip = Column(String)             # ip is actually an inet in PG
-    public_ip = Column(String)      # public_ip is actually an inet in PG
-    port = Column(Integer)
-    tg_name = Column(String)
-    
-    def __init__(self, ip, cluster_name, vhost):
-        self.cluster_name = cluster_name
-        self.vhost = vhost
-        self.ip = ip
-        self.port = port
-        self.tg_name = tg_name
-
-    def __repr__(self):
-       return "<ZeusCluster('%s', '%s', '%s', '%s', '%s')>" % (self.cluster_name, self.vhost, self.ip, self.port, self.tg_name)
 
 class Users(Base):
     __tablename__ = 'users'
