@@ -13,26 +13,6 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `application_instances`
---
-
-DROP TABLE IF EXISTS `application_instances`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `application_instances` (
-  `ip` char(15) DEFAULT NULL,
-  `port` int(11) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `tag` varchar(100) DEFAULT NULL,
-  `started_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `scms_version_id` int(11) DEFAULT NULL,
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `dns_addendum`
 --
 
@@ -231,22 +211,6 @@ CREATE TABLE `servers` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `system_services`
---
-
-DROP TABLE IF EXISTS `system_services`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `system_services` (
-  `name` varchar(200) DEFAULT NULL,
-  `ip` varchar(15) DEFAULT NULL,
-  `server_id` bigint(20) unsigned DEFAULT NULL,
-  KEY `system_services_server_id_fkey` (`server_id`),
-  CONSTRAINT `system_services_server_id_fkey` FOREIGN KEY (`server_id`) REFERENCES `servers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `user_group_mapping`
 --
 
@@ -303,26 +267,6 @@ CREATE TABLE `xen_pools` (
   `server_id` bigint(20) unsigned DEFAULT NULL,
   KEY `xen_pools_server_id_fkey` (`server_id`),
   CONSTRAINT `xen_pools_server_id_fkey` FOREIGN KEY (`server_id`) REFERENCES `servers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `zeus_cluster`
---
-
-DROP TABLE IF EXISTS `zeus_cluster`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `zeus_cluster` (
-  `cluster_name` varchar(50) DEFAULT NULL,
-  `vhost` varchar(300) DEFAULT NULL,
-  `ip` varchar(15) DEFAULT NULL,
-  `public_ip` varchar(15) DEFAULT NULL,
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `port` int(11) DEFAULT NULL,
-  `tg_name` varchar(200) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
