@@ -1,0 +1,269 @@
+---
+# Copyright 2011 Gilt Groupe, INC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# General config options
+general:
+ 
+  # fqdn/fqun construction happens in this section
+  # a fqdn in mothership is: server.realm.site_id.domain.tld
+  # ex: ns1.qa.sfo.localhost.localdomain
+  # a fqun in mothership is: username.realm.site_id.domain.tld
+  # ex: dkovach.prod.area51.mywebsite.com
+
+  # the domain portion of the fqn
+  domain: 'localhost.localdomain'
+
+  # default contact email address
+  contact: 'hostmaster@localhost.localdomain'
+
+  # an array of valid realms. completely arbitrary
+  # we suggest at least 'prod' and 'qa'
+  realms: ['prod', 'qa']
+
+  # an array of valid site ids. completely arbitrary
+  # for naming of various geographic locations
+  # only really useful if you have multiple datacenters
+  # we default to using international airport callsigns
+  # since they're 3 letters long and globally unique
+  site_ids: ['iad', 'sfo']
+
+  # default public_ip for use in the network table
+  # for networks with a default outbound many-to-one NAT,
+  # this would be the public address
+  publicip: '123.123.123.123'
+
+  # configurable sudo passwords.
+  # if you use ssh keys and don't want to use passwords
+  # on user accounts for security reasons, set this to "True"
+  sudo_nopass: True
+
+  # set this to True to prevent root (uid 0) from running
+  # mothership. mostly useful for auditing purposes
+  root_lockout: True
+
+  # audit log location. this will get a dump of every command
+  # run in mothership with a timestamp and the user who ran it
+  audit_log_file: '/var/log/mothership_audit.log'
+
+# Database options
+db:
+
+  # db engine, currently mysql and postgresql are supported
+  engine: 'postgresql'
+
+  # username to access the db
+  #must have write privileges on the db defined in 'dbname' below
+  user: 'root'
+
+  # password to access the db
+  pass: 'rootpass'
+
+  # hostname of the db
+  hostname: 'localhost'
+
+  # db name
+  dbname: 'mothership'
+
+  # Makes sqlalchemy output debug sql statements
+  # to the console.   Normally you should not need this unless
+  # you are debugging a SQL generation error in sqlalchemy
+  echo: false
+
+
+# Cobbler-specific info
+cobbler:
+  
+  # to enable Cobbler integration, set this to True
+  active: False
+
+  # user and pass are added via: 
+  # htdigest /etc/cobbler/users.digest "Cobbler" <user>
+  user: 'api'
+  pass: 'api'
+
+  # Cobbler host
+  host: 'localhost'
+
+  # for profiles, the following fields MUST be defined in order
+  # for provisioning to work:
+  #    Name       : <cobbler_profile>   # the cobbler_profile name
+  #    Comment    : <os>                # the operating system name
+  #    DHCP Tag   : <default-arch>      # baremetal | virtual | xenserver 
+  # for example: cobbler profile edit --name="xenserverXYZ" --comment="XenServer X.Y.Z" --dhcp-tag="xenserver"
+
+
+# power control options
+power:
+  user: 'vlad'
+  pass: 'CHANGE_ME_PLEASE'
+
+# Dell Remote Access Controller options
+drac:
+  dell: 'calvin'
+  user: 'root'
+  pass: 'CHANGE_ME_PLEASE'
+  keys: [ 'root', 'postgres' ]
+  trust: 'gold'
+
+
+# SNMP info for network equipment information gathering
+snmp:
+
+  # an array of ips representing the switches we are interested in
+  hosts: [ '10.0.0.1', '10.0.0.3' ]
+
+  # SNMP version, '2c' is a reasonable default
+  version: '2c'
+
+  # SNMP RO community string. you really should change this
+  # default for most infrastructure devices is "public"
+  # you should change this
+  community: 'public'
+
+
+# options for the Key-Value table
+kv:
+  
+  # an array with site and realm info that gets joined into
+  # the default search path for the key-value functions
+  search_path: [ ['prod', 'iad'], ['iad'], [] ]
+
+
+# options for virtual machines
+vm:
+
+  # minimum number of cpu cores
+  min_cpu: 1
+  # minimum size of memory ram in GB
+  min_ram: 1
+  # minimum size of virtual disks in GB
+  min_disk: 25
+
+
+# Zenoss options
+zenoss:
+  active: False
+
+
+# Zabbix options
+zabbix:
+
+  # change to True to enable the Zabbix module.
+  # VERY IMPORTANT: make sure you have a zabbix server set up
+  # before enabling this option.
+  active: False
+
+# Network Config
+network:
+
+  # This can be set to either 'snmp' or 'curl' depending on
+  # what style of management you want to use
+  mgmt_facility: 'snmp'
+  
+  # Set the interface your management vlan uses
+  # eth0 is a reasonable default for this
+  mgmt_interface: 'eth0'
+
+  # Set the read-write community string for your switches here
+  # only applicable if you chose 'snmp' as your facility
+  mgmt_community: 'CHANGE_ME_PLEASE'
+
+  # Set the url for curl to call 
+  # only applicable if you chose 'curl' as your facility
+  # you must set the user and password in KV
+  mgmt_enable_url: 'https://change.me/please?enable'
+  mgmt_disable_url: 'https://change.me/please?disable'
+  mgmt_status_url: 'https://change.me/please?status'
+
+  # Network map, repeat blocks as necessary
+  map:
+  - vlan: 100                   # the vlan number on switch for this subnet
+    cidr: '1.2.3.4/24'          # the network/prefix CIDR address for this subnet
+    gw: '1.2.3.1'               # the gateway address for this subnet
+    nic: 'eth0'                 # the interface name for this subnet
+    dom: '.realm.siteid.tld'    # the domain suffix to be appended to short-hostnames
+    1st_static_ip: '10.0.0.10'  # the first static ip address for baremetal hosts
+    1st_dyn_ip: '10.0.50.10'    # the first dynamic ip address for virtual instances
+
+# User and Group options
+users_and_groups:
+
+  # A list containing valid user types
+  user_types: ['employee', 'consultant', 'system']
+
+  # Default user type, for when a user is added without
+  # any type being specified on the command line
+  def_user_type: 'employee'
+
+  # Default home directory path, will have <username> appended
+  # eg. hdir: "/home" will yield /home/dkovach 
+  hdir: '/home'
+
+  # Default shell. /bin/bash seems to be reasonable
+  shell: '/bin/bash'
+
+  # Default email domain, will have <username> prepended
+  # eg. email_domain: "company.com" will yield username@company.com
+  email_domain: 'company.com'
+
+  # Start of the reserved UID range
+  # only change this if you REALLY know what you're doing
+  uid_start: '500'
+
+  # End of the reserved UID range
+  # for compatibility's sake, assume UIDs are 16-bit
+  # only change this if you REALLY know what you're doing
+  uid_end: '65535'
+
+  # Start of the reserved GID range
+  # only change this if you REALLY know what you're doing
+  gid_start: '500'
+
+  # End of the reserved GID range
+  # for compatibility's sake, assume GIDs are 16-bit
+  # only change this if you REALLY know what you're doing
+  gid_end: '65535'
+
+  # Array of groups to which ALL users are added
+  # we recommend populating this with at least one group
+  # commonly called "users"
+  default_groups: ['users', 'web']
+
+
+# LDAP module options
+ldap:
+
+  # To enable LDAP set this to True
+  # if you enable this, make sure you set up KV records 
+  # in all your realms' master ldap server(s) for:
+  # ldap_admin_cn (usually root)
+  # ldap_admin_pass
+  # ldap_master_slapd_rootpw
+  active: False
+
+  # OU for users
+  users_ou: 'users'
+
+  # OU for groups
+  groups_ou: 'groups'
+
+  # LDAP connection success code.
+  # DO NOT CHANGE THIS unless you know what you're doing
+  ldap_success: '97' 
+
+  # Default gidNumber for posixGroup , should match value
+  # associated to the first entry of default_groups array
+  default_gid: '401'
+

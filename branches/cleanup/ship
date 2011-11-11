@@ -1,0 +1,1568 @@
+#!/usr/bin/env python
+
+# Copyright 2011 Gilt Groupe, INC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# System modules
+import os
+import sys
+import cmdln
+import socket
+import types
+import datetime
+import time
+
+# Extra modules
+sys.path.append("/usr/lib/python2.4/site-packages/SQLAlchemy-0.5.5-py2.4.egg/")
+import sqlalchemy
+from pprint import pprint
+import yaml
+
+# Our modules
+import mothership
+import mothership.kv
+import mothership.xen
+import mothership.cobbler
+import mothership.puppet
+import mothership.serverinfo
+import mothership.mgmt_vlan
+import mothership.dns
+import mothership.users
+import mothership.list_values
+import mothership.zenoss
+import mothership.zeus_cluster
+import mothership.ldap
+from mothership.list_servers import *
+from mothership.mothership_models import *
+from mothership.configure import Configure
+import mothership.zabbix
+
+class ShipCli(cmdln.Cmdln):
+    def __init__(self, cfg):
+        cmdln.Cmdln.__init__(self)
+        self.cfg = cfg
+        self.name = "ship"
+
+    # Zabbix API interaction
+    @cmdln.alias("zabbix_api")
+    @cmdln.alias("zab")
+    @cmdln.alias("zbx")
+    @cmdln.option("-a", "--add", action="store_true",
+                  help="add a server to zabbix")
+    @cmdln.option("-r", "--remove", action="store_true",
+                  help="remove a server from zabbix")
+    @cmdln.option("-e", "--enable", action="store_true",
+                  help="enable monitoring on a server")
+    @cmdln.option("-d", "--disable", action="store_true",
+                  help="disable monitoring on a server")
+    @cmdln.option("-s", "--zabbix_server", 
+                  help="specify a zabbix server to connect to")
+    @cmdln.option("-t", "--zabbix_template", 
+                  help="specify a zabbix template to assign to this host")
+    def do_zabbix(self, subcmd, opts, hostname):
+        """${cmd_name}: manipulate zabbix info for a host
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        # get some basic server info
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        unqdn = '.'.join([host,realm,site_id])
+
+        # get some Zabbix server info
+        if opts.zabbix_server:
+          zs_host,zs_realm,zs_site_id = mothership.get_unqdn(self.cfg, opts.zabbix_server)
+          zs_unqdn = '.'.join([zs_host,zs_realm,zs_site_id])
+        else:
+          zs_unqdn = None 
+
+        if opts.add:
+           if opts.zabbix_template:
+             mothership.zabbix.add(self.cfg, unqdn, zs_unqdn, zabbix_template=opts.zabbix_template)
+           else:
+             mothership.zabbix.add(self.cfg, unqdn, zs_unqdn, zabbix_template=None)
+        elif opts.remove:
+           mothership.zabbix.remove(self.cfg, unqdn, zs_unqdn)
+        elif opts.enable:
+           if opts.disable:
+             print "Incompatible options -d and -e"
+             return
+           else:
+             mothership.zabbix.enable(self.cfg, unqdn, zs_unqdn)
+        elif opts.disable:
+           if opts.enable:
+             print "Incompatible options -d and -e"
+             return
+           else:
+             mothership.zabbix.disable(self.cfg, unqdn, zs_unqdn)
+        else:
+           mothership.zabbix.display(self.cfg, unqdn, zs_unqdn)
+
+    # Capistrano functions, this needs expansion
+    @cmdln.alias("cap")
+    def do_capistrano(self, subcmd, opts):
+        """${cmd_name}: manipulate capistrano data, default writes out a cap config 'tag' section 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        
+        mothership.cap_write_config(self.cfg)
+
+
+    # Management vlan interaction
+    @cmdln.alias("mgmtvlan")
+    @cmdln.alias("mvl")
+    @cmdln.option("-e", "--enable", action="store_true",
+                  help="enable a server's management port")
+    @cmdln.option("-d", "--disable", action="store_true",
+                  help="disable a server's management port")
+    def do_mgmt_vlan(self, subcmd, opts, hostname):
+        """${cmd_name}: manipulate a server's management port
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+
+        # get some basic server info
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+ 
+        if opts.enable:
+          mothership.mgmt_vlan.enable(self.cfg, host, realm, site_id)
+        elif opts.disable:
+          mothership.mgmt_vlan.disable(self.cfg, host, realm, site_id)
+        else:
+          mothership.mgmt_vlan.status(self.cfg, host, realm, site_id)
+
+
+    # Add users, ldap edition
+    @cmdln.alias("useradd")
+    @cmdln.alias("uadd")
+    @cmdln.alias("addu")
+    @cmdln.alias("add_user")
+    @cmdln.alias("user_add")
+    @cmdln.alias("adduser")
+    @cmdln.option("-c", "--copy_from",
+                  help="copy type, shell, and groups from a user")
+    @cmdln.option("-k", "--keyfile",
+                  help="ssh2 public key file to read")
+    @cmdln.option("-u", "--uid", type="int",
+                  help="assign a particular uid to a user")
+    @cmdln.option("-H", "--homedir",
+                  help="assign an alternate homedir to a user (default is /home/username)")
+    @cmdln.option("-s", "--shell",
+                  help="assign an alternate shell to a user (default is /bin/bash)")
+    @cmdln.option("-e", "--email",
+                  help="assign an alternate email to a user (default is username@email_domain)")
+    @cmdln.option("-t", "--type",
+                  help="type of user")
+    @cmdln.option("-l", "--ldap", action="store_true",
+                  help="Add user to LDAP server")
+    def do_add_users(self, subcmd, opts, username, first_name, last_name): 
+        """${cmd_name}: add users to mothership. to assign groups, use "ugmap"
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.uadd(self.cfg, username, first_name, last_name, copy_from=opts.copy_from, keyfile=opts.keyfile, uid=opts.uid, hdir=opts.homedir, shell=opts.shell, email=opts.email, user_type=opts.type)
+        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+            print "Error: %s" % e
+
+        if opts.ldap:
+            if not self.cfg.ldap_active:
+                print "LDAP functionality is inactive.\n--ldap (-l) is only useful if you turn LDAP on in the config"
+                sys.exit(1)
+            else:
+                try:
+                    mothership.ldap.add_user(self.cfg, username)
+                except (mothership.ldap.LDAPError), e:
+                    print 'Error: %s' % e
+
+
+    # Remove users
+    @cmdln.alias("rmuser")
+    @cmdln.alias("rmusers")
+    @cmdln.alias("rm_user")
+    @cmdln.alias("deluser")
+    @cmdln.alias("userdel")
+    @cmdln.alias("user_del")
+    @cmdln.alias("del_user")
+    def do_rm_users(self, subcmd, opts, username):
+        """${cmd_name}: completely remove users from mothership 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.uremove(self.cfg, username)
+        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+            print 'Error: %s' % e
+            
+
+    # Disable/deactivate users
+    @cmdln.alias("de_user")
+    @cmdln.alias("disable_user")
+    @cmdln.alias("disable_users")
+    @cmdln.alias("deactivate_user")
+    @cmdln.alias("deactivate_users")
+    @cmdln.alias("deuser")
+    @cmdln.alias("disuser")
+    @cmdln.alias("deusers")
+    @cmdln.alias("disusers")
+    def do_de_users(self, subcmd, opts, username):
+        """${cmd_name}: disable users stored within mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.udeactivate(self.cfg, username)
+        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+            print 'Error: %s' % e
+
+    # enable/activate users
+    @cmdln.alias("en_user")
+    @cmdln.alias("act_user")
+    @cmdln.alias("enable_user")
+    @cmdln.alias("enable_users")
+    @cmdln.alias("activate_user")
+    @cmdln.alias("activate_users")
+    @cmdln.alias("enuser")
+    @cmdln.alias("actuser")
+    @cmdln.alias("enusers")
+    @cmdln.alias("actusers")
+    def do_en_users(self, subcmd, opts, username):
+        """${cmd_name}: enable users stored within mothership.
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.uactivate(self.cfg, username)
+        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+            print 'Error: %s' % e
+
+    # Modify users
+    @cmdln.alias("moduser")
+    @cmdln.alias("mu")
+    @cmdln.alias("usermod")
+    @cmdln.alias("modusers")
+    @cmdln.alias("usersmod")
+    @cmdln.alias("mod_user")
+    @cmdln.alias("user_mod")
+    @cmdln.alias("users_mod")
+    @cmdln.option("-k", "--keyfile",
+                  help="ssh2 public key file to read")
+    @cmdln.option("-f", "--fname",
+                  help="user's first name")
+    @cmdln.option("-l", "--lname",
+                  help="user's last name")
+    @cmdln.option("-u", "--uid", type="int",
+                  help="assign a particular uid to a user")
+    @cmdln.option("-H", "--homedir",
+                  help="assign an alternate homedir to a user (default is /home/username)")
+    @cmdln.option("-s", "--shell",
+                  help="assign an alternate shell to a user (default is /bin/bash)")
+    @cmdln.option("-e", "--email",
+                  help="assign an alternate email to a user (default is username@email_domain)")
+    @cmdln.option("-t", "--type",
+                  help="type of user")
+    def do_mod_users(self, subcmd, opts, username):
+        """${cmd_name}: modify users stored within mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.umodify(self.cfg, username, first_name=opts.fname, last_name=opts.lname, keyfile=opts.keyfile, uid=opts.uid, hdir=opts.homedir, shell=opts.shell, email=opts.email, user_type=opts.type)
+        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+            print 'Error: %s' % e
+             
+
+
+    # clone users
+    @cmdln.alias("cloneuser")
+    @cmdln.alias("userclone")
+    @cmdln.alias("cloneu")
+    @cmdln.alias("uclone")
+    def do_clone_user(self, subcmd, opts, username, newfqn):
+        """${cmd_name}: clone a user into a new realm.site_id
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.uclone(self.cfg, username, newfqn)
+        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+            print 'Error: %s' % e
+
+
+    # write a user's ssh public key to a file
+    @cmdln.alias("writekey")
+    @cmdln.alias("write_key")
+    @cmdln.alias("write_pubkey")
+    @cmdln.alias("write_ssh_pubkey")
+    @cmdln.alias("writesshkey")
+    @cmdln.alias("wk")
+    @cmdln.alias("wspk")
+    @cmdln.option("-k", "--keyfile",
+                  help="ssh2 public key file to write")
+    def do_write_ssh_public_key(self, subcmd, opts, username):
+        """${cmd_name}: write out a user's ssh public key 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.uwrite_pubkey(self.cfg, username, opts.keyfile)
+        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+            print 'Error: %s' % e
+    
+
+    # User display 
+    @cmdln.alias("user")
+    @cmdln.alias("udisplay")
+    @cmdln.alias("displayusers")
+    @cmdln.alias("displayuser")
+    @cmdln.alias("user_display")
+    @cmdln.alias("display_user")
+    @cmdln.alias("ud")
+    @cmdln.alias("du")
+    @cmdln.option("-p", "--pubkey", action="store_true",
+                  help="display public key, only useful with -d")
+    @cmdln.option("-c", "--compact", action="store_true",
+                  help="display user in compact form, only useful with -d")
+    @cmdln.option("-l", "--list_groups", action="store_true",
+                  help="display the user's groups in a list, one on each line")
+    def do_display_users(self, subcmd, opts, username):
+        """${cmd_name}: display users stored within mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.udisplay(self.cfg, username, pubkey=opts.pubkey, compact=opts.compact, list=opts.list_groups)
+        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+            print 'Error: %s' % e
+
+
+    # Add a group
+    @cmdln.alias("addgroup")
+    @cmdln.alias("groupadd")
+    @cmdln.alias("add_groups")
+    @cmdln.alias("group_add")
+    @cmdln.alias("addg")
+    @cmdln.alias("gadd")
+    @cmdln.option("-g", "--gid", type="int",
+                  help="assign a particular GID to a group")
+    @cmdln.option("-d", "--desc",
+                  help="a description for the group")
+    @cmdln.option("-s", "--sudo_cmds",
+                  help="command restrictions for sudoers generation (ALL is valid here). an empty value will cause the group to be ignored by generate_sudoers")
+    def do_add_group(self, subcmd, opts, groupname):
+        """${cmd_name}: add a group to mothership 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.gadd(self.cfg, groupname, gid=opts.gid, description=opts.desc, sudo_cmds=opts.sudo_cmds)
+        except (mothership.validate.ValidationError, mothership.users.UsersError), e:
+            print 'Error: %s' % e
+        
+
+    # Remove a group
+    @cmdln.alias("removegroup")
+    @cmdln.alias("group_remove")
+    @cmdln.alias("groupremove")
+    @cmdln.alias("rmgroup")
+    @cmdln.alias("rmg")
+    @cmdln.alias("grm")
+    @cmdln.alias("gremove")
+    def do_remove_group(self, subcmd, opts, groupname):
+        """${cmd_name}: remove a group from mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.gremove(self.cfg, groupname)
+        except (mothership.validate.ValidationError, mothership.users.UsersError), e:
+            print 'Error: %s' % e
+
+
+    # Modify a group
+    @cmdln.alias("gmod")
+    @cmdln.alias("group_modify")
+    @cmdln.alias("modgroup")
+    @cmdln.alias("gm")
+    @cmdln.alias("mg")
+    @cmdln.alias("modifygroup")
+    @cmdln.alias("groupmodify")
+    @cmdln.alias("groupmod")
+    @cmdln.option("-g", "--gid", type="int",
+                  help="assign a particular GID to a group")
+    @cmdln.option("-d", "--desc",
+                  help="a description for the group")
+    @cmdln.option("-s", "--sudo_cmds",
+                  help="command restrictions for sudoers generation (ALL is valid here). an empty value will cause the group to be ignored by generate_sudoers")
+    def do_modify_group(self, subcmd, opts, groupname):
+        """${cmd_name}: modify a group within mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.gmodify(self.cfg, groupname, gid=opts.gid, description=opts.desc, sudo_cmds=opts.sudo_cmds)
+        except (mothership.validate.ValidationError, mothership.users.UsersError), e:
+            print 'Error: %s' % e
+
+
+    # Display a group 
+    @cmdln.alias("gdisplay")
+    @cmdln.alias("gd")
+    @cmdln.alias("gidsp")
+    @cmdln.alias("display_group")
+    @cmdln.alias("displaygroup")
+    @cmdln.option("-l", "--list_users", action="store_true",
+                  help="display the group members in a list, one on each line")
+    def do_group_display(self, subcmd, opts, groupname):
+        """${cmd_name}: display a group within mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.gdisplay(self.cfg, groupname, opts.list_users)
+        except (mothership.validate.ValidationError, mothership.users.UsersError), e:
+            print 'Error: %s' % e
+
+
+    # User/Group mapping manipulation
+    @cmdln.alias("ugmap")
+    @cmdln.option("-a", "--add", action="store_true",
+                  help="add a user to a group")
+    @cmdln.option("-r", "--remove", action="store_true",
+                  help="remove a user from a group")
+    def do_user_group_mapping(self, subcmd, opts, username, groupname):
+        """${cmd_name}: manipulate user-to-group mappings within mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+
+        try:
+            if opts.add and opts.remove:
+                print "-a and -r are mutually exclusive, pick one."
+                sys.exit(1)
+            elif opts.add:
+                mothership.users.utog(self.cfg, username, groupname)
+            elif opts.remove:
+                mothership.users.urmg(self.cfg, username, groupname)
+            else:
+                # write a display
+                print "display functionality is not yet working, check back later"
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError), e:
+            print "Error: %s" % e
+
+
+    # LDAP section. only present these commands if we're configured for LDAP in mothership.yaml
+    # add a user to the ldap db
+    @cmdln.alias("lduadd")
+    @cmdln.alias("ldapuadd")
+    @cmdln.alias("ldapuseradd")
+    def do_ldap_user_add(self, subcmd, opts, username):
+        """${cmd_name}: LDAP user add 
+ 
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        if self.cfg.ldap_active:
+            try:
+                mothership.ldap.uadd(self.cfg, username)
+            except (mothership.validate.ValidationError,
+                    mothership.users.UsersError,
+                    mothership.ldap.LDAPError), e:
+                print "Error: %s" % e
+
+
+    # remove a user from the ldap db
+    @cmdln.alias("ldurm")
+    @cmdln.alias("lduserrm")
+    @cmdln.alias("lduremove")
+    @cmdln.alias("lduserremove")
+    @cmdln.alias("ldapurm")
+    @cmdln.alias("ldapuserremove")
+    @cmdln.alias("ldap_urm")
+    def do_ldap_user_remove(self, subcmd, opts, username):
+        """${cmd_name}: LDAP user remove 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.ldap.uremove(self.cfg, username)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+
+    # update a user's ldap entry
+    @cmdln.alias("lduupdate")
+    @cmdln.alias("lduu")
+    @cmdln.alias("ldumodify")
+    @cmdln.alias("ldapuupdate")
+    @cmdln.alias("ldapuserupdate")
+    @cmdln.alias("ldapuu")
+    def do_ldap_user_update(self, subcmd, opts, username):
+        """${cmd_name}: LDAP user update 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.ldap.uupdate(self.cfg, username)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+    # update a user's ldap password
+    @cmdln.alias("ldpw")
+    @cmdln.alias("ldappassword")
+    @cmdln.alias("ldappass")
+    @cmdln.alias("ldappwd")
+    def do_ldap_user_passwd(self, subcmd, opts, username):
+        """${cmd_name}: LDAP user password update 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.ldap.update_ldap_passwd(self.cfg, username)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+
+    # refresh all users in the ldap db (dangerous)
+    @cmdln.alias("ldrefresh")
+    @cmdln.alias("ld_refresh")
+    @cmdln.alias("ldaprefresh")
+    @cmdln.option("-u", "--users", action="store_true",
+                 help="refresh the users in ldap")
+    @cmdln.option("-g", "--groups", action="store_true",
+                 help="refresh the groups in ldap")
+    def do_ldap_refresh(self, subcmd, opts, realm_path):
+        """${cmd_name}: LDAP refresh, takes realm.site_id as its argument 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            if opts.users:
+                mothership.ldap.urefresh(self.cfg, realm_path)
+            if opts.groups:
+                mothership.ldap.grefresh(self.cfg, realm_path)
+            if not opts.groups and not opts.users:
+                mothership.ldap.urefresh(self.cfg, realm_path)
+                mothership.ldap.grefresh(self.cfg, realm_path)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+
+    # display a user's ldap entry
+    @cmdln.alias("ldud")
+    @cmdln.alias("ldapudisplay")
+    @cmdln.alias("ldapuserdisplay")
+    @cmdln.alias("ldapdisplayuser")
+    @cmdln.alias("ldap_udisplay")
+    def do_ldap_user_display(self, subcmd, opts, username):
+        """${cmd_name}: LDAP user display 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.ldap.udisplay(self.cfg, username)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+
+    # add a group to ldap's db
+    @cmdln.alias("ldgadd")
+    @cmdln.alias("ldapgadd")
+    @cmdln.alias("ldapgroupadd")
+    def do_ldap_group_add(self, subcmd, opts, groupname):
+        """${cmd_name}: LDAP group add 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.ldap.gadd(self.cfg, groupname)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+
+    # remove a group from the ldap db
+    @cmdln.alias("ldgrm")
+    @cmdln.alias("ldgrouprm")
+    @cmdln.alias("ldgremove")
+    @cmdln.alias("ldgroupremove")
+    @cmdln.alias("ldapgurm")
+    @cmdln.alias("ldapgroupremove")
+    @cmdln.alias("ldap_grm")
+    def do_ldap_group_remove(self, subcmd, opts, groupname):
+        """${cmd_name}: LDAP group remove
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.ldap.gremove(self.cfg, groupname)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+
+    # update a group's ldap entry
+    @cmdln.alias("ldgupdate")
+    @cmdln.alias("ldgu")
+    @cmdln.alias("ldgmodify")
+    @cmdln.alias("ldapgupdate")
+    @cmdln.alias("ldapgroupupdate")
+    @cmdln.alias("ldapgu")
+    def do_ldap_group_update(self, subcmd, opts, groupname):
+        """${cmd_name}: LDAP group update 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.ldap.gupdate(self.cfg, groupname)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+
+    # display a group's ldap entry
+    @cmdln.alias("ldgd")
+    @cmdln.alias("ldapgdisplay")
+    @cmdln.alias("ldapgroupdisplay")
+    @cmdln.alias("ldapdisplaygroup")
+    @cmdln.alias("ldap_gdisplay")
+    def do_ldap_group_display(self, subcmd, opts, groupname):
+        """${cmd_name}: LDAP group display
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.ldap.gdisplay(self.cfg, groupname)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+
+    # Server listing command
+    @cmdln.alias("lss")
+    @cmdln.alias("ls_serv")
+    @cmdln.alias("lsservers")
+    @cmdln.alias("ls_servers")
+    @cmdln.option("-c", "--config",
+                  help="use db config file")
+    @cmdln.option("-v", "--verbose", action="store_true",
+                  help="print verbose output")
+    @cmdln.option("-V", "--vlan", type="int",
+                  help="print servers in one vlan")
+    @cmdln.option("-s", "--site-id",
+                  help="print servers in one site")
+    @cmdln.option("-t", "--tag",
+                  help="print servers in one tag")
+    @cmdln.option("-R", "--realm",
+                  help="print servers in one realm")
+    @cmdln.option("-m", "--manufacturer",
+                  help="print servers by one manufacturer")
+    @cmdln.option("-M", "--model",
+                  help="print servers of one model type")
+    @cmdln.option("-C", "--cores",
+                  help="print servers with a specific number of cpu cores")
+    @cmdln.option("-a", "--ram", type="int",
+                  help="print servers with a specific amount of ram")
+    @cmdln.option("-d", "--disk", type="int",
+                  help="print servers with a specific amount of disk")
+    @cmdln.option("-H", "--hw_tag",
+                  help="print servers with a specific hw_tag")
+    @cmdln.option("-x", "--virtual", action="store_true",
+                  help="print virtual servers")
+    @cmdln.option("-p", "--physical", action="store_true",
+                  help="print physical (non-vm) servers")
+    @cmdln.option("-n", "--name",
+                  help="print servers whose name matches *NAME*")
+    def do_list_servers(self, subcmd, opts):
+        """${cmd_name}: get a list of all of the servers in mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        if opts.vlan:
+            list_servers(self.cfg, listby='vlan', lookfor=opts.vlan)
+        elif opts.site_id:
+            list_servers(self.cfg, listby='site_id', lookfor=opts.site_id)
+        elif opts.tag:
+            list_servers(self.cfg, listby='tag', lookfor=opts.tag)
+        elif opts.realm:
+            list_servers(self.cfg, listby='realm', lookfor=opts.realm)
+        elif opts.manufacturer:
+            list_servers(self.cfg, listby='manufacturer', lookfor=opts.manufacturer)
+        elif opts.model:
+            list_servers(self.cfg, listby='model', lookfor=opts.model)
+        elif opts.cores:
+            list_servers(self.cfg, listby='cores', lookfor=opts.cores)
+        elif opts.ram:
+            list_servers(self.cfg, listby='ram', lookfor=opts.ram)
+        elif opts.disk:
+            list_servers(self.cfg, listby='disk', lookfor=opts.disk)
+        elif opts.hw_tag:
+            list_servers(self.cfg, listby='hw_tag', lookfor=opts.hw_tag)
+        elif opts.virtual:
+            list_servers(self.cfg, listby='virtual')
+        elif opts.physical:
+            list_servers(self.cfg, listby='physical')
+        elif opts.name:
+            list_servers(self.cfg, listby='name', lookfor=opts.name)
+        else:
+            list_servers(self.cfg)
+
+    @cmdln.alias("sinfo")
+    @cmdln.alias("si")
+    @cmdln.alias("server_info")
+    @cmdln.option("-i", "--ip",
+                  help="search by ip")
+    @cmdln.option("-n", "--name",
+                  help="search by hostname")
+    @cmdln.option("-H", "--hw_tag",
+                  help="search by hardware tag")
+    @cmdln.option("-m", "--mac",
+                  help="search by mac address")
+    @cmdln.option("-I", "--printip", action="store_true",
+                  help="print ip addresses only")
+    @cmdln.option("-M", "--printmac", action="store_true",
+                  help="print mac addresses only")
+    def do_serverinfo(self, subcmd, opts):
+        """${cmd_name}: get information about a server
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            arg_count = sum(x != None for x in (opts.ip, opts.name, opts.mac, opts.hw_tag))
+            if arg_count != 1:
+                print "Specify one search argument."
+                cmdln.Cmdln.do_help(self, ['','serverinfo'])
+                sys.exit(1)
+
+            if opts.ip:
+                hostname = mothership.serverinfo.get_host(self.cfg, ip=opts.ip)
+            elif opts.name:
+                hostname = opts.name
+            elif opts.mac:
+                hostname = mothership.serverinfo.get_host(self.cfg, mac=opts.mac)
+            elif opts.hw_tag:
+                hostname = mothership.serverinfo.get_host(self.cfg, hw_tag=opts.hw_tag)
+            else:
+                print "unexpected error, check everything."
+                sys.exit(1)
+
+            host, realm, site_id = mothership.get_unqdn(self.cfg, hostname)
+
+            if opts.printip and opts.printmac:
+                print "-M and -I options are mutually exclusive, pick one."
+                cmdln.Cmdln.do_help(self, ['','serverinfo'])
+                sys.exit(1)
+
+            if opts.printip:
+                mothership.serverinfo.ip_only(self.cfg, host, realm, site_id)
+            elif opts.printmac:
+                mothership.serverinfo.mac_only(self.cfg, host, realm, site_id)
+            else:
+                mothership.serverinfo.all(self.cfg, host, realm, site_id)
+
+        except mothership.serverinfo.ServerInfoError, e:
+            print 'Error: %s' % e
+            sys.exit(1)
+
+    @cmdln.alias("kv")
+    @cmdln.option("-u", "--update", action="store_true",
+            help="Update the value of the key.  Will overwrite any existing values.")
+    @cmdln.option("-r", "--remove", action="store_true",
+            help="Delete a key=value pair.")
+    @cmdln.option("-a", "--add", action="store_true",
+            help="Add a key=value pair.")
+    def do_keyvalues(self, subcmd, opts, name, key):
+        """${cmd_name}: Manipulate the kv table.
+
+        ${cmd_option_list}
+        examples:
+            select: ship kv host.realm.site key    # specific key for host.realm.site
+                    ship kv realm.site key         # specific key for realm.site
+                    ship kv site key               # specific key for site
+                    ship kv host.realm.site %      # all keys for host.realm.site
+                    ship kv realm.site %           # all keys for realm.site
+                    ship kv site %                 # all keys for site
+                    ship kv . key                  # the . is global
+
+            update: ship kv -u . key=global
+                    ship kv -u name key=specific
+
+            append: ship kv -a . key=global
+                    ship kv -a name array=three
+
+            remove: ship kv -r name key=junk
+        """
+        kvs = []
+
+        # Global
+        if name == '.':
+            fqdn = ''
+        # Wildcard
+        elif name == '%':
+            fqdn = None
+        # Parse name parts
+        else:
+            # this causes much grief.
+            # fqdn = ".".join(mothership.get_unqdn(self.cfg, name))
+            fqdn = name 
+
+        # Parse key=value argument
+        value = None
+        if key.find('=') > 0:
+            key, value = key.split('=')
+
+        if opts.add and opts.remove or opts.add and opts.update or opts.remove and opts.update:
+            print "Incompatible options."
+            return
+ 
+        try:
+            if opts.add:
+                # Add another value for a key
+                kvs = [mothership.kv.add(self.cfg, fqdn, key, value)]
+            elif opts.update:
+                # Update or insert the value for a key
+                kvs = [mothership.kv.upsert(self.cfg, fqdn, key, value)]
+            elif opts.remove:
+                if key and value:
+                    # Display the value
+                    kvs = [mothership.kv.select(self.cfg, fqdn, key, value)]
+                    # Delete the value
+                    mothership.kv.delete(self.cfg, fqdn, key, value)
+                else:
+                    print "Delete requires key=value parameter."
+            else:   # everything else should be collect
+                if key == '%':
+                    # Query all values for a host
+                    kvs = mothership.kv.collect(self.cfg, fqdn)
+                else:
+                    # Query all values for a key
+                    kvs = mothership.kv.collect(self.cfg, fqdn, key=key, value=value)
+            if kvs:
+                for kv in kvs:
+                    print kv
+        except (mothership.KVError), e:
+            print 'Error: %s' % e
+
+
+    @cmdln.alias("p")
+    @cmdln.alias("puppet")
+    def do_classify(self, subcmd, opts, fqdn):
+        """${cmd_name}: Puppet classifier yaml for a server
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        node = mothership.puppet.classify(self.cfg, fqdn)
+        print(yaml.dump(node, default_flow_style=False))
+
+    @cmdln.alias("genip")
+    @cmdln.alias("gen_ip")
+    @cmdln.option("-l", "--last",
+                  help="specify last ip address to generate")
+    @cmdln.option("-c", "--count",
+                  help="specify number of ip addresses to generate")
+    def do_generate_ipaddress(self, subcmd, opts, first):
+        """${cmd_name}:
+            Generate ip addresses given the first and last in range;
+            convert mac addresses and discover vlan, interface, etc;
+            and insert them into the network table
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        host,realm,site_id = mothership.get_unqdn(self.cfg, '')
+        mothership.generate_ipaddress_range(self.cfg, first,
+            last=opts.last, count=opts.count, realm=realm, site_id=site_id)
+
+    @cmdln.alias("rm_dns")
+    @cmdln.alias("deldns")
+    @cmdln.alias("rmdns")
+    @cmdln.alias("del_dns")
+    def do_delete_dns(self, subcmd, opts, hostname):
+        """${cmd_name}: Remove DNS records from the dns_addendum table
+        Assumes the current realm and site_id unless options are specified
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        print 'Deleting %s.%s.%s from dns_addendum table' % (host, realm, site_id)
+        mothership.dns.update_table_dnsaddendum(self.cfg,
+            { 'realm':realm, 'site_id':site_id, 'host':host },
+            delete=True)
+
+    @cmdln.alias("dns")
+    @cmdln.alias("adddns")
+    def do_add_dns(self, subcmd, opts, hostname, rec_type, target):
+        """${cmd_name}: Add DNS records to the dns_addendum table.
+        HOSTNAME should be unqdn.
+        you must generate dns to have your updates take effect.
+        
+        see "ship gendns -h"
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        print 'Adding %s.%s.%s to dns_addendum table' % (host, realm, site_id)
+        mothership.dns.update_table_dnsaddendum(self.cfg,
+            { 'realm':realm, 'site_id':site_id,
+            'host':host, 'target':target.rstrip('.'),
+            'record_type':rec_type.upper() })
+
+    @cmdln.alias("gendns")
+    @cmdln.alias("gen_dns")
+    @cmdln.option("-s", "--sync", action="store_true",
+                  help="sync cobbler after updating zone_templates")
+    @cmdln.option("-c", "--cobbler", action="store_true",
+                  help="output to cobbler zone_templates")
+    @cmdln.option("-o", "--outdir",
+                  help="output to directory as realm.site_id.domain")
+    def do_generate_dns(self, subcmd, opts, domain):
+        """${cmd_name}: Generate DNS entries from dns_addendum table.
+        For outdir/cobbler, all files that match the domain specified will be generated.
+        For stdout, if more than one realm.site_id matches, a selection prompt will display.
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        outdir = None
+        if opts.outdir: outdir = opts.outdir
+        if opts.cobbler: outdir = '/etc/cobbler/zone_templates'
+        mothership.dns.generate_dns_output(self.cfg, domain, outdir, opts.cobbler)
+        if opts.cobbler and opts.sync:
+            cc = mothership.cobbler.CobblerAPI(self.cfg)
+            cc.sync_cobbler(self.cfg)
+
+    @cmdln.alias("add")
+    @cmdln.alias("add_serv")
+    @cmdln.alias("add_server")
+    @cmdln.option("-o", "--osname",
+                  help="os or profile name for hostname (default: CentOS 5.5)")
+    @cmdln.option("-V", "--disk", default=None,
+                  help="specify GB of memory used for virtual host")
+    @cmdln.option("-M", "--ram", default=None,
+                  help="specify GB of memory used for virtual host")
+    @cmdln.option("-C", "--cores", default=None,
+                  help="specify number of cpu cores used for virtual host")
+    @cmdln.option("-t", "--hw_tag",
+                  help="identify hardware using hardware tag (hw_tag)")
+    @cmdln.option("-m", "--mgmtip",
+                  help="identify hardware using specified management ip address")
+    @cmdln.option("-d", "--dracip",
+                  help="identify hardware using specified drac ip address")
+    @cmdln.option("-r", "--tag",
+                  help="primary tag for hostname (default: hostname s/\d+$//)")
+    @cmdln.option("-p", "--public_ip",
+                  help="public ip address for eth1 hostname")
+    def do_provision_server(self, subcmd, opts, hostname, vlan):
+        """${cmd_name}:
+            provision the specified server hostname into servers table using the
+            specified identifier to associate it with the proper hardware in the
+            hardware/network table.  One identifier option MUST be used and the
+            hostname MUST be unqdn.  The vlan for the primary interface (eth1)
+            MUST be specified for both baremetal and virtual hosts.
+            
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        added = False
+        unqdn = ".".join(mothership.get_unqdn(self.cfg, hostname))
+        osdict = mothership.cobbler.CobblerAPI(self.cfg).get_os_dict(self.cfg)
+        added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict, opts)
+        if added:
+            if self.cfg.zab_active:
+                # cloned portions of do_zabbix, to add when new servers are provisioned
+                zs_unqdn = '.'.join(mothership.get_unqdn(self.cfg, self.cfg.dbsess.query(Server).\
+                    filter(Server.tag=="zabbix_server").first().hostname))
+                mothership.zabbix.add(self.cfg, unqdn, zs_unqdn, zabbix_template=None)
+
+    @cmdln.alias("swap")
+    @cmdln.alias("rms")
+    @cmdln.alias("rm_serv")
+    @cmdln.alias("expire")
+    def do_expire_server(self, subcmd, opts, hostname):
+        """${cmd_name}: expire the specified server hostname and cleanup network table
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        cc = mothership.cobbler.CobblerAPI(self.cfg)
+        expired = False
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        expired = mothership.expire_server(self.cfg, host, today)
+        if expired == 'virtual':
+            # for virtual servers, xenserver instance must be purged
+            try:
+                cc.set_system_power(self.cfg, host, 'off')
+            except:
+                sys.stderr.write('Failed to destroy virtual host, aborting\n')
+                sys.exit()
+        if expired:
+            unqdn = '.'.join([host,realm,site_id])
+            # cobbler system MUST be removed upon expire to avoid future duplicate errors
+            cc.delete_system(self.cfg, host)
+            if self.cfg.zenlive:
+                zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))
+                auth = dict([ (x.split('_')[-1], str(mothership.kv.select(self.cfg, zhost, key="zenoss_"+x)).split('=')[1])
+                    for x in [ 'api_user', 'api_pass', 'default_arch' ] ], host=zhost)
+                z = mothership.zenoss.ZenossAPI(auth)
+                z.disable_host(unqdn)
+            if self.cfg.zab_active:
+                # cloned portions of do_zabbix, to disable when servers are expired
+                mothership.zabbix.disable(self.cfg, unqdn, zs_unqdn=None)
+
+    @cmdln.alias("swap")
+    @cmdln.alias("swap_serv")
+    @cmdln.option("-c", "--cobbler", action="store_true",
+                  help="rebuild both systems in cobbler database")
+    def do_swap_server(self, subcmd, opts, thishost, thathost):
+        """${cmd_name}: swap two baremetal hosts (switch the hardware,
+        but leave all other associations intact)
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        if not thishost or not thathost:
+            print 'Error, two servers MUST be specified in order to swap'
+            return
+        thishost = mothership.get_unqdn(self.cfg, thishost)[0]
+        thathost = mothership.get_unqdn(self.cfg, thathost)[0]
+        mothership.swap_server(self.cfg, today, [ thishost, thathost ])
+        if opts.cobbler:
+            cc = mothership.cobbler.CobblerAPI(self.cfg)
+            cc.delete_system(self.cfg, thishost)
+            cc.add_system(self.cfg,
+                mothership.retrieve_cobbler_system_dict(self.cfg, thathost))
+            cc.add_system(self.cfg,
+                mothership.retrieve_cobbler_system_dict(self.cfg, thishost))
+
+    @cmdln.alias("cob")
+    @cmdln.alias("cobble")
+    @cmdln.option("-x", "--xen", default=False,
+                  help="specify a xen server to override automated vlan detection")
+    @cmdln.option("-r", "--remove", action="store_true",
+                  help="remove server from cobbler")
+    @cmdln.option("-k", "--kick", action="store_true",
+                  help="kick the system after adding/updating system")
+    @cmdln.option("-s", "--sync", action="store_true",
+                  help="sync cobbler after adding/updating/deleting system")
+    def do_cobbler(self, subcmd, opts, hostname):
+        """${cmd_name}: update cobbler system using mothership server hostname info
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
+        host,realm,site_id = unqdn.split('.')
+        cc = mothership.cobbler.CobblerAPI(self.cfg)
+        if not self.cfg.coblive:
+            print '%s\n%s' % (self.cfg.cobremote, self.cfg.cobtoken)
+        if opts.remove:
+            cc.delete_system(self.cfg, host)
+            if opts.sync:
+                cc.sync_cobbler(self.cfg)
+        else:
+            sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, host, opts.xen)
+            if opts.kick:
+                if cc.abort_kick(self.cfg, self.name, unqdn):
+                    return
+                if 'xen' in sysdict['power_type']:
+                    cc.set_system_power(self.cfg, host, 'off')
+                    xenpass = str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')
+                    if not xenpass or len(xenpass) < 2:
+                        sys.stderr.write('Xenserver password was not configured, please update with:\n')
+                        sys.stderr.write('\tship kv -a % xen_api_pass=<passwd>\n')
+                        sys.exit()
+                    xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root', xenpass[1])
+                    xenhost, storage = xs.triple_check(sysdict)
+                    sysdict['storage'] = storage
+                    if not xenhost:
+                        return
+                    else:
+                        sysdict['power_switch'] = xenhost
+            if not cc.add_system(self.cfg, sysdict):
+                sys.exit(1)
+            if opts.kick:
+                if self.cfg.coblive:
+                    if not cc.clear_puppetca(mothership.retrieve_fqdn(self.cfg, host)):
+                        print 'Kick aborted.'
+                        return
+                else:
+                    print 'API: clear out puppet key before we proceed'
+                cc.set_system_netboot(self.cfg, host, True)
+                if opts.sync: cc.sync_cobbler(self.cfg)
+                cc.set_system_power(self.cfg, host, 'reboot')
+                if self.cfg.zenlive:
+                    zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))
+                    auth = dict([ (x.split('_')[-1], str(mothership.kv.select(self.cfg, zhost, key="zenoss_"+x)).split('=')[1])
+                        for x in [ 'api_user', 'api_pass', 'default_arch' ] ], host=zhost)
+                    z = mothership.zenoss.ZenossAPI(auth)
+                    tag = self.cfg.dbsess.query(Server.tag).filter(Server.hostname==hostname.split('.')[0]).one()[0]
+                    z.add_host(unqdn, tag)
+            else:
+                if opts.sync:
+                    cc.sync_cobbler(self.cfg)
+
+    @cmdln.alias("drac")
+    @cmdln.option("-t", "--telnet", default=0,
+                  help="set telnet to 0 or 1 (disable/enable)")
+    @cmdln.option("-d", "--debug", action="store_true",
+                  help="execute prep in debug mode")
+    @cmdln.option("-p", "--prep", action="store_true",
+                  help="prepare the dracs with all the basics")
+    @cmdln.option("-i", "--insert", action="store_true",
+                  help="insert data from drac into ship db (same as 'ship import -d') ")
+    @cmdln.option("-s", "--show", action="store_true",
+                  help="show the sysinfo parsed from the drac")
+    def do_drac_tools(self, subcmd, opts, drac_ip):
+        """${cmd_name}: common drac utilities
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        if opts.prep and os.getuid() > 0:
+            print "You are not privileged enough to prep the drac using ship!"
+            sys.exit(1)
+        import mothership.idrac6
+        if opts.show or opts.insert:
+            drac_info = mothership.idrac6.sysinfo(mothership.idrac6.query_idrac(self.cfg, drac_ip))
+            if opts.show:
+                pprint(drac_info)
+            elif opts.insert:
+                host,realm,site_id = mothership.get_unqdn(self.cfg, 'localhost')
+                drac_info.update({'power_switch':drac_ip, 'site_id':site_id, 'realm':realm})
+                mothership.convert_drac_dict_to_network(self.cfg, drac_info, drac_ip)
+                mothership.import_multiple_table_info(self.cfg, {'hardware':[drac_info]}, today)
+        elif opts.prep or opts.telnet:
+            mothership.idrac6.prep_idrac(self.cfg, drac_ip, debug=opts.debug,
+                basics=opts.prep, telnet=int(opts.telnet))
+
+    @cmdln.alias("import")
+    @cmdln.option("-y", "--yaml", action="store_true",
+                  help="import from yaml file (name.yaml)")
+    @cmdln.option("-s", "--snmp", action="store_true",
+                  help="import from snmpwalk of switches (source-ignored)")
+    @cmdln.option("-d", "--drac", action="store_true",
+                  help="import from drac (drac-ipaddress)")
+    @cmdln.option("-c", "--cobbler", action="store_true",
+                  help="import from cobbler (system-name)")
+    def do_import_from(self, subcmd, opts, source):
+        """${cmd_name}: import from sources that contain the table and column names
+            such that it can be translated into:
+                { 'table1': [ { 'col1':'val1', ... 'colX':'valX' }, ... ], ... }
+
+            For snmp import, there is no source, so enter any comment, like:
+
+                ship import -s all
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        count = 0
+        cc = mothership.cobbler.CobblerAPI(self.cfg)
+        info = {}
+        if opts.yaml:
+            info = yaml.load(open(source).read())
+        elif opts.drac:
+            import mothership.idrac6
+            data = mothership.idrac6.sysinfo(mothership.idrac6.query_idrac(self.cfg, source))
+            host,realm,site_id = mothership.get_unqdn(self.cfg, 'localhost')
+            drac.update({'power_switch':source, 'site_id':site_id, 'realm':realm})
+            mothership.convert_drac_dict_to_network(self.cfg, data, source)
+            info['hardware'] = [data]
+        elif opts.cobbler:
+            if source == 'list':
+                for system in cc.list_all_systems: print system['name']
+                return
+            else:
+                info = cc.extract_system_by_hostname(self.cfg, source)
+        elif opts.snmp:
+            for line in \
+                mothership.walk_snmp_for_mac_port_list(self.cfg,
+                mothership.walk_snmp_for_vlan_switch_list(self.cfg),
+                mothership.walk_snmp_for_vlan_ip_mac_list(self.cfg)):
+                if 'switch_port' not in line: continue
+                mothership.update_table_network(self.cfg, line, noinsert=True)
+                count = count + 1
+            print 'Imported %d lines from SNMP' % count
+            return
+        else:
+            print 'Source type unknown.  You must specify one of the switches'
+        if info:
+            mothership.import_multiple_table_info(self.cfg, info, today)
+
+    @cmdln.alias("mod_network")
+    def do_modify_network(self, subcmd, opts, hostname, interface, colname, colval):
+        """${cmd_name}:
+            Modify a column named colname to colval for a particular row
+            in the network table based on HOSTNAME & INTERFACE parameters
+
+            ex. ship modify_network spare3 eth1 netmask 255.255.255.0
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        mothership.modify_network_column(self.cfg, host, interface, colname, colval)
+
+    @cmdln.alias("mod_serv")
+    def do_modify_server(self, subcmd, opts, hostname, colname, colval):
+        """${cmd_name}:
+            Modify a column named colname to colval for a particular row
+            in the servers table based on HOSTNAME parameters
+
+            ex. ship modify_network spare3 cores 2
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        mothership.modify_server_column(self.cfg, host, colname, colval)
+
+    @cmdln.alias("vlan")
+    @cmdln.alias("mod_vlan")
+    @cmdln.option("-f", "--force", action="store_true",
+                  help="force modification if vlan already exists for interface")
+    @cmdln.option("-i", "--interface", default='eth1',
+                  help="identify interface to modify (default: eth1)")
+    def do_modify_vlan(self, subcmd, opts, hostname, vlan):
+        """${cmd_name}:
+            for baremetal hostname, modify the vlan of the network interface specified,
+            assigning the next available ip address in that vlan.  If the values
+            already exist for the specified hostname+interface, then prompt the
+            user to respond (unless --force is specified)
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        mothership.modify_network_vlan(self.cfg, host, vlan,
+            interface=opts.interface, force=opts.force)
+
+    @cmdln.alias("snmp")
+    @cmdln.option("-u", "--update", action="store_true",
+                  help="update mothership database with retrieved info")
+    @cmdln.option("-i", "--interface", default=False,
+                  help="identify interface to retrieve (default: all)")
+    @cmdln.option("-d", "--debug", action="store_true",
+                  help="display debug info, like snmp commands, etc")
+    def do_snmp_info(self, subcmd, opts, hostname):
+        """${cmd_name}: Walk SNMP for the hostname interface info
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        host = mothership.get_unqdn(self.cfg, hostname)[0]
+        for info in mothership.walk_snmp_for_ifname(self.cfg,
+            host, ifname=opts.interface, debug=opts.debug):
+            print '\n'.join(['%10s: %s'] * 4) \
+                % ('interface', info['nic'], 'macaddress', info['mac'],
+                'switch', info['switch'], 'port', info['switch_port']) + '\n'
+            if opts.update:
+                if info['switch_port'] == 'disconnected': continue
+                info['interface'] = info['nic']
+                mothership.update_table_network(self.cfg, info, noinsert=True)
+
+    @cmdln.alias("zc")
+    @cmdln.option("-I", "--public_ip",
+                  help="specify the updated public ip address")
+    @cmdln.option("-i", "--ip",
+                  help="specify the updated traffic group ip address")
+    @cmdln.option("-t", "--tg_name",
+                  help="specify the updated traffic group name")
+    @cmdln.option("-p", "--port",
+                  help="specify the updated port")
+    @cmdln.option("-v", "--vhost",
+                  help="specify the updated virtual host name")
+    @cmdln.option("-c", "--cluster_name",
+                  help="specify the updated cluster name")
+    @cmdln.option("-u", "--update", action="store_true",
+                  help="update zeus_cluster entry based on identifier (IP || PUBLIC_IP)")
+    @cmdln.option("-r", "--remove", action="store_true",
+                  help="remove zeus_cluster entry based on identifier (IP || PUBLIC_IP)")
+    @cmdln.option("-a", "--add", action="store_true",
+                  help="add zeus_cluster name based on identifier CLUSTER_NAME")
+    def do_zeus_cluster(self, subcmd, opts, *args):
+        """${cmd_name}: Zeus Cluster Management
+            ship zc -a CLUSTER_NAME VHOST_NAME PORT TRAFFIC_GROUP_NAME IP [PUBLIC_IP]
+            ship zc -d ( IP | PUBLIC_IP ) PORT
+            ship zc -u ( IP | PUBLIC_IP ) ( -c CLUSTER_NAME | -v VHOST_NAME | -p PORT | -t TRAFFIC_GROUP_NAME | -i IP | -I PUBLIC_IP )
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        mothership.zeus_cluster.manage(self.cfg, opts, args)
+
+    @cmdln.alias("ls")
+    @cmdln.alias("list")
+    @cmdln.alias("list_all")
+    @cmdln.option("-q", "--quiet", action="store_true",
+                  help="suppress printing of informational header")
+    def do_list_all_values(self, subcmd, opts, listing):
+        """${cmd_name}: list all unique values for specified item
+        
+        valid items are: ips, vlans, tags, users, groups
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        mothership.list_values.list_all_values(self.cfg, listing, quiet=opts.quiet)
+
+
+    # manipulate the tag table
+    @cmdln.alias("tags")
+    @cmdln.option("-a", "--add", action="store_true",
+                  help="add a tag")
+    @cmdln.option("-r", "--remove", action="store_true",
+                  help="remove a tag")
+    @cmdln.option("-d", "--display", action="store_true",
+                  help="display a tag")
+    @cmdln.option("-s", "--start_port", type="int",
+                  help="beginning of this tag's port range")
+    @cmdln.option("-S", "--stop_port", type="int",
+                  help="ending of this tag's port range")
+    @cmdln.option("-l", "--security_level", type="int",
+                  help="security level override (use with caution)")
+    def do_tag(self, subcmd, opts, name):
+        """${cmd_name}: interact with tags in the mothership db 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            if (opts.add and opts.remove) or (opts.add and opts.display) or (opts.remove and opts.display):
+                print "Pick one: -a -r -d"
+                sys.exit(1)
+            elif opts.display:
+                mothership.display_tag(self.cfg, name)
+            elif opts.add:
+                mothership.add_tag(self.cfg, name, opts.start_port, opts.stop_port, opts.security_level)
+            elif opts.remove: 
+                mothership.rm_tag(self.cfg, name)
+            else:
+                mothership.display_tag(self.cfg, name)
+        except (mothership.MothershipError), e:
+            print 'Error: %s' % e
+
+    @cmdln.alias("xen")
+    @cmdln.option("-V", "--disk", default=None,
+                  help="specify GB of memory for virtual machine")
+    @cmdln.option("-M", "--ram", default=None,
+                  help="specify GB of memory for virtual machine")
+    @cmdln.option("-C", "--cores", default=None,
+                  help="specify number of cpu cores for virtual machine")
+    @cmdln.option("-r", "--resize_vm",
+                  help="resize virtual machine")
+    @cmdln.option("-f", "--force", action="store_true",
+                  help="force Yes on any xenserver prompts")
+    @cmdln.option("-d", "--delete_vm",
+                  help="delete virtual machine")
+    @cmdln.option("-R", "--storage",
+                  help="specify storage repository OpaqueRef to install_vm")
+    @cmdln.option("-x", "--xenhost", default=False,
+                  help="""specify xenhost to override vlan selection
+                  (for use with --install_vm)""")
+    @cmdln.option("-i", "--install_vm",
+                  help="install new virtual machine")
+    @cmdln.option("-S", "--shutdown_vm",
+                  help="shutdown virtual machine")
+    @cmdln.option("-s", "--start_vm",
+                  help="start virtual machine")
+    @cmdln.option("-v", "--viewpool",
+                  help="view xenserver/pool layout")
+    @cmdln.option("-l", "--license",
+                  help="check LICENSE xenserver expiration")
+    def do_xenserver(self, subcmd, opts):
+        """${cmd_name}: manage xenserver features using API
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        xenpw = str(mothership.kv.select(self.cfg,
+            '', 'xen_api_pass')).split('=')[1]
+        if opts.license:
+            xs = mothership.xen.XenServerAPI(opts.license, 'root', xenpw)
+            xs.check_license(opts.license)
+        elif opts.viewpool:
+            xs = mothership.xen.XenServerAPI(opts.viewpool, 'root', xenpw)
+            xs.view_layout()
+        else:
+            cc = mothership.cobbler.CobblerAPI(self.cfg)
+            for o in ['install_vm', 'resize_vm', 'start_vm',
+                'shutdown_vm', 'delete_vm']:
+                if getattr(opts, o):
+                    exec '''host = opts.%s''' % o
+                    try:
+                        info = cc.extract_system_by_hostname(self.cfg, host)
+                        if o == 'install_vm':
+                            info = cc.append_kickstart_info(self.cfg, info)
+                    except:
+                        sys.stderr.write('!! %s does not appear to have been provisioned by mothership/cobbler !!\n' % host)
+                        return
+                    if opts.xenhost:
+                        xenhost = opts.xenhost
+                    else:
+                        xenhost = info["hardware"][0]["power_switch"]
+                    xs = mothership.xen.XenServerAPI(xenhost, "root", xenpw)
+                    exec 'status = xs.%s(info, opts)' % o
+                    if status and o == 'resize_vm':
+                        # update mothership server values
+                        for key in ['cores', 'ram', 'disk']:
+                            if getattr(opts, key):
+                                mothership.modify_server_column(self.cfg, host,
+                                    key, getattr(opts, key), force=True)
+                    return
+
+    @cmdln.alias("zen")
+    @cmdln.option("-d", "--disable", action="store_true",
+                  help="disable server from zenoss")
+    @cmdln.option("-a", "--add", action="store_true",
+                  help="add server to zenoss")
+    def do_zenoss(self, subcmd, opts, hostname):
+        """${cmd_name}: manage hostnames in zenoss
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        host = mothership.get_unqdn(self.cfg, hostname)
+        unqdn = ".".join(host)
+        if self.cfg.zenlive:
+            zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))
+            auth = dict([ (x.split('_')[-1], str(mothership.kv.select(self.cfg, zhost, key="zenoss_"+x)).split('=')[1])
+                for x in [ 'api_user', 'api_pass', 'default_arch' ] ], host=zhost)
+            z = mothership.zenoss.ZenossAPI(auth)
+            if opts.add:
+                tag = self.cfg.dbsess.query(Server.tag).filter(Server.hostname==host[0]).one()[0]
+                z.add_host(unqdn, tag)
+            elif opts.disable:
+                z.disable_host(unqdn)
+
+
+    @cmdln.alias("generate_sudoers_groups")
+    @cmdln.alias("gensudo")
+    @cmdln.alias("gen_sudo")
+    @cmdln.alias("gen_sudo_groups")
+    def do_gen_sudoers_groups(self, subcmd, opts, hostname):
+        """${cmd_name}: generate the group lines for inclusion in sudoers
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        sudoers = mothership.users.gen_sudoers_groups(cfg, unqdn=hostname)
+        for group in sudoers:
+            print group
+
+    @cmdln.alias("test")
+    @cmdln.alias("compare")
+    def do_verify(self, subcmd, opts, hostname):
+        """${cmd_name}: Verify certain specs between database and actual host
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        mothership.verify_host_data(self.cfg, hostname)
+
+
+if __name__ == "__main__":
+    # the global config. useful everywhere
+    cfgfile = 'mothership.yaml'
+    cfg = Configure(cfgfile)
+
+    # useful global values
+    today = datetime.date.today()
+
+    # prevent root from running ship
+    if sys.stdin.isatty():
+        if os.getlogin() == 'root':
+            print "Please do not run ship as root"
+            print "Your effective uid: " + os.geteuid()
+            sys.exit(1)
+
+    # write out the command line we were called with to an audit log
+    try:
+        alog = open(cfg.audit_log_file, 'a')
+        ltz = time.tzname[time.daylight] 
+        tformat = "%Y-%m-%d %H:%M:%S"
+        timestamp = datetime.datetime.now()
+        if sys.stdin.isatty():
+            username = os.getlogin()
+        else:
+            username = "nottyUID=" + str(os.geteuid())
+        command_run = ' '.join(sys.argv)
+        buffer = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, command_run)
+        alog.write(buffer)        
+        alog.close()
+    except Exception, e:
+        print "Exception: " + str(e)
+        print "Problem writing to audit log file!"
+        print "Audit file configured as: " + cfg.audit_log_file
+        print "logline dump:"
+        print "%s %s: %s: %s" % (ltz, timestamp, username, command_run)
+        alog.close()
+
+    try:
+        ship = ShipCli(cfg)
+        retval = ship.main()
+        # Properly close DB connection
+        cfg.close_connections()
+        sys.exit(retval)
+    except IOError, e:
+        print "Missing file named %s" % cfgfile
+        print "ERROR: %s" % e
+        sys.exit(1)
+    except Exception, e:
+        print e
