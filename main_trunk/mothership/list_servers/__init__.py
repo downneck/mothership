@@ -49,6 +49,7 @@ def list_servers(cfg, listby=None, lookfor=None):
         sys.exit(1)
       else:
         for serv, net in cfg.dbsess.query(Server, Network).\
+        filter(Network.ip!=None).\
         filter(Network.vlan==lookfor).\
         filter(Server.id==Network.server_id).\
         order_by(Server.hostname):
