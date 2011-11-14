@@ -518,7 +518,6 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         interface = 'eth1'
         static_route, netmask = mothership.network_mapper.remap(cfg, ['gw', 'mask'],
             nic=interface, ip=iplist[1], siteid=site_id)
-        static_route = None
         if not opts.public_ip or mothership.network_mapper.remap(
             cfg, 'ip', ip=opts.public_ip):
             print 'Invalid public_ip %s, using default %s' \
