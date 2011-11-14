@@ -404,7 +404,8 @@ def check_server_tag(cfg, hostname, tag=None):
     # check to make sure that the tag is valid before proceeding
     try:
         cfg.dbsess.query(Tag).filter(Tag.name==tag).one()
-        return True
+        print 'Setting primary tag to %s' % tag
+        return tag
     except:
         print '%s is not a valid tag, provisioning of %s aborted' % (tag, hostname)
         return False
@@ -459,7 +460,8 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
     hostname,realm,site_id = split_fqdn(fqdn)
 
     if check_server_exists(cfg, hostname): return
-    if not check_server_tag(cfg, hostname, opts.tag): return
+    setattr(opts, 'tag', check_server_tag(cfg, hostname, opts.tag))
+    if not opts.tag: return
 
     setattr(opts, 'vlan', vlan)
     virtual = False
