@@ -31,7 +31,8 @@ import mothership
 import mothership.kv
 import mothership.cobbler
 import mothership.puppet
-import mothership.serverinfo
+#import mothership.serverinfo
+from mothership.serverinfo import ServerInfo
 import mothership.mgmt_vlan
 import mothership.dns
 import mothership.users
@@ -42,6 +43,12 @@ from mothership.list_servers import *
 from mothership.mothership_models import *
 from mothership.configure import Configure
 import mothership.zabbix
+
+# for >=2.6 use json, >2.6 use simplejson
+try:
+    import json as myjson
+except ImportError:
+    import simplejson as myjson
 
 class ShipCli(cmdln.Cmdln):
     def __init__(self, cfg):
@@ -276,38 +283,9 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_option_list}
         """
         try:
-            arg_count = sum(x != None for x in (opts.ip, opts.name, opts.mac, opts.hw_tag))
-            if arg_count != 1:
-                print "Specify one search argument."
-                cmdln.Cmdln.do_help(self, ['','serverinfo'])
-                sys.exit(1)
-
-            if opts.ip:
-                hostname = mothership.serverinfo.get_host(self.cfg, ip=opts.ip)
-            elif opts.name:
-                hostname = opts.name
-            elif opts.mac:
-                hostname = mothership.serverinfo.get_host(self.cfg, mac=opts.mac)
-            elif opts.hw_tag:
-                hostname = mothership.serverinfo.get_host(self.cfg, hw_tag=opts.hw_tag)
-            else:
-                print "unexpected error, check everything."
-                sys.exit(1)
-
-            host, realm, site_id = mothership.get_unqdn(self.cfg, hostname)
-
-            if opts.printip and opts.printmac:
-                print "-M and -I options are mutually exclusive, pick one."
-                cmdln.Cmdln.do_help(self, ['','serverinfo'])
-                sys.exit(1)
-
-            if opts.printip:
-                mothership.serverinfo.ip_only(self.cfg, host, realm, site_id)
-            elif opts.printmac:
-                mothership.serverinfo.mac_only(self.cfg, host, realm, site_id)
-            else:
-                mothership.serverinfo.all(self.cfg, host, realm, site_id)
-
+            server = ServerInfo()
+            for i in server.urls:
+                print myjson.JSONEncoder(indent=4).encode(i) 
         except mothership.serverinfo.ServerInfoError, e:
             print 'Error: %s' % e
             sys.exit(1)
