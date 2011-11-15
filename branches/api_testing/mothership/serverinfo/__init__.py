@@ -27,17 +27,11 @@ from sqlalchemy import or_, desc, MetaData
 class ServerInfoError(Exception):
     pass
 
-# for >=2.6 use json, >2.6 use simplejson
-try:
-    import json as myjson
-except ImportError:
-    import simplejson as myjson
-
 
 def get_host(cfg, hw_tag=None, ip=None, mac=None):
     """
     [description]
-    search for a host based on info supplied
+    search for a host based on info supplied 
 
     [parameter info]
     required:
@@ -100,7 +94,7 @@ def get_host(cfg, hw_tag=None, ip=None, mac=None):
         raise ServerInfoError("You did something weird, please don't."
                 "hw_tag=%s ip=%s mac=%s" % hw_tag, ip, mac)
 
-def all(cfg, host, realm, site_id, json=None):
+def all(cfg, host, realm, site_id):
     """
     [description]
     search for a host based on info supplied 
@@ -111,8 +105,6 @@ def all(cfg, host, realm, site_id, json=None):
         host: the hostname of the server we're displaying
         realm: the realm of the server we're displaying
         site_id: the site_id of the server we're displaying
-    optional:
-        json: formats the output in JSON if true
 
     [return value]
     no explicit return 
@@ -140,44 +132,33 @@ def all(cfg, host, realm, site_id, json=None):
     except:
       raise ServerInfoError("something horrible happened")
 
-    if not json:
-        # fire EVERYTHING!
-        print ""
-        print "hostname:\t\t%s.%s.%s" % (s.hostname, s.realm, s.site_id)
-        print "provisioned:\t\t%s" % (s.provision_date)
-        print "purchased:\t\t%s" % (h.purchase_date)
-        print "primary tag, index:\t%s, %s" % (s.tag, s.tag_index)
-        print "ancillary tags:\t%s" % (', '.join([kv.value for kv in kvs]))
-        print "security level:\t\t%s" % s.security_level
-        print "cobbler_profile:\t%s" % (s.cobbler_profile)
-        print "manufacturer, model:\t%s, %s" % (h.manufacturer, h.model)
-        print "hardware tag:\t\t%s" % (h.hw_tag)
-        if s.virtual==False:
-          print "cores:\t\t\t%s" % (h.cores)
-          print "ram (GB):\t\t%s" % (h.ram)
-          print "disk:\t\t\t%s" % (h.disk)
-        else:
-          print "cores:\t\t\t%s" % (s.cores)
-          print "ram (GB):\t\t%s" % (s.ram)
-          print "disk:\t\t\t%s" % (s.disk)
-        print "cpu speed:\t\t%s" % (h.cpu_speed)
-        print ""
-        for n in cfg.dbsess.query(Network).\
-        filter(Server.id==Network.server_id).\
-        filter(Server.hostname==s.hostname).\
-        order_by(Network.interface).all():
-          print "%s| mac: %-17s | ip: %-15s | public_ip: %-15s" % (n.interface, n.mac, n.ip, n.public_ip)
-          print "%s| vlan: %-3s | switch: %-15s | switch_port: %-10s" % (n.interface, n.vlan, n.switch, n.switch_port)
+    # fire EVERYTHING!
+    print ""
+    print "hostname:\t\t%s.%s.%s" % (s.hostname, s.realm, s.site_id)
+    print "provisioned:\t\t%s" % (s.provision_date)
+    print "purchased:\t\t%s" % (h.purchase_date)
+    print "primary tag, index:\t%s, %s" % (s.tag, s.tag_index)
+    print "ancillary tags:\t%s" % (', '.join([kv.value for kv in kvs]))
+    print "security level:\t\t%s" % s.security_level
+    print "cobbler_profile:\t%s" % (s.cobbler_profile)
+    print "manufacturer, model:\t%s, %s" % (h.manufacturer, h.model)
+    print "hardware tag:\t\t%s" % (h.hw_tag)
+    if s.virtual==False:
+      print "cores:\t\t\t%s" % (h.cores)
+      print "ram (GB):\t\t%s" % (h.ram)
+      print "disk:\t\t\t%s" % (h.disk)
     else:
-        print myjson.JSONEncoder(indent=4).encode(h.to_dict())
-        print myjson.JSONEncoder(indent=4).encode(s.to_dict())
-        for n in cfg.dbsess.query(Network).\
-        filter(Server.id==Network.server_id).\
-        filter(Server.hostname==s.hostname).\
-        order_by(Network.interface).all():
-            print myjson.JSONEncoder(indent=4).encode(n.to_dict())
-
-
+      print "cores:\t\t\t%s" % (s.cores)
+      print "ram (GB):\t\t%s" % (s.ram)
+      print "disk:\t\t\t%s" % (s.disk)
+    print "cpu speed:\t\t%s" % (h.cpu_speed)
+    print ""
+    for n in cfg.dbsess.query(Network).\
+    filter(Server.id==Network.server_id).\
+    filter(Server.hostname==s.hostname).\
+    order_by(Network.interface).all():
+      print "%s| mac: %-17s | ip: %-15s | public_ip: %-15s" % (n.interface, n.mac, n.ip, n.public_ip)
+      print "%s| vlan: %-3s | switch: %-15s | switch_port: %-10s" % (n.interface, n.vlan, n.switch, n.switch_port)
 
 def ip_only(cfg, host, realm, site_id):
     """

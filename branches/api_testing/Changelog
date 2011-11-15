@@ -1,3 +1,11 @@
+revision 220 (dk)
+* merged cleanup into main
+revision 214 (dk)
+* merged easy_install to main
+revision 202 (dk)
+* added lockout to prevent running as root (from console)
+* added audit log (defaults to /var/log/mothership_audit.log)
+* cleaned up some stuff in mothership.yaml.sample
 revision 149 (kl)
 * fix snmp logic for empty vlans
 revision 147 (dk)

@@ -352,6 +352,272 @@ ALTER SEQUENCE servers_id_seq OWNED BY servers.id;
 
 
 --
+-- Name: user_group_mapping; Type: TABLE; Schema: public; Owner: mothership; Tablespace: 
+--
+
+CREATE TABLE user_group_mapping (
+    groups_id integer,
+    users_id integer,
+    id integer NOT NULL
+);
+
+
+ALTER TABLE public.user_group_mapping OWNER TO mothership;
+
+--
+-- Name: user_group_mapping_id_seq; Type: SEQUENCE; Schema: public; Owner: mothership
+--
+
+CREATE SEQUENCE user_group_mapping_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.user_group_mapping_id_seq OWNER TO mothership;
+
+--
+-- Name: user_group_mapping_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mothership
+--
+
+ALTER SEQUENCE user_group_mapping_id_seq OWNED BY user_group_mapping.id;
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: mothership; Tablespace: 
+--
+
+CREATE TABLE users (
+    first_name character varying(100) NOT NULL,
+    last_name character varying(100) NOT NULL,
+    ssh_public_key character varying(4096),
+    username character varying(64) NOT NULL,
+    site_id character varying(3) NOT NULL,
+    realm character varying(10) NOT NULL,
+    uid integer NOT NULL,
+    id integer NOT NULL,
+    type character varying(15),
+    hdir character varying(100),
+    shell character varying(100),
+    active boolean DEFAULT true,
+    email character varying(100)
+);
+
+
+ALTER TABLE public.users OWNER TO mothership;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: mothership
+--
+
+CREATE SEQUENCE users_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.users_id_seq OWNER TO mothership;
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: mothership
+--
+
+ALTER SEQUENCE users_id_seq OWNED BY users.id;
+
+
+--
+-- Name: xen_pools; Type: TABLE; Schema: public; Owner: postgres; Tablespace: 
+--
+
+CREATE TABLE xen_pools (
+    server_id integer NOT NULL,
+    realm character varying(10),
+    pool_id smallint
+);
+
+
+ALTER TABLE public.xen_pools OWNER TO mothership;
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE dns_addendum ALTER COLUMN id SET DEFAULT nextval('dns_addendum_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: mothership
+--
+
+ALTER TABLE groups ALTER COLUMN id SET DEFAULT nextval('groups_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE hardware ALTER COLUMN id SET DEFAULT nextval('hardware_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE network ALTER COLUMN id SET DEFAULT nextval('network_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE tags ALTER COLUMN id SET DEFAULT nextval('tags_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE server_graveyard ALTER COLUMN id SET DEFAULT nextval('server_graveyard_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE servers ALTER COLUMN id SET DEFAULT nextval('servers_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: mothership
+--
+
+ALTER TABLE user_group_mapping ALTER COLUMN id SET DEFAULT nextval('user_group_mapping_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: mothership
+--
+
+ALTER TABLE users ALTER COLUMN id SET DEFAULT nextval('users_id_seq'::regclass);
+
+
+--
+-- Name: dns_addendum_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY dns_addendum
+    ADD CONSTRAINT dns_addendum_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: group_realm_site_id; Type: CONSTRAINT; Schema: public; Owner: mothership; Tablespace: 
+--
+
+ALTER TABLE ONLY groups
+    ADD CONSTRAINT group_realm_site_id PRIMARY KEY (groupname, realm, site_id);
+
+
+--
+-- Name: groups_id_key; Type: CONSTRAINT; Schema: public; Owner: mothership; Tablespace: 
+--
+
+ALTER TABLE ONLY groups
+    ADD CONSTRAINT groups_id_key UNIQUE (id);
+
+
+--
+-- Name: hardware_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY hardware
+    ADD CONSTRAINT hardware_pkey PRIMARY KEY (hw_tag);
+
+
+--
+-- Name: kv_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY kv
+    ADD CONSTRAINT kv_id_key UNIQUE (id);
+
+
+--
+-- Name: kv_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY kv
+    ADD CONSTRAINT kv_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: network_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY network
+    ADD CONSTRAINT network_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tags_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY tags
+    ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: server_graveyard_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY server_graveyard
+    ADD CONSTRAINT server_graveyard_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: servers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY servers
+    ADD CONSTRAINT servers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_group_mapping_pkey; Type: CONSTRAINT; Schema: public; Owner: mothership; Tablespace: 
+--
+
+ALTER TABLE ONLY user_group_mapping
+    ADD CONSTRAINT user_group_mapping_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user_realm_site_id; Type: CONSTRAINT; Schema: public; Owner: mothership; Tablespace: 
+--
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT user_realm_site_id PRIMARY KEY (username, realm, site_id);
+
+
+--
+-- Name: users_id_key; Type: CONSTRAINT; Schema: public; Owner: mothership; Tablespace: 
+--
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_id_key UNIQUE (id);
+
+
+--
+-- Name: xen_pools_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres; Tablespace: 
+--
+
+ALTER TABLE ONLY xen_pools
+    ADD CONSTRAINT xen_pools_pkey PRIMARY KEY (server_id);
+
+
+--
 -- Name: user_group_mapping_groups_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: mothership
 --
 

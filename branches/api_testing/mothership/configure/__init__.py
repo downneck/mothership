@@ -184,6 +184,10 @@ class Configure:
             self.sudo_nopass = genconfig['sudo_nopass']
         else:
             self.sudo_nopass = True
+        if 'audit_log_file' in genconfig and genconfig['audit_log_file']:
+            self.audit_log_file = genconfig['audit_log_file']
+        else:
+            self.audit_log_file = '/var/log/mothership_audit.log'
 
         # Virtual Machine settings
         vmconfig = all_configs['vm']

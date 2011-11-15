@@ -222,13 +222,10 @@ class XenServerAPI:
         else:
             #print 'User selected "%s"' % storage.keys()[int(ans)]
             if 'Local' in storage.values()[int(ans)]:
-                xenhost = storage.values()[int(ans)].split(':')[0]
+                xenhost = storage.values()[int(ans)].split(':')[0].replace(' ', '')
             else:
                 xenhost = None
-            return storage.keys()[int(ans)], xenhost.replace(' ', '')
-            # temporary for power_xenserver.template
-            #return re.sub('^.*:\s*(\w.*\w)\s+\(.*$', '\g<1>',
-            #    storage.values()[int(ans)]), xenhost.replace(' ', '')
+            return storage.keys()[int(ans)], xenhost
 
     def get_refs(self, host):
         if not self.specs:

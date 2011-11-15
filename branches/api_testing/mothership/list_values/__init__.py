@@ -15,30 +15,22 @@
 supports the listing of various types of DB data
 """
 
-# imports
+# imports 
 
 from sqlalchemy import or_, desc, MetaData
 from mothership.mothership_models import *
-import mothership
 
-# for >=2.6 use json, >2.6 use simplejson
-try:
-    import json as myjson
-except ImportError:
-    import simplejson as myjson
-
-def list_all_values(cfg, listing, quiet=None, json=None):
+def list_all_values(cfg, listing, quiet=False):
     """
     [description]
-    lists all values of a given type
+    lists all values of a given type 
 
     [parameter info]
     required:
         cfg: the config object. useful everywhere
         listing: the type of data to search for and display
     optional:
-        quiet: suppress the printing of the info header and just dump data
-        json: encodes output in JSON format
+        quiet: suppress the printing of the info header and just dump data 
 
     [return value]
     returns an integer representing the next available UID
@@ -55,57 +47,27 @@ def list_all_values(cfg, listing, quiet=None, json=None):
             filter(Network.vlan!=0).\
             order_by(Network.vlan).\
             distinct().all():
-                vlist.append(str(result.vlan))
-        if not quiet and not json:
-            print "all vlans:"
-            print "--------------------------------------------------"
-        if not json:
-            print '\n'.join(vlist)
-        else:
-            print myjson.JSONEncoder(indent=4).encode(vlist)
+                vlist.append(result.vlan)
+        print '\n'.join(map(str, vlist))
     elif listing == 'ip' or listing == 'ips':
-        all_ips = []
         for net in cfg.dbsess.query(Network).order_by(Network.ip):
             if net.ip != '0.0.0.0' and net.ip != None:
-                all_ips.append(net.ip)
-        if not quiet and not json:
-            print "all ip addresses:"
-            print "--------------------------------------------------"
-        if not json:
-            print '\n'.join(all_ips)
-        else:
-            print myjson.JSONEncoder(indent=4).encode(all_ips)
+                print net.ip
     elif listing == 'tag' or listing == 'tags':
-        tag_list = []
         for tag in cfg.dbsess.query(Tag):
-          tag_list.append(tag.name)
-        if not quiet and not json:
-            print "all tags:"
-            print "--------------------------------------------------"
-        if not json:
-            print '\n'.join(tag_list)
-        else:
-            print myjson.JSONEncoder(indent=4).encode(tag_list)
+          print tag.name
     elif listing == 'group' or listing == 'groups':
         if not quiet:
             print "GID, Group Name, Location"
             print "--------------------------------------------------"
-        if not json:
-            for g in cfg.dbsess.query(Groups):
-                print "%s %s %s.%s" % (g.gid, g.groupname, g.realm, g.site_id)
-        else:
-            for g in cfg.dbsess.query(Groups):
-                print myjson.JSONEncoder(indent=4).encode(g.to_dict())
+        for g in cfg.dbsess.query(Groups):
+            print "%s %s %s.%s" % (g.gid, g.groupname, g.realm, g.site_id)
     elif listing == 'user' or listing == 'users':
-        if not quiet and not json:
+        if not quiet:
             print "UID, User Name, Location"
             print "--------------------------------------------------"
-        if not json:
-            for u in cfg.dbsess.query(Users):
-                print "%s %s %s.%s" % (u.uid, u.username, u.realm, u.site_id)
-        else:
-            for u in cfg.dbsess.query(Users):
-                print myjson.JSONEncoder(indent=4).encode(u.to_dict())
+        for u in cfg.dbsess.query(Users):
+            print "%s %s %s.%s" % (u.uid, u.username, u.realm, u.site_id)
     elif listing == 'available_hardware' or listing == 'free_hardware':
         # setting up some vars
         all_hw = []
@@ -120,10 +82,6 @@ def list_all_values(cfg, listing, quiet=None, json=None):
         # diff 'em
         unalloc_hw = [item for item in all_hw if not item in alloc_hw]
         # display the diff
-        if not quiet and not json:
+        if not quiet:
             print "unallocated hardware tags:"
-            print "--------------------------------------------------"
-        if json:
-            print myjson.JSONEncoder().encode(unalloc_hw)
-        else:
-            print '\n'.join(unalloc_hw)
+        print '\n'.join(unalloc_hw)
