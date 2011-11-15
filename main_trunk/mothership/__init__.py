@@ -467,14 +467,17 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
     virtual = False
     if not opts.hw_tag:
         for o in ['dracip', 'mgmtip', 'vlan']:
-            try:
-                exec 'setattr(opts, "hw_tag", get_hwtag_from_%s(cfg, opts.%s))' % (o, o)
-                if o == 'vlan':
-                    virtual = True
-                    profile = osdict['default']['virtual']
-                break
-            except:
-                pass
+            exec 'test = opts.%s' % o
+            if test:
+                try:
+                    exec 'setattr(opts, "hw_tag", get_hwtag_from_%s(cfg, opts.%s))' % (o, o)
+                    if o == 'vlan':
+                        virtual = True
+                        profile = osdict['default']['virtual']
+                    break
+                except:
+                    print '%s=%s was not fond in database, aborting' % (o, test)
+                    return
 
     if not virtual:
         try:    # check to see if hwtag already belongs to a server
