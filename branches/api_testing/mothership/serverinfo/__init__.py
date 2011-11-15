@@ -28,32 +28,32 @@ class ServerInfoError(Exception):
     pass
 
 class ServerInfo:
-    classname = "ServerInfo"
-    modulename = "serverinfo"
-    baseurl = "/serverinfo"
-    urls = [
-            {
-             'url': '/serverinfo',
-             'method': 'get()',
-             'required_args': ['cfg', 'host', 'realm', 'site_id'],
-             'optional_args': [],
-            },
-            {
-             'url': '/serverinfo/search',
-             'method': 'get_host()',
-             'required_args': ['cfg'],
-             'optional_args': ['hw_tag', 'ip', 'mac']
-            },
-           ]
 
-    def get_host(cfg, hw_tag=None, ip=None, mac=None):
+    def __init__(self, cfg):
+        self.cfg = cfg
+        self.name = "ServerInfo"
+        self.modulename = "serverinfo"
+        self.urls = [
+                     {
+                      'url': '/serverinfo',
+                      'method': 'get()',
+                      'required_args': ['host', 'realm', 'site_id'],
+                      'optional_args': [],
+                     },
+                     {
+                      'url': '/serverinfo/search',
+                      'method': 'get_host()',
+                      'required_args': [],
+                      'optional_args': ['hw_tag', 'ip', 'mac']
+                     },
+                    ]
+
+    def get_host(self, hw_tag=None, ip=None, mac=None):
         """
         [description]
         search for a host based on info supplied
 
         [parameter info]
-        required:
-            cfg: the config object. useful everywhere
         optional:
             hw_tag: the hardware tag to search for
             ip: the ip to search for
@@ -62,6 +62,8 @@ class ServerInfo:
         [return value]
         returns a hostname if successful, raises an exception if unsuccessful
         """
+
+        cfg = self.cfg
 
         if sum(x != None for x in (hw_tag, ip, mac)) != 1:
             raise ServerInfoError(
@@ -112,14 +114,13 @@ class ServerInfo:
             raise ServerInfoError("You did something weird, please don't."
                     "hw_tag=%s ip=%s mac=%s" % hw_tag, ip, mac)
 
-    def get(cfg, host, realm, site_id):
+    def getserverinfo(self, host, realm, site_id):
         """
         [description]
         search for a host based on info supplied
 
         [parameter info]
         required:
-            cfg: the config object. useful everywhere
             host: the hostname of the server we're displaying
             realm: the realm of the server we're displaying
             site_id: the site_id of the server we're displaying
@@ -128,6 +129,7 @@ class ServerInfo:
         no explicit return
         """
 
+        cfg = self.cfg
         kvs = []
 
         # gather server info from mothership's db
@@ -149,7 +151,7 @@ class ServerInfo:
           raise ServerInfoError("host \"%s\" not found" % host)
         except:
           raise ServerInfoError("something horrible happened")
-    
+
         # fire EVERYTHING!
         print ""
         print "hostname:\t\t%s.%s.%s" % (s.hostname, s.realm, s.site_id)
@@ -178,14 +180,13 @@ class ServerInfo:
           print "%s| mac: %-17s | ip: %-15s | public_ip: %-15s" % (n.interface, n.mac, n.ip, n.public_ip)
           print "%s| vlan: %-3s | switch: %-15s | switch_port: %-10s" % (n.interface, n.vlan, n.switch, n.switch_port)
     
-    def ip_only(cfg, host, realm, site_id):
+    def ip_only(self, host, realm, site_id):
         """
         [description]
         print ip information for a server 
     
         [parameter info]
         required:
-            cfg: the config object. useful everywhere
             host: the hostname of the server we're displaying
             realm: the realm of the server we're displaying
             site_id: the site_id of the server we're displaying
@@ -194,7 +195,8 @@ class ServerInfo:
         no explicit return 
         """
     
-    
+        cfg = self.cfg
+
         # gather host info from mothership
         h, s = cfg.dbsess.query(Hardware, Server).filter(Server.hostname==host).\
         filter(Server.realm==realm).\
@@ -213,14 +215,13 @@ class ServerInfo:
           else:
             print "%s|\tprivate ip: %s\t | public ip: %s" % (n.interface, n.ip, n.public_ip)
     
-    def mac_only(cfg, host, realm, site_id):
+    def mac_only(self, host, realm, site_id):
         """
         [description]
         print mac address information for a server 
     
         [parameter info]
         required:
-            cfg: the config object. useful everywhere
             host: the hostname of the server we're displaying
             realm: the realm of the server we're displaying
             site_id: the site_id of the server we're displaying
@@ -229,6 +230,8 @@ class ServerInfo:
         no explicit return 
         """
     
+        cfg = self.cfg
+
         # gather host info from mothership
         h, s = cfg.dbsess.query(Hardware, Server).filter(Server.hostname==host).\
         filter(Server.realm==realm).\
