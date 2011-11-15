@@ -149,9 +149,10 @@ def confirm_column_change(curr_val, new_val, colname, tblname):
 
 def convert_drac_dict_to_network(cfg, drac_sysinfo, ip):
     siteid = drac_sysinfo['site_id']
-    for k in drac_sysinfo.keys():
+    for k in sorted(drac_sysinfo.keys()):
         netdrac_sysinfo = drac_sysinfo.copy()
         if not k.startswith('eth') and k != 'drac': continue
+        print 'Importing %s' % k
         net = mothership.network_mapper.remap(cfg, ['vlan','mask','ip'], nic=k, siteid=siteid)
         dracip = mothership.network_mapper.remap(cfg, 'ip', nic='drac', siteid=siteid)
         if net:
@@ -482,12 +483,12 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
     if not virtual:
         try:    # check to see if hwtag already belongs to a server
             check = retrieve_network_row_by_ifname(cfg,
-                    'eth0', filter={'hw_tag':hwtag})
+                    'eth0', filter={'hw_tag':opts.hw_tag})
             if check.server_id:
-                print '%s already provisioned as server id %s' % (hwtag, check.id)
+                print '%s already provisioned as server id %s' % (opts.hw_tag, check.id)
                 return
         except:
-            print 'Hardware tag %s does NOT exist in mothership' % hwtag
+            print 'Hardware tag %s does NOT exist in mothership' % opts.hw_tag
             return
         if hostname.startswith('xen'):    # xen server
             profile = osdict['default']['xenserver']
@@ -643,7 +644,7 @@ def retrieve_hardware_row(cfg, hwtag):
         return cfg.dbsess.query(Hardware).filter(Hardware.hw_tag==hwtag).one()
     except:
         print "hwtag %s not found in database" % hwtag
-        sys.exit(1)
+        return None
 
 def retrieve_network_rows_by_unqdn(cfg, unqdn, interface = None):
     """
@@ -691,14 +692,6 @@ def retrieve_network_rows(cfg, hwtag=None, serverid=None):
     return data.all()
 
 def retrieve_next_virtual_ip(cfg, vlan, autogen=False):
-    # retrieve the next available ip, assuming that it will be unused
-    #next = cfg.dbsess.query(Network).\
-    #    filter(Network.server_id==cfg.dbnull).\
-    #    filter(Network.hw_tag==cfg.dbnull).\
-    #    filter(Network.vlan==vlan)
-    #if next.first():
-    #    return next.order_by(Network.ip).first().ip
-    # loop thru available ip and check ping before returning
     for next in cfg.dbsess.query(Network).\
         filter(Network.server_id==cfg.dbnull).\
         filter(Network.hw_tag==cfg.dbnull).\
@@ -836,9 +829,8 @@ def swap_server(cfg, when, hosts=[]):
 
 def update_table_hardware(cfg, info, when):
     data = retrieve_hardware_row(cfg, info['hw_tag'])
-    if not data.purchase_date: info['purchase_date'] = when
-    if not data.rma: info['rma'] = False
-    if not data.id:
+    if not data:
+        info.update({'purchase_date':when, 'rma':False})
         # insert if it does not exist
         print 'Inserting into hardware table'
         data = Hardware(info['hw_tag'])
@@ -861,6 +853,8 @@ def update_table_network(cfg, info, noinsert=False):
             return
         # insert if it does not exist and noinsert=False
         print 'Inserting into network table'
+        if 'ip' not in info:
+            info.update({'ip':None, 'netmask':None})
         data = Network(info['ip'], info['interface'],
                info['netmask'], info['mac'])
     else:
