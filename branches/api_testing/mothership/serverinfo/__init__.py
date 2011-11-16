@@ -32,19 +32,27 @@ class ServerInfo:
     def __init__(self, cfg):
         self.cfg = cfg
         self.name = "ServerInfo"
-        self.modulename = "serverinfo"
-        self.urls = [
+        self.namespace = "serverinfo"
+        self.metadata = [
                      {
-                      'url': '/serverinfo',
-                      'call': 'get()',
-                      'required_args': ['host', 'realm', 'site_id'],
+                      'url': '/'+self.namespace,
+                      'class': self.name,
+                      'namespace': self.namespace,
+                      'call': 'getserverinfo()',
+                      'module_dependencies': [],
+                      'required_args': {'host': 'string', 'realm': 'string', 'site_id': 'string'},
                       'optional_args': [],
+                      'cmdln_aliases': ['si', 'server_info', 'serverinfo'],
                      },
                      {
-                      'url': '/serverinfo/search',
+                      'url': '/'+self.namespace+'/search',
+                      'class': self.name,
+                      'namespace': self.namespace,
                       'call': 'get_host()',
+                      'module_dependencies': [],
                       'required_args': [],
-                      'optional_args': ['hw_tag', 'ip', 'mac']
+                      'optional_args': {'hw_tag': 'string', 'ip': 'string', 'mac': 'string'},
+                      'cmdln_aliases': ['si_search', 'serverinfo_search', 'server_info_search'],
                      },
                     ]
 

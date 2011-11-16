@@ -82,16 +82,16 @@ class ShipCli(cmdln.Cmdln):
             sys.exit(1)
 
 
-    @cmdln.alias("si_urls")
-    def do_get_serverinfo_urls(self, subcmd, opts):
-        """${cmd_name}: get the module's REST urls
+    @cmdln.alias("simeta")
+    def do_get_serverinfo_metadata(self, subcmd, opts):
+        """${cmd_name}: get the module's metadata 
 
         ${cmd_usage}
         ${cmd_option_list}
         """
         try:
             si = ServerInfo(cfg)
-            print myjson.JSONEncoder(indent=4).encode(si.urls)
+            print myjson.JSONEncoder(indent=4).encode(si.metadata)
         except mothership.serverinfo.ServerInfoError, e:
             print 'Error: %s' % e
             sys.exit(1)
