@@ -36,17 +36,21 @@ class ServerInfo:
         self.urls = [
                      {
                       'url': '/serverinfo',
-                      'method': 'get()',
+                      'call': 'get()',
                       'required_args': ['host', 'realm', 'site_id'],
                       'optional_args': [],
                      },
                      {
                       'url': '/serverinfo/search',
-                      'method': 'get_host()',
+                      'call': 'get_host()',
                       'required_args': [],
                       'optional_args': ['hw_tag', 'ip', 'mac']
                      },
                     ]
+
+    # ask the module to define its REST urls
+    def get_urls(self):
+        return urls
 
     def get_host(self, hw_tag=None, ip=None, mac=None):
         """
@@ -117,7 +121,63 @@ class ServerInfo:
     def getserverinfo(self, host, realm, site_id):
         """
         [description]
-        search for a host based on info supplied
+        return all information for a server, identified by host.realm.site_id 
+
+        [parameter info]
+        required:
+            host: the hostname of the server we're displaying
+            realm: the realm of the server we're displaying
+            site_id: the site_id of the server we're displaying
+
+        [return value]
+        ret = a list of objects related to the server entry 
+        """
+
+        cfg = self.cfg
+        kvs = [] # stores values from kv search for tag=? that apply to our server
+        ret = [] # order: [0]=server, [1]=hardware, [2]=kv, [3]=network, [4]=network, (+more network objects if there are more)
+
+        # gather server info from mothership's db
+        try:
+          # hardware and server entries
+          h, s = cfg.dbsess.query(Hardware, Server).\
+          filter(Server.hostname==host).\
+          filter(Server.realm==realm).\
+          filter(Server.site_id==site_id).\
+          filter(Hardware.hw_tag==Server.hw_tag).first()
+
+          ret.append(s) # add server to return list
+          ret.append(h) # add hardware to return list
+
+          # kv entries
+          for h2, s2 in cfg.dbsess.query(Hardware, Server).\
+          filter(Server.hostname==host).\
+          filter(Server.realm==realm).\
+          filter(Server.site_id==site_id).\
+          filter(Hardware.hw_tag==Server.hw_tag):
+            fqdn = '.'.join([host,realm,site_id])
+            kvs = mothership.kv.collect(cfg, fqdn, key='tag')
+          ret.append(kvs) # add kv values to return list
+
+          # network entries
+          for n in cfg.dbsess.query(Network).\
+          filter(Server.id==Network.server_id).\
+          filter(Server.hostname==s.hostname).\
+          order_by(Network.interface).all():
+              ret.append(n)
+
+        except TypeError:
+          raise ServerInfoError("host \"%s\" not found" % host)
+        except:
+          raise ServerInfoError("something horrible happened")
+
+        return ret
+
+
+    def ip_only(self, host, realm, site_id):
+        """
+        [description]
+        print ip information for a server
 
         [parameter info]
         required:
@@ -129,72 +189,6 @@ class ServerInfo:
         no explicit return
         """
 
-        cfg = self.cfg
-        kvs = []
-
-        # gather server info from mothership's db
-        try:
-          h, s = cfg.dbsess.query(Hardware, Server).\
-          filter(Server.hostname==host).\
-          filter(Server.realm==realm).\
-          filter(Server.site_id==site_id).\
-          filter(Hardware.hw_tag==Server.hw_tag).first()
-
-          for h2, s2 in cfg.dbsess.query(Hardware, Server).\
-          filter(Server.hostname==host).\
-          filter(Server.realm==realm).\
-          filter(Server.site_id==site_id).\
-          filter(Hardware.hw_tag==Server.hw_tag):
-            fqdn = '.'.join([host,realm,site_id])
-            kvs = mothership.kv.collect(cfg, fqdn, key='tag')
-        except TypeError:
-          raise ServerInfoError("host \"%s\" not found" % host)
-        except:
-          raise ServerInfoError("something horrible happened")
-
-        # fire EVERYTHING!
-        print ""
-        print "hostname:\t\t%s.%s.%s" % (s.hostname, s.realm, s.site_id)
-        print "provisioned:\t\t%s" % (s.provision_date)
-        print "purchased:\t\t%s" % (h.purchase_date)
-        print "primary tag, index:\t%s, %s" % (s.tag, s.tag_index)
-        print "ancillary tags:\t%s" % (', '.join([kv.value for kv in kvs]))
-        print "security level:\t\t%s" % s.security_level
-        print "cobbler_profile:\t%s" % (s.cobbler_profile)
-        print "manufacturer, model:\t%s, %s" % (h.manufacturer, h.model)
-        print "hardware tag:\t\t%s" % (h.hw_tag)
-        if s.virtual==False:
-          print "cores:\t\t\t%s" % (h.cores)
-          print "ram (GB):\t\t%s" % (h.ram)
-          print "disk:\t\t\t%s" % (h.disk)
-        else:
-          print "cores:\t\t\t%s" % (s.cores)
-          print "ram (GB):\t\t%s" % (s.ram)
-          print "disk:\t\t\t%s" % (s.disk)
-        print "cpu speed:\t\t%s" % (h.cpu_speed)
-        print ""
-        for n in cfg.dbsess.query(Network).\
-        filter(Server.id==Network.server_id).\
-        filter(Server.hostname==s.hostname).\
-        order_by(Network.interface).all():
-          print "%s| mac: %-17s | ip: %-15s | public_ip: %-15s" % (n.interface, n.mac, n.ip, n.public_ip)
-          print "%s| vlan: %-3s | switch: %-15s | switch_port: %-10s" % (n.interface, n.vlan, n.switch, n.switch_port)
-    
-    def ip_only(self, host, realm, site_id):
-        """
-        [description]
-        print ip information for a server 
-    
-        [parameter info]
-        required:
-            host: the hostname of the server we're displaying
-            realm: the realm of the server we're displaying
-            site_id: the site_id of the server we're displaying
-    
-        [return value]
-        no explicit return 
-        """
-    
         cfg = self.cfg
 
         # gather host info from mothership

@@ -67,14 +67,35 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             si = ServerInfo(cfg)
-            print myjson.JSONEncoder(indent=4).encode(si.urls)
             host = 'mtest3'
             realm = 'satest'
             site_id = 'jfk'
-            si.getserverinfo(host, realm, site_id)
+            infos = si.getserverinfo(host, realm, site_id)
+            for i in infos:
+                if isinstance(i, list): 
+                     for l in i:
+                         print myjson.JSONEncoder(indent=4).encode(l.to_dict())
+                else:
+                     print myjson.JSONEncoder(indent=4).encode(i.to_dict())
         except mothership.serverinfo.ServerInfoError, e:
             print 'Error: %s' % e
             sys.exit(1)
+
+
+    @cmdln.alias("si_urls")
+    def do_get_serverinfo_urls(self, subcmd, opts):
+        """${cmd_name}: get the module's REST urls
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            si = ServerInfo(cfg)
+            print myjson.JSONEncoder(indent=4).encode(si.urls)
+        except mothership.serverinfo.ServerInfoError, e:
+            print 'Error: %s' % e
+            sys.exit(1)
+
 
 if __name__ == "__main__":
     # the global config. useful everywhere

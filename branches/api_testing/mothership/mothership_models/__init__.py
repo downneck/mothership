@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+mothership's ORM
+"""
 
 from sqlalchemy import Table, Column, Integer, String, MetaData, ForeignKey, Boolean, Date
 from sqlalchemy.ext.declarative import declarative_base
@@ -35,6 +38,11 @@ class KV(Base):
         self.realm = realm
         self.site_id = site_id
 
+    def to_dict(self):
+        kvdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        kvdict['table_name'] = 'kv'
+        return kvdict
+
     def __repr__(self):
         namespace = [self.hostname, self.realm, self.site_id]
         namespace = filter(None, namespace)
@@ -49,6 +57,11 @@ class Tag(Base):
     stop_port = Column(Integer)
     id = Column(Integer, primary_key=True)
     security_level = Column(Integer)
+
+    def to_dict(self):
+        tagdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        tagdict['table_name'] = 'tags'
+        return tagdict
 
     def __init__(self, name, start_port, stop_port, security_level):
         self.name = name
@@ -79,6 +92,12 @@ class Server(Base):
     cost = Column(Integer)
     active = Column(Boolean)
 
+    def to_dict(self):
+        servdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        servdict['provision_date'] = str(servdict['provision_date'])
+        servdict['table_name'] = 'servers'
+        return servdict
+
     def __init__(self, hostname):
         self.name = hostname
 
@@ -108,6 +127,13 @@ class ServerGraveyard(Base):
     security_level = Column(Integer)
     cost = Column(Integer)
 
+    def to_dict(self):
+        servgdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        servgdict['provision_date'] = str(servgdict['provision_date'])
+        servgdict['deprovision_date'] = str(servgdict['deprovision_date'])
+        servgdict['table_name'] = 'server_graveyard'
+        return servgdict
+
     def __init__(self, hostname):
         self.name = hostname
 
@@ -136,6 +162,12 @@ class Hardware(Base):
     cpu_speed  = Column(String)
     rma = Column(Boolean)
 
+    def to_dict(self):
+        hwdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        hwdict['purchase_date'] = str(hwdict['purchase_date'])
+        hwdict['table_name'] = 'hardware'
+        return hwdict
+
     def __init__(self, hw_tag):
         self.hw_tag = hw_tag
 
@@ -151,6 +183,11 @@ class DnsAddendum(Base):
     host = Column(String)
     target = Column(String)
     record_type = Column(String)
+
+    def to_dict(self):
+        dnsdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        dnsdict['table_name'] = 'dns_addendum'
+        return dnsdict
 
     def __init__(self, host, record_type, realm, site_id, target):
         self.site_id = hw_tag
@@ -180,7 +217,12 @@ class Network(Base):
     static_route = Column(String)   # static_route is actually an inet in PG
     public_ip = Column(String)      # public_ip is actually an inet in PG
     hw_tag = Column(String)
- 
+
+    def to_dict(self):
+        netdict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        netdict['table_name'] = 'network'
+        return netdict
+
     def __init__(self, ip, interface, netmask, mac):
         self.ip = ip
         self.interface = interface
@@ -190,6 +232,30 @@ class Network(Base):
     def __repr__(self):
        return "<Network('%s', '%s', '%s', '%s', '%s')>" % (self.ip, self.mac, self.interface, self.site_id, self.realm)
 
+class AppInstance(Base):
+    __tablename__ = 'application_instances'
+
+    id = Column(Integer, primary_key=True)
+    ip = Column(String)             # ip is actually an inet in PG
+    port = Column(Integer)
+    created_at = Column(Date)
+    tag = Column(String)
+    started_at = Column(Date)
+    scms_version_id = Column(Integer)
+
+    def to_dict(self):
+        appinstancedict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        appinstancedict['table_name'] = 'application_instances'
+        return appinstancedict
+
+    def __init__(self, ip, port, tag):
+        self.ip = ip
+        self.port = port
+        self.tag = tag
+
+    def __repr__(self):
+       return "<AppInstance('%s', '%s', '%s')>" % (self.ip, self.port, self.tag)
+
 class XenPools(Base):
     __tablename__ = 'xen_pools'
 
@@ -197,7 +263,12 @@ class XenPools(Base):
     pool_id = Column(Integer, primary_key=True)
     server_id = Column(Integer, ForeignKey(Server.id))
     server = relation(Server)
-    
+
+    def to_dict(self):
+        xenpooldict = dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+        xenpooldict['table_name'] = 'xen_pools'
+        return xenpooldict
+
     def __init__(self, realm, pool_id):
         self.realm = realm
         self.pool_id = pool_id
@@ -236,6 +307,10 @@ class Users(Base):
         self.email = email
         self.active = active
 
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
+
+
     def __repr__(self):
         return "<Users('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')>" % (self.first_name, self.last_name, self.ssh_public_key, self.username, self.site_id, self.realm, self.uid, self.type, self.hdir, self.shell, self.email, self.active)
 
@@ -249,6 +324,9 @@ class Groups(Base):
     realm = Column(String, primary_key=True)
     gid = Column(Integer)
     id = Column(Integer, primary_key=True)
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
 
     def __init__(self, description, sudo_cmds, groupname, site_id, realm, gid):
         self.description = description
@@ -267,6 +345,9 @@ class UserGroupMapping(Base):
     groups_id = Column(Integer, ForeignKey(Groups.id))
     users_id = Column(Integer, ForeignKey(Users.id))
     id = Column(Integer, primary_key=True)
+
+    def to_dict(self):
+        return dict([(k, getattr(self, k)) for k in self.__dict__.keys() if not k.startswith("_")])
 
     def __init__(self, groups_id, users_id):
         self.groups_id = groups_id
