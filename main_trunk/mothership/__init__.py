@@ -98,6 +98,7 @@ def calculate_next_baremetal_vlan_ipaddress(cfg, vlan):
     try:
         first = data.order_by(Network.ip).first().ip
         last = data.order_by(Network.ip.desc()).first().ip
+        #print 'RANGE: %s - %s' % (first, last)
     except:
         first = mothership.network_mapper.remap(cfg, '1st_static_ip', vlan=int(vlan))
         last = first
@@ -547,10 +548,19 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
 
         # update the server_id in the network table rows and return the id
         for net in retrieve_network_rows(cfg, hwtag=opts.hw_tag):
-            ip = None
+            ip = net.ip
             interface = net.interface
             if interface == 'eth1':
                 ip = calculate_next_baremetal_vlan_ipaddress(cfg, vlan)
+                opts.vlan = vlan
+                if not opts.public_ip or network_mapper.remap(
+                    cfg, 'ip', ip=opts.public_ip):
+                    print 'Invalid public_ip %s, using default %s' \
+                        % (opts.public_ip, cfg.def_public_ip)
+                    opts.public_ip = cfg.def_public_ip
+            else:
+                opts.vlan = net.vlan
+                opts.public_ip = None
             # never retrieve the gw without ip=, especially when eth1
             static_route, netmask = mothership.network_mapper.remap(cfg, ['gw', 'mask'],
                 nic=interface, ip=ip, siteid=site_id)
