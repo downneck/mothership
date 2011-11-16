@@ -562,8 +562,12 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
                 opts.vlan = net.vlan
                 opts.public_ip = None
             # never retrieve the gw without ip=, especially when eth1
-            static_route, netmask = mothership.network_mapper.remap(cfg, ['gw', 'mask'],
-                nic=interface, ip=ip, siteid=site_id)
+            if ip:
+                static_route, netmask = mothership.network_mapper.remap(cfg, ['gw', 'mask'],
+                    nic=interface, ip=ip, siteid=site_id)
+            else:
+                static_route = None
+                netmask = None
             bond_options = None
             net_info = build_model_dict(Network('','','',''), opts, locals())
             update_table_network(cfg, net_info)
@@ -920,7 +924,7 @@ def walk_snmp_for_ifname(cfg, hostname, ifname=None, debug=False):
     data = []
     if ifname:
         snmp_dict = walk_snmp_for_network(cfg, retrieve_network_row_by_ifname(
-            cfg, ifname, serverid=retrieve_server_row(cfg, hostname).id), debug)
+            cfg, ifname, filter={'server_id':retrieve_server_row(cfg, hostname).id}), debug)
         if snmp_dict:
             data.append(snmp_dict)
     else:
@@ -1018,7 +1022,12 @@ def walk_snmp_with_oid(cfg, oid, vlan=None, switch=None, debug=False):
             if debug:
                 print 'DEBUG: %s %s %s %s %s %s' \
                 % (walk, opts, vers, cstr, host, oid)
-            if p: data.append({'snmp':p, 'switch':host})
+            if p:
+                valid = True
+                for x in cfg.snmpskip:
+                    if str(x) in p:
+                        valid = False
+                if valid: data.append({'snmp':p, 'switch':host})
     return data
 
 def verify_host_data(cfg, hostname):

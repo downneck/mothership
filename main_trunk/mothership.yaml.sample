@@ -132,6 +132,8 @@ snmp:
   # you should change this
   community: 'public'
 
+  # ports to exclude in snmp scan (i.e. bridge ports, etc)
+  exclude: [ 'No Such', 100 ]
 
 # options for the Key-Value table
 kv:

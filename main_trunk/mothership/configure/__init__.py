@@ -143,6 +143,10 @@ class Configure:
             self.snmpver = snmpconfig['version']
         else:
             self.snmpver = '2c'
+        if 'exclude' in snmpconfig and snmpconfig['exclude']:
+            self.snmpskip = snmpconfig['exclude']
+        else:
+            self.snmpskip = ['No Such']
 
         # KV settings
         kvconfig = all_configs['kv']
