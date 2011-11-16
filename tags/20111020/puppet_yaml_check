@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+# Quick node classifier check for ship puppet
+
+import os
+import sys
+import yaml
+import socket
+
+vitals = ['classes', 'environment', 'parameters']
+
+test = os.popen("%s/ship puppet %s" % (
+    os.path.dirname(sys.argv[0]),
+    socket.gethostname()),"r").read()
+try:
+    data = yaml.load(test)
+except:
+    print 'ERROR: Node classifier YAML failed to load!'
+    sys.exit(2)
+
+if sorted(data.keys()) != vitals:
+    print 'ERROR: Node classifier YAML has incorrect keys: %s' % data.keys()
+    sys.exit(2)
+
+for i in vitals:
+    if not data[i]:
+        print 'ERROR: Node classifier YAML for "%s" is empty!' % i
+        sys.exit(2)
+
+print 'OK: Node classifier YAML passed all tests!'
+sys.exit(0)
+
