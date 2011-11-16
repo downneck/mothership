@@ -564,6 +564,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
             # never retrieve the gw without ip=, especially when eth1
             static_route, netmask = mothership.network_mapper.remap(cfg, ['gw', 'mask'],
                 nic=interface, ip=ip, siteid=site_id)
+            bond_options = None
             net_info = build_model_dict(Network('','','',''), opts, locals())
             update_table_network(cfg, net_info)
             if re.match('eth[12]', interface):
