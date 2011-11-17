@@ -528,6 +528,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
             print 'Invalid public_ip %s, using default %s' \
                 % (opts.public_ip, cfg.def_public_ip)
             opts.public_ip = cfg.def_public_ip
+        setattr(opts, 'hw_tag', None)
         net_info = build_model_dict(Network('','','',''), opts, locals())
         update_table_network(cfg, net_info)
 
