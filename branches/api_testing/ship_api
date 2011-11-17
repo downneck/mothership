@@ -98,7 +98,17 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             si = ServerInfo(cfg)
-            print myjson.JSONEncoder(indent=4).encode(si.metadata)
+            #print myjson.JSONEncoder(indent=4).encode(si.metadata)
+            for k, v in si.metadata['functions'].iteritems():
+                rargs = ''
+                oargs = ''
+                if si.metadata['functions'][k]['required_args']:
+                    rargs = ', '.join(si.metadata['functions'][k]['required_args'])
+                    rargs = rargs+', '
+                for k2, v2 in si.metadata['functions'][k]['optional_args'].iteritems():
+                    oargs = oargs+k2+'=None, '
+                args = rargs + oargs
+                print si.metadata['functions'][k]['call']+'('+args+')' 
         except mothership.serverinfo.ServerInfoError, e:
             print 'Error: %s' % e
             sys.exit(1)

@@ -31,57 +31,63 @@ class ServerInfo:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.version = '1' #placeholder, let's figure this out later
+        self.version = '1'
         self.name = "ServerInfo"
         self.namespace = "serverinfo"
-        self.metadata = [
-                     {
-                      'url': '/'+self.namespace,
-                      'class': self.name,
-                      'namespace': self.namespace,
-                      'version': self.version,
-                      'call': 'getserverinfo()',
-                      'module_dependencies': {'modulename': 'version', 'othermodule': 'otherversion'},
-                      'required_args': {'host': 'string', 'realm': 'string', 'site_id': 'string'},
-                      'optional_args': [],
-                      'cmdln_aliases': ['si', 'server_info', 'serverinfo'],
-                      'return': {
-                                 'server': 'ORMobject',
-                                 'hardware': 'ORMobject',
-                                 'network': [
-                                             'ORMobject',
-                                             'ORMobject',
-                                            ],
-                                 'kv': [
-                                        'ORMobject',
-                                        'ORMobject',
-                                       ],
-                                },
-                     },
-                     {
-                      'url': '/'+self.namespace+'/search',
-                      'class': self.name,
-                      'namespace': self.namespace,
-                      'version': self.version,
-                      'call': 'get_host()',
-                      'module_dependencies': {'modulename': 'version', 'othermodule': 'otherversion'},
-                      'required_args': [],
-                      'optional_args': {'hw_tag': 'string', 'ip': 'string', 'mac': 'string'},
-                      'cmdln_aliases': ['si_search', 'serverinfo_search', 'server_info_search'],
-                      'return': {
-                                 'server': 'ORMobject',
-                                 'hardware': 'ORMobject',
-                                 'network': [
-                                             'ORMobject',
-                                             'ORMobject',
-                                            ],
-                                 'kv': [
-                                        'ORMobject',
-                                        'ORMobject',
-                                       ],
-                                },
-                     },
-                    ]
+        self.metadata = {
+            'config': {
+                'module_dependencies': {
+                    'kv': '1',
+                    'mothership_models': '1'
+                },
+            },
+            'functions': {
+                'getserverinfo': {
+                    'url': '/'+self.namespace,
+                    'class': self.name,
+                    'namespace': self.namespace,
+                    'version': self.version,
+                    'call': 'getserverinfo',
+                    'required_args': {'host': 'string', 'realm': 'string', 'site_id': 'string'},
+                    'optional_args': {'test': 'int', 'test2': 'ip'},
+                    'cmdln_aliases': ['si', 'server_info', 'serverinfo'],
+                    'return': {
+                        'server': 'ORMobject',
+                        'hardware': 'ORMobject',
+                        'network': [
+                            'ORMobject',
+                            'ORMobject',
+                            ],
+                        'kv': [
+                            'ORMobject',
+                            'ORMobject',
+                        ],
+                    },
+                },
+                'search': {
+                    'url': '/'+self.namespace+'/search',
+                    'class': self.name,
+                    'namespace': self.namespace,
+                    'version': self.version,
+                    'call': 'get_host',
+                    'required_args': {},
+                    'optional_args': {'hw_tag': 'string', 'ip': 'string', 'mac': 'string'},
+                    'cmdln_aliases': ['si_search', 'serverinfo_search', 'server_info_search'],
+                    'return': {
+                        'server': 'ORMobject',
+                        'hardware': 'ORMobject',
+                        'network': [
+                            'ORMobject',
+                            'ORMobject',
+                        ],
+                        'kv': [
+                            'ORMobject',
+                            'ORMobject',
+                        ],
+                    },
+                },
+            },
+        }
 
 
     def get_host(self, hw_tag=None, ip=None, mac=None):
