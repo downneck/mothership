@@ -31,6 +31,7 @@ class ServerInfo:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        self.version = '1' #placeholder, let's figure this out later
         self.name = "ServerInfo"
         self.namespace = "serverinfo"
         self.metadata = [
@@ -38,8 +39,9 @@ class ServerInfo:
                       'url': '/'+self.namespace,
                       'class': self.name,
                       'namespace': self.namespace,
+                      'version': self.version,
                       'call': 'getserverinfo()',
-                      'module_dependencies': [],
+                      'module_dependencies': {'modulename': 'version', 'othermodule': 'otherversion'}, 
                       'required_args': {'host': 'string', 'realm': 'string', 'site_id': 'string'},
                       'optional_args': [],
                       'cmdln_aliases': ['si', 'server_info', 'serverinfo'],
@@ -48,8 +50,9 @@ class ServerInfo:
                       'url': '/'+self.namespace+'/search',
                       'class': self.name,
                       'namespace': self.namespace,
+                      'version': self.version,
                       'call': 'get_host()',
-                      'module_dependencies': [],
+                      'module_dependencies': {'modulename': 'version', 'othermodule': 'otherversion'}, 
                       'required_args': [],
                       'optional_args': {'hw_tag': 'string', 'ip': 'string', 'mac': 'string'},
                       'cmdln_aliases': ['si_search', 'serverinfo_search', 'server_info_search'],
@@ -142,8 +145,9 @@ class ServerInfo:
         """
 
         cfg = self.cfg
-        kvs = [] # stores values from kv search for tag=? that apply to our server
-        ret = [] # order: [0]=server, [1]=hardware, [2]=kv, [3]=network, [4]=network, (+more network objects if there are more)
+        kvs = [] # stores kv objects to return
+        nets = [] # stores network objects to return
+        ret = {} # order: [0]=server, [1]=hardware, [2]=kv, [3]=network, [4]=network, (+more network objects if there are more)
 
         # gather server info from mothership's db
         try:
@@ -154,8 +158,8 @@ class ServerInfo:
           filter(Server.site_id==site_id).\
           filter(Hardware.hw_tag==Server.hw_tag).first()
 
-          ret.append(s) # add server to return list
-          ret.append(h) # add hardware to return list
+          ret['server'] = s # add server object to return dict
+          ret['hardware'] = h # add hardware object to return dict
 
           # kv entries
           for h2, s2 in cfg.dbsess.query(Hardware, Server).\
@@ -165,14 +169,15 @@ class ServerInfo:
           filter(Hardware.hw_tag==Server.hw_tag):
             fqdn = '.'.join([host,realm,site_id])
             kvs = mothership.kv.collect(cfg, fqdn, key='tag')
-          ret.append(kvs) # add kv values to return list
+          ret['kv'] = kvs # add list of kv objects to return dict
 
           # network entries
           for n in cfg.dbsess.query(Network).\
           filter(Server.id==Network.server_id).\
           filter(Server.hostname==s.hostname).\
           order_by(Network.interface).all():
-              ret.append(n)
+              nets.append(n) # add network objects to our list
+          ret['network'] = nets # add list of network objects to return dict
 
         except TypeError:
           raise ServerInfoError("host \"%s\" not found" % host)

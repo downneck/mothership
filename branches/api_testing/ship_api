@@ -20,6 +20,7 @@ import sys
 import cmdln
 import datetime
 import socket
+import pprint # for printing dicts 
 
 # Extra modules
 import sqlalchemy
@@ -66,17 +67,23 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_option_list}
         """
         try:
-            si = ServerInfo(cfg)
-            host = 'mtest3'
-            realm = 'satest'
-            site_id = 'jfk'
+            si = ServerInfo(cfg) # instantiate a serverinfo object, extends Configure
+            host = 'mtest3'   # this is
+            realm = 'satest'  # all just
+            site_id = 'jfk'   # test data
             infos = si.getserverinfo(host, realm, site_id)
-            for i in infos:
-                if isinstance(i, list): 
-                     for l in i:
-                         print myjson.JSONEncoder(indent=4).encode(l.to_dict())
+            buff = {} # buffer to hold our ORMobject->dict/list translations
+            tl = [] # temp list to hold list[ORMobject]->list[dict] translations
+            # start translating
+            for k, v in infos.iteritems(): #get keys and values from the infos dict
+                if isinstance(v, list): # some values will be lists of objects (network, kv)
+                     for l in v:
+                         tl.append(l.to_dict()) # add the translated ORMobject->dict to temp list
+                     buff[k] = tl # add the temp list to our buffer dict
+                     tl = [] # clear the list so we don't end up with two of everything
                 else:
-                     print myjson.JSONEncoder(indent=4).encode(i.to_dict())
+                     buff[k] = v.to_dict() # if it's not a list, translate and add the dict to buffer
+            print myjson.JSONEncoder(indent=4).encode(buff) # now that everything's translated to a dict/list[dict], print.
         except mothership.serverinfo.ServerInfoError, e:
             print 'Error: %s' % e
             sys.exit(1)
