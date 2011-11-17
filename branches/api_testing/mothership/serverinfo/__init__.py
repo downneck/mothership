@@ -41,10 +41,22 @@ class ServerInfo:
                       'namespace': self.namespace,
                       'version': self.version,
                       'call': 'getserverinfo()',
-                      'module_dependencies': {'modulename': 'version', 'othermodule': 'otherversion'}, 
+                      'module_dependencies': {'modulename': 'version', 'othermodule': 'otherversion'},
                       'required_args': {'host': 'string', 'realm': 'string', 'site_id': 'string'},
                       'optional_args': [],
                       'cmdln_aliases': ['si', 'server_info', 'serverinfo'],
+                      'return': {
+                                 'server': 'ORMobject',
+                                 'hardware': 'ORMobject',
+                                 'network': [
+                                             'ORMobject',
+                                             'ORMobject',
+                                            ],
+                                 'kv': [
+                                        'ORMobject',
+                                        'ORMobject',
+                                       ],
+                                },
                      },
                      {
                       'url': '/'+self.namespace+'/search',
@@ -52,16 +64,25 @@ class ServerInfo:
                       'namespace': self.namespace,
                       'version': self.version,
                       'call': 'get_host()',
-                      'module_dependencies': {'modulename': 'version', 'othermodule': 'otherversion'}, 
+                      'module_dependencies': {'modulename': 'version', 'othermodule': 'otherversion'},
                       'required_args': [],
                       'optional_args': {'hw_tag': 'string', 'ip': 'string', 'mac': 'string'},
                       'cmdln_aliases': ['si_search', 'serverinfo_search', 'server_info_search'],
+                      'return': {
+                                 'server': 'ORMobject',
+                                 'hardware': 'ORMobject',
+                                 'network': [
+                                             'ORMobject',
+                                             'ORMobject',
+                                            ],
+                                 'kv': [
+                                        'ORMobject',
+                                        'ORMobject',
+                                       ],
+                                },
                      },
                     ]
 
-    # ask the module to define its REST urls
-    def get_urls(self):
-        return urls
 
     def get_host(self, hw_tag=None, ip=None, mac=None):
         """
