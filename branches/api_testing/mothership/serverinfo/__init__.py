@@ -43,14 +43,30 @@ class ServerInfo:
             },
             'functions': {
                 'getserverinfo': {
+                    'description': 'retrieve server info for a server identified by hostname.realm.site_id',
                     'url': '/'+self.namespace,
                     'class': self.name,
                     'namespace': self.namespace,
                     'version': self.version,
                     'call': 'getserverinfo',
-                    'required_args': {'host': 'string', 'realm': 'string', 'site_id': 'string'},
-                    'optional_args': {'test': 'int', 'test2': 'ip'},
-                    'cmdln_aliases': ['si', 'server_info', 'serverinfo'],
+                    'required_args': {
+                        'host': 'string',
+                        'realm': 'string',
+                        'site_id': 'string'
+                    },
+                    'optional_args': {
+                        'min': '1',
+                        'max': '2',
+                        'args': {
+                            'test': 'int',
+                            'test2': 'ip',
+                        },
+                    },
+                    'cmdln_aliases': [
+                        'si',
+                        'server_info',
+                        'serverinfo'
+                    ],
                     'return': {
                         'server': 'ORMobject',
                         'hardware': 'ORMobject',
@@ -65,21 +81,32 @@ class ServerInfo:
                     },
                 },
                 'search': {
+                    'description': 'retrieve server info, identified by one of: hw_tag (hardware tag), ip (ip address), mac (mac address)',
                     'url': '/'+self.namespace+'/search',
                     'class': self.name,
                     'namespace': self.namespace,
                     'version': self.version,
                     'call': 'get_host',
                     'required_args': {},
-                    'optional_args': {'hw_tag': 'string', 'ip': 'string', 'mac': 'string'},
-                    'cmdln_aliases': ['si_search', 'serverinfo_search', 'server_info_search'],
+                    'optional_args': {
+                        'min': '1',
+                        'max': '1',
+                        'args': {
+                            'hw_tag': 'string',
+                            'ip': 'string',
+                            'mac': 'string',
+                        },
+                    },
+                    'cmdln_aliases': [
+                        'si_search',
+                    ],
                     'return': {
                         'server': 'ORMobject',
                         'hardware': 'ORMobject',
                         'network': [
                             'ORMobject',
                             'ORMobject',
-                        ],
+                            ],
                         'kv': [
                             'ORMobject',
                             'ORMobject',

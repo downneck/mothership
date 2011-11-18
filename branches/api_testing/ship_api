@@ -57,6 +57,17 @@ class ShipCli(cmdln.Cmdln):
         self.cfg = cfg
         self.name = "ship"
 
+        # attempting to auto-construct a command line. god help me.
+        si = ServerInfo(cfg)
+        #for k, v in si.metadata['functions'].iteritems():
+        #    fname = k 
+        #    fcall = si.metadata['functions'][k]['call']
+        #    func = getattr(si, fcall)
+        #    print fname
+        #    if fname=='getserverinfo':
+        #        print func('mtest3', 'satest', 'jfk')
+
+
     @cmdln.alias("sinfo")
     @cmdln.alias("si")
     @cmdln.alias("server_info")
@@ -98,20 +109,21 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             si = ServerInfo(cfg)
-            #print myjson.JSONEncoder(indent=4).encode(si.metadata)
-            for k, v in si.metadata['functions'].iteritems():
-                rargs = ''
-                oargs = ''
-                if si.metadata['functions'][k]['required_args']:
-                    rargs = ', '.join(si.metadata['functions'][k]['required_args'])
-                    rargs = rargs+', '
-                for k2, v2 in si.metadata['functions'][k]['optional_args'].iteritems():
-                    oargs = oargs+k2+'=None, '
-                args = rargs + oargs
-                print si.metadata['functions'][k]['call']+'('+args+')' 
+            print myjson.JSONEncoder(indent=4).encode(si.metadata)
+            for k, v in si.metadata['functions'].iteritems(): # get functions from metadata
+                rargs = '' # clear args
+                oargs = '' # clear args
+                if si.metadata['functions'][k]['required_args']: # if there are required args, process first
+                    rargs = ', '.join(si.metadata['functions'][k]['required_args']) # just a string for now
+                    rargs = rargs+', ' # tack a , on at the end
+                for k2, v2 in si.metadata['functions'][k]['optional_args']['args'].iteritems(): # process opt args
+                    oargs = oargs+k2+'=None, ' # just a string for now
+                args = rargs + oargs # put both args together
+                #print si.metadata['functions'][k]['call']+'('+args+')' # print out what we would have called
         except mothership.serverinfo.ServerInfoError, e:
             print 'Error: %s' % e
             sys.exit(1)
+
 
 
 if __name__ == "__main__":
