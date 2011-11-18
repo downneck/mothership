@@ -31,52 +31,52 @@ class ServerInfo:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.version = '1'
-        self.name = "ServerInfo"
-        self.namespace = "serverinfo"
-        self.metadata = {
-            'config': {
-                'module_dependencies': {
-                    'kv': '1',
-                    'mothership_models': '1'
+        self.version = '1' # the version of this module
+        self.name = "ServerInfo" # class name
+        self.namespace = "serverinfo" # class' namespace
+        self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
+            'config': { # some basic module-wide config data
+                'module_dependencies': { # what other modules do we depend on?
+                    'kv': '1', # a module, and its minimum accepted version
+                    'mothership_models': '1' # another module, and its minimum accepted version
                 },
             },
-            'functions': {
-                'getserverinfo': {
-                    'description': 'retrieve server info for a server identified by hostname.realm.site_id',
-                    'url': '/'+self.namespace,
-                    'class': self.name,
-                    'namespace': self.namespace,
-                    'version': self.version,
-                    'call': 'getserverinfo',
-                    'required_args': {
-                        'host': 'string',
-                        'realm': 'string',
-                        'site_id': 'string'
+            'functions': { # a dict of functions we're presenting to the outside world
+                'getserverinfo': { # a function identifier
+                    'description': 'retrieve server info for a server identified by hostname.realm.site_id', # for generating help
+                    'url': '/'+self.namespace, # REST url we'd like to use
+                    'class': self.name, # our class name
+                    'namespace': self.namespace, # our desired namespace
+                    'version': self.version, # our version
+                    'call': 'getserverinfo', # the function call, stripped of () and args
+                    'required_args': { # dict of info about arguments we just can't live without
+                        'host': 'string', # an arg, and its type
+                        'realm': 'string', # another arg, and its type
+                        'site_id': 'string' # yet another arg, and its type
                     },
-                    'optional_args': {
-                        'min': '1',
-                        'max': '2',
-                        'args': {
-                            'test': 'int',
-                            'test2': 'ip',
+                    'optional_args': { # dict holding optional argument info
+                        'min': '0', # minimum number of optional args we'll accept
+                        'max': '2', # maximum number of optional args we'll accept
+                        'args': { # the argument definitions themselves
+                            'test': 'int', # an arg and its type
+                            'test2': 'ip', # another arg and its type
                         },
                     },
-                    'cmdln_aliases': [
-                        'si',
-                        'server_info',
-                        'serverinfo'
+                    'cmdln_aliases': [ # list of desired subcommand aliases for our command line
+                        'si', # alias
+                        'server_info', # another alias
+                        'serverinfo', # yet another alias
                     ],
-                    'return': {
-                        'server': 'ORMobject',
-                        'hardware': 'ORMobject',
-                        'network': [
-                            'ORMobject',
-                            'ORMobject',
+                    'return': { # a dict defining what our return value looks like
+                        'server': 'ORMobject', # a server table object
+                        'hardware': 'ORMobject', # a hardware table object
+                        'network': [ # a list of network objects, may be 1 to N objects
+                            'ORMobject', # a network table object
+                            'ORMobject', # a second network table object
                             ],
-                        'kv': [
-                            'ORMobject',
-                            'ORMobject',
+                        'kv': [ # a list of kv objects describing tags that apply to the machine, may be 0 to N objects
+                            'ORMobject', # a kv table object
+                            'ORMobject', # a second kv table object
                         ],
                     },
                 },
