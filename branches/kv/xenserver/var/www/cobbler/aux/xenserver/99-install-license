@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -eu
+
+LICENSE="${FIRSTBOOT_DATA_DIR}/license.xslic"
+
+start() {
+    if [ ! -f "/etc/license" ]; then
+        # Or parse out $XE host-license-view
+        if [ -e "$LICENSE" ]; then
+            # if xslic exists, then add it
+            $XE host-license-add host_uuid=$($XE host-list | sed -ne 's/^uuid .*: //p') license-file=$LICENSE
+        fi
+    fi
+}
+
+case $1 in
+  start) start ;;
+esac
+

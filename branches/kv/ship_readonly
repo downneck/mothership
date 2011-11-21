@@ -1,0 +1,374 @@
+#!/usr/bin/env python
+
+# Copyright 2011 Gilt Groupe, INC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# System modules
+import os
+import sys
+import cmdln
+import datetime
+import socket
+
+# Extra modules
+import sqlalchemy
+from pprint import pprint
+import yaml
+
+# Our modules
+import mothership
+import mothership.kv
+import mothership.cobbler
+import mothership.puppet
+import mothership.serverinfo
+import mothership.mgmt_vlan
+import mothership.dns
+import mothership.users
+import mothership.list_values
+import mothership.zenoss
+import mothership.ldap
+from mothership.list_servers import *
+from mothership.mothership_models import *
+from mothership.configure import Configure
+import mothership.zabbix
+
+class ShipCli(cmdln.Cmdln):
+    def __init__(self, cfg):
+        cmdln.Cmdln.__init__(self)
+        self.cfg = cfg
+        self.name = "ship"
+
+    # Zabbix API interaction
+    @cmdln.alias("zabbix_api")
+    @cmdln.alias("zab")
+    @cmdln.alias("zbx")
+    @cmdln.option("-a", "--add", action="store_true",
+                  help="add a server to zabbix")
+    @cmdln.option("-r", "--remove", action="store_true",
+                  help="remove a server from zabbix")
+    @cmdln.option("-e", "--enable", action="store_true",
+                  help="enable monitoring on a server")
+    @cmdln.option("-d", "--disable", action="store_true",
+                  help="disable monitoring on a server")
+    @cmdln.option("-s", "--zabbix_server", 
+                  help="specify a zabbix server to connect to")
+    @cmdln.option("-t", "--zabbix_template", 
+                  help="specify a zabbix template to assign to this host")
+    def do_zabbix(self, subcmd, opts, hostname):
+        """${cmd_name}: display zabbix info for a host
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        # get some basic server info
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        unqdn = '.'.join([host,realm,site_id])
+
+        # get some Zabbix server info
+        if opts.zabbix_server:
+          zs_host,zs_realm,zs_site_id = mothership.get_unqdn(self.cfg, opts.zabbix_server)
+          zs_unqdn = '.'.join([zs_host,zs_realm,zs_site_id])
+        else:
+          zs_unqdn = None 
+        mothership.zabbix.display(self.cfg, unqdn, zs_unqdn)
+
+
+    # Management vlan interaction
+    @cmdln.alias("mgmtvlan")
+    @cmdln.alias("mvl")
+    def do_mgmt_vlan(self, subcmd, opts, hostname):
+        """${cmd_name}: display the status of a server's management port
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+
+        # get some basic server info
+        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        mothership.mgmt_vlan.status(self.cfg, host, realm, site_id)
+
+
+    # User display 
+    @cmdln.alias("user")
+    @cmdln.alias("udisplay")
+    @cmdln.alias("displayusers")
+    @cmdln.alias("displayuser")
+    @cmdln.alias("user_display")
+    @cmdln.alias("display_user")
+    @cmdln.alias("ud")
+    @cmdln.alias("du")
+    @cmdln.option("-c", "--compact", action="store_true",
+                  help="display user in compact form, only useful with -d")
+    @cmdln.option("-l", "--list_groups", action="store_true",
+                  help="display the user's groups in a list, one on each line")
+    def do_display_users(self, subcmd, opts, username):
+        """${cmd_name}: display users stored within mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.udisplay(self.cfg, username, pubkey=None, compact=opts.compact, list=opts.list_groups)
+        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+            print 'Error: %s' % e
+
+
+    # Display a group 
+    @cmdln.alias("gdisplay")
+    @cmdln.alias("gd")
+    @cmdln.alias("gidsp")
+    @cmdln.alias("display_group")
+    @cmdln.alias("displaygroup")
+    @cmdln.option("-l", "--list_users", action="store_true",
+                  help="display the group members in a list, one on each line")
+    def do_group_display(self, subcmd, opts, groupname):
+        """${cmd_name}: display a group within mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.users.gdisplay(self.cfg, groupname, opts.list_users)
+        except (mothership.validate.ValidationError, mothership.users.UsersError), e:
+            print 'Error: %s' % e
+
+
+    # display a user's ldap entry
+    @cmdln.alias("ldud")
+    @cmdln.alias("ldapudisplay")
+    @cmdln.alias("ldapuserdisplay")
+    @cmdln.alias("ldapdisplayuser")
+    @cmdln.alias("ldap_udisplay")
+    def do_ldap_user_display(self, subcmd, opts, username):
+        """${cmd_name}: LDAP user display 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.ldap.udisplay(self.cfg, username)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+
+    # display a group's ldap entry
+    @cmdln.alias("ldgd")
+    @cmdln.alias("ldapgdisplay")
+    @cmdln.alias("ldapgroupdisplay")
+    @cmdln.alias("ldapdisplaygroup")
+    @cmdln.alias("ldap_gdisplay")
+    def do_ldap_group_display(self, subcmd, opts, groupname):
+        """${cmd_name}: LDAP group display
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.ldap.gdisplay(self.cfg, groupname)
+        except (mothership.validate.ValidationError,
+                mothership.users.UsersError,
+                mothership.ldap.LDAPError), e:
+            print "Error: %s" % e
+
+
+    # Server listing command
+    @cmdln.alias("lss")
+    @cmdln.alias("ls_serv")
+    @cmdln.alias("lsservers")
+    @cmdln.alias("ls_servers")
+    @cmdln.option("-c", "--config",
+                  help="use db config file")
+    @cmdln.option("-v", "--verbose", action="store_true",
+                  help="print verbose output")
+    @cmdln.option("-V", "--vlan", type="int",
+                  help="print servers in one vlan")
+    @cmdln.option("-s", "--site-id",
+                  help="print servers in one site")
+    @cmdln.option("-t", "--tag",
+                  help="print servers in one tag")
+    @cmdln.option("-R", "--realm",
+                  help="print servers in one realm")
+    @cmdln.option("-m", "--manufacturer",
+                  help="print servers by one manufacturer")
+    @cmdln.option("-M", "--model",
+                  help="print servers of one model type")
+    @cmdln.option("-C", "--cores",
+                  help="print servers with a specific number of cpu cores")
+    @cmdln.option("-a", "--ram", type="int",
+                  help="print servers with a specific amount of ram")
+    @cmdln.option("-d", "--disk", type="int",
+                  help="print servers with a specific amount of disk")
+    @cmdln.option("-H", "--hw_tag",
+                  help="print servers with a specific hw_tag")
+    @cmdln.option("-x", "--virtual", action="store_true",
+                  help="print virtual servers")
+    @cmdln.option("-p", "--physical", action="store_true",
+                  help="print physical (non-vm) servers")
+    @cmdln.option("-n", "--name",
+                  help="print servers whose name matches *NAME*")
+    def do_list_servers(self, subcmd, opts):
+        """${cmd_name}: get a list of all of the servers in mothership
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        if opts.vlan:
+            list_servers(self.cfg, listby='vlan', lookfor=opts.vlan)
+        elif opts.site_id:
+            list_servers(self.cfg, listby='site_id', lookfor=opts.site_id)
+        elif opts.tag:
+            list_servers(self.cfg, listby='tag', lookfor=opts.tag)
+        elif opts.realm:
+            list_servers(self.cfg, listby='realm', lookfor=opts.realm)
+        elif opts.manufacturer:
+            list_servers(self.cfg, listby='manufacturer', lookfor=opts.manufacturer)
+        elif opts.model:
+            list_servers(self.cfg, listby='model', lookfor=opts.model)
+        elif opts.cores:
+            list_servers(self.cfg, listby='cores', lookfor=opts.cores)
+        elif opts.ram:
+            list_servers(self.cfg, listby='ram', lookfor=opts.ram)
+        elif opts.disk:
+            list_servers(self.cfg, listby='disk', lookfor=opts.disk)
+        elif opts.hw_tag:
+            list_servers(self.cfg, listby='hw_tag', lookfor=opts.hw_tag)
+        elif opts.virtual:
+            list_servers(self.cfg, listby='virtual')
+        elif opts.physical:
+            list_servers(self.cfg, listby='physical')
+        elif opts.name:
+            list_servers(self.cfg, listby='name', lookfor=opts.name)
+        else:
+            list_servers(self.cfg)
+
+    @cmdln.alias("sinfo")
+    @cmdln.alias("si")
+    @cmdln.alias("server_info")
+    @cmdln.option("-i", "--ip",
+                  help="search by ip")
+    @cmdln.option("-n", "--name",
+                  help="search by hostname")
+    @cmdln.option("-H", "--hw_tag",
+                  help="search by hardware tag")
+    @cmdln.option("-m", "--mac",
+                  help="search by mac address")
+    @cmdln.option("-I", "--printip", action="store_true",
+                  help="print ip addresses only")
+    @cmdln.option("-M", "--printmac", action="store_true",
+                  help="print mac addresses only")
+    def do_serverinfo(self, subcmd, opts):
+        """${cmd_name}: get information about a server
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            arg_count = sum(x != None for x in (opts.ip, opts.name, opts.mac, opts.hw_tag))
+            if arg_count != 1:
+                print "Specify one search argument."
+                cmdln.Cmdln.do_help(self, ['','serverinfo'])
+                sys.exit(1)
+
+            if opts.ip:
+                hostname = mothership.serverinfo.get_host(self.cfg, ip=opts.ip)
+            elif opts.name:
+                hostname = opts.name
+            elif opts.mac:
+                hostname = mothership.serverinfo.get_host(self.cfg, mac=opts.mac)
+            elif opts.hw_tag:
+                hostname = mothership.serverinfo.get_host(self.cfg, hw_tag=opts.hw_tag)
+            else:
+                print "unexpected error, check everything."
+                sys.exit(1)
+
+            host, realm, site_id = mothership.get_unqdn(self.cfg, hostname)
+
+            if opts.printip and opts.printmac:
+                print "-M and -I options are mutually exclusive, pick one."
+                cmdln.Cmdln.do_help(self, ['','serverinfo'])
+                sys.exit(1)
+
+            if opts.printip:
+                mothership.serverinfo.ip_only(self.cfg, host, realm, site_id)
+            elif opts.printmac:
+                mothership.serverinfo.mac_only(self.cfg, host, realm, site_id)
+            else:
+                mothership.serverinfo.all(self.cfg, host, realm, site_id)
+
+        except mothership.serverinfo.ServerInfoError, e:
+            print 'Error: %s' % e
+            sys.exit(1)
+
+
+    @cmdln.alias("p")
+    @cmdln.alias("puppet")
+    def do_classify(self, subcmd, opts, fqdn):
+        """${cmd_name}: Puppet classifier yaml for a server
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        node = mothership.puppet.classify(self.cfg, fqdn)
+        print(yaml.dump(node, default_flow_style=False))
+
+
+    @cmdln.alias("ls")
+    @cmdln.alias("list")
+    @cmdln.alias("list_all")
+    @cmdln.option("-q", "--quiet", action="store_true",
+                  help="suppress printing of informational header")
+    def do_list_all_values(self, subcmd, opts, listing):
+        """${cmd_name}: list all unique values for specified item
+        
+        valid items are: ips, vlans, tags, users, groups
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        mothership.list_values.list_all_values(self.cfg, listing, quiet=opts.quiet)
+
+
+    # display the tag table
+    @cmdln.alias("tags")
+    def do_tag(self, subcmd, opts, name):
+        """${cmd_name}: display tags/tags in the mothership db 
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            mothership.display_tag(self.cfg, name)
+        except (mothership.MothershipError), e:
+            print 'Error: %s' % e
+
+
+if __name__ == "__main__":
+    # the global config. useful everywhere
+    cfgfile = 'mothership.yaml'
+    cfg = Configure(cfgfile)
+
+    # useful global values
+    today = datetime.date.today()
+
+    try:
+        ship = ShipCli(cfg)
+        retval = ship.main()
+        # Properly close DB connection
+        cfg.close_connections()
+        sys.exit(retval)
+    except IOError:
+        print "Missing file named %s" % cfgfile
+        sys.exit(1)

@@ -1,0 +1,77 @@
+revision 243 (dk)
+* added sanity checks in kv
+revision 220 (dk)
+* merged cleanup into main
+revision 214 (dk)
+* merged easy_install to main
+revision 202 (dk)
+* added lockout to prevent running as root (from console)
+* added audit log (defaults to /var/log/mothership_audit.log)
+* cleaned up some stuff in mothership.yaml.sample
+revision 149 (kl)
+* fix snmp logic for empty vlans
+revision 147 (dk)
+* fixing a bug in variable assignment for copy_user
+revision 141 (kl)
+* merge xenserver_api branch to main_trunk
+revision 132 (dk)
+* merge copy_from_user branch to main_trunk, release
+revision 129 (dk)
+* (branch) add a copy_from switch to uadd to allow operators to
+  copy group, shell, and type info from another user
+revision 127 (kl)
+* update the firstboot.d scripts for xenserver kickstart
+revision 121 (dk)
+* removed realm-path guessing from kv command
+revision 120 (kl)
+* update puppet_yaml_check to discover empty vital key-values
+* add catch for missing xen password in do_cobbler
+revision 113 (kl)
+* fix expire server abort sequencing
+* remove sys.exit from global exception causing unknown problems
+revision 110 (kl)
+* fix check free memory for when Local storage is used on xenhost
+revision 106 (kl)
+* fix xenserver SR name-label issues
+* forcie all sudo-necessary ship commands to be run sudo
+* remove faulty xen slave exception
+revision 100 (kl)
+* query user for storage when multiple storage repositories
+* fix provisioning baremetal bug on new vlan
+* minor change to support zenoss 3.2.0 changes to api
+revision 94 (mo)
+* fixed typo in ./ship
+revision 90 (dk):
+* making the ENC spit out sudoers properly
+revision 89 (dk):
+* sys.exit -> raise ConfigError
+* idrac6.py -> mothership/idrac6/__init__.py
+revision 83 (dk):
+* modernizing Changelog
+revision 78 (dk):
+* merged in sudo_cmds functionality to add sudo command sets to groups
+revision 74 (dk):
+* fixed passing of variables in users module in gmodify()
+* normalizing revisions in Changelog
+revision 70 (dk):
+* fixing bad quotes in validation module error raising messages
+revision 68 (mo):
+* adding activate user command
+* command activates a user, setting true in the enabled colum in the
+  mothership DB
+* does not add the user to any groups by default.
+* Also, screwed up merging this something awful because now i'm use to git
+revision 59 (dk):
+* in order to avoid stepping on puppet's reserved keyword "tags", we changed
+  tags to mtags in the puppet module, added an example config in the
+  puppet_skeleton, and added some info in INSTALL
+revision 51 (dk):
+* modernized interaction with the newer version of the python port of the
+  zabbix API
+revision 43 (dk):
+* fixed a bunch of bugs in LDAP integration with user module
+* modernized Changelog
+Revision 40 (dk):
+* updated all instances of "role(s)" to read "tag(s)" (including the DB schema)
+* stopped users module from prompting for ldap interaction if the realm 
+  doesn't have an active ldap_master
