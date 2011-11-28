@@ -892,7 +892,7 @@ class ShipCli(cmdln.Cmdln):
             if kvs:
                 for kv in kvs:
                     print kv
-        except (mothership.kv.KVError), e:
+        except (mothership.KVError), e:
             print 'Error: %s' % e
 
 
@@ -1167,6 +1167,10 @@ class ShipCli(cmdln.Cmdln):
                   help="insert data from drac into ship db (same as 'ship import -d') ")
     @cmdln.option("-s", "--show", action="store_true",
                   help="show the sysinfo parsed from the drac")
+    @cmdln.option("-S", "--site_id", 
+                  help="specify site_id for drac import")
+    @cmdln.option("-R", "--realm",
+                  help="specify realm for drac import")
     def do_drac_tools(self, subcmd, opts, drac_ip):
         """${cmd_name}: common drac utilities
 
@@ -1183,6 +1187,8 @@ class ShipCli(cmdln.Cmdln):
                 pprint(drac_info)
             elif opts.insert:
                 host,realm,site_id = mothership.get_unqdn(self.cfg, 'localhost')
+                if opts.realm: realm = opts.realm
+                if opts.site_id: site_id = opts.site_id
                 drac_info.update({'power_switch':drac_ip, 'site_id':site_id, 'realm':realm})
                 mothership.convert_drac_dict_to_network(self.cfg, drac_info, drac_ip)
                 mothership.import_multiple_table_info(self.cfg, {'hardware':[drac_info]}, today)
@@ -1368,6 +1374,8 @@ class ShipCli(cmdln.Cmdln):
             print 'Error: %s' % e
 
     @cmdln.alias("xen")
+    @cmdln.option("-u", "--update",
+                  help="update servers table with latest VM layout")
     @cmdln.option("-V", "--disk", default=None,
                   help="specify GB of memory for virtual machine")
     @cmdln.option("-M", "--ram", default=None,
@@ -1409,6 +1417,18 @@ class ShipCli(cmdln.Cmdln):
         elif opts.viewpool:
             xs = mothership.xen.XenServerAPI(opts.viewpool, 'root', xenpw)
             xs.view_layout()
+        elif opts.update:
+            host,realm,site_id = mothership.get_unqdn(self.cfg, opts.update)
+            xs = mothership.xen.XenServerAPI(opts.update, 'root', xenpw)
+            xs.get_specs()
+            for xh in xs.specs.keys():
+                hw_tag = mothership.retrieve_server_row_by_unqdn(self.cfg, '%s.%s.%s' % \
+                    (xs.specs[xh]['name'], realm, site_id)).hw_tag
+                for vm in xs.specs[xh]['vm'].keys():
+                    if not xs.specs[xh]['vm'][vm]['name'].startswith('Transfer'):
+                        print 'Updating %s...' % xs.specs[xh]['vm'][vm]['name']
+                        mothership.modify_server_column(self.cfg,
+                            xs.specs[xh]['vm'][vm]['name'], 'hw_tag', hw_tag, force=True)
         else:
             cc = mothership.cobbler.CobblerAPI(self.cfg)
             for o in ['install_vm', 'resize_vm', 'start_vm',

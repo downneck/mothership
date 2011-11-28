@@ -192,6 +192,7 @@ network:
   # Network map, repeat blocks as necessary
   map:
   - vlan: 100                   # the vlan number on switch for this subnet
+    name: 'prod_web'            # logical name for this subnet
     cidr: '1.2.3.4/24'          # the network/prefix CIDR address for this subnet
     gw: '1.2.3.1'               # the gateway address for this subnet
     nic: 'eth0'                 # the interface name for this subnet
