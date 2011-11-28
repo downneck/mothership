@@ -1,3 +1,5 @@
+revision 243 (dk)
+* added sanity checks in kv
 revision 220 (dk)
 * merged cleanup into main
 revision 214 (dk)
