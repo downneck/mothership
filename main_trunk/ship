@@ -1374,6 +1374,8 @@ class ShipCli(cmdln.Cmdln):
             print 'Error: %s' % e
 
     @cmdln.alias("xen")
+    @cmdln.option("-u", "--update",
+                  help="update servers table with latest VM layout")
     @cmdln.option("-V", "--disk", default=None,
                   help="specify GB of memory for virtual machine")
     @cmdln.option("-M", "--ram", default=None,
@@ -1415,6 +1417,18 @@ class ShipCli(cmdln.Cmdln):
         elif opts.viewpool:
             xs = mothership.xen.XenServerAPI(opts.viewpool, 'root', xenpw)
             xs.view_layout()
+        elif opts.update:
+            host,realm,site_id = mothership.get_unqdn(self.cfg, opts.update)
+            xs = mothership.xen.XenServerAPI(opts.update, 'root', xenpw)
+            xs.get_specs()
+            for xh in xs.specs.keys():
+                hw_tag = mothership.retrieve_server_row_by_unqdn(self.cfg, '%s.%s.%s' % \
+                    (xs.specs[xh]['name'], realm, site_id)).hw_tag
+                for vm in xs.specs[xh]['vm'].keys():
+                    if not xs.specs[xh]['vm'][vm]['name'].startswith('Transfer'):
+                        print 'Updating %s...' % xs.specs[xh]['vm'][vm]['name']
+                        mothership.modify_server_column(self.cfg,
+                            xs.specs[xh]['vm'][vm]['name'], 'hw_tag', hw_tag, force=True)
         else:
             cc = mothership.cobbler.CobblerAPI(self.cfg)
             for o in ['install_vm', 'resize_vm', 'start_vm',
