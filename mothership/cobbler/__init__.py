@@ -17,6 +17,7 @@ cobbler functionality
 
 import os
 import re
+import sys
 import types
 import mothership.network_mapper
 import subprocess
@@ -24,7 +25,7 @@ from mothership.transkey import transkey
 from xmlrpclib import Fault
 
 class CobblerAPI:
-    def __init__(self, cfg):
+    def __init__(self, cfg, site_id=None):
 
         # mothership.transkey map for cobbler interface to mothership hardware
         self.map_hardware = {
@@ -109,6 +110,20 @@ class CobblerAPI:
 
         # retrieve os dict
         self.osdict = self.get_os_dict(cfg)
+
+        # set up remote cobbler control
+        self.subremote = None
+        self.subtoken = None
+        if site_id and cfg.cobsites:
+            for s in cfg.cobsites:
+                if s['id'] == site_id:
+                    subsite = cfg.cobsites[site_id]
+                    try:
+                        self.subremote = xmlrpclib.Server('http://%s/cobbler_api' % subsite['host'])
+                        self.subtoken = self.subremote.login(subsite['user'], subsite['pass'])
+                    except:
+                        sys.stderr.write('Cobbler could not configure subsite.  Check cobbler API server')
+                        return
 
     def add_system(self, cfg, host_dict):
         hostname = host_dict['hostname']
@@ -227,6 +242,8 @@ class CobblerAPI:
         # save all system changes
         if cfg.coblive:
             cfg.remote.save_system(handle, cfg.token)
+            if self.subremote:
+                self.subremote.save_system(handle, self.subtoken)
         else:
             print 'API: remote.save_system(handle, token)'
         return True
@@ -246,6 +263,8 @@ class CobblerAPI:
                 return
             print 'Deleting cobbler system: %s' % hostname
             cfg.remote.remove_system(hostname, cfg.token)
+            if self.subremote:
+                self.subremote.remove_system(hostname, self.subtoken)
         else:
             print 'API: remote.remove_system(hostname, token)'
 
@@ -305,7 +324,10 @@ class CobblerAPI:
                 return
             print 'Setting netboot "%s" for %s' % (state, hostname)
             handle = cfg.remote.get_system_handle(hostname, cfg.token)
-            cfg.remote.modify_system(handle, 'netboot_enabled', state, cfg.token)
+            if self.subremote:
+                self.subremote.modify_system(handle, 'netboot_enabled', state, self.subtoken)
+            else:
+                cfg.remote.modify_system(handle, 'netboot_enabled', state, cfg.token)
         else:
             print 'API: set handle = remote.get_system_handle(hostname, token)'
             print 'API: remote.modify_system(handle, \'netboot_enabled\', state, token)'
@@ -319,7 +341,10 @@ class CobblerAPI:
             handle = cfg.remote.get_system_handle(hostname, cfg.token)
             #self.check_known_hosts(cfg, hostname, '~root')
             try:
-                cfg.remote.power_system(handle, state, cfg.token)
+                if self.subremote:
+                    self.subremote.power_system(handle, state, self.subtoken)
+                else:
+                    cfg.remote.power_system(handle, state, cfg.token)
             except Fault, err:
                 print 'ERROR occurred during cobbler power: %s' \
                     % str(err).replace('\n', ' ')
@@ -333,6 +358,8 @@ class CobblerAPI:
             print 'Syncing cobbler configurations'
             try:
                 cfg.remote.sync(cfg.token)
+                if self.subremote:
+                    self.subremote.sync(self.subtoken)
             except Fault, err:
                 print 'ERROR occurred during cobbler sync: %s' % str(err)
                 return
