@@ -94,6 +94,10 @@ class Configure:
         else:
             self.cobremote = 'API: set remote = xmlrpclib.Server(\'http://server/cobbler_api\')'
             self.cobtoken = 'API: set token = remote.login(user, pass)'
+        if 'sites' in cobconfig and cobconfig['sites']:
+            self.cobsites = cobconfig['sites']
+        else:
+            self.cobsites = {}
 
         # Power related settings
         pwrconfig = all_configs['power']
