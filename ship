@@ -1046,7 +1046,7 @@ class ShipCli(cmdln.Cmdln):
         if expired == 'virtual':
             # for virtual servers, xenserver instance must be purged
             try:
-                cc.set_system_power(host, 'off')
+                cc.set_system_power(host, 'off', virtual=True)
             except:
                 sys.stderr.write('Failed to destroy virtual host, aborting\n')
                 sys.exit()
@@ -1118,7 +1118,7 @@ class ShipCli(cmdln.Cmdln):
                 if cc.abort_kick(self.name, unqdn):
                     return
                 if 'xen' in sysdict['power_type']:
-                    cc.set_system_power(host, 'off')
+                    cc.set_system_power(host, 'off', virtual=sysdict['virtual'])
                     xenpass = str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')
                     if not xenpass or len(xenpass) < 2:
                         sys.stderr.write('Xenserver password was not configured, please update with:\n')
@@ -1140,9 +1140,9 @@ class ShipCli(cmdln.Cmdln):
                         return
                 else:
                     print 'API: clear out puppet key before we proceed'
-                cc.set_system_netboot(host, True)
+                cc.set_system_netboot(host, True, virtual=sysdict['virtual'])
                 if opts.sync: cc.sync_cobbler()
-                cc.set_system_power(host, 'reboot')
+                cc.set_system_power(host, 'reboot', virtual=sysdict['virtual'])
                 if self.cfg.zenlive:
                     zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))
                     auth = dict([ (x.split('_')[-1], str(mothership.kv.select(self.cfg, zhost, key="zenoss_"+x)).split('=')[1])

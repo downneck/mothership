@@ -139,6 +139,7 @@ class CobblerAPI:
         self._add_system(cfg, host_dict, self.cobremote, self.cobtoken)
         if self.subremote is not None:
             self._add_system(cfg, host_dict, self.subremote, self.subtoken)
+        return True
 
     def _add_system(self, cfg, host_dict, remote, token):
         hostname = host_dict['hostname']
@@ -259,7 +260,6 @@ class CobblerAPI:
             remote.save_system(handle, token)
         else:
             print 'API: remote.save_system(handle, token)'
-        return True
 
     def append_value_to_keyname(self, cfg, olddict, suffix):
         # loop through all keys and append the suffix to the keyname
@@ -307,7 +307,7 @@ class CobblerAPI:
             info['network'].append(transkey(system['interfaces'][k], self.map_network, True))
         return info
 
-    def append_kickstart_info(self, info, remote):
+    def append_kickstart_info(self, info):
         return self._append_kickstart_info(info, self.cobremote)
 
     def _append_kickstart_info(self, info, remote):
@@ -345,8 +345,8 @@ class CobblerAPI:
     def _list_all_systems(self, remote):
         return remote.get_systems()
 
-    def set_system_netboot(self, hostname, state=False):
-        if self.subremote is not None:
+    def set_system_netboot(self, hostname, state=False, virtual=False):
+        if self.subremote is not None and not virtual:
             self._set_system_netboot(hostname, self.subremote, self.subtoken, state)
         else:
             self._set_system_netboot(hostname, self.cobremote, self.cobtoken, state)
@@ -364,8 +364,8 @@ class CobblerAPI:
             print 'API: set handle = remote.get_system_handle(hostname, token)'
             print 'API: remote.modify_system(handle, \'netboot_enabled\', state, token)'
 
-    def set_system_power(self, hostname, state='reboot'):
-        if self.subremote is not None:
+    def set_system_power(self, hostname, state='reboot', virtual=False):
+        if self.subremote is not None and not virtual:
             self._set_system_power(hostname, self.subremote, self.subtoken, state)
         else:
             self._set_system_power(hostname, self.cobremote, self.cobtoken, state)
@@ -466,4 +466,4 @@ class CobblerAPI:
                 communicate()[0]
             f = open(userknownhosts, 'a')
             f.write(key)
-    
+
