@@ -88,22 +88,22 @@ def generate_dns_output(cfg, domain, outdir, usecobbler=False):
                         shutil.copyfile(zone+'_header', zone)
                         print 'Updating %s/%s.%s.%s with dns_addendum table' \
                             % (outdir, dns.realm, dns.site_id, tld)
-                        f=open(zone, 'a')
+                        f = open(zone, 'a')
                     else:
                         print '\nFile does not exist: %s_header' % zone
                         print 'Using stdout instead:'
-                        f=sys.stdout
+                        f = sys.stdout
                         f.write(generate_dns_header('%s.%s.%s' \
                             % (dns.realm, dns.site_id, tld), cfg.contact))
                 else:
                     print 'Generating boilerplate header for %s/%s.%s.%s' \
                         % (outdir, dns.realm, dns.site_id, tld)
-                    f=open(zone, 'w')
+                    f = open(zone, 'w')
                     f.write(generate_dns_header('%s.%s.%s' \
                         % (dns.realm, dns.site_id, tld), cfg.contact))
-                    f=open(zone, 'a')
+                    f = open(zone, 'a')
             else:
-                f=sys.stdout
+                f = sys.stdout
                 f.write(generate_dns_header('%s.%s.%s' \
                     % (dns.realm, dns.site_id, tld), cfg.contact))
         # if last octet of target is non-numerical and does not end with
@@ -113,8 +113,8 @@ def generate_dns_output(cfg, domain, outdir, usecobbler=False):
             if not target.endswith('.'):
                 target += '.'
         f.write("%-20s\tIN\t%-8s%-16s\n" % (dns.host, dns.record_type, target))
-    if usecobbler:
-        f.write("\n$host_record\n")
+        if usecobbler:
+            f.write("\n$host_record\n")
 
 def update_table_dnsaddendum(cfg, info, delete=False):
     """
