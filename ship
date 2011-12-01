@@ -1521,18 +1521,18 @@ if __name__ == "__main__":
             sys.exit(1)
 
     # write out the command line we were called with to an audit log
+    ltz = time.tzname[time.daylight]
+    timestamp = datetime.datetime.now()
+    if sys.stdin.isatty():
+        username = os.getlogin()
+    else:
+        username = "nottyUID=" + str(os.geteuid())
+    command_run = ' '.join(sys.argv)
     try:
         alog = open(cfg.audit_log_file, 'a')
-        ltz = time.tzname[time.daylight] 
         tformat = "%Y-%m-%d %H:%M:%S"
-        timestamp = datetime.datetime.now()
-        if sys.stdin.isatty():
-            username = os.getlogin()
-        else:
-            username = "nottyUID=" + str(os.geteuid())
-        command_run = ' '.join(sys.argv)
         buffer = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, command_run)
-        alog.write(buffer)        
+        alog.write(buffer)
         alog.close()
     except Exception, e:
         print "Exception: " + str(e)
@@ -1540,7 +1540,6 @@ if __name__ == "__main__":
         print "Audit file configured as: " + cfg.audit_log_file
         print "logline dump:"
         print "%s %s: %s: %s" % (ltz, timestamp, username, command_run)
-        alog.close()
 
     try:
         ship = ShipCli(cfg)
