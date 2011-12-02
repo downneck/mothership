@@ -182,7 +182,12 @@ def count_graveyard_server_by_date(cfg, hostname, when):
         return 0
 
 def delete_server(cfg, hostname, relatives=None):
-    s = cfg.dbsess.query(Server).filter(Server.hostname==hostname).one()
+    host,realm,site_id = mothership.get_unqdn(cfg, hostname)
+    s = cfg.dbsess.query(Server).\
+        filter(Server.hostname==host).\
+        filter(Server.realm==realm).\
+        filter(Server.site_id==site_id).\
+        one()
     # mapper/delete-cascade does not seem to override foreign constraint, so
     # delete constrained foreign keys first, replace if better method found
     for r in relatives:
@@ -316,10 +321,13 @@ def merge_dictlists(master, slave, key):
     return master
 
 def modify_network_vlan(cfg, hostname, vlan, interface='eth1', force=False):
+    host,realm,site_id = mothership.get_unqdn(cfg, hostname)
     ip = calculate_next_baremetal_vlan_ipaddress(cfg, vlan)
     try:
         data = cfg.dbsess.query(Server,Network).\
-            filter(Server.hostname==hostname).\
+            filter(Server.hostname==host).\
+            filter(Server.realm==realm).\
+            filter(Server.site_id==site_id).\
             filter(Server.id==Network.server_id).\
             filter(Network.interface==interface).\
             one().Network
@@ -376,7 +384,8 @@ def modify_server_column(cfg, hostname, col, value, force=False):
         will be removed from this function since it belongs to the
         network table)
     """
-    row = retrieve_server_row(cfg, hostname)
+    unqdn = mothership.get_unqdn(cfg, hostname)
+    row = retrieve_server_row_by_unqdn(cfg, unqdn)
     curr_val = getattr(row, col)
     if force or confirm_column_change(curr_val, value, col, row.__tablename__):
         setattr(row, col, value)
@@ -413,10 +422,11 @@ def check_server_tag(cfg, hostname, tag=None):
         return False
 
 def check_server_exists(cfg, hostname):
+    unqdn = mothership.get_unqdn(cfg, hostname)
     try:
-        row = retrieve_server_row(cfg, hostname)
+        row = retrieve_server_row_by_unqdn(cfg, unqdn)
         if row:
-            sys.stderr.write('%s already provisioned, skipping\n' % hostname)
+            sys.stderr.write('%s already provisioned, skipping\n' % unqdn)
             return True
     except:
         return False
@@ -478,7 +488,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
                         profile = osdict['default']['virtual']
                     break
                 except:
-                    print '%s=%s was not fond in database, aborting' % (o, test)
+                    print '%s=%s was not found in database, aborting' % (o, test)
                     return
 
     if not virtual:
@@ -610,8 +620,11 @@ def remove_method_keys(dict, empty=False):
     return dict
 
 def retrieve_cobbler_network_rows(cfg, hostname):
+    host,realm,site_id = mothership.get_unqdn(cfg, hostname)
     return cfg.dbsess.query(Server,Network).\
-            filter(Server.hostname==hostname).\
+            filter(Server.hostname==host).\
+            filter(Server.realm==realm).\
+            filter(Server.site_id==site_id).\
             filter(Server.id==Network.server_id).\
             order_by(Network.interface).all()
 
@@ -642,9 +655,12 @@ def retrieve_cobbler_system_dict(cfg, hostname, xen=False):
     return sysdict
 
 def retrieve_cobbler_system_row(cfg, hostname):
+    host,realm,site_id = mothership.get_unqdn(cfg, hostname)
     try:
         return cfg.dbsess.query(Server,Hardware).\
-            filter(Server.hostname==hostname).\
+            filter(Server.hostname==host).\
+            filter(Server.realm==realm).\
+            filter(Server.site_id==site_id).\
             filter(Server.hw_tag==Hardware.hw_tag).one()
     except:
         print "Server %s not found in cobbler database" % hostname
@@ -684,7 +700,8 @@ def retrieve_network_rows_by_servername(cfg, hostname):
     """
         Retrieve all network rows associated with a particular hostname
     """
-    server = retrieve_server_row(cfg, hostname)
+    unqdn = mothership.get_unqdn(cfg, hostname)
+    server = retrieve_server_row_by_unqdn(cfg, unqdn)
     if server:
         server_id = server.id
         network_rows = retrieve_network_rows(cfg, serverid = server_id)
@@ -732,9 +749,10 @@ def retrieve_next_virtual_ip(cfg, vlan, autogen=False):
     return False
 
 def retrieve_server_dict(cfg, hostname):
+    unqdn = mothership.get_unqdn(cfg, hostname)
     empty = False
     try:
-        values = retrieve_server_row(cfg, hostname).__dict__.copy()
+        values = retrieve_server_row_by_unqdn(cfg, unqdn).__dict__.copy()
     except:
         values = Server.__dict__.copy()
         empty = True
@@ -743,19 +761,13 @@ def retrieve_server_dict(cfg, hostname):
         if k.startswith('_'): del values[k]
     return values
 
-def retrieve_server_row(cfg, hostname):
-    try:
-        return cfg.dbsess.query(Server).filter(Server.hostname==hostname).one()
-    except:
-        return []
-
 def retrieve_server_row_by_unqdn(cfg, unqdn):
     hostname,realm,site_id  = mothership.get_unqdn(cfg, unqdn)
-    row = cfg.dbsess.query(Server).\
+    return cfg.dbsess.query(Server).\
         filter(Server.hostname==hostname).\
         filter(Server.realm==realm).\
-        filter(Server.site_id==site_id)
-    return row.one()
+        filter(Server.site_id==site_id).\
+        one()
 
 def retrieve_ssh_data(results, cmd, virtual=False):
     parsers = [
@@ -882,12 +894,13 @@ def update_table_network(cfg, info, noinsert=False):
     cfg.dbsess.commit()
 
 def update_table_server(cfg, info, when=None, rename=None):
-    if rename: info['hostname'] = rename
-    data = retrieve_server_row(cfg, info['hostname'])
+    unqdn =  '%s.%s.%s' % (info['hostname'], info['realm'], info['site_id'])
+    data = retrieve_server_row_by_unqdn(cfg, unqdn)
+    if rename: unqdn = mothership.get_unqdn(cfg, rename)
     if not data:
         # insert if it does not exist
         print 'Inserting into server table'
-        data = Server(info['hostname'])
+        data = Server(unqdn)
     else:
         print 'Updating server table'
     if 'purchase_date' not in dir(data):
@@ -897,7 +910,7 @@ def update_table_server(cfg, info, when=None, rename=None):
     if not data.id:
         cfg.dbsess.add(data)
     cfg.dbsess.commit()
-    ans = retrieve_server_row(cfg, info['hostname'])
+    ans = retrieve_server_row_by_unqdn(cfg, unqdn)
     return ans.id, ans.hw_tag
 
 def walk_snmp_dict_oid_match(cfg, snmp_dict, oid, inkey, outkey, debug=False):
@@ -921,16 +934,18 @@ def walk_snmp_for_network(cfg, ifobj, debug=False):
     return snmp_dict
 
 def walk_snmp_for_ifname(cfg, hostname, ifname=None, debug=False):
-    print '\n  hostname: %s' % hostname
+    unqdn = mothership.get_unqdn(cfg, hostname)
+    print '\n  hostname: %s' % unqdn
     data = []
     if ifname:
         snmp_dict = walk_snmp_for_network(cfg, retrieve_network_row_by_ifname(
-            cfg, ifname, filter={'server_id':retrieve_server_row(cfg, hostname).id}), debug)
+            cfg, ifname, filter={'server_id':retrieve_server_row_by_unqdn(cfg,
+                unqdn).id}), debug)
         if snmp_dict:
             data.append(snmp_dict)
     else:
         for i in retrieve_network_rows(cfg,
-            serverid=retrieve_server_row(cfg, hostname).id):
+            serverid=retrieve_server_row_by_unqdn(cfg, unqdn).id):
             snmp_dict = walk_snmp_for_network(cfg, i,  debug=debug)
             if snmp_dict:
                 data.append(snmp_dict)
@@ -1041,7 +1056,11 @@ def verify_host_data(cfg, hostname):
         'disk': 1024 * 1024 * 1024,
     }
     print 'Verifying %s' % host
-    q = cfg.dbsess.query(Server).filter(Server.hostname==host).one().__dict__
+    q = cfg.dbsess.query(Server).\
+        filter(Server.hostname==host).\
+        filter(Server.realm==realm).\
+        filter(Server.site_id==site_id).\
+        one().__dict__
 
     if q['virtual']:
         virtual = True

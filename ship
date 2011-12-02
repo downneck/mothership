@@ -1109,16 +1109,16 @@ class ShipCli(cmdln.Cmdln):
         host,realm,site_id = unqdn.split('.')
         cc = mothership.cobbler.CobblerAPI(self.cfg, site_id=site_id)
         if opts.remove:
-            cc.delete_system(host)
+            cc.delete_system(unqdn)
             if opts.sync:
                 cc.sync_cobbler()
         else:
-            sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, host, opts.xen)
+            sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, unqdn, opts.xen)
             if opts.kick:
                 if cc.abort_kick(self.name, unqdn):
                     return
                 if 'xen' in sysdict['power_type']:
-                    cc.set_system_power(host, 'off', virtual=sysdict['virtual'])
+                    cc.set_system_power(unqdn, 'off', virtual=sysdict['virtual'])
                     xenpass = str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')
                     if not xenpass or len(xenpass) < 2:
                         sys.stderr.write('Xenserver password was not configured, please update with:\n')
@@ -1135,14 +1135,14 @@ class ShipCli(cmdln.Cmdln):
                 sys.exit(1)
             if opts.kick:
                 if self.cfg.coblive:
-                    if not cc.clear_puppetca(mothership.retrieve_fqdn(self.cfg, host)):
+                    if not cc.clear_puppetca(mothership.retrieve_fqdn(self.cfg, unqdn)):
                         print 'Kick aborted.'
                         return
                 else:
                     print 'API: clear out puppet key before we proceed'
-                cc.set_system_netboot(host, True, virtual=sysdict['virtual'])
+                cc.set_system_netboot(unqdn, True, virtual=sysdict['virtual'])
                 if opts.sync: cc.sync_cobbler()
-                cc.set_system_power(host, 'reboot', virtual=sysdict['virtual'])
+                cc.set_system_power(unqdn, 'reboot', virtual=sysdict['virtual'])
                 if self.cfg.zenlive:
                     zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))
                     auth = dict([ (x.split('_')[-1], str(mothership.kv.select(self.cfg, zhost, key="zenoss_"+x)).split('=')[1])
@@ -1309,9 +1309,8 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        host = mothership.get_unqdn(self.cfg, hostname)[0]
         for info in mothership.walk_snmp_for_ifname(self.cfg,
-            host, ifname=opts.interface, debug=opts.debug):
+            hostname, ifname=opts.interface, debug=opts.debug):
             print '\n'.join(['%10s: %s'] * 4) \
                 % ('interface', info['nic'], 'macaddress', info['mac'],
                 'switch', info['switch'], 'port', info['switch_port']) + '\n'
