@@ -17,7 +17,7 @@ setup(name='Mothership',
       install_requires = install_requires,
       packages=find_packages(),
       scripts=['ship',
-               'ship-readonly'
+               'ship_readonly'
                ],
       url='http://mothership.sf.net',
       version='0.1',
