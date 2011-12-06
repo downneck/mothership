@@ -1124,13 +1124,15 @@ class ShipCli(cmdln.Cmdln):
                         sys.stderr.write('Xenserver password was not configured, please update with:\n')
                         sys.stderr.write('\tship kv -a % xen_api_pass=<passwd>\n')
                         sys.exit()
-                    xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root', xenpass[1])
+                    xs = mothership.xen.XenServerAPI(self.cfg,
+                        sysdict['power_switch'], 'root', xenpass[1])
                     xenhost, storage = xs.triple_check(sysdict)
                     sysdict['storage'] = storage
                     if not xenhost:
                         return
                     else:
-                        sysdict['power_switch'] = xenhost
+                        sysdict['power_switch'] = '.'.join(
+                            mothership.get_unqdn(self.cfg, xenhost))
             if not cc.add_system(self.cfg, sysdict):
                 sys.exit(1)
             if opts.kick:
@@ -1409,18 +1411,17 @@ class ShipCli(cmdln.Cmdln):
         xenpw = str(mothership.kv.select(self.cfg,
             '', 'xen_api_pass')).split('=')[1]
         if opts.license:
-            xs = mothership.xen.XenServerAPI(opts.license, 'root', xenpw)
+            xs = mothership.xen.XenServerAPI(self.cfg, opts.license, 'root', xenpw)
             xs.check_license(opts.license)
         elif opts.viewpool:
-            xs = mothership.xen.XenServerAPI(opts.viewpool, 'root', xenpw)
+            xs = mothership.xen.XenServerAPI(self.cfg, opts.viewpool, 'root', xenpw)
             xs.view_layout()
         elif opts.update:
-            host,realm,site_id = mothership.get_unqdn(self.cfg, opts.update)
-            xs = mothership.xen.XenServerAPI(opts.update, 'root', xenpw)
+            unqdn = '.'.join(mothership.get_unqdn(self.cfg, opts.update))
+            xs = mothership.xen.XenServerAPI(self.cfg, opts.update, 'root', xenpw)
             xs.get_specs()
             for xh in xs.specs.keys():
-                hw_tag = mothership.retrieve_server_row_by_unqdn(self.cfg, '%s.%s.%s' % \
-                    (xs.specs[xh]['name'], realm, site_id)).hw_tag
+                hw_tag = mothership.retrieve_server_row_by_unqdn(self.cfg, unqdn).hw_tag
                 for vm in xs.specs[xh]['vm'].keys():
                     if not xs.specs[xh]['vm'][vm]['name'].startswith('Transfer'):
                         print 'Updating %s...' % xs.specs[xh]['vm'][vm]['name']
@@ -1440,10 +1441,10 @@ class ShipCli(cmdln.Cmdln):
                         sys.stderr.write('!! %s does not appear to have been provisioned by mothership/cobbler !!\n' % host)
                         return
                     if opts.xenhost:
-                        xenhost = opts.xenhost
+                        xenhost = '.'.join(mothership.get_unqdn(self.cfg, opts.xenhost))
                     else:
                         xenhost = info["hardware"][0]["power_switch"]
-                    xs = mothership.xen.XenServerAPI(xenhost, "root", xenpw)
+                    xs = mothership.xen.XenServerAPI(self.cfg, xenhost, "root", xenpw)
                     exec 'status = xs.%s(info, opts)' % o
                     if status and o == 'resize_vm':
                         # update mothership server values
@@ -1511,21 +1512,23 @@ if __name__ == "__main__":
     # useful global values
     today = datetime.date.today()
 
+    if sys.stdin.isatty():
+        try:
+            username = os.getlogin()
+        except:
+            username = 'nologin'
+    else:
+        username = "nottyUID=" + str(os.geteuid())
+
     # prevent root from running ship
-    # exception for xenserver if because cobbler runs as root
-    if sys.stdin.isatty() and sys.argv[1] not in ['xen', 'xenserver']:
-        if os.getlogin() == 'root':
-            print "Please do not run ship as root"
-            print "Your effective uid: " + os.geteuid()
-            sys.exit(1)
+    if username == 'root':
+        print "Please do not run ship as root"
+        print "Your effective uid: " + os.geteuid()
+        sys.exit(1)
 
     # write out the command line we were called with to an audit log
     ltz = time.tzname[time.daylight]
     timestamp = datetime.datetime.now()
-    if sys.stdin.isatty():
-        username = os.getlogin()
-    else:
-        username = "nottyUID=" + str(os.geteuid())
     command_run = ' '.join(sys.argv)
     try:
         alog = open(cfg.audit_log_file, 'a')

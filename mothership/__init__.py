@@ -648,9 +648,14 @@ def retrieve_cobbler_system_dict(cfg, hostname, xen=False):
             filter(Server.id==Network.server_id).\
             filter(Server.cobbler_profile.like('xenserver%'))
         if xen:
-            power = power.filter(Server.hostname==xen)
+            host,realm,site_id = mothership.get_unqdn(cfg, xen)
+            power = power.\
+                filter(Server.hostname==host).\
+                filter(Server.realm==realm).\
+                filter(Server.site_id==site_id)
         try:
-            sysdict['power_switch'] = power.first().Server.hostname
+            s = power.first().Server
+            sysdict['power_switch'] = '.'.join([s.hostname, s.realm, s.site_id])
         except:
             print "Server %s not found or not part of vlan %s" % (xen,netdict['eth1']['vlan'])
             sys.exit(1)
