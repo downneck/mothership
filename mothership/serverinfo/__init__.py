@@ -110,27 +110,23 @@ def all(cfg, host, realm, site_id):
     no explicit return 
     """
 
-    kvs = []
-
     # gather server info from mothership's db
+    fqdn = '.'.join([host,realm,site_id])
     try:
-      h, s = cfg.dbsess.query(Hardware, Server).\
-      filter(Server.hostname==host).\
-      filter(Server.realm==realm).\
-      filter(Server.site_id==site_id).\
-      filter(Hardware.hw_tag==Server.hw_tag).first()
-
-      for h2, s2 in cfg.dbsess.query(Hardware, Server).\
-      filter(Server.hostname==host).\
-      filter(Server.realm==realm).\
-      filter(Server.site_id==site_id).\
-      filter(Hardware.hw_tag==Server.hw_tag):
-        fqdn = '.'.join([host,realm,site_id])
         kvs = mothership.kv.collect(cfg, fqdn, key='tag')
-    except TypeError:
-      raise ServerInfoError("host \"%s\" not found" % fqdn)
     except:
-      raise ServerInfoError("something horrible happened")
+        kvs = []
+
+    try:
+        h, s = cfg.dbsess.query(Hardware, Server).\
+            filter(Server.hostname==host).\
+            filter(Server.realm==realm).\
+            filter(Server.site_id==site_id).\
+            filter(Hardware.hw_tag==Server.hw_tag).first()
+    except TypeError:
+        raise ServerInfoError("host \"%s\" not found" % fqdn)
+    except:
+        raise ServerInfoError("something horrible happened")
 
     # fire EVERYTHING!
     print ""
@@ -143,22 +139,22 @@ def all(cfg, host, realm, site_id):
     print "cobbler_profile:\t%s" % (s.cobbler_profile)
     print "manufacturer, model:\t%s, %s" % (h.manufacturer, h.model)
     print "hardware tag:\t\t%s" % (h.hw_tag)
-    if s.virtual==False:
-      print "cores:\t\t\t%s" % (h.cores)
-      print "ram (GB):\t\t%s" % (h.ram)
-      print "disk:\t\t\t%s" % (h.disk)
+    if s.virtual is False:
+        print "cores:\t\t\t%s" % (h.cores)
+        print "ram (GB):\t\t%s" % (h.ram)
+        print "disk:\t\t\t%s" % (h.disk)
     else:
-      print "cores:\t\t\t%s" % (s.cores)
-      print "ram (GB):\t\t%s" % (s.ram)
-      print "disk:\t\t\t%s" % (s.disk)
+        print "cores:\t\t\t%s" % (s.cores)
+        print "ram (GB):\t\t%s" % (s.ram)
+        print "disk:\t\t\t%s" % (s.disk)
     print "cpu speed:\t\t%s" % (h.cpu_speed)
     print ""
     for n in cfg.dbsess.query(Network).\
-    filter(Server.id==Network.server_id).\
-    filter(Server.hostname==s.hostname).\
-    order_by(Network.interface).all():
-      print "%s| mac: %-17s | ip: %-15s | public_ip: %-15s" % (n.interface, n.mac, n.ip, n.public_ip)
-      print "%s| vlan: %-3s | switch: %-15s | switch_port: %-10s" % (n.interface, n.vlan, n.switch, n.switch_port)
+        filter(Server.id==Network.server_id).\
+        filter(Server.id==s.id).\
+        order_by(Network.interface).all():
+        print "%s| mac: %-17s | ip: %-15s | public_ip: %-15s" % (n.interface, n.mac, n.ip, n.public_ip)
+        print "%s| vlan: %-3s | switch: %-15s | switch_port: %-10s" % (n.interface, n.vlan, n.switch, n.switch_port)
 
 def ip_only(cfg, host, realm, site_id):
     """

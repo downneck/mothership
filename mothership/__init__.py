@@ -415,7 +415,7 @@ def get_hwtag_from_vlan(cfg, vlan):
 def check_server_tag(cfg, hostname, tag=None):
     # set the primary tag to be the hostname without the trailing integers
     if not tag:
-        tag = re.sub('\d+$', '', hostname)
+        tag = re.sub('\d+$', '', hostname.split('.')[0])
     # check to make sure that the tag is valid before proceeding
     try:
         cfg.dbsess.query(Tag).filter(Tag.name==tag).one()
@@ -473,11 +473,12 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
     if not is_unqdn(cfg, fqdn):
         print 'fqdn MUST contain hostname.realm.site_id'
         return
-    hostname,realm,site_id = split_fqdn(fqdn)
 
-    if check_server_exists(cfg, hostname): return
-    setattr(opts, 'tag', check_server_tag(cfg, hostname, opts.tag))
+    if check_server_exists(cfg, fqdn): return
+    setattr(opts, 'tag', check_server_tag(cfg, fqdn, opts.tag))
     if not opts.tag: return
+
+    hostname,realm,site_id = split_fqdn(fqdn)
 
     setattr(opts, 'vlan', vlan)
     virtual = False

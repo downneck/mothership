@@ -30,20 +30,20 @@ from pprint import pprint
 class XenServerAPI:
     def __init__(self, cfg, host, user, passwd):
         unqdn = '.'.join(mothership.get_unqdn(cfg, host))
-        print 'Original: %s' % unqdn
+        #print 'Original: %s' % unqdn
         self.session = XenAPI.Session('https://%s:443' % unqdn)
         try:
             self.session.xenapi.login_with_password(user, passwd)
         except XenAPI.Failure, e:
             # If slave host from pool chosed, contact master
             exec 'err=%s' % str(e)
-            print 'Error: %s' % err[1]
+            #print 'Error: %s' % err[1]
             self.session = XenAPI.Session('https://%s:443' % err[1])
             self.session.xenapi.login_with_password(user, passwd)
         except socket.error, e:
             try:
                 # Try specified host if unqdn fails
-                print 'Host: %s' % host
+                #print 'Host: %s' % host
                 self.session = XenAPI.Session('https://%s:443' % host)
                 self.session.xenapi.login_with_password(user, passwd)
             except socket.error, e:
