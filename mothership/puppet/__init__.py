@@ -55,24 +55,26 @@ def classify(cfg, name):
         mtag = cfg.dbsess.query(Tag).filter(Tag.name==server.tag).first()
 
     if server and server.id:
-        server_id = server.id
-        parameters['server_id'] = server_id
+        parameters['server_id'] = server.id
         networks = cfg.dbsess.query(Network).\
-                filter(Network.server_id==server_id).all()
+                filter(Network.server_id==server.id).all()
         for network in networks:
+            if network.interface=='eth0':
+                if network.static_route:
+                    parameters['mgmt_gateway'] = network.static_route
+                if network.ip:
+                    parameters['mgmt_ip'] = network.ip
+                if network.netmask:
+                    parameters['mgmt_netmask'] = network.netmask
             if network.interface=='eth1':
                 if network.static_route:
-                    default_gateway = network.static_route
-                    parameters['default_gateway'] = default_gateway
+                    parameters['default_gateway'] = network.static_route
                 if network.ip:
-                    bond_ip = network.ip
-                    parameters['bond_ip'] = bond_ip
+                    parameters['primary_ip'] = network.ip
                 if network.netmask:
-                    bond_netmask = network.netmask
-                    parameters['bond_netmask'] = bond_netmask
+                    parameters['primary_netmask'] = network.netmask
                 if network.bond_options:
-                    bond_options = network.bond_options
-                    parameters['bond_options'] = bond_options
+                    parameters['bond_options'] = network.bond_options
 
     # Tag
     if mtag and mtag.name:
