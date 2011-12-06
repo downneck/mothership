@@ -195,20 +195,23 @@ def delete_server(cfg, hostname, relatives=None):
         print 'Deleting %s records that are related to server_id %d' % (r, s.id)
         cfg.dbconn.execute(r.delete().where(Column('server_id')==s.id))
     # Then remove the servers record
-    print 'Deleting %s (id=%d) from servers' % (hostname, s.id)
+    print 'Deleting %s (id=%d) from servers' % (
+        '.'.join(mothership.get_unqdn(cfg, hostname)), s.id)
     cfg.dbsess.delete(s)
     cfg.dbsess.commit()
 
 def expire_server(cfg, hostname, when, delete_entry=True):
     cols = retrieve_server_dict(cfg, hostname)
     if not cols['id']:
-        print 'There is no server named %s to delete' % hostname
+        print 'There is no server named %s to delete' % \
+            '.'.join(mothership.get_unqdn(cfg, hostname))
         return
     cols['delid'] = cols['id']
     del cols['id']
     cols['deprovision_date'] = when
     # retrieve all server_id related info and display
-    print '\nThe following info is related to %s (id=%d)' % (hostname, cols['delid'])
+    print '\nThe following info is related to %s (id=%d)' % (
+        '.'.join(mothership.get_unqdn(cfg, hostname)), cols['delid'])
     meta = MetaData()
     meta.reflect(bind=cfg.dbengine)
     relatives = []  # while displaying related tables, build list for deletion
@@ -232,7 +235,8 @@ def expire_server(cfg, hostname, when, delete_entry=True):
         if ans != 'delete_%s' % hostname:
             print 'Expire server aborted.'
             return
-        print 'Inserting %s into server_graveyard' % hostname
+        print 'Inserting %s into server_graveyard' % \
+            '.'.join(mothership.get_unqdn(cfg, hostname))
         insert_server_into_graveyard(cfg, cols) # Insert into server graveyard
         # Check hostname exists in server_graveyard and continue only if found
         if count_graveyard_server_by_date(cfg, hostname, when) > 0:
@@ -384,7 +388,7 @@ def modify_server_column(cfg, hostname, col, value, force=False):
         will be removed from this function since it belongs to the
         network table)
     """
-    unqdn = mothership.get_unqdn(cfg, hostname)
+    unqdn = '.'.join(mothership.get_unqdn(cfg, hostname))
     row = retrieve_server_row_by_unqdn(cfg, unqdn)
     curr_val = getattr(row, col)
     if force or confirm_column_change(curr_val, value, col, row.__tablename__):
@@ -422,7 +426,7 @@ def check_server_tag(cfg, hostname, tag=None):
         return False
 
 def check_server_exists(cfg, hostname):
-    unqdn = mothership.get_unqdn(cfg, hostname)
+    unqdn = '.'.join(mothership.get_unqdn(cfg, hostname))
     try:
         row = retrieve_server_row_by_unqdn(cfg, unqdn)
         if row:
@@ -545,7 +549,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         # update network for eth0
         mgmt_info = {'server_id': server_id, 'interface':'eth0', 'ip':iplist[0]}
         update_table_network(cfg, mgmt_info)
-        print 'Added virtual host %s to mothership' % hostname
+        print 'Added virtual host %s to mothership' % fqdn
     else:
         # check to make sure that hardware is not marked for RMA
         data = retrieve_hardware_row(cfg, opts.hw_tag)
@@ -700,7 +704,7 @@ def retrieve_network_rows_by_servername(cfg, hostname):
     """
         Retrieve all network rows associated with a particular hostname
     """
-    unqdn = mothership.get_unqdn(cfg, hostname)
+    unqdn = '.'.join(mothership.get_unqdn(cfg, hostname))
     server = retrieve_server_row_by_unqdn(cfg, unqdn)
     if server:
         server_id = server.id
@@ -749,7 +753,7 @@ def retrieve_next_virtual_ip(cfg, vlan, autogen=False):
     return False
 
 def retrieve_server_dict(cfg, hostname):
-    unqdn = mothership.get_unqdn(cfg, hostname)
+    unqdn = '.'.join(mothership.get_unqdn(cfg, hostname))
     empty = False
     try:
         values = retrieve_server_row_by_unqdn(cfg, unqdn).__dict__.copy()
@@ -763,11 +767,15 @@ def retrieve_server_dict(cfg, hostname):
 
 def retrieve_server_row_by_unqdn(cfg, unqdn):
     hostname,realm,site_id  = mothership.get_unqdn(cfg, unqdn)
-    return cfg.dbsess.query(Server).\
-        filter(Server.hostname==hostname).\
-        filter(Server.realm==realm).\
-        filter(Server.site_id==site_id).\
-        one()
+    try:
+        data = cfg.dbsess.query(Server).\
+            filter(Server.hostname==hostname).\
+            filter(Server.realm==realm).\
+            filter(Server.site_id==site_id).\
+            one()
+        return data
+    except:
+        return None
 
 def retrieve_ssh_data(results, cmd, virtual=False):
     parsers = [
@@ -896,7 +904,7 @@ def update_table_network(cfg, info, noinsert=False):
 def update_table_server(cfg, info, when=None, rename=None):
     unqdn =  '%s.%s.%s' % (info['hostname'], info['realm'], info['site_id'])
     data = retrieve_server_row_by_unqdn(cfg, unqdn)
-    if rename: unqdn = mothership.get_unqdn(cfg, rename)
+    if rename: unqdn = '.'.join(mothership.get_unqdn(cfg, rename))
     if not data:
         # insert if it does not exist
         print 'Inserting into server table'
@@ -934,7 +942,7 @@ def walk_snmp_for_network(cfg, ifobj, debug=False):
     return snmp_dict
 
 def walk_snmp_for_ifname(cfg, hostname, ifname=None, debug=False):
-    unqdn = mothership.get_unqdn(cfg, hostname)
+    unqdn = '.'.join(mothership.get_unqdn(cfg, hostname))
     print '\n  hostname: %s' % unqdn
     data = []
     if ifname:

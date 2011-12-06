@@ -83,7 +83,8 @@ class Server(Base):
         self.name = hostname
 
     def __repr__(self):
-       return "<Server('%s','%s')>" % (self.hostname, self.hw_tag)
+       return "<Server('%s', '%s', '%s', '%s')>" % (self.hostname,
+               self.realm, self.site_id, self.hw_tag)
 
 class ServerGraveyard(Base):
     __tablename__ = 'server_graveyard'

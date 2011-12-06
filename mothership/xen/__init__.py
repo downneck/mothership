@@ -398,11 +398,19 @@ class XenServerAPI:
         return self.session.xenapi.VDI.create(data)
 
     def create_vm(self, info):
+        #for i in info['network']:
+        #    if i['interface'] == 'eth0':
+        #        net = i
         mem = str(self.byte_unit(info['server'][0]['ram'], 2))
         data = { 'HVM_boot_params': {}, 'HVM_boot_policy': '',
             'HVM_shadow_multiplier': 1.0, 'PCI_bus': '',
+            # For DHCP omit the ip/netmask/gateway and use default:
             'PV_args': 'ks=%s/%s ksdevice=eth0 noipv6 utf8' % (
                 info['kick']['ks'], info['server'][0]['hostname']),
+            # Use static ip/netmask instead of DHCP
+            #'PV_args': 'ks=%s/%s ksdevice=eth0 noipv6 utf8 ip=%s netmask=%s' \
+            #    % (info['kick']['ks'], info['server'][0]['hostname'],
+            #    net['ip'], net['netmask']),
             'PV_bootloader': 'eliloader', 'PV_bootloader_args': '',
             'PV_kernel': '', 'PV_legacy_args': '', 'PV_ramdisk': '',
             'VCPUs_params': {}, 'VCPUs_at_startup': '1',

@@ -128,7 +128,7 @@ def all(cfg, host, realm, site_id):
         fqdn = '.'.join([host,realm,site_id])
         kvs = mothership.kv.collect(cfg, fqdn, key='tag')
     except TypeError:
-      raise ServerInfoError("host \"%s\" not found" % host)
+      raise ServerInfoError("host \"%s\" not found" % fqdn)
     except:
       raise ServerInfoError("something horrible happened")
 

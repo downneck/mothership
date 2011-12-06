@@ -1041,19 +1041,19 @@ class ShipCli(cmdln.Cmdln):
         """
         expired = False
         host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
+        unqdn = '.'.join([host,realm,site_id])
         cc = mothership.cobbler.CobblerAPI(self.cfg, site_id=site_id)
         expired = mothership.expire_server(self.cfg, host, today)
         if expired == 'virtual':
             # for virtual servers, xenserver instance must be purged
             try:
-                cc.set_system_power(host, 'off', virtual=True)
+                cc.set_system_power(unqdn, 'off', virtual=True)
             except:
                 sys.stderr.write('Failed to destroy virtual host, aborting\n')
                 sys.exit()
         if expired:
-            unqdn = '.'.join([host,realm,site_id])
             # cobbler system MUST be removed upon expire to avoid future duplicate errors
-            cc.delete_system(host)
+            cc.delete_system(unqdn)
             if self.cfg.zenlive:
                 zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))
                 auth = dict([ (x.split('_')[-1], str(mothership.kv.select(self.cfg, zhost, key="zenoss_"+x)).split('=')[1])

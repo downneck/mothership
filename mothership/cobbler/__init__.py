@@ -84,7 +84,7 @@ class CobblerAPI:
             'power_type'          : 'power_type',
             'power_switch'        : 'power_address',
             'power_port'          : 'power_id',
-            'name'                : [ 'hostname' ],
+            'name'                : [ 'hostname', 'realm', 'site_id' ],
             'cobbler_profile'     : 'profile',
             'virtual'             : 'virtual',
             'cores'               : 'virt_cpus',
@@ -142,7 +142,8 @@ class CobblerAPI:
         return True
 
     def _add_system(self, cfg, host_dict, remote, token):
-        hostname = host_dict['hostname']
+        hostname = '%s.%s.%s' % (host_dict['hostname'],
+            host_dict['realm'], host_dict['site_id'])
         if not host_dict['cobbler_profile']:
             print '%s has empty profile: system not provisioned for cobbler!' % hostname
             return
@@ -205,7 +206,7 @@ class CobblerAPI:
             if x['ip']:
                 domain = mothership.network_mapper.remap(cfg, 'dom', nic=x['interface'], siteid=x['site_id'], ip=x['ip'])
             if domain:
-                x['dns_name'] = '%s%s' % (hostname, domain)
+                x['dns_name'] = '%s%s' % (host_dict['hostname'], domain)
 
             # set the bond0 master interface
             if not ifbond and x['bond_options']:
