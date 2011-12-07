@@ -5,7 +5,7 @@ from setuptools import setup,  find_packages
 
 install_requires = [
     'cmdln',
-    'SQLAlchemy'
+    'SQLAlchemy == 0.5.5'
     ]
 
 extras_require = {
