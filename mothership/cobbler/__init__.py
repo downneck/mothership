@@ -136,9 +136,9 @@ class CobblerAPI:
         self.osdict = self.get_os_dict(cfg)
 
     def add_system(self, cfg, host_dict):
-        self._add_system(cfg, host_dict, self.cobremote, self.cobtoken)
-        if self.subremote is not None:
+        if self.subremote is not None and not host_dict['virtual']:
             self._add_system(cfg, host_dict, self.subremote, self.subtoken)
+        self._add_system(cfg, host_dict, self.cobremote, self.cobtoken)
         return True
 
     def _add_system(self, cfg, host_dict, remote, token):
