@@ -48,7 +48,7 @@ class XenServerAPI:
                 self.session.xenapi.login_with_password(user, passwd)
             except socket.error, e:
                 # Try mgmt if connection refused
-                print 'Mgmt: %s' % unqdn.replace('prod','mgmt')
+                #print 'Mgmt: %s' % unqdn.replace('prod','mgmt')
                 self.session = XenAPI.Session('https://%s:443' % \
                     unqdn.replace('prod','mgmt'))
                 self.session.xenapi.login_with_password(user, passwd)
