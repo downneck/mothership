@@ -48,7 +48,7 @@ from mothership.mothership_models import *
 from mothership.configure import Configure
 import mothership.zabbix
 
-def _isServerProvisioningAllowed(config):
+def is_server_provisioning_allowed(config):
     if config.general.min_time and config.general.max_time:
         tzone = False
         try:
@@ -1039,7 +1039,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        if _isServerProvisioningAllowed(self.cfg):
+        if is_server_provisionig_allowed(self.cfg):
             added = False
             unqdn = ".".join(mothership.get_unqdn(self.cfg, hostname))
             osdict = mothership.cobbler.CobblerAPI(self.cfg).get_os_dict(self.cfg)
