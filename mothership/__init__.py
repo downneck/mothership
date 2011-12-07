@@ -679,7 +679,7 @@ def retrieve_cobbler_system_row(cfg, hostname):
 def retrieve_fqdn(cfg, hostname, interface='eth1'):
     q = retrieve_server_dict(cfg, hostname)
     append = mothership.network_mapper.remap(cfg, 'dom', nic=interface, siteid=q['site_id'])
-    return hostname + append
+    return q['hostname'] + append
 
 def retrieve_hardware_row(cfg, hwtag):
     try:

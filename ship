@@ -1150,7 +1150,10 @@ class ShipCli(cmdln.Cmdln):
                     auth = dict([ (x.split('_')[-1], str(mothership.kv.select(self.cfg, zhost, key="zenoss_"+x)).split('=')[1])
                         for x in [ 'api_user', 'api_pass', 'default_arch' ] ], host=zhost)
                     z = mothership.zenoss.ZenossAPI(auth)
-                    tag = self.cfg.dbsess.query(Server.tag).filter(Server.hostname==hostname.split('.')[0]).one()[0]
+                    tag = self.cfg.dbsess.query(Server.tag).\
+                        filter(Server.site_id==site_id).\
+                        filter(Server.hostname==host).\
+                        filter(Server.realm==realm).one()[0]
                     z.add_host(unqdn, tag)
             else:
                 if opts.sync:

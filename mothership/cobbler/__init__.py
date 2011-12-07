@@ -187,7 +187,7 @@ class CobblerAPI:
 
         ifbond = False
         for k in sorted(host_dict['interfaces'].keys()):
-            x = host_dict['interfaces'][k]
+            x = host_dict['interfaces'][k].copy()
 
             # remove ip if world
             if 'ip' in x and x['ip'] == '0.0.0.0':
@@ -247,7 +247,7 @@ class CobblerAPI:
             if self.coblive and host_dict['interfaces'][k]['mac']:
                 try:
                     remote.modify_system(handle, 'modify_interface', 
-                        self.append_value_to_keyname(cfg, transkey(host_dict['interfaces'][k],
+                        self.append_value_to_keyname(cfg, transkey(x,
                         self.map_interface, True), '-'+k), token)
                 except xmlrpclib.Fault, err:
                     print 'Aborting cobbler add, failed to modify %s %s' % (hostname, k)
