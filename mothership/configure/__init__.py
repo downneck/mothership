@@ -80,20 +80,11 @@ class Configure:
             raise ConfigureError('Database configuration error')
 
         # Cobbler related settings
-        cobconfig = all_configs['cobbler']
+        self.cobconfig = all_configs['cobbler']
         # Only ping cobbler server if configured to
         self.coblive = False
-        if cobconfig.has_key('active'):
-            self.coblive = cobconfig['active']
-        if self.coblive:
-            try:
-                self.remote = xmlrpclib.Server('http://%s/cobbler_api' % cobconfig['host'])
-                self.token = self.remote.login(cobconfig['user'], cobconfig['pass'])
-            except:
-                sys.stderr.write('Cobbler configuration error.  Check cobbler API server')
-        else:
-            self.cobremote = 'API: set remote = xmlrpclib.Server(\'http://server/cobbler_api\')'
-            self.cobtoken = 'API: set token = remote.login(user, pass)'
+        if self.cobconfig.has_key('active'):
+            self.coblive = self.cobconfig['active']
 
         # Power related settings
         pwrconfig = all_configs['power']

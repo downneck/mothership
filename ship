@@ -984,7 +984,7 @@ class ShipCli(cmdln.Cmdln):
         mothership.dns.generate_dns_output(self.cfg, domain, outdir, opts.cobbler)
         if opts.cobbler and opts.sync:
             cc = mothership.cobbler.CobblerAPI(self.cfg)
-            cc.sync_cobbler(self.cfg)
+            cc.sync_cobbler()
 
     @cmdln.alias("add")
     @cmdln.alias("add_serv")
@@ -1039,21 +1039,21 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        cc = mothership.cobbler.CobblerAPI(self.cfg)
         expired = False
         host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
-        expired = mothership.expire_server(self.cfg, host, today)
+        unqdn = '.'.join([host,realm,site_id])
+        cc = mothership.cobbler.CobblerAPI(self.cfg, site_id=site_id)
+        expired = mothership.expire_server(self.cfg, unqdn, today)
         if expired == 'virtual':
             # for virtual servers, xenserver instance must be purged
             try:
-                cc.set_system_power(self.cfg, host, 'off')
+                cc.set_system_power(unqdn, 'off', virtual=True)
             except:
                 sys.stderr.write('Failed to destroy virtual host, aborting\n')
                 sys.exit()
         if expired:
-            unqdn = '.'.join([host,realm,site_id])
             # cobbler system MUST be removed upon expire to avoid future duplicate errors
-            cc.delete_system(self.cfg, host)
+            cc.delete_system(unqdn)
             if self.cfg.zenlive:
                 zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))
                 auth = dict([ (x.split('_')[-1], str(mothership.kv.select(self.cfg, zhost, key="zenoss_"+x)).split('=')[1])
@@ -1079,11 +1079,11 @@ class ShipCli(cmdln.Cmdln):
             print 'Error, two servers MUST be specified in order to swap'
             return
         thishost = mothership.get_unqdn(self.cfg, thishost)[0]
-        thathost = mothership.get_unqdn(self.cfg, thathost)[0]
+        thathost,realm,site_id = mothership.get_unqdn(self.cfg, thathost)
         mothership.swap_server(self.cfg, today, [ thishost, thathost ])
         if opts.cobbler:
-            cc = mothership.cobbler.CobblerAPI(self.cfg)
-            cc.delete_system(self.cfg, thishost)
+            cc = mothership.cobbler.CobblerAPI(self.cfg, site_id=site_id)
+            cc.delete_system(thishost)
             cc.add_system(self.cfg,
                 mothership.retrieve_cobbler_system_dict(self.cfg, thathost))
             cc.add_system(self.cfg,
@@ -1107,54 +1107,57 @@ class ShipCli(cmdln.Cmdln):
         """
         unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
         host,realm,site_id = unqdn.split('.')
-        cc = mothership.cobbler.CobblerAPI(self.cfg)
-        if not self.cfg.coblive:
-            print '%s\n%s' % (self.cfg.cobremote, self.cfg.cobtoken)
+        cc = mothership.cobbler.CobblerAPI(self.cfg, site_id=site_id)
         if opts.remove:
-            cc.delete_system(self.cfg, host)
+            cc.delete_system(unqdn)
             if opts.sync:
-                cc.sync_cobbler(self.cfg)
+                cc.sync_cobbler()
         else:
-            sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, host, opts.xen)
+            sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, unqdn, opts.xen)
             if opts.kick:
-                if cc.abort_kick(self.cfg, self.name, unqdn):
+                if cc.abort_kick(self.name, unqdn):
                     return
                 if 'xen' in sysdict['power_type']:
-                    cc.set_system_power(self.cfg, host, 'off')
+                    cc.set_system_power(unqdn, 'off', virtual=sysdict['virtual'])
                     xenpass = str(mothership.kv.select(self.cfg, '', 'xen_api_pass')).split('=')
                     if not xenpass or len(xenpass) < 2:
                         sys.stderr.write('Xenserver password was not configured, please update with:\n')
                         sys.stderr.write('\tship kv -a % xen_api_pass=<passwd>\n')
                         sys.exit()
-                    xs = mothership.xen.XenServerAPI(sysdict['power_switch'], 'root', xenpass[1])
+                    xs = mothership.xen.XenServerAPI(self.cfg,
+                        sysdict['power_switch'], 'root', xenpass[1])
                     xenhost, storage = xs.triple_check(sysdict)
                     sysdict['storage'] = storage
                     if not xenhost:
                         return
                     else:
-                        sysdict['power_switch'] = xenhost
+                        sysdict['power_switch'] = '.'.join(
+                            mothership.get_unqdn(self.cfg, xenhost))
             if not cc.add_system(self.cfg, sysdict):
                 sys.exit(1)
             if opts.kick:
                 if self.cfg.coblive:
-                    if not cc.clear_puppetca(mothership.retrieve_fqdn(self.cfg, host)):
+                    if not cc.clear_puppetca(mothership.retrieve_fqdn(self.cfg, unqdn)):
                         print 'Kick aborted.'
                         return
                 else:
                     print 'API: clear out puppet key before we proceed'
-                cc.set_system_netboot(self.cfg, host, True)
-                if opts.sync: cc.sync_cobbler(self.cfg)
-                cc.set_system_power(self.cfg, host, 'reboot')
+                cc.set_system_netboot(unqdn, True)
+                if opts.sync: cc.sync_cobbler()
+                cc.set_system_power(unqdn, 'reboot', virtual=sysdict['virtual'])
                 if self.cfg.zenlive:
                     zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))
                     auth = dict([ (x.split('_')[-1], str(mothership.kv.select(self.cfg, zhost, key="zenoss_"+x)).split('=')[1])
                         for x in [ 'api_user', 'api_pass', 'default_arch' ] ], host=zhost)
                     z = mothership.zenoss.ZenossAPI(auth)
-                    tag = self.cfg.dbsess.query(Server.tag).filter(Server.hostname==hostname.split('.')[0]).one()[0]
+                    tag = self.cfg.dbsess.query(Server.tag).\
+                        filter(Server.site_id==site_id).\
+                        filter(Server.hostname==host).\
+                        filter(Server.realm==realm).one()[0]
                     z.add_host(unqdn, tag)
             else:
                 if opts.sync:
-                    cc.sync_cobbler(self.cfg)
+                    cc.sync_cobbler()
 
     @cmdln.alias("drac")
     @cmdln.option("-t", "--telnet", default=0,
@@ -1231,10 +1234,10 @@ class ShipCli(cmdln.Cmdln):
             info['hardware'] = [data]
         elif opts.cobbler:
             if source == 'list':
-                for system in cc.list_all_systems: print system['name']
+                for system in cc.list_all_systems(): print system['name']
                 return
             else:
-                info = cc.extract_system_by_hostname(self.cfg, source)
+                info = cc.extract_system_by_hostname(source)
         elif opts.snmp:
             for line in \
                 mothership.walk_snmp_for_mac_port_list(self.cfg,
@@ -1311,9 +1314,8 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        host = mothership.get_unqdn(self.cfg, hostname)[0]
         for info in mothership.walk_snmp_for_ifname(self.cfg,
-            host, ifname=opts.interface, debug=opts.debug):
+            hostname, ifname=opts.interface, debug=opts.debug):
             print '\n'.join(['%10s: %s'] * 4) \
                 % ('interface', info['nic'], 'macaddress', info['mac'],
                 'switch', info['switch'], 'port', info['switch_port']) + '\n'
@@ -1412,41 +1414,41 @@ class ShipCli(cmdln.Cmdln):
         xenpw = str(mothership.kv.select(self.cfg,
             '', 'xen_api_pass')).split('=')[1]
         if opts.license:
-            xs = mothership.xen.XenServerAPI(opts.license, 'root', xenpw)
+            xs = mothership.xen.XenServerAPI(self.cfg, opts.license, 'root', xenpw)
             xs.check_license(opts.license)
         elif opts.viewpool:
-            xs = mothership.xen.XenServerAPI(opts.viewpool, 'root', xenpw)
+            xs = mothership.xen.XenServerAPI(self.cfg, opts.viewpool, 'root', xenpw)
             xs.view_layout()
         elif opts.update:
-            host,realm,site_id = mothership.get_unqdn(self.cfg, opts.update)
-            xs = mothership.xen.XenServerAPI(opts.update, 'root', xenpw)
+            unqdn = '.'.join(mothership.get_unqdn(self.cfg, opts.update))
+            xs = mothership.xen.XenServerAPI(self.cfg, opts.update, 'root', xenpw)
             xs.get_specs()
             for xh in xs.specs.keys():
-                hw_tag = mothership.retrieve_server_row_by_unqdn(self.cfg, '%s.%s.%s' % \
-                    (xs.specs[xh]['name'], realm, site_id)).hw_tag
+                hw_tag = mothership.retrieve_server_row_by_unqdn(self.cfg, unqdn).hw_tag
                 for vm in xs.specs[xh]['vm'].keys():
                     if not xs.specs[xh]['vm'][vm]['name'].startswith('Transfer'):
                         print 'Updating %s...' % xs.specs[xh]['vm'][vm]['name']
                         mothership.modify_server_column(self.cfg,
                             xs.specs[xh]['vm'][vm]['name'], 'hw_tag', hw_tag, force=True)
         else:
-            cc = mothership.cobbler.CobblerAPI(self.cfg)
             for o in ['install_vm', 'resize_vm', 'start_vm',
                 'shutdown_vm', 'delete_vm']:
                 if getattr(opts, o):
-                    exec '''host = opts.%s''' % o
+                    exec 'host = opts.%s' % o
                     try:
-                        info = cc.extract_system_by_hostname(self.cfg, host)
+                        exec 'site_id = mothership.get_unqdn(self.cfg, opts.%s)[2]' % o
+                        cc = mothership.cobbler.CobblerAPI(self.cfg, site_id=site_id)
+                        info = cc.extract_system_by_hostname(host)
                         if o == 'install_vm':
-                            info = cc.append_kickstart_info(self.cfg, info)
+                            info = cc.append_kickstart_info(info)
                     except:
                         sys.stderr.write('!! %s does not appear to have been provisioned by mothership/cobbler !!\n' % host)
                         return
                     if opts.xenhost:
-                        xenhost = opts.xenhost
+                        xenhost = '.'.join(mothership.get_unqdn(self.cfg, opts.xenhost))
                     else:
                         xenhost = info["hardware"][0]["power_switch"]
-                    xs = mothership.xen.XenServerAPI(xenhost, "root", xenpw)
+                    xs = mothership.xen.XenServerAPI(self.cfg, xenhost, "root", xenpw)
                     exec 'status = xs.%s(info, opts)' % o
                     if status and o == 'resize_vm':
                         # update mothership server values
@@ -1514,26 +1516,29 @@ if __name__ == "__main__":
     # useful global values
     today = datetime.date.today()
 
-    # prevent root from running ship
     if sys.stdin.isatty():
-        if os.getlogin() == 'root':
-            print "Please do not run ship as root"
-            print "Your effective uid: " + os.geteuid()
-            sys.exit(1)
+        try:
+            username = os.getlogin()
+        except:
+            username = 'nologin'
+    else:
+        username = "nottyUID=" + str(os.geteuid())
+
+    # prevent root from running ship
+    if username == 'root':
+        print "Please do not run ship as root"
+        print "Your effective uid: " + os.geteuid()
+        sys.exit(1)
 
     # write out the command line we were called with to an audit log
+    ltz = time.tzname[time.daylight]
+    timestamp = datetime.datetime.now()
+    command_run = ' '.join(sys.argv)
     try:
         alog = open(cfg.audit_log_file, 'a')
-        ltz = time.tzname[time.daylight] 
         tformat = "%Y-%m-%d %H:%M:%S"
-        timestamp = datetime.datetime.now()
-        if sys.stdin.isatty():
-            username = os.getlogin()
-        else:
-            username = "nottyUID=" + str(os.geteuid())
-        command_run = ' '.join(sys.argv)
         buffer = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, command_run)
-        alog.write(buffer)        
+        alog.write(buffer)
         alog.close()
     except Exception, e:
         print "Exception: " + str(e)
@@ -1541,7 +1546,6 @@ if __name__ == "__main__":
         print "Audit file configured as: " + cfg.audit_log_file
         print "logline dump:"
         print "%s %s: %s: %s" % (ltz, timestamp, username, command_run)
-        alog.close()
 
     try:
         ship = ShipCli(cfg)

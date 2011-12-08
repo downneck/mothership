@@ -48,20 +48,12 @@ def get_master(cfg, realm_path):
     fqn = mothership.validate.v_get_fqn(cfg, realm_path)
     realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
 
-    serv = list(cfg.dbsess.query(Server).\
-    filter(Server.tag=='ldap').\
-    filter(Server.realm==realm).\
-    filter(Server.site_id==site_id).\
-    filter(Server.tag_index=='1').all())
+    serv = str(mothership.kv.select(cfg, realm_path, key='ldap_master_server')).split('=')[1]
 
-    if len(serv) > 1:
-        raise LDAPError("more than one master ldap server found for \"%s\", aborting.\nPlease fix your ldap tag indexes" % realm_path)
-    elif not serv:
+    if serv:
+        return serv
+    else:
         return None
-
-    # i hate this so much...
-    serv = serv[0]
-    return serv.hostname+'.'+realm_path
 
 
 def ld_connect(cfg, ldap_master):
