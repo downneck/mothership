@@ -49,17 +49,13 @@ def get_master(cfg, realm_path):
     realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
 
     serv = str(mothership.kv.select(cfg, realm_path, key='ldap_master_server')).split('=')[1]
-    print serv
-    sys.exit(0)
 
     if len(serv) > 1:
         raise LDAPError("more than one master ldap server found for \"%s\", aborting.\nPlease fix your ldap_master_server KV entry" % realm_path)
     elif not serv:
         return None
 
-    # i hate this so much...
-    serv = serv[0]
-    return serv.hostname+'.'+realm_path
+    return serv
 
 
 def ld_connect(cfg, ldap_master):
