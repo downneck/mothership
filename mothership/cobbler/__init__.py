@@ -17,22 +17,23 @@ cobbler functionality
 
 import os
 import re
+import sys
 import types
-import mothership.network_mapper
+import xmlrpclib
 import subprocess
+import mothership.network_mapper
 from mothership.transkey import transkey
-from xmlrpclib import Fault
 
 class CobblerAPI:
-    def __init__(self, cfg):
+    def __init__(self, cfg, site_id=None):
 
-        # mothership.transkey map for cobbler interface to mothership hardware
+        # transkey map for cobbler interface to mothership hardware
         self.map_hardware = {
             'power_address': 'power_switch',
 #            'hw_tag'       : 'hw_tag',
             }
 
-        # mothership.transkey map for cobbler interface to mothership servers
+        # transkey map for cobbler interface to mothership servers
         self.map_server = {
             'name'          : 'hostname',
             'profile'       : 'cobbler_profile',
@@ -46,7 +47,7 @@ class CobblerAPI:
 #            'hw_tag'       : 'hw_tag',
             }
 
-        # mothership.transkey map for cobbler interface to mothership network
+        # transkey map for cobbler interface to mothership network
         self.map_network = {
             'mac_address'  : 'mac',
             'dhcp_tag'     : 'vlan',
@@ -62,7 +63,7 @@ class CobblerAPI:
 #            'hw_tag'       : 'hw_tag',
             }
 
-        # mothership.transkey map for mothership to cobbler interface
+        # transkey map for mothership to cobbler interface
         self.map_interface = {
             'mac'           : 'macaddress',
             'ip'            : 'ipaddress',
@@ -76,14 +77,14 @@ class CobblerAPI:
             'static_routes' : 'staticroutes',
             }
 
-        # mothership.transkey map for mothership to cobbler system
+        # transkey map for mothership to cobbler system
         self.map_system =  {
             'hostname'            :'hostname',
             'netboot_enabled'     : False,
             'power_type'          : 'power_type',
             'power_switch'        : 'power_address',
             'power_port'          : 'power_id',
-            'name'                : [ 'hostname' ],
+            'name'                : [ 'hostname', 'realm', 'site_id' ],
             'cobbler_profile'     : 'profile',
             'virtual'             : 'virtual',
             'cores'               : 'virt_cpus',
@@ -107,27 +108,58 @@ class CobblerAPI:
 #            '' :'uid',
             }
 
+        # set up primary cobbler control
+        self.coblive = cfg.coblive
+        self.cobremote = None
+        self.cobtoken = None
+        if self.coblive:
+            try:
+                self.cobremote = xmlrpclib.Server('http://%s/cobbler_api' % cfg.cobconfig['host'])
+                self.cobtoken = self.cobremote.login(cfg.cobconfig['user'], cfg.cobconfig['pass'])
+            except:
+                sys.stderr.write('Cobbler configuration error.  Check cobbler API server')
+
+        # set up remote cobbler control
+        self.subremote = None
+        self.subtoken = None
+        if site_id and 'sites' in cfg.cobconfig.keys():
+            for s in cfg.cobconfig['sites']:
+                if s['id'] == site_id:
+                    try:
+                        self.subremote = xmlrpclib.Server('http://%s/cobbler_api' % s['host'])
+                        self.subtoken = self.subremote.login(s['user'], s['pass'])
+                    except:
+                        sys.stderr.write('Cobbler could not configure subsite.  Check cobbler API server')
+                        return
+
         # retrieve os dict
         self.osdict = self.get_os_dict(cfg)
 
     def add_system(self, cfg, host_dict):
-        hostname = host_dict['hostname']
+        if self.subremote is not None and not host_dict['virtual']:
+            self._add_system(cfg, host_dict, self.subremote, self.subtoken)
+        self._add_system(cfg, host_dict, self.cobremote, self.cobtoken)
+        return True
+
+    def _add_system(self, cfg, host_dict, remote, token):
+        hostname = '%s.%s.%s' % (host_dict['hostname'],
+            host_dict['realm'], host_dict['site_id'])
         if not host_dict['cobbler_profile']:
             print '%s has empty profile: system not provisioned for cobbler!' % hostname
             return
-        if cfg.coblive:
-            if self.find_system_by_hostname(cfg, hostname):
+        if self.coblive:
+            if self._find_system_by_hostname(hostname, remote):
                 print 'System already exists: %s' % hostname
-                self.delete_system(cfg, hostname)
-            print 'Adding system: %s' % hostname
-            handle = cfg.remote.new_system(cfg.token)
+                self._delete_system(hostname, remote, token)
+            print 'Adding system to %s: %s' % (remote._ServerProxy__host, hostname)
+            handle = remote.new_system(token)
         else:
             print 'API: remote.find_system({\'name\':hostname})'
             print 'API: if found: remote.remove_system(hostname, token)'
             print 'API: set new handle = remote.new_system(token)'
 
-        sysdict = mothership.transkey(host_dict, self.map_system)
-        # Adjust power management values after mothership.transkey
+        sysdict = transkey(host_dict, self.map_system)
+        # Adjust power management values after transkey
         if sysdict['virtual']:
             sysdict['power_user'] = 'root'
             sysdict['power_pass'] = ''
@@ -135,7 +167,7 @@ class CobblerAPI:
             sysdict['power_user'] = cfg.puser
             sysdict['power_pass'] = cfg.ppass
 
-        if cfg.coblive:
+        if self.coblive:
             for k in sysdict.keys():
                 if '-xen-' not in sysdict['profile'] and 'virt_' in k:
                     continue    # do not set cpu,ram,disk for baremetal
@@ -144,7 +176,7 @@ class CobblerAPI:
                         # convert mothership GB to cobbler MB
                         sysdict[k] = int(sysdict[k]) * 1024
                     #print 'Modifying %s system values: %s' % (hostname, k)
-                    cfg.remote.modify_system(handle, k, sysdict[k], cfg.token)
+                    remote.modify_system(handle, k, sysdict[k], token)
         else:
             from pprint import pprint
             print 'API: sysdict = { \'key\':\'value\', }'
@@ -155,7 +187,7 @@ class CobblerAPI:
 
         ifbond = False
         for k in sorted(host_dict['interfaces'].keys()):
-            x = host_dict['interfaces'][k]
+            x = host_dict['interfaces'][k].copy()
 
             # remove ip if world
             if 'ip' in x and x['ip'] == '0.0.0.0':
@@ -174,7 +206,7 @@ class CobblerAPI:
             if x['ip']:
                 domain = mothership.network_mapper.remap(cfg, 'dom', nic=x['interface'], siteid=x['site_id'], ip=x['ip'])
             if domain:
-                x['dns_name'] = '%s%s' % (hostname, domain)
+                x['dns_name'] = '%s%s' % (host_dict['hostname'], domain)
 
             # set the bond0 master interface
             if not ifbond and x['bond_options']:
@@ -183,23 +215,23 @@ class CobblerAPI:
                 ifdict['bonding'] = 'master'
                 del ifdict['mac']
                 # modify system interface bond0
-                if cfg.coblive:
+                if self.coblive:
                     #print 'Modifying %s network values: %s' % (hostname, ifbond)
-                    cfg.remote.modify_system(handle, 'modify_interface', 
-                        self.append_value_to_keyname(cfg, mothership.transkey(ifdict,
-                        self.map_interface, True), '-'+ifbond), cfg.token)
+                    remote.modify_system(handle, 'modify_interface', 
+                        self.append_value_to_keyname(cfg, transkey(ifdict,
+                        self.map_interface, True), '-'+ifbond), token)
                 else:
                     print 'API: since bond_options are set:'
                     print 'API:     remote.modify_system(handle, \'modify_interface\', ifbond-dict-map, token)'
                 # if xenserver, then add template for bond0
                 if 'xenserver' in sysdict['profile']:
-                    if cfg.coblive:
+                    if self.coblive:
                         #print 'Modifying %s templates values' % hostname
-                        cfg.remote.modify_system(handle, 'template_files', {
+                        remote.modify_system(handle, 'template_files', {
                             '/var/www/cobbler/aux/xenserver/create_bond0.template': '/bond0',
                             '/var/www/cobbler/aux/xenserver/create_eth1.template': '/eth1',
                             '/var/www/cobbler/aux/xenserver/gateway_eth1.template': '/defgw',
-                            }, cfg.token)
+                            }, token)
                     else:
                         print 'API: if \'xenserver\' profile:'
                         print 'API:     remote.modify_system(handle, \'template_files\', {template-path:alias}, token)'
@@ -212,12 +244,12 @@ class CobblerAPI:
                 del x['bond_options']
 
             # modify system interface 'k'
-            if cfg.coblive and host_dict['interfaces'][k]['mac']:
+            if self.coblive and host_dict['interfaces'][k]['mac']:
                 try:
-                    cfg.remote.modify_system(handle, 'modify_interface', 
-                        self.append_value_to_keyname(cfg, mothership.transkey(host_dict['interfaces'][k],
-                        self.map_interface, True), '-'+k), cfg.token)
-                except Fault, err:
+                    remote.modify_system(handle, 'modify_interface', 
+                        self.append_value_to_keyname(cfg, transkey(x,
+                        self.map_interface, True), '-'+k), token)
+                except xmlrpclib.Fault, err:
                     print 'Aborting cobbler add, failed to modify %s %s' % (hostname, k)
                     print '    ' + str(err)
                     return False
@@ -225,11 +257,10 @@ class CobblerAPI:
                 print 'API: remote.modify_system(handle, \'modify_interface\', %s-dict-map, token)' % k
 
         # save all system changes
-        if cfg.coblive:
-            cfg.remote.save_system(handle, cfg.token)
+        if self.coblive:
+            remote.save_system(handle, token)
         else:
             print 'API: remote.save_system(handle, token)'
-        return True
 
     def append_value_to_keyname(self, cfg, olddict, suffix):
         # loop through all keys and append the suffix to the keyname
@@ -239,26 +270,34 @@ class CobblerAPI:
                 newdict['%s%s' % (k,suffix)] = olddict[k]
         return newdict
 
-    def delete_system(self, cfg, hostname):
-        if cfg.coblive:
-            if not self.find_system_by_hostname(cfg, hostname):
+    def delete_system(self, hostname):
+        self._delete_system(hostname, self.cobremote, self.cobtoken)
+        if self.subremote is not None:
+            self._delete_system(hostname, self.subremote, self.subtoken)
+
+    def _delete_system(self, hostname, remote, token):
+        if self.coblive:
+            if not self._find_system_by_hostname(hostname, remote):
                 print 'Skipping cobbler delete, system does not exist: %s' % hostname
                 return
-            print 'Deleting cobbler system: %s' % hostname
-            cfg.remote.remove_system(hostname, cfg.token)
+            print 'Deleting cobbler system from %s: %s' % (remote._ServerProxy__host, hostname)
+            remote.remove_system(hostname, token)
         else:
             print 'API: remote.remove_system(hostname, token)'
 
-    def extract_system_by_hostname(self, cfg, hostname):
+    def extract_system_by_hostname(self, hostname):
+        return self._extract_system_by_hostname(self.cobremote, hostname)
+
+    def _extract_system_by_hostname(self, remote, hostname):
         info = {}
         print 'Extracting cobbler system: %s' % hostname
-        system = cfg.remote.get_system(hostname)
+        system = remote.get_system(hostname)
         if '-xen-' in system['profile']:
             system['virtual'] = True
         else:
             system['virtual'] = False
-        info['server'] = [ mothership.transkey(system, self.map_server) ] 
-        info['hardware'] = [ mothership.transkey(system, self.map_hardware) ]
+        info['server'] = [ transkey(system, self.map_server) ] 
+        info['hardware'] = [ transkey(system, self.map_hardware) ]
         info['network'] = []
         sysif = system['interfaces']
         for k in sysif.keys():
@@ -266,22 +305,25 @@ class CobblerAPI:
             sysif[k]['interface'] = k
             if sysif[k]['static_routes']:
                 sysif[k]['static_route'] = sysif[k]['static_routes'][0].split(':')[1]
-            info['network'].append(mothership.transkey(system['interfaces'][k], self.map_network, True))
+            info['network'].append(transkey(system['interfaces'][k], self.map_network, True))
         return info
 
-    def append_kickstart_info(self, cfg, info):
-        profile = cfg.remote.get_profile(info['server'][0]['cobbler_profile'])
+    def append_kickstart_info(self, info):
+        return self._append_kickstart_info(info, self.cobremote)
+
+    def _append_kickstart_info(self, info, remote):
+        profile = remote.get_profile(info['server'][0]['cobbler_profile'])
         while profile['parent'] != '':
-            profile = cfg.remote.get_profile(profile['parent'])
-        distro = cfg.remote.get_distro(profile['distro'])['name']
-        cobblerip = cfg.remote.get_settings()['server']
+            profile = remote.get_profile(profile['parent'])
+        distro = remote.get_distro(profile['distro'])['name']
+        cobblerip = remote.get_settings()['server']
         info['kick'] = {}
         info['kick']['repo'] = 'http://%s/cblr/links/%s/' % (cobblerip, distro)
         info['kick']['ks'] = 'http://%s/cblr/svc/op/ks/system' % cobblerip
         return info
 
-    def find_system_by_hostname(self, cfg, hostname):
-        return cfg.remote.find_system({'name':hostname})
+    def _find_system_by_hostname(self, hostname, remote):
+        return remote.find_system({'name':hostname})
 
     def get_os_dict(self, cfg):
         osdict = { 'profile':{}, 'default':{} }
@@ -292,35 +334,54 @@ class CobblerAPI:
                     osdict['default'][profile['dhcp_tag']] = profile['name']
         return osdict
 
-    def list_all_profiles(self, cfg):
-        return cfg.remote.get_profiles()
+    def list_all_profiles(self, remote):
+        return self._list_all_profiles(self.cobremote)
 
-    def list_all_systems(self, cfg):
-        return cfg.remote.get_systems()
+    def _list_all_profiles(self, remote):
+        return remote.get_profiles()
 
-    def set_system_netboot(self, cfg, hostname, state=False):
-        if cfg.coblive:
-            if not self.find_system_by_hostname(cfg, hostname):
+    def list_all_systems(self, remote):
+        return self._list_all_systems(self.cobremote)
+
+    def _list_all_systems(self, remote):
+        return remote.get_systems()
+
+    def set_system_netboot(self, hostname, state=False, virtual=False):
+        if self.subremote is not None and not virtual:
+            self._set_system_netboot(hostname, self.subremote, self.subtoken, state)
+        else:
+            self._set_system_netboot(hostname, self.cobremote, self.cobtoken, state)
+
+    def _set_system_netboot(self, hostname, remote, token, state=False):
+        if self.coblive:
+            if not self._find_system_by_hostname(hostname, remote):
                 print 'Skipping netboot setting, system does not exist: %s' % hostname
                 return
-            print 'Setting netboot "%s" for %s' % (state, hostname)
-            handle = cfg.remote.get_system_handle(hostname, cfg.token)
-            cfg.remote.modify_system(handle, 'netboot_enabled', state, cfg.token)
+            print 'Setting netboot "%s" for %s on %s' % (state, hostname,
+                remote._ServerProxy__host)
+            handle = remote.get_system_handle(hostname, token)
+            remote.modify_system(handle, 'netboot_enabled', state, token)
         else:
             print 'API: set handle = remote.get_system_handle(hostname, token)'
             print 'API: remote.modify_system(handle, \'netboot_enabled\', state, token)'
 
-    def set_system_power(self, cfg, hostname, state='reboot'):
-        if cfg.coblive:
-            if not self.find_system_by_hostname(cfg, hostname):
+    def set_system_power(self, hostname, state='reboot', virtual=False):
+        if self.subremote is not None and not virtual:
+            self._set_system_power(hostname, self.subremote, self.subtoken, state)
+        else:
+            self._set_system_power(hostname, self.cobremote, self.cobtoken, state)
+
+    def _set_system_power(self, hostname, remote, token, state='reboot'):
+        if self.coblive:
+            if not self._find_system_by_hostname(hostname, remote):
                 print 'Skipping power setting, system does not exist: %s' % hostname
                 return
-            print 'Setting power "%s" for %s' % (state, hostname)
-            handle = cfg.remote.get_system_handle(hostname, cfg.token)
-            #self.check_known_hosts(cfg, hostname, '~root')
+            print 'Setting power "%s" for %s on %s' % (state, hostname,
+                remote._ServerProxy__host)
+            handle = remote.get_system_handle(hostname, token)
             try:
-                cfg.remote.power_system(handle, state, cfg.token)
-            except Fault, err:
+                remote.power_system(handle, state, token)
+            except xmlrpclib.Fault, err:
                 print 'ERROR occurred during cobbler power: %s' \
                     % str(err).replace('\n', ' ')
                 return
@@ -328,21 +389,32 @@ class CobblerAPI:
             print 'API: set handle = remote.get_system_handle(hostname, token)'
             print 'API: remote.power_system(handle, state, token)'
 
-    def sync_cobbler(self, cfg):
-        if cfg.coblive:
-            print 'Syncing cobbler configurations'
+    def sync_cobbler(self):
+        self._sync_cobbler(self.cobremote, self.cobtoken)
+        if self.subremote is not None:
+            self._sync_cobbler(self.subremote, self.subtoken)
+
+    def _sync_cobbler(self, remote, token):
+        if self.coblive:
+            print 'Syncing cobbler configurations on %s' % remote._ServerProxy__host
             try:
-                cfg.remote.sync(cfg.token)
-            except Fault, err:
+                remote.sync(token)
+            except xmlrpclib.Fault, err:
                 print 'ERROR occurred during cobbler sync: %s' % str(err)
                 return
         else:
             print 'API: remote.sync(token)'
 
-    def abort_kick(self, cfg, name, host):
+    def abort_kick(self, name, host):
+        if self.subremote is not None:
+            self._abort_kick(name, host, self.subremote)
+        else:
+            self._abort_kick(name, host, self.cobremote)
+
+    def _abort_kick(self, name, host, remote):
         # abort kick if host.realm.site_id not defined for current system
         try:
-            if str(self.extract_system_by_hostname(cfg,
+            if str(self._extract_system_by_hostname(remote,
                 host.split('.')[0])).find(host) < 0:
                 print '!! IP Address for %s not defined' % host
                 print 'Please run: %s mod_vlan %s <vlan#>' % (name, host)
@@ -375,9 +447,9 @@ class CobblerAPI:
             print 'Failed to clear puppet ssl for %s (are you root?)' % host
             return False
 
-    def check_known_hosts(self, cfg, host, user='~'):
+    def _check_known_hosts(self, host, remote, user='~'):
         print 'Checking known_hosts for %s' % host
-        system = cfg.remote.get_system(host)
+        system = remote.get_system(host)
         host = system['power_address']
         # check for ssh host key
         hasKey = False
@@ -395,4 +467,4 @@ class CobblerAPI:
                 communicate()[0]
             f = open(userknownhosts, 'a')
             f.write(key)
-    
+
