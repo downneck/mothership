@@ -174,10 +174,14 @@ def convert_table_objects_to_dict(tables):
     return d
 
 def count_graveyard_server_by_date(cfg, hostname, when):
+    host,realm,site_id = mothership.get_unqdn(cfg, hostname)
     try:
         return cfg.dbsess.query(ServerGraveyard).\
             filter(ServerGraveyard.deprovision_date==when).\
-            filter(ServerGraveyard.hostname==hostname).count()
+            filter(ServerGraveyard.hostname==host).\
+            filter(ServerGraveyard.realm==realm).\
+            filter(ServerGraveyard.site_id==site_id).\
+            count()
     except:
         return 0
 
