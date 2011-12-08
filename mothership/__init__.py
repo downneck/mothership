@@ -205,17 +205,16 @@ def delete_server(cfg, hostname, relatives=None):
     cfg.dbsess.commit()
 
 def expire_server(cfg, hostname, when, delete_entry=True):
+    unqdn = '.'.join(mothership.get_unqdn(cfg, hostname))
     cols = retrieve_server_dict(cfg, hostname)
     if not cols['id']:
-        print 'There is no server named %s to delete' % \
-            '.'.join(mothership.get_unqdn(cfg, hostname))
+        print 'There is no server named %s to delete' % unqdn
         return
     cols['delid'] = cols['id']
     del cols['id']
     cols['deprovision_date'] = when
     # retrieve all server_id related info and display
-    print '\nThe following info is related to %s (id=%d)' % (
-        '.'.join(mothership.get_unqdn(cfg, hostname)), cols['delid'])
+    print '\nThe following info is related to %s (id=%d)' % (unqdn, cols['delid'])
     meta = MetaData()
     meta.reflect(bind=cfg.dbengine)
     relatives = []  # while displaying related tables, build list for deletion
@@ -239,14 +238,13 @@ def expire_server(cfg, hostname, when, delete_entry=True):
         if ans != 'delete_%s' % hostname:
             print 'Expire server aborted.'
             return
-        print 'Inserting %s into server_graveyard' % \
-            '.'.join(mothership.get_unqdn(cfg, hostname))
+        print 'Inserting %s into server_graveyard' % unqdn
         insert_server_into_graveyard(cfg, cols) # Insert into server graveyard
         # Check hostname exists in server_graveyard and continue only if found
         if count_graveyard_server_by_date(cfg, hostname, when) > 0:
             # remove the server's group
-            server_groupname = hostname+"_"+cols['realm']+"_"+cols['site_id'] \
-                +"."+cols['realm']+"."+cols['site_id']
+            server_groupname = unqdn.replace('.', '_') + \
+                "." + cols['realm'] + "." + cols['site_id']
             mothership.users.gremove(cfg, server_groupname)
             # clear server info from network table
             clear_serverinfo_from_network(cfg, cols['delid'])
@@ -598,11 +596,11 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         print 'Added baremetal host %s to mothership' % hostname
 
     # create a group for the new machine
-    newgroupname = hostname+"_"+realm+"_"+site_id
+    newgroupname = fqdn.replace('.', '_')
     g = cfg.dbsess.query(Groups).\
-    filter(Groups.groupname==newgroupname).\
-    filter(Groups.realm==realm).\
-    filter(Groups.site_id==site_id).first()
+        filter(Groups.groupname==newgroupname).\
+        filter(Groups.realm==realm).\
+        filter(Groups.site_id==site_id).first()
     if g:
         print "group exists, skipping: %s" % newgroupname
     else:
@@ -612,9 +610,9 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
     # create a group for the new machine's sudoers
     newsudogroup = newgroupname+'_sudo'
     g = cfg.dbsess.query(Groups).\
-    filter(Groups.groupname==newsudogroup).\
-    filter(Groups.realm==realm).\
-    filter(Groups.site_id==site_id).first()
+        filter(Groups.groupname==newsudogroup).\
+        filter(Groups.realm==realm).\
+        filter(Groups.site_id==site_id).first()
     if g:
         print "group exists, skipping: %s" % newsudogroup
     else:

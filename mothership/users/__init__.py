@@ -561,7 +561,7 @@ def udeactivate(cfg, username):
         cfg.dbsess.add(u)
         cfg.dbsess.commit()
         # if we're running ldap, remove the user from ldap
-        ldap_master = mothership.ldap.get_master(cfg, fqn)
+        ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
         if cfg.ldap_active and ldap_master:
             ans = raw_input('Do you want to remove this user from LDAP as well? (y/n): ')
             if ans == 'y' or ans == 'Y':
@@ -621,7 +621,7 @@ def uactivate(cfg, username):
         cfg.dbsess.add(u)
         cfg.dbsess.commit()
         # if we're running ldap, remove the user from ldap
-        ldap_master = mothership.ldap.get_master(cfg, fqn)
+        ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
         if cfg.ldap_active and ldap_master:
             print "Activating user to LDAP..."
             print "Adding \"%s\" user entry from LDAP" % username
@@ -779,7 +779,7 @@ def utog(cfg, username, groupname):
         cfg.dbsess.add(newmap)
         cfg.dbsess.commit()
     # update ldap data
-    ldap_master = mothership.ldap.get_master(cfg, fqn)
+    ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
     if cfg.ldap_active and ldap_master:
         ans = raw_input('Do you want to update this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
@@ -837,7 +837,7 @@ def urmg(cfg, username, groupname):
     else:
         raise UsersError("user \"%s\" not found in group \"%s\" for %s.%s" % (u.username, g.groupname, u.realm, u.site_id))
     # update ldap data
-    ldap_master = mothership.ldap.get_master(cfg, fqn)
+    ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
     if cfg.ldap_active and ldap_master:
         ans = raw_input('Do you want to update this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
@@ -971,7 +971,7 @@ def gadd(cfg, groupname, gid=None, description=None, sudo_cmds=None):
     print 'group "%s" added successfully\n' % groupname
     gdisplay(cfg, groupname=fqgn)
     # update ldap data
-    ldap_master = mothership.ldap.get_master(cfg, fqn)
+    ldap_master = mothership.ldap.get_master(cfg, g.realm+'.'+g.site_id)
     if cfg.ldap_active and ldap_master:
         ans = raw_input('Do you want to add this group to LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
@@ -1035,7 +1035,7 @@ def gremove(cfg, groupname):
             raise UsersError("group \"%s\" delete aborted, restoring users: %s" % (groupname, ' '.join(userlist)))
         else:
             # update ldap data
-            ldap_master = mothership.ldap.get_master(cfg, fqn)
+            ldap_master = mothership.ldap.get_master(cfg, g.realm+'.'+g.site_id)
             if cfg.ldap_active and ldap_master:
                 ans = raw_input('Do you want to remove this group from LDAP as well? (y/n): ')
                 if ans == 'y' or ans == 'Y':
@@ -1062,7 +1062,7 @@ def gremove(cfg, groupname):
             raise UsersError('group delete aborted!')
         else:
             # update ldap data
-            ldap_master = mothership.ldap.get_master(cfg, fqn)
+            ldap_master = mothership.ldap.get_master(cfg, g.realm+'.'+g.site_id)
             if cfg.ldap_active and ldap_master:
                 ans = raw_input('Do you want to remove this group from LDAP as well? (y/n): ')
                 if ans == 'y' or ans == 'Y':
