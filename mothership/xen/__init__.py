@@ -195,6 +195,9 @@ class XenServerAPI:
         ref, host = self.choose_storage(info['disk'])
         if not host:
             host = info['power_switch']
+        if '.' not in host:
+            # make sure unqdn is returned
+            host = '%s.%s.%s' % (host, info['realm'], info['site_id'])
         return host, ref
 
     def choose_storage(self, need=None):
