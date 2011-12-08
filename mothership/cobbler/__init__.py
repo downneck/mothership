@@ -309,7 +309,10 @@ class CobblerAPI:
         return info
 
     def append_kickstart_info(self, info):
-        return self._append_kickstart_info(info, self.cobremote)
+        if self.subremote is not None:
+            return self._append_kickstart_info(info, self.subremote)
+        else:
+            return self._append_kickstart_info(info, self.cobremote)
 
     def _append_kickstart_info(self, info, remote):
         profile = remote.get_profile(info['server'][0]['cobbler_profile'])

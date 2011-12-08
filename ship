@@ -1431,12 +1431,13 @@ class ShipCli(cmdln.Cmdln):
                         mothership.modify_server_column(self.cfg,
                             xs.specs[xh]['vm'][vm]['name'], 'hw_tag', hw_tag, force=True)
         else:
-            cc = mothership.cobbler.CobblerAPI(self.cfg)
             for o in ['install_vm', 'resize_vm', 'start_vm',
                 'shutdown_vm', 'delete_vm']:
                 if getattr(opts, o):
-                    exec '''host = opts.%s''' % o
+                    exec 'host = opts.%s' % o
                     try:
+                        exec 'site_id = mothership.get_unqdn(self.cfg, opts.%s)[2]' % o
+                        cc = mothership.cobbler.CobblerAPI(self.cfg, site_id=site_id)
                         info = cc.extract_system_by_hostname(host)
                         if o == 'install_vm':
                             info = cc.append_kickstart_info(info)
