@@ -1043,7 +1043,7 @@ class ShipCli(cmdln.Cmdln):
         host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
         unqdn = '.'.join([host,realm,site_id])
         cc = mothership.cobbler.CobblerAPI(self.cfg, site_id=site_id)
-        expired = mothership.expire_server(self.cfg, host, today)
+        expired = mothership.expire_server(self.cfg, unqdn, today)
         if expired == 'virtual':
             # for virtual servers, xenserver instance must be purged
             try:
