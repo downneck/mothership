@@ -50,7 +50,11 @@ def classify(cfg, name):
         groups.append(g)
 
     # Server
-    server = cfg.dbsess.query(Server).filter(Server.hostname==hostname).first()
+    server = cfg.dbsess.query(Server).\
+        filter(Server.hostname==hostname).\
+        filter(Server.realm==realm).\
+        filter(Server.site_id==site_id).\
+        first()
     if server:
         mtag = cfg.dbsess.query(Tag).filter(Tag.name==server.tag).first()
 
@@ -112,6 +116,10 @@ def classify(cfg, name):
             groups.append(value)
         else:
             parameters[key] = value
+
+    # if no environment defined, use site_id
+    if not environment:
+        environment = site_id
 
     # sudoers
     sudoers = mothership.users.gen_sudoers_groups(cfg, unqdn)
