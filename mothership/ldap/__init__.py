@@ -75,9 +75,9 @@ def ld_connect(cfg, ldap_master, realm, site_id):
     admin_cn = str(mothership.kv.select(cfg, ldap_master, key="ldap_admin_cn")).split('=')[1]
     admin_pass = str(mothership.kv.select(cfg, ldap_master, key="ldap_admin_pass")).split('=')[1]
     admin_dn = "cn=%s,dc=%s,dc=%s,dc=" % (admin_cn, realm, site_id)
+    #admin_dn = "cn=%s,dc=" % admin_cn
     admin_dn += ',dc='.join(d)
     ld_server_string = "ldap://"+ldap_master
-
     # init the connection to the ldap server
     try:
         ldcon = ldap.initialize(ld_server_string)
@@ -95,11 +95,11 @@ def uadd(cfg, username):
     """
     [description]
     add a user to ldap
-    
+
     [parameter info]
     required:
         cfg: the config object. useful everywhere
-        username: the username to add 
+        username: the username to add
 
     [return value]
     no explicit return 
@@ -152,7 +152,9 @@ def uadd(cfg, username):
                          ]
         add_record += attributes
         print "adding ldap user entry for %s" % (u.username+'.'+u.realm+'.'+u.site_id)
+        print dn, add_record
         ldcon.add_s(dn,add_record)
+        print "narf" 
     except ldap.LDAPError, e:
         raise LDAPError(e)
 
@@ -214,17 +216,19 @@ def urefresh(cfg, realm_path):
     realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
     # an array made of the domain parts.
     d = cfg.domain.split('.')
-
     dnlist = []
     userlist = []
     ldap_master = get_master(cfg, realm+'.'+site_id)
+
     dn ="ou=%s,dc=%s,dc=%s,dc=" % (cfg.ldap_users_ou, realm, site_id)
     dn += ',dc='.join(d)
     ldcon = ld_connect(cfg, ldap_master, realm, site_id)
     search = '(objectClass=person)'
-
-    for result in ldcon.search_s(dn, ldap.SCOPE_SUBTREE, search):
-        dnlist.append(result[0])
+    try:
+        for result in ldcon.search_s(dn, ldap.SCOPE_SUBTREE, search):
+            dnlist.append(result[0])
+    except:
+        print "No existing user records found for dn: %s" % dn
 
     print "This command will completely wipe out all forms of life in the ldap database on %s" % ldap_master
     ans = raw_input("to completely refresh the ldap database type \"refresh_%s\": " % ldap_master)
@@ -238,8 +242,9 @@ def urefresh(cfg, realm_path):
     filter(Users.active==True).all():
         userlist.append(user.username+'.'+realm+'.'+site_id)
 
-    for dn in dnlist:
-        ldcon.delete_s(dn)
+    if dnlist:
+        for dn in dnlist:
+            ldcon.delete_s(dn)
     for user in userlist:
         uadd(cfg, user)
 
@@ -510,8 +515,11 @@ def grefresh(cfg, realm_path):
     ldcon = ld_connect(cfg, ldap_master, realm, site_id)
     search = '(objectClass=posixGroup)'
 
-    for result in ldcon.search_s(dn, ldap.SCOPE_SUBTREE, search):
-        dnlist.append(result[0])
+    try:
+        for result in ldcon.search_s(dn, ldap.SCOPE_SUBTREE, search):
+            dnlist.append(result[0])
+    except:
+        print "No existing group records found for dn: %s" % dn
 
     print "This command will completely wipe out all groups in the ldap database on %s" % ldap_master
     ans = raw_input("to completely refresh the groups in the ldap database type \"refresh_%s\": " % ldap_master)
