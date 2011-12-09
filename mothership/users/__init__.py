@@ -307,16 +307,16 @@ def uclone(cfg, username, newfqn):
         ans = raw_input('Do you want to add this user to LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
-                print "adding \"%s\" to LDAP" % fqun
-                mothership.ldap.uadd(cfg, username=newu.username+'.'+newfqun)
+                print "adding \"%s\" to LDAP" % (newu.username+'.'+newfqn)
+                mothership.ldap.uadd(cfg, username=newu.username+'.'+newfqn)
                 for i in newgrouplist:
                     print "updating \"%s\" in LDAP" % i+'.'+newu.realm+'.'+newu.site_id
                     mothership.ldap.gupdate(cfg, groupname=i+'.'+realm+'.'+site_id)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
-                print "Error: %s" % e            
+                print "Error: %s" % e
         else:
-            print "LDAP update aborted by user input, skipping." 
+            print "LDAP update aborted by user input, skipping."
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:

@@ -75,7 +75,6 @@ def ld_connect(cfg, ldap_master, realm, site_id):
     admin_cn = str(mothership.kv.select(cfg, ldap_master, key="ldap_admin_cn")).split('=')[1]
     admin_pass = str(mothership.kv.select(cfg, ldap_master, key="ldap_admin_pass")).split('=')[1]
     admin_dn = "cn=%s,dc=%s,dc=%s,dc=" % (admin_cn, realm, site_id)
-    #admin_dn = "cn=%s,dc=" % admin_cn
     admin_dn += ',dc='.join(d)
     ld_server_string = "ldap://"+ldap_master
     # init the connection to the ldap server
@@ -152,10 +151,11 @@ def uadd(cfg, username):
                          ]
         add_record += attributes
         print "adding ldap user entry for %s" % (u.username+'.'+u.realm+'.'+u.site_id)
-        print dn, add_record
-        ldcon.add_s(dn,add_record)
-        print "narf" 
+        ldcon.add_s(dn, add_record)
     except ldap.LDAPError, e:
+        print dn
+        print add_record
+        print u.username+'.'+u.realm+'.'+u.site_id
         raise LDAPError(e)
 
     # close the LDAP connection
@@ -373,7 +373,6 @@ def gadd(cfg, groupname):
 
     # create a connection to the ldap_master server
     ldcon = ld_connect(cfg, ldap_master, g.realm, g.site_id)
-
     # stitch together the LDAP, fire it into the ldap master server 
     dn = "cn=%s,ou=%s,dc=%s,dc=%s,dc=" % (g.groupname, cfg.ldap_groups_ou, g.realm, g.site_id)
     dn += ',dc='.join(d)
@@ -481,6 +480,7 @@ def gremove(cfg, groupname):
     ldcon = ld_connect(cfg, ldap_master, g.realm, g.site_id)
 
     try:
+        print dn 
         ldcon.delete_s(dn)
         ldcon.unbind()
     except ldap.LDAPError, e:
