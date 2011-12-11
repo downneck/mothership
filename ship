@@ -1264,8 +1264,8 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
-        mothership.modify_network_column(self.cfg, host, interface, colname, colval)
+        unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
+        mothership.modify_network_column(self.cfg, unqdn, interface, colname, colval)
 
     @cmdln.alias("mod_serv")
     def do_modify_server(self, subcmd, opts, hostname, colname, colval):
@@ -1278,8 +1278,8 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
-        mothership.modify_server_column(self.cfg, host, colname, colval)
+        unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
+        mothership.modify_server_column(self.cfg, unqdn, colname, colval)
 
     @cmdln.alias("vlan")
     @cmdln.alias("mod_vlan")
@@ -1297,8 +1297,8 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        host,realm,site_id = mothership.get_unqdn(self.cfg, hostname)
-        mothership.modify_network_vlan(self.cfg, host, vlan,
+        unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
+        mothership.modify_network_vlan(self.cfg, unqdn, vlan,
             interface=opts.interface, force=opts.force)
 
     @cmdln.alias("snmp")
