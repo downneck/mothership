@@ -241,7 +241,8 @@ def uclone(cfg, username, newfqn):
     """
     u = mothership.validate.v_get_user_obj(cfg, username)
     newrealm, newsite_id, domain = mothership.validate.v_split_fqn(newfqn+'.'+cfg.domain)
-
+    print newfqn
+    print newrealm, newsite_id, domain
     if not u:
         raise UsersError("User not found: %s" % username)
 
@@ -274,7 +275,8 @@ def uclone(cfg, username, newfqn):
     filter(UserGroupMapping.users_id==u.id):
         group = cfg.dbsess.query(Groups).\
         filter(Groups.id==g.groups_id).first()
-        grouplist.append(group.groupname)
+        if g not in cfg.default_groups:
+            grouplist.append(group.groupname)
 
         ng = None
         ng = cfg.dbsess.query(Groups).\
@@ -303,7 +305,10 @@ def uclone(cfg, username, newfqn):
 
     # update ldap data
     ldap_master = mothership.ldap.get_master(cfg, newu.realm+'.'+newu.site_id)
-    if cfg.ldap_active and ldap_master:
+    dn = "uid=%s,ou=%s,dc=%s,dc=%s,dc=" % (newu.username, cfg.ldap_users_ou, newu.realm, newu.site_id)
+    dn += ',dc='.join(d)
+    ldap_user_entry = ldcon.search_s(dn, ldap.SCOPE_BASE)
+    if cfg.ldap_active and ldap_master and not ldap_user_entry:
         ans = raw_input('Do you want to add this user to LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:

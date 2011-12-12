@@ -156,6 +156,7 @@ def uadd(cfg, username):
         print dn
         print add_record
         print u.username+'.'+u.realm+'.'+u.site_id
+        udisplay(cfg, u.username+'.'+u.realm+'.'+u.site_id) 
         raise LDAPError(e)
 
     # close the LDAP connection
