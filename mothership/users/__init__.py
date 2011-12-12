@@ -65,6 +65,7 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
     fqun = mothership.validate.v_get_fqn(cfg, name=username)
     username, realm, site_id, domain = mothership.validate.v_split_fqn(fqun)
     fqn = realm+'.'+site_id+'.'+domain
+    fqun = username+'.'+fqn
 
     if get_uid(cfg, username=fqun):
         raise UsersError("User exists, exiting!")
@@ -944,6 +945,7 @@ def gadd(cfg, groupname, gid=None, description=None, sudo_cmds=None):
     fqgn = mothership.validate.v_get_fqn(cfg, name=groupname)
     groupname, realm, site_id, domain = mothership.validate.v_split_fqn(fqgn)
     fqn = realm+'.'+site_id
+    fqgn = groupname+'.'+fqn
 
     if not description:
         description = "No description given"
