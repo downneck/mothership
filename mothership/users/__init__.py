@@ -767,6 +767,7 @@ def utog(cfg, username, groupname):
     [return value]
     no explicit return
     """
+    skip_ldap = False
     u = mothership.validate.v_get_user_obj(cfg, username)
     if not u:
         raise UsersError("user \"%s\" not found" % username)
@@ -778,7 +779,7 @@ def utog(cfg, username, groupname):
         raise UsersError("group \"%s\" not found" % groupname)
 
     if get_utog_map(cfg, username=u.username+'.'+fqn, groupname=g.groupname):
-        raise UsersError("user \"%s\" is already in group \"%s\", aborting!" % (username, groupname))
+        skip_ldap = "user \"%s\" is already in group \"%s\", skipping!" % (username, groupname)
     else:
         # create a new map object
         newmap = UserGroupMapping(g.id, u.id)
@@ -788,7 +789,7 @@ def utog(cfg, username, groupname):
         cfg.dbsess.commit()
     # update ldap data
     ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
-    if cfg.ldap_active and ldap_master:
+    if cfg.ldap_active and ldap_master and not skip_ldap:
         ans = raw_input('Do you want to update this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
@@ -801,6 +802,8 @@ def utog(cfg, username, groupname):
             print "LDAP update aborted by user input, skipping."
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
+    elif skip_ldap:
+        print skip_ldap 
     else:
         print "No LDAP master found for %s.%s, skipping" % (g.realm, g.site_id)
 
@@ -1173,10 +1176,11 @@ def gclone(cfg, groupname, newfqn):
     # if there are users in the source group, find out if we should
     # copy them to the target group.
     if userlist:
-        print "the source group has users in it, should we copy the list?"
+        print "the source group \"%s\" has users in it, should we copy the list?" % (g.groupname+'.'+g.realm+'.'+g.site_id)
         print "YES: all users that exist in the target fqn will be copied"
         print "NO: no users will be copied"
-        print "nonexistent users will be ignored in either case"
+        print "nonexistent users will be cloned"
+        print "user list to be copied is: %s" % userlist
         ans = raw_input("copy user list? (y/n): ")
         if ans == 'Y' or ans == 'y':
             newuserlist = []
@@ -1188,7 +1192,11 @@ def gclone(cfg, groupname, newfqn):
                 if newu:
                     newuserlist.append(newu.username)
                 else:
-                    print "\"%s\" not found in \"%s.%s\", skipping" % (user, newrealm, newsite_id)
+                    try:
+                         uclone(cfg, user, newrealm+'.'+newsite_id)
+                    except:
+                        print "Clone failed! Help!"
+                        raise UsersError("Error: %s" % e)
         else:
             print "no users will be copied"
     # update ldap data
@@ -1197,7 +1205,10 @@ def gclone(cfg, groupname, newfqn):
     d = cfg.domain.split('.')
     dn += ',dc='.join(d)
     ldcon = mothership.ldap.ld_connect(cfg, ldap_master, newg.realm, newg.site_id)
-    ldap_group_entry = ldcon.search_s(dn, ldap.SCOPE_BASE)
+    try:
+        ldap_group_entry = ldcon.search_s(dn, ldap.SCOPE_BASE)
+    except:
+        ldap_group_entry = None
     if cfg.ldap_active and ldap_master and not ldap_group_entry:
         ans = raw_input('Do you want to add this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
@@ -1207,6 +1218,7 @@ def gclone(cfg, groupname, newfqn):
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
                 print "Error: %s" % e
+                print ldap_group_entry
         else:
             print "LDAP update aborted by user input, skipping LDAP group update"
     elif not cfg.ldap_active:
