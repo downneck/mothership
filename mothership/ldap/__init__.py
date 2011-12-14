@@ -481,7 +481,6 @@ def gremove(cfg, groupname):
     ldcon = ld_connect(cfg, ldap_master, g.realm, g.site_id)
 
     try:
-        print dn 
         ldcon.delete_s(dn)
         ldcon.unbind()
     except ldap.LDAPError, e:
