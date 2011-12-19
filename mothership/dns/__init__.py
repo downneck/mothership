@@ -113,8 +113,8 @@ def generate_dns_output(cfg, domain, outdir, usecobbler=False):
             if not target.endswith('.'):
                 target += '.'
         f.write("%-20s\tIN\t%-8s%-16s\n" % (dns.host, dns.record_type, target))
-        if usecobbler:
-            f.write("\n$host_record\n")
+    if usecobbler:
+        f.write("\n$host_record\n")
 
 def update_table_dnsaddendum(cfg, info, delete=False):
     """
