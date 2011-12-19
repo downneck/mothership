@@ -156,12 +156,12 @@ def update_table_dnsaddendum(cfg, info, delete=False):
                 info['realm'], info['site_id'])
         else:
             ans = raw_input('Which ID do you wish to delete? ')
-            if int(ans) not in idlist:
+            if not ans or int(ans) not in idlist:
                 print 'Delete DNS entry aborted.'
                 return
             else:
                 print 'Deleting DNS entry %d' % int(ans)
                 data = cfg.dbsess.query(DnsAddendum).\
-                    filter(DnsAddendum.id==int(ans))
+                    filter(DnsAddendum.id==int(ans)).one()
                 cfg.dbsess.delete(data)
     cfg.dbsess.commit()
