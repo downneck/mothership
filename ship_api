@@ -68,9 +68,7 @@ class ShipCli(cmdln.Cmdln):
         #        print func('mtest3', 'satest', 'jfk')
 
 
-    @cmdln.alias("sinfo")
     @cmdln.alias("si")
-    @cmdln.alias("server_info")
     def do_serverinfo(self, subcmd, opts):
         """${cmd_name}: get information about a server
 
@@ -82,7 +80,7 @@ class ShipCli(cmdln.Cmdln):
             host = 'mtest3'   # this is
             realm = 'satest'  # all just
             site_id = 'jfk'   # test data
-            infos = si.getserverinfo(host, realm, site_id)
+            infos = si.get_host(hostname=host+'.'+realm+'.'+site_id)
             buff = {} # buffer to hold our ORMobject->dict/list translations
             tl = [] # temp list to hold list[ORMobject]->list[dict] translations
             # start translating
@@ -110,21 +108,46 @@ class ShipCli(cmdln.Cmdln):
         try:
             si = ServerInfo(cfg)
             print myjson.JSONEncoder(indent=4).encode(si.metadata)
-            for k, v in si.metadata['functions'].iteritems(): # get functions from metadata
-                rargs = '' # clear args
-                oargs = '' # clear args
-                if si.metadata['functions'][k]['required_args']: # if there are required args, process first
-                    rargs = ', '.join(si.metadata['functions'][k]['required_args']) # just a string for now
-                    rargs = rargs+', ' # tack a , on at the end
-                for k2, v2 in si.metadata['functions'][k]['optional_args']['args'].iteritems(): # process opt args
-                    oargs = oargs+k2+'=None, ' # just a string for now
-                args = rargs + oargs # put both args together
-                #print si.metadata['functions'][k]['call']+'('+args+')' # print out what we would have called
         except mothership.serverinfo.ServerInfoError, e:
             print 'Error: %s' % e
             sys.exit(1)
 
 
+    @cmdln.alias("test")
+    def do_automatic_command_line(self, subcmd, opts):
+        """${cmd_name}: testing out automatic command line generation
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        try:
+            si = ServerInfo(cfg)
+            #for k, v in si.metadata['methods'].iteritems(): # get functions from metadata
+            #    rargs = '' # clear args
+            #    oargs = '' # clear args
+            #    if si.metadata['methods'][k]['required_args']: # if there are required args, process first
+            #        rargs = ', '.join(si.metadata['methods'][k]['required_args']) # just a string for now
+            #        rargs = rargs+', ' # tack a , on at the end
+            #    for k2, v2 in si.metadata['methods'][k]['optional_args']['args'].iteritems(): # process opt args
+            #        oargs = oargs+k2+'=None, ' # just a string for now
+            #    args = rargs + oargs # put both args together
+            funct = getattr(si, si.metadata['methods']['search']['call'])
+            infos = funct(hostname='mtest3.satest.jfk')
+            buff = {} # buffer to hold our ORMobject->dict/list translations
+            tl = [] # temp list to hold list[ORMobject]->list[dict] translations
+            # start translating
+            for k, v in infos.iteritems(): #get keys and values from the infos dict
+                if isinstance(v, list): # some values will be lists of objects (network, kv)
+                     for l in v:
+                         tl.append(l.to_dict()) # add the translated ORMobject->dict to temp list
+                     buff[k] = tl # add the temp list to our buffer dict
+                     tl = [] # clear the list so we don't end up with two of everything
+                else:
+                     buff[k] = v.to_dict() # if it's not a list, translate and add the dict to buffer
+            print myjson.JSONEncoder(indent=4).encode(buff)
+        except mothership.serverinfo.ServerInfoError, e:
+            print "Error: %s" % e
+            sys.exit(1)
 
 if __name__ == "__main__":
     # the global config. useful everywhere
