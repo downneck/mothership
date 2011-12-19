@@ -77,25 +77,6 @@ def add(cfg, fqdn, key, value):
     if not value:
         raise KVError('No value specified!')
 
-    # if we're adding a tag, make sure it exists, first!
-    if key == 'tag':
-        tag = cfg.dbsess.query(Tag).filter(Tag.name==value).first()
-        if not tag:
-            print "Trying to apply a nonexistent tag. Abort! Abort!"
-            raise KVError('Try "ship tag --help" for more info')
-
-    # make sure the serverpath exists
-    hostname, realm, site_id = mothership.split_fqdn(fqdn)
-    if hostname != None:
-        results = cfg.dbsess.query(Server)
-        results = results.\
-            filter(Server.site_id==site_id).\
-            filter(Server.realm==realm).\
-            filter(Server.hostname==hostname).\
-            first()
-        if not results:
-            raise KVError('Trying to apply a tag to a nonexistent host. Abort!')
-
     # Check for duplicate key=value.
     kv = select(cfg, fqdn, key, value)
     if kv:

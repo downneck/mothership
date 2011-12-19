@@ -50,35 +50,29 @@ def classify(cfg, name):
         groups.append(g)
 
     # Server
-    server = cfg.dbsess.query(Server).\
-        filter(Server.hostname==hostname).\
-        filter(Server.realm==realm).\
-        filter(Server.site_id==site_id).\
-        first()
+    server = cfg.dbsess.query(Server).filter(Server.hostname==hostname).first()
     if server:
         mtag = cfg.dbsess.query(Tag).filter(Tag.name==server.tag).first()
 
     if server and server.id:
-        parameters['server_id'] = server.id
+        server_id = server.id
+        parameters['server_id'] = server_id
         networks = cfg.dbsess.query(Network).\
-                filter(Network.server_id==server.id).all()
+                filter(Network.server_id==server_id).all()
         for network in networks:
-            if network.interface=='eth0':
-                if network.static_route:
-                    parameters['mgmt_gateway'] = network.static_route
-                if network.ip:
-                    parameters['mgmt_ip'] = network.ip
-                if network.netmask:
-                    parameters['mgmt_netmask'] = network.netmask
             if network.interface=='eth1':
                 if network.static_route:
-                    parameters['default_gateway'] = network.static_route
+                    default_gateway = network.static_route
+                    parameters['default_gateway'] = default_gateway
                 if network.ip:
-                    parameters['primary_ip'] = network.ip
+                    bond_ip = network.ip
+                    parameters['bond_ip'] = bond_ip
                 if network.netmask:
-                    parameters['primary_netmask'] = network.netmask
+                    bond_netmask = network.netmask
+                    parameters['bond_netmask'] = bond_netmask
                 if network.bond_options:
-                    parameters['bond_options'] = network.bond_options
+                    bond_options = network.bond_options
+                    parameters['bond_options'] = bond_options
 
     # Tag
     if mtag and mtag.name:
@@ -116,10 +110,6 @@ def classify(cfg, name):
             groups.append(value)
         else:
             parameters[key] = value
-
-    # if no environment defined, use site_id
-    if not environment:
-        environment = site_id
 
     # sudoers
     sudoers = mothership.users.gen_sudoers_groups(cfg, unqdn)

@@ -84,11 +84,11 @@ db:
 
 # Cobbler-specific info
 cobbler:
-
+  
   # to enable Cobbler integration, set this to True
   active: False
 
-  # user and pass are added via:
+  # user and pass are added via: 
   # htdigest /etc/cobbler/users.digest "Cobbler" <user>
   user: 'api'
   pass: 'api'
@@ -102,13 +102,6 @@ cobbler:
   #    Comment    : <os>                # the operating system name
   #    DHCP Tag   : <default-arch>      # baremetal | virtual | xenserver 
   # for example: cobbler profile edit --name="xenserverXYZ" --comment="XenServer X.Y.Z" --dhcp-tag="xenserver"
-
-  # define additional cobbler sites
-  sites:
-  - id: 'sfo'
-    user: 'sfo'
-    pass: 'sfo'
-    host: 'cm1.prod.sfo'
 
 
 # power control options
@@ -139,8 +132,6 @@ snmp:
   # you should change this
   community: 'public'
 
-  # ports to exclude in snmp scan (i.e. bridge ports, etc)
-  exclude: [ 'No Such', 100 ]
 
 # options for the Key-Value table
 kv:
@@ -199,7 +190,6 @@ network:
   # Network map, repeat blocks as necessary
   map:
   - vlan: 100                   # the vlan number on switch for this subnet
-    name: 'prod_web'            # logical name for this subnet
     cidr: '1.2.3.4/24'          # the network/prefix CIDR address for this subnet
     gw: '1.2.3.1'               # the gateway address for this subnet
     nic: 'eth0'                 # the interface name for this subnet
