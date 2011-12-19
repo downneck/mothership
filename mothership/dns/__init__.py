@@ -113,8 +113,8 @@ def generate_dns_output(cfg, domain, outdir, usecobbler=False):
             if not target.endswith('.'):
                 target += '.'
         f.write("%-20s\tIN\t%-8s%-16s\n" % (dns.host, dns.record_type, target))
-        if usecobbler:
-            f.write("\n$host_record\n")
+    if usecobbler:
+        f.write("\n$host_record\n")
 
 def update_table_dnsaddendum(cfg, info, delete=False):
     """
@@ -135,10 +135,13 @@ def update_table_dnsaddendum(cfg, info, delete=False):
             print 'Please delete first before adding again'
             return
         else:
-            if len(info['target'].split('.')) < 4 and (info['record_type'] == 'A' or info['record_type'] == 'CNAME'):
+            if len(info['target'].split('.')) < 4 and \
+                (info['record_type'] == 'A' or info['record_type'] == 'CNAME'):
                 print 'Target should end with ip or fqdn for A and CNAME types, aborting'
                 return
-            cfg.dbconn.execute(DnsAddendum.__table__.insert(), [ info ])
+            data = DnsAddendum(info['host'], info['record_type'],
+                info['realm'], info['site_id'], info['target'])
+            cfg.dbsess.add(data)
     else:
         idlist = []
         print 'For %s.%s, we found:' % (info['realm'], info['site_id'])
@@ -158,5 +161,7 @@ def update_table_dnsaddendum(cfg, info, delete=False):
                 return
             else:
                 print 'Deleting DNS entry %d' % int(ans)
-                cfg.dbconn.execute(DnsAddendum.__table__.delete().\
-                    where(DnsAddendum.id==int(ans)))
+                data = cfg.dbsess.query(DnsAddendum).\
+                    filter(DnsAddendum.id==int(ans))
+                cfg.dbsess.delete(data)
+    cfg.dbsess.commit()
