@@ -40,6 +40,7 @@ import mothership.mgmt_vlan
 import mothership.dns
 import mothership.users
 import mothership.list_values
+import mothership.snmp
 import mothership.zenoss
 import mothership.ldap
 from mothership.list_servers import *
@@ -1240,9 +1241,9 @@ class ShipCli(cmdln.Cmdln):
                 info = cc.extract_system_by_hostname(source)
         elif opts.snmp:
             for line in \
-                mothership.walk_snmp_for_mac_port_list(self.cfg,
-                mothership.walk_snmp_for_vlan_switch_list(self.cfg),
-                mothership.walk_snmp_for_vlan_ip_mac_list(self.cfg)):
+                mothership.snmp.walk_snmp_for_mac_port_list(self.cfg,
+                mothership.snmp.walk_snmp_for_vlan_switch_list(self.cfg),
+                mothership.snmp.walk_snmp_for_vlan_ip_mac_list(self.cfg)):
                 if 'switch_port' not in line: continue
                 mothership.update_table_network(self.cfg, line, noinsert=True)
                 count = count + 1
@@ -1314,7 +1315,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        for info in mothership.walk_snmp_for_ifname(self.cfg,
+        for info in mothership.snmp.walk_snmp_for_ifname(self.cfg,
             hostname, ifname=opts.interface, debug=opts.debug):
             print '\n'.join(['%10s: %s'] * 4) \
                 % ('interface', info['nic'], 'macaddress', info['mac'],
