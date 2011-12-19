@@ -20,6 +20,7 @@ module controlling various puppet interactions
 import mothership
 import mothership.kv
 import mothership.users
+import mothership.network_mapper
 from mothership.mothership_models import *
 
 def classify(cfg, name):
@@ -70,6 +71,11 @@ def classify(cfg, name):
                     parameters['mgmt_ip'] = network.ip
                 if network.netmask:
                     parameters['mgmt_netmask'] = network.netmask
+                if network.ip and network.netmask:
+                    mgmt_cidr = mothership.network_mapper.remap(cfg,
+                        'cidr', nic=network.interface, siteid=site_id)
+                    parameters['mgmt_subnet'] = mothership.\
+                        network_mapper.get_network(mgmt_cidr)
             if network.interface=='eth1':
                 if network.static_route:
                     parameters['default_gateway'] = network.static_route
