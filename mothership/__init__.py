@@ -852,23 +852,19 @@ def swap_server(cfg, when, hosts=[]):
         if s['virtual']:
             print 'Only baremetal hosts can be swapped!'
             return
-    # First make both server aware of their old and new hw_tag
-    for i in range(0,len(swaplist)):
-        swaplist[i]['oldtag'] = swaplist[i]['hw_tag']
-        swaplist[i]['newtag'] = swaplist[i^1]['hw_tag']
-    # Second, copy them to the server_graveyard
+    # First, copy them to the server_graveyard
     for i in range(0,len(swaplist)):
         del swaplist[i]['id']
         swaplist[i]['deprovision_date'] = when
         insert_server_into_graveyard(cfg, swaplist[i]) # Insert into server graveyard
     print 'Swapping hardware for ' + ' and '.join(hosts)
-    # Finally, update servers table with newtag and network with newid
-    for i in range(0,len(swaplist)):
-        swaplist[i]['hw_tag'] = swaplist[i]['newtag']
-        sid,hwtag = update_table_server(cfg, swaplist[i], when)
-        for net in retrieve_network_rows(cfg, hwtag=hwtag):
-            update_table_network(cfg, { 'interface':net.interface,
-                'hw_tag':hwtag, 'server_id':sid })
+    # Rename server0 to tmpserver0, server1 to server0, then tmpserver0 to server1
+    modify_server_column(cfg, hosts[0],
+        'hostname', 'tmp'+swaplist[0]['hostname'], force=True)
+    modify_server_column(cfg, hosts[1],
+        'hostname', swaplist[0]['hostname'], force=True)
+    modify_server_column(cfg, 'tmp'+hosts[0],
+        'hostname', swaplist[1]['hostname'], force=True)
 
 def update_table_hardware(cfg, info, when):
     data = retrieve_hardware_row(cfg, info['hw_tag'])
