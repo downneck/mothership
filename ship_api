@@ -51,6 +51,14 @@ try:
 except ImportError:
     import simplejson as myjson
 
+si_methods = ""
+
+def decorate_cmdln(names):
+    aliases = []
+    for i in names:
+        aliases.append('cmdln.alias("'+i+'")')
+    return aliases
+
 class ShipCli(cmdln.Cmdln):
     def __init__(self, cfg):
         cmdln.Cmdln.__init__(self)
@@ -59,13 +67,19 @@ class ShipCli(cmdln.Cmdln):
 
         # attempting to auto-construct a command line. god help me.
         si = ServerInfo(cfg)
-        #for k, v in si.metadata['functions'].iteritems():
-        #    fname = k 
-        #    fcall = si.metadata['functions'][k]['call']
-        #    func = getattr(si, fcall)
-        #    print fname
-        #    if fname=='getserverinfo':
-        #        print func('mtest3', 'satest', 'jfk')
+        global si_methods
+        for k, v in si.metadata['methods'].iteritems(): # get functions from metadata
+            si_method_list = []
+            si_method_list.append(k)
+            rargs = '' # clear args
+            oargs = '' # clear args
+            if si.metadata['methods'][k]['required_args']: # if there are required args, process first
+                rargs = ', '.join(si.metadata['methods'][k]['required_args']) # just a string for now
+                rargs = rargs+', ' # tack a , on at the end
+            for k2, v2 in si.metadata['methods'][k]['optional_args']['args'].iteritems(): # process opt args
+                oargs = oargs+k2+'=None, ' # just a string for now
+            args = rargs + oargs # put both args together
+        si_methods = si_method_list
 
 
     @cmdln.alias("si")
@@ -112,8 +126,8 @@ class ShipCli(cmdln.Cmdln):
             print 'Error: %s' % e
             sys.exit(1)
 
-
-    @cmdln.alias("test")
+    
+    @decorate_cmdln(si_methods) # does not work. is the suck.
     def do_automatic_command_line(self, subcmd, opts):
         """${cmd_name}: testing out automatic command line generation
 
@@ -122,16 +136,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             si = ServerInfo(cfg)
-            #for k, v in si.metadata['methods'].iteritems(): # get functions from metadata
-            #    rargs = '' # clear args
-            #    oargs = '' # clear args
-            #    if si.metadata['methods'][k]['required_args']: # if there are required args, process first
-            #        rargs = ', '.join(si.metadata['methods'][k]['required_args']) # just a string for now
-            #        rargs = rargs+', ' # tack a , on at the end
-            #    for k2, v2 in si.metadata['methods'][k]['optional_args']['args'].iteritems(): # process opt args
-            #        oargs = oargs+k2+'=None, ' # just a string for now
-            #    args = rargs + oargs # put both args together
-            funct = getattr(si, si.metadata['methods']['search']['call'])
+            funct = getattr(si, si.metadata['methods'][sys.argv[1]]['call'])
             infos = funct(hostname='mtest3.satest.jfk')
             buff = {} # buffer to hold our ORMobject->dict/list translations
             tl = [] # temp list to hold list[ORMobject]->list[dict] translations
