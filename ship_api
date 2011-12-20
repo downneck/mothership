@@ -53,12 +53,6 @@ except ImportError:
 
 si_methods = ""
 
-def decorate_cmdln(names):
-    aliases = []
-    for i in names:
-        aliases.append('cmdln.alias("'+i+'")')
-    return aliases
-
 class ShipCli(cmdln.Cmdln):
     def __init__(self, cfg):
         cmdln.Cmdln.__init__(self)
@@ -80,6 +74,7 @@ class ShipCli(cmdln.Cmdln):
                 oargs = oargs+k2+'=None, ' # just a string for now
             args = rargs + oargs # put both args together
         si_methods = si_method_list
+        print si_methods
 
 
     @cmdln.alias("si")
@@ -127,7 +122,7 @@ class ShipCli(cmdln.Cmdln):
             sys.exit(1)
 
     
-    @decorate_cmdln(si_methods) # does not work. is the suck.
+    @cmdln.alias('search')
     def do_automatic_command_line(self, subcmd, opts):
         """${cmd_name}: testing out automatic command line generation
 
@@ -143,12 +138,12 @@ class ShipCli(cmdln.Cmdln):
             # start translating
             for k, v in infos.iteritems(): #get keys and values from the infos dict
                 if isinstance(v, list): # some values will be lists of objects (network, kv)
-                     for l in v:
-                         tl.append(l.to_dict()) # add the translated ORMobject->dict to temp list
-                     buff[k] = tl # add the temp list to our buffer dict
-                     tl = [] # clear the list so we don't end up with two of everything
+                    for l in v:
+                        tl.append(l.to_dict()) # add the translated ORMobject->dict to temp list
+                    buff[k] = tl # add the temp list to our buffer dict
+                    tl = [] # clear the list so we don't end up with two of everything
                 else:
-                     buff[k] = v.to_dict() # if it's not a list, translate and add the dict to buffer
+                    buff[k] = v.to_dict() # if it's not a list, translate and add the dict to buffer
             print myjson.JSONEncoder(indent=4).encode(buff)
         except mothership.serverinfo.ServerInfoError, e:
             print "Error: %s" % e

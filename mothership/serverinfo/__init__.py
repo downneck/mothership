@@ -28,12 +28,12 @@ from sqlalchemy import or_, desc, MetaData
 class ServerInfoError(Exception):
     pass
 
-class ServerInfo:
+class serverinfo:
 
     def __init__(self, cfg):
         self.cfg = cfg
         self.version = '1' # the version of this module
-        self.name = "ServerInfo" # class name
+        self.name = "serverinfo" # class name
         self.namespace = "serverinfo" # class' namespace
         self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
             'config': { # some basic module-wide config data
