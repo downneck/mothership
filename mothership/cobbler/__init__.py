@@ -418,7 +418,7 @@ class CobblerAPI:
         # abort kick if host.realm.site_id not defined for current system
         try:
             if str(self._extract_system_by_hostname(remote,
-                host.split('.')[0])).find(host) < 0:
+                host)).find(host) < 0:
                 print '!! IP Address for %s not defined' % host
                 print 'Please run: %s mod_vlan %s <vlan#>' % (name, host)
                 print 'or equivalent command before kickstarting'
@@ -426,7 +426,7 @@ class CobblerAPI:
         except:
             return False
         # confirm kick if host.realm.site_id responds to pings
-        pingcheck = os.popen("ping -q -c2 -t2 "+host,"r")
+        pingcheck = os.popen("ping -q -c2 -t5 "+host,"r")
         while 1:
             line = pingcheck.readline()
             if not line: break
