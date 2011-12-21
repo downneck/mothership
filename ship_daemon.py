@@ -45,11 +45,26 @@ except ImportError, e:
 
 @httpship.route('/')
 def index():
-    return "<P>Callable paths:<BR>"+"<BR>".join(module_metadata.keys())
+    buf = "<P>namespaces:<BR><BR>"
+    for k in module_metadata.keys():
+        try:
+            buf += "/"+module_metadata[k].namespace+"<BR>"
+        except:
+            continue
+    return buf
 
 @httpship.route("/:pname")
-def top_path(pname):
-    return module_metadata[pname].metadata
+def namespace_path(pname):
+    buf = "Callable paths:<BR><BR>"
+    buf += "/"+pname+"/metadata<BR>"
+    for meth in module_metadata[pname].metadata['methods']:
+        buf += "/%s/%s<BR>" % (pname, meth)
+    return buf
+
+@httpship.route("/:pname/metadata")
+def metadata_path(pname):
+    buf = myjson.JSONEncoder(indent=4).encode(module_metadata[pname].metadata)
+    return buf
 
 
 # the daemon
