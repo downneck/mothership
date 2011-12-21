@@ -33,13 +33,13 @@ class serverinfo:
     def __init__(self, cfg):
         self.cfg = cfg
         self.version = '1' # the version of this module
-        self.name = "serverinfo" # class name
-        self.namespace = "serverinfo" # class' namespace
+        self.name = 'serverinfo' # class name
+        self.namespace = 'serverinfo' # class' namespace
         self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
             'config': { # some basic module-wide config data
                 'module_dependencies': { # what other modules do we depend on?
                     'kv': '1', # a module, and its minimum accepted version
-                    'mothership_models': '1' # another module, and its minimum accepted version
+                    'mothership_models': '1', # another module, and its minimum accepted version
                 },
             },
             'methods': { # a dict of methods we're presenting to the outside world
@@ -53,8 +53,8 @@ class serverinfo:
                     'required_args': { # dict of info about arguments we just can't live without
                     },
                     'optional_args': { # dict holding optional argument info
-                        'min': '1', # minimum number of optional args we'll accept
-                        'max': '1', # maximum number of optional args we'll accept
+                        'min': 1, # minimum number of optional args we'll accept
+                        'max': 1, # maximum number of optional args we'll accept
                         'args': { # the argument definitions themselves
                             'hw_tag': 'string', # an arg and its type
                             'ip': 'string', # an arg and its type
@@ -84,7 +84,7 @@ class serverinfo:
         }
 
 
-    def get_host(self, hw_tag=None, ip=None, mac=None, hostname=None):
+    def get_host(self, query):
         """
         [description]
         search for a host based on info supplied
