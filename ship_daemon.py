@@ -16,8 +16,8 @@ except ImportError:
 # uncomment to debug bottle
 bottle.debug(True)
 # set to True to debug ship-daemon.py
-DEBUG=True
-#DEBUG=False
+#DEBUG=True
+DEBUG=False
 
 
 # instantiate a bottle
@@ -105,10 +105,11 @@ def callable_path(pname, callpath):
         if DEBUG:
             print "method called: %s" % myjson.JSONEncoder(indent=4).encode(module_metadata[pname].metadata['methods'][callpath]['call'])
             buf = getattr(module_metadata[pname], module_metadata[pname].metadata['methods'][callpath]['call'])
-            return myjson.JSONEncoder().encode(buf(query))
+            print myjson.JSONEncoder(indent=4).encode(buf(query, DEBUG))
+            return myjson.JSONEncoder().encode(buf(query, DEBUG))
         else:
             buf = getattr(module_metadata[pname], module_metadata[pname].metadata['methods'][callpath]['call'])
-            return myjson.JSONEncoder().encode(buf(query))
+            return myjson.JSONEncoder().encode(buf(query, DEBUG))
 
 @httpship.route("/test")
 def test():

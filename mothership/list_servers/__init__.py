@@ -121,7 +121,7 @@ class list_servers:
         }
 
 
-    def lss(self, query):
+    def lss(self, query, DEBUG):
         """
         [description]
         creates a list of all servers found for a given parameter
