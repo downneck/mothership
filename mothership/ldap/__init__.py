@@ -56,7 +56,7 @@ def get_master(cfg, realm_path):
         return None
 
 
-def ld_connect(cfg, ldap_master):
+def ld_connect(cfg, ldap_master, realm, site_id):
     """
     [description]
     open a connection to the ldap master
@@ -74,10 +74,9 @@ def ld_connect(cfg, ldap_master):
 
     admin_cn = str(mothership.kv.select(cfg, ldap_master, key="ldap_admin_cn")).split('=')[1]
     admin_pass = str(mothership.kv.select(cfg, ldap_master, key="ldap_admin_pass")).split('=')[1]
-    admin_dn = "cn=%s,dc=" % admin_cn
+    admin_dn = "cn=%s,dc=%s,dc=%s,dc=" % (admin_cn, realm, site_id)
     admin_dn += ',dc='.join(d)
     ld_server_string = "ldap://"+ldap_master
-
     # init the connection to the ldap server
     try:
         ldcon = ldap.initialize(ld_server_string)
@@ -95,11 +94,11 @@ def uadd(cfg, username):
     """
     [description]
     add a user to ldap
-    
+
     [parameter info]
     required:
         cfg: the config object. useful everywhere
-        username: the username to add 
+        username: the username to add
 
     [return value]
     no explicit return 
@@ -119,9 +118,9 @@ def uadd(cfg, username):
         raise LDAPError("user \"%s\" not found, aborting" % username)
 
     # create a connection to the ldap master
-    ldcon = ld_connect(cfg, ldap_master)
+    ldcon = ld_connect(cfg, ldap_master, u.realm, u.site_id)
 
-    dn = "uid=%s,ou=%s,dc=" % (u.username, cfg.ldap_users_ou)
+    dn = "uid=%s,ou=%s,dc=%s,dc=%s,dc=" % (u.username, cfg.ldap_users_ou, u.realm, u.site_id)
     dn += ',dc='.join(d)
     # stitch together the LDAP, fire it into the ldap master server 
     try:
@@ -152,8 +151,12 @@ def uadd(cfg, username):
                          ]
         add_record += attributes
         print "adding ldap user entry for %s" % (u.username+'.'+u.realm+'.'+u.site_id)
-        ldcon.add_s(dn,add_record)
+        ldcon.add_s(dn, add_record)
     except ldap.LDAPError, e:
+        print dn
+        print add_record
+        print u.username+'.'+u.realm+'.'+u.site_id
+        udisplay(cfg, u.username+'.'+u.realm+'.'+u.site_id) 
         raise LDAPError(e)
 
     # close the LDAP connection
@@ -182,12 +185,12 @@ def uremove(cfg, username):
     if u:
         # get ldap master info, stitch together some dn info
         ldap_master = get_master(cfg, u.realm+'.'+u.site_id)
-        dn = "uid=%s,ou=%s,dc=" % (u.username, cfg.ldap_users_ou)
+        dn = "uid=%s,ou=%s,dc=%s,dc=%s,dc=" % (u.username, cfg.ldap_users_ou, u.realm, u.site_id)
         dn += ',dc='.join(d)
     else:
         raise LDAPError("user \"%s\" not found, aborting" % username)
 
-    ldcon = ld_connect(cfg, ldap_master)
+    ldcon = ld_connect(cfg, ldap_master, u.realm, u.site_id)
 
     try:
         ldcon.delete_s(dn)
@@ -214,17 +217,19 @@ def urefresh(cfg, realm_path):
     realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
     # an array made of the domain parts.
     d = cfg.domain.split('.')
-
     dnlist = []
     userlist = []
     ldap_master = get_master(cfg, realm+'.'+site_id)
-    dn ="ou=%s,dc=" % cfg.ldap_users_ou
-    dn += ',dc='.join(d)
-    ldcon = ld_connect(cfg, ldap_master)
-    search = '(objectClass=person)'
 
-    for result in ldcon.search_s(dn, ldap.SCOPE_SUBTREE, search):
-        dnlist.append(result[0])
+    dn ="ou=%s,dc=%s,dc=%s,dc=" % (cfg.ldap_users_ou, realm, site_id)
+    dn += ',dc='.join(d)
+    ldcon = ld_connect(cfg, ldap_master, realm, site_id)
+    search = '(objectClass=person)'
+    try:
+        for result in ldcon.search_s(dn, ldap.SCOPE_SUBTREE, search):
+            dnlist.append(result[0])
+    except:
+        print "No existing user records found for dn: %s" % dn
 
     print "This command will completely wipe out all forms of life in the ldap database on %s" % ldap_master
     ans = raw_input("to completely refresh the ldap database type \"refresh_%s\": " % ldap_master)
@@ -238,8 +243,9 @@ def urefresh(cfg, realm_path):
     filter(Users.active==True).all():
         userlist.append(user.username+'.'+realm+'.'+site_id)
 
-    for dn in dnlist:
-        ldcon.delete_s(dn)
+    if dnlist:
+        for dn in dnlist:
+            ldcon.delete_s(dn)
     for user in userlist:
         uadd(cfg, user)
 
@@ -267,12 +273,12 @@ def udisplay(cfg, username):
     if u:
         # get ldap master info, stitch together some dn info
         ldap_master = get_master(cfg, u.realm+'.'+u.site_id)
-        dn = "uid=%s,ou=%s,dc=" % (u.username, cfg.ldap_users_ou)
+        dn = "uid=%s,ou=%s,dc=%s,dc=%s,dc=" % (u.username, cfg.ldap_users_ou, u.realm, u.site_id)
         dn += ',dc='.join(d)
     else:
         raise LDAPError("user \"%s\" not found, aborting" % username)
 
-    ldcon = ld_connect(cfg, ldap_master)
+    ldcon = ld_connect(cfg, ldap_master, u.realm, u.site_id)
 
     try:
         raw_res = ldcon.search_s(dn, ldap.SCOPE_BASE)
@@ -311,9 +317,9 @@ def uupdate(cfg, username):
         raise LDAPError("user \"%s\" not found, aborting" % username)
 
     # create a connection to the ldap master
-    ldcon = ld_connect(cfg, ldap_master)
+    ldcon = ld_connect(cfg, ldap_master, u.realm, u.site_id)
 
-    dn = "uid=%s,ou=%s,dc=" % (u.username, cfg.ldap_users_ou)
+    dn = "uid=%s,ou=%s,dc=%s,dc=%s,dc=" % (u.username, cfg.ldap_users_ou, u.realm, u.site_id)
     dn += ',dc='.join(d)
     # stitch together the LDAP, fire it into the ldap master server 
     try:
@@ -367,10 +373,9 @@ def gadd(cfg, groupname):
         raise LDAPError("group \"%s\" not found, aborting" % groupname)
 
     # create a connection to the ldap_master server
-    ldcon = ld_connect(cfg, ldap_master)
-
+    ldcon = ld_connect(cfg, ldap_master, g.realm, g.site_id)
     # stitch together the LDAP, fire it into the ldap master server 
-    dn = "cn=%s,ou=%s,dc=" % (g.groupname, cfg.ldap_groups_ou)
+    dn = "cn=%s,ou=%s,dc=%s,dc=%s,dc=" % (g.groupname, cfg.ldap_groups_ou, g.realm, g.site_id)
     dn += ',dc='.join(d)
     try:
         add_record = [('objectClass', ['top', 'posixGroup'])]
@@ -428,10 +433,10 @@ def gupdate(cfg, groupname):
         raise LDAPError("group \"%s\" not found, aborting" % groupname)
 
     # create a connection to the ldap_master server
-    ldcon = ld_connect(cfg, ldap_master)
+    ldcon = ld_connect(cfg, ldap_master, g.realm, g.site_id)
 
     # stitch together the LDAP, fire it into the ldap master server 
-    dn = "cn=%s,ou=%s,dc=" % (g.groupname, cfg.ldap_groups_ou)
+    dn = "cn=%s,ou=%s,dc=%s,dc=%s,dc=" % (g.groupname, cfg.ldap_groups_ou, g.realm, g.site_id)
     dn += ',dc='.join(d)
     try:
         mod_record = [(ldap.MOD_REPLACE, 'description', g.description),
@@ -468,12 +473,12 @@ def gremove(cfg, groupname):
     if g:
         # get ldap master info, stitch together some dn info
         ldap_master = get_master(cfg, g.realm+'.'+g.site_id)
-        dn = "cn=%s,ou=%s,dc=" % (g.groupname, cfg.ldap_groups_ou)
+        dn = "cn=%s,ou=%s,dc=%s,dc=%s,dc=" % (g.groupname, cfg.ldap_groups_ou, g.realm, g.site_id)
         dn += ',dc='.join(d)
     else:
         raise LDAPError("group \"%s\" not found, aborting" % groupname)
 
-    ldcon = ld_connect(cfg, ldap_master)
+    ldcon = ld_connect(cfg, ldap_master, g.realm, g.site_id)
 
     try:
         ldcon.delete_s(dn)
@@ -505,13 +510,16 @@ def grefresh(cfg, realm_path):
     dnlist = []
     grouplist = []
     ldap_master = get_master(cfg, realm+'.'+site_id)
-    dn ="ou=%s,dc=" % cfg.ldap_groups_ou
+    dn ="ou=%s,dc=%s,dc=%s,dc=" % (cfg.ldap_groups_ou, realm, site_id)
     dn += ',dc='.join(d)
-    ldcon = ld_connect(cfg, ldap_master)
+    ldcon = ld_connect(cfg, ldap_master, realm, site_id)
     search = '(objectClass=posixGroup)'
 
-    for result in ldcon.search_s(dn, ldap.SCOPE_SUBTREE, search):
-        dnlist.append(result[0])
+    try:
+        for result in ldcon.search_s(dn, ldap.SCOPE_SUBTREE, search):
+            dnlist.append(result[0])
+    except:
+        print "No existing group records found for dn: %s" % dn
 
     print "This command will completely wipe out all groups in the ldap database on %s" % ldap_master
     ans = raw_input("to completely refresh the groups in the ldap database type \"refresh_%s\": " % ldap_master)
@@ -554,12 +562,12 @@ def gdisplay(cfg, groupname):
     if g:
         # get ldap master info, stitch together some dn info
         ldap_master = get_master(cfg, g.realm+'.'+g.site_id)
-        dn = "cn=%s,ou=%s,dc=" % (g.groupname, cfg.ldap_groups_ou)
+        dn = "cn=%s,ou=%s,dc=%s,dc=%s,dc=" % (g.groupname, cfg.ldap_groups_ou, g.realm, g.site_id)
         dn += ',dc='.join(d)
     else:
         raise LDAPError("group \"%s\" not found, aborting" % groupname)
 
-    ldcon = ld_connect(cfg, ldap_master)
+    ldcon = ld_connect(cfg, ldap_master, g.realm, g.site_id)
 
     try:
         raw_res = ldcon.search_s(dn, ldap.SCOPE_BASE)
@@ -591,9 +599,9 @@ def ldapimport(cfg, realm_path):
     d = cfg.domain.split('.')
 
     ldap_master = get_master(cfg, realm+'.'+site_id)
-    dn ="ou=%s,dc=" % cfg.ldap_groups_ou
+    dn ="ou=%s,dc=%s,dc=%s,dc=" % (cfg.ldap_groups_ou, realm, site_id)
     dn += ',dc='.join(d)
-    ldcon = ld_connect(cfg, ldap_master)
+    ldcon = ld_connect(cfg, ldap_master, realm, site_id)
     search = '(objectClass=posixGroup)'
     attr = ['memberUid', 'gidNumber', 'description', 'cn']
     # fetch all groups from the ldap master db
@@ -635,7 +643,7 @@ def ldapimport(cfg, realm_path):
                     else:
                         # fetch user info from ldap, stuff into new
                         # user, map user into group
-                        dn = "uid=%s,ou=%s,dc=" % (user, cfg.ldap_users_ou)
+                        dn = "uid=%s,ou=%s,dc=%s,dc=%s,dc=" % (user, cfg.ldap_users_ou, realm, site_id)
                         dn += ',dc='.join(d)
                         search = '(objectClass=person)'
                         print "fetching user data for: %s" % dn
@@ -694,7 +702,7 @@ def ldapimport(cfg, realm_path):
                     else:
                         # fetch user info from ldap, stuff into new
                         # user, map user into group
-                        dn = "uid=%s,ou=%s,dc=" % (user, cfg.ldap_users_ou)
+                        dn = "uid=%s,ou=%s,dc=%s,dc=%s,dc=" % (user, cfg.ldap_users_ou, realm, site_id)
                         dn += ',dc='.join(d)
                         search = '(objectClass=person)'
                         try:
@@ -733,7 +741,7 @@ def ldapimport(cfg, realm_path):
                             print "User \"%s\" not created. The user is in a group in LDAP but does not actually exist in LDAP.\nMost likely this is a system user (such as \"nobody\" or \"apache\") that should not exist in LDAP." % user
     # now that we're done with the groups, let's go back in and make
     # sure we create any leftover users that weren't in a group
-    dn = "ou=%s,dc=" % cfg.ldap_users_ou
+    dn = "ou=%s,dc=%s,dc=%s,dc=" % (cfg.ldap_users_ou, realm, site_id)
     dn += ',dc='.join(d)
     search = '(objectClass=person)'
     try:
@@ -797,11 +805,11 @@ def update_ldap_passwd(cfg, username):
     d = cfg.domain.split('.')
     if u:
         ldap_master = get_master(cfg, u.realm+'.'+u.site_id)
-        dn = "uid=%s,ou=%s,dc=" % (u.username, cfg.ldap_users_ou)
+        dn = "uid=%s,ou=%s,dc=%s,dc=%s,dc=" % (u.username, cfg.ldap_users_ou, u.realm, u.site_id)
         dn += ',dc='.join(d)
     else:
         raise LDAPError("user \"%s\" not found, aborting" % username)
-    ldcon = ld_connect(cfg, ldap_master)
+    ldcon = ld_connect(cfg, ldap_master, u.realm, u.site_id)
     try:
         raw_res = ldcon.search_s(dn, ldap.SCOPE_BASE)
         if 'userPassword' in raw_res[0][1].keys():

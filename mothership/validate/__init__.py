@@ -850,8 +850,8 @@ def v_validate_name(cfg, name):
         print 'name contains illegal characters! allowed characters are: A-Z a-z 0-9 _ - .'
         return False
 
-    if len(name) < 4:
-        print 'too short! name must have more than 3 characters'
+    if len(name) < 2:
+        print 'too short! name must have more than 1 character'
         return False
 
     return True
