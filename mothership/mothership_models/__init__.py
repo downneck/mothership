@@ -155,7 +155,7 @@ class DnsAddendum(Base):
     record_type = Column(String)
 
     def __init__(self, host, record_type, realm, site_id, target):
-        self.site_id = hw_tag
+        self.site_id = site_id
         self.realm = realm
         self.host = host
         self.target = target

@@ -110,6 +110,9 @@ cobbler:
     pass: 'sfo'
     host: 'cm1.prod.sfo'
 
+  # for citrix xenserver, define templates for post-install
+  xentemplates:
+    '/var/www/cobbler/aux/xenserver/filename.template': '/alias'
 
 # power control options
 power:

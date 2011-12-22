@@ -227,11 +227,7 @@ class CobblerAPI:
                 if 'xenserver' in sysdict['profile']:
                     if self.coblive:
                         #print 'Modifying %s templates values' % hostname
-                        remote.modify_system(handle, 'template_files', {
-                            '/var/www/cobbler/aux/xenserver/create_bond0.template': '/bond0',
-                            '/var/www/cobbler/aux/xenserver/create_eth1.template': '/eth1',
-                            '/var/www/cobbler/aux/xenserver/gateway_eth1.template': '/defgw',
-                            }, token)
+                        remote.modify_system(handle, 'template_files', cfg.cobconfig['xentemplates'], token)
                     else:
                         print 'API: if \'xenserver\' profile:'
                         print 'API:     remote.modify_system(handle, \'template_files\', {template-path:alias}, token)'
@@ -418,7 +414,7 @@ class CobblerAPI:
         # abort kick if host.realm.site_id not defined for current system
         try:
             if str(self._extract_system_by_hostname(remote,
-                host.split('.')[0])).find(host) < 0:
+                host)).find(host) < 0:
                 print '!! IP Address for %s not defined' % host
                 print 'Please run: %s mod_vlan %s <vlan#>' % (name, host)
                 print 'or equivalent command before kickstarting'
@@ -426,7 +422,7 @@ class CobblerAPI:
         except:
             return False
         # confirm kick if host.realm.site_id responds to pings
-        pingcheck = os.popen("ping -q -c2 -t2 "+host,"r")
+        pingcheck = os.popen("ping -q -c2 -t5 "+host,"r")
         while 1:
             line = pingcheck.readline()
             if not line: break
