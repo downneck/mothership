@@ -135,6 +135,10 @@ def callable_path(pname, callpath):
             buf = getattr(module_metadata[pname], module_metadata[pname].metadata['methods'][callpath]['call'])
             return myjson.JSONEncoder().encode(buf(query))
 
+@httpship.route("/favicon.ico")
+def favicon():
+    return bottle.static_file('favicon.ico', root=sys.path[0])
+
 @httpship.route("/test")
 def test():
     query = {}
