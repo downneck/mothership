@@ -54,7 +54,7 @@ class list_servers:
                     'required_args': {
                     },
                     'optional_args': {
-                        'min': 0,
+                        'min': 1,
                         'max': 1,
                         'args': {
                             'all': {

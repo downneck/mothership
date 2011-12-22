@@ -105,7 +105,7 @@ def callable_path(pname, callpath):
     # everyone wants query strings, blow up and spit out information if
     # we don't get any query strings
     elif not query:
-        buf = "Here are the possible query strings for \"%s/%s\"<BR><BR>required_args:<BR>" % (pname, callpath) 
+        buf = "Here are the possible query strings for \"/%s/%s\"<BR><BR>required_args:<BR>" % (pname, callpath)
         try:
             for req in module_metadata[pname].metadata['methods'][callpath]['required_args']['args'].keys():
                 if cfg.debug:
@@ -113,7 +113,7 @@ def callable_path(pname, callpath):
                 buf += "%s (%s): %s<BR>" % (req, module_metadata[pname].metadata['methods'][callpath]['required_args']['args'][req]['vartype'], module_metadata[pname].metadata['methods'][callpath]['required_args']['args'][req]['desc'])
         except:
             buf += "No required_args found<BR>"
-        buf += "<BR><BR>optional_args:<BR>"
+        buf += "<BR><BR>optional_args, please supply at least %s but not more than %s of the following:<BR>" % (module_metadata[pname].metadata['methods'][callpath]['optional_args']['min'], module_metadata[pname].metadata['methods'][callpath]['optional_args']['max'])
         try:
             for opt in module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'].keys():
                 if cfg.debug:
