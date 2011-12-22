@@ -1143,8 +1143,9 @@ class ShipCli(cmdln.Cmdln):
                         return
                 else:
                     print 'API: clear out puppet key before we proceed'
-                if opts.sync: cc.sync_cobbler()
+                # netboot must come before sync for xenserver post-sync triggers
                 cc.set_system_netboot(unqdn, True)
+                if opts.sync: cc.sync_cobbler()
                 cc.set_system_power(unqdn, 'reboot', virtual=sysdict['virtual'])
                 if self.cfg.zenlive:
                     zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))

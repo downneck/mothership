@@ -227,11 +227,7 @@ class CobblerAPI:
                 if 'xenserver' in sysdict['profile']:
                     if self.coblive:
                         #print 'Modifying %s templates values' % hostname
-                        remote.modify_system(handle, 'template_files', {
-                            '/var/www/cobbler/aux/xenserver/create_bond0.template': '/bond0',
-                            '/var/www/cobbler/aux/xenserver/create_eth1.template': '/eth1',
-                            '/var/www/cobbler/aux/xenserver/gateway_eth1.template': '/defgw',
-                            }, token)
+                        remote.modify_system(handle, 'template_files', cfg.cobconfig['xentemplates'], token)
                     else:
                         print 'API: if \'xenserver\' profile:'
                         print 'API:     remote.modify_system(handle, \'template_files\', {template-path:alias}, token)'
