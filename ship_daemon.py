@@ -59,7 +59,7 @@ except ImportError, e:
 
 @httpship.route('/')
 def index():
-    buf = "<P>namespaces:<BR><BR>"
+    buf = "<P>loaded modules:<BR><BR>"
     for k in module_metadata.keys():
         if cfg.debug:
             print 'route: /'
@@ -74,7 +74,7 @@ def index():
 
 @httpship.route("/:pname")
 def namespace_path(pname):
-    buf = "Callable paths:<BR><BR>"
+    buf = "Callable functions:<BR><BR>"
     buf += "/"+pname+"/metadata<BR>"
     if cfg.debug:
         print "buf: "+buf
