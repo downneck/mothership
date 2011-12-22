@@ -56,10 +56,22 @@ class serverinfo:
                         'min': 1, # minimum number of optional args we'll accept
                         'max': 1, # maximum number of optional args we'll accept
                         'args': { # the argument definitions themselves
-                            'hw_tag': 'string', # an arg and its type
-                            'ip': 'string', # an arg and its type
-                            'mac': 'string', # an arg and its type
-                            'hostname': 'string', # an arg and its type
+                            'hw_tag': { # an arg
+                                'vartype': 'string', # its type
+                                'desc': 'search for a hw_tag (hardware tag)', # its description
+                            },
+                            'ip': { # an arg
+                                'vartype': 'string', # its type
+                                'desc': 'search for an ip (public or private)', # its description
+                            },
+                            'mac': { # an arg
+                                'vartype': 'string', # its type
+                                'desc': 'search for a MAC address', # its description
+                            },
+                            'hostname': { # an arg
+                                'vartype': 'string', # its type
+                                'desc': 'search for a hostname', # its description
+                            },
                         },
                     },
                     'cmdln_aliases': [ # list of desired subcommand aliases for our command line
