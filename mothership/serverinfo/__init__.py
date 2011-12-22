@@ -84,7 +84,7 @@ class serverinfo:
         }
 
 
-    def get_host(self, query, DEBUG):
+    def get_host(self, query):
         """
         [description]
         search for a host based on info supplied
@@ -106,16 +106,16 @@ class serverinfo:
         if len(query) > self.metadata['methods']['get_host']['optional_args']['max']:
             retval = "too many queries! max number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['max']
             retval += "you tried to pass %s queries\n" % len(query)
-            if DEBUG:
+            if cfg.debug:
                 print retval
             raise ServerInfoError(retval)
         elif len(query) < self.metadata['methods']['get_host']['optional_args']['min']:
             retval = "not enough queries! min number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['min']
             retval += "you tried to pass %s queries\n" % len(query)
-            if DEBUG:
+            if cfg.debug:
                 print retval
             raise ServerInfoError(retval)
-        elif DEBUG:
+        elif cfg.debug:
             print "num queries: %s" % len(query)
             print "max num queries: %s" % self.metadata['methods']['get_host']['optional_args']['max']
 
@@ -125,17 +125,17 @@ class serverinfo:
                     filter(Server.hw_tag==query['hw_tag']).\
                     filter(Server.virtual==False).first()
                 if s.hostname:
-                    ret = self.__getserverinfo(s.hostname, s.realm, s.site_id, DEBUG)
+                    ret = self.__getserverinfo(s.hostname, s.realm, s.site_id)
             except TypeError:
                 raise ServerInfoError("no host found with hw_tag: %s" % query['hw_tag'])
-        elif 'ip' in query:
+        if 'ip' in query:
             # try the private ip
             try:
                 s, n = cfg.dbsess.query(Server, Network).\
                     filter(Server.id==Network.server_id).\
                     filter(Network.ip==query['ip']).first()
                 if s.hostname:
-                    ret = self.__getserverinfo(s.hostname, s.realm, s.site_id, DEBUG)
+                    ret = self.__getserverinfo(s.hostname, s.realm, s.site_id)
             except TypeError:
                 pass
             # try the public ip
@@ -144,36 +144,39 @@ class serverinfo:
                     filter(Server.id==Network.server_id).\
                     filter(Network.public_ip==query['ip']).first()
                 if s.hostname:
-                    ret = self.__getserverinfo(s.hostname, s.realm, s.site_id, DEBUG)
+                    ret = self.__getserverinfo(s.hostname, s.realm, s.site_id)
             except TypeError:
                 raise ServerInfoError("no host found with public or private ip: %s" % query['ip'])
-        elif 'mac' in query:
+        if 'mac' in query:
             try:
                 h, s = cfg.dbsess.query(Network, Server).\
                     filter(Network.hw_tag==Server.hw_tag).\
                     filter(Network.mac==query['mac']).\
                     filter(Server.virtual==False).first()
                 if s.hostname:
-                    ret = self.__getserverinfo(s.hostname, s.realm, s.site_id, DEBUG)
+                    ret = self.__getserverinfo(s.hostname, s.realm, s.site_id, cfg.debug)
             except TypeError:
                 raise ServerInfoError("no host found with MAC address: %s" % query['mac'])
-        elif 'hostname' in query:
+        if 'hostname' in query:
             try:
                 # this won't work with our RESTness
                 #unqdn = mothership.validate.v_get_fqn(cfg, name=query['hostname'])
                 #
                 s = mothership.validate.v_get_host_obj(cfg, query['hostname'])
-                if DEBUG:
+                if cfg.debug:
                     print s
-                ret = self.__getserverinfo(s.hostname, s.realm, s.site_id, DEBUG)
+                ret = self.__getserverinfo(s.hostname, s.realm, s.site_id)
             except:
                 raise ServerInfoError("no host found with name: %s" % query['hostname'])
+
+        if ret:
+            return ret
         else:
-            raise ServerInfoError("You did something weird, that made the serverinfo module blow up.")
+            if cfg.debug:
+                print "get_host: return value \"ret\" is empty!"
+            raise ServerInfoError("get_host: return value\"ret\" is empty!")
 
-        return ret
-
-    def __getserverinfo(self, host, realm, site_id, DEBUG):
+    def __getserverinfo(self, host, realm, site_id):
         """
         [description]
         return all information for a server, identified by host.realm.site_id
@@ -203,10 +206,10 @@ class serverinfo:
           filter(Hardware.hw_tag==Server.hw_tag).first()
 
           ret['server'] = s.to_dict() # add server object to return dict
-          if DEBUG:
+          if cfg.debug:
               print s.to_dict()
           ret['hardware'] = h.to_dict() # add hardware object to return dict
-          if DEBUG:
+          if cfg.debug:
               print h.to_dict()
 
           # kv entries
@@ -218,7 +221,7 @@ class serverinfo:
             fqdn = '.'.join([host,realm,site_id])
             kvs = mothership.kv.collect(cfg, fqdn, key='tag')
           ret['kv'] = kvs # add list of kv objects to return dict
-          if DEBUG:
+          if cfg.debug:
               print kvs
 
           # network entries
@@ -227,7 +230,7 @@ class serverinfo:
           filter(Server.hostname==s.hostname).\
           order_by(Network.interface).all():
               nets.append(n.to_dict()) # add network objects to our list
-              if DEBUG:
+              if cfg.debug:
                   print n.to_dict()
           ret['network'] = nets # add list of network objects to return dict
 

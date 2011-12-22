@@ -57,6 +57,10 @@ class list_servers:
                         'min': 0,
                         'max': 1,
                         'args': {
+                            'all': {
+                                'vartype': 'None',
+                                'desc': 'retrieve all servers',
+                            },
                             'tag': {
                                 'vartype': 'string',
                                 'desc': 'filter by tag',
@@ -65,9 +69,9 @@ class list_servers:
                                 'vartype': 'string',
                                 'desc': 'filter by hardware tag',
                             },
-                            'name': {
+                            'hostname': {
                                 'vartype': 'string',
-                                'desc': 'filter by name',
+                                'desc': 'filter by hostname',
                             },
                             'virtual': {
                                 'vartype': 'bool',
@@ -121,7 +125,7 @@ class list_servers:
         }
 
 
-    def lss(self, query, DEBUG):
+    def lss(self, query):
         """
         [description]
         creates a list of all servers found for a given parameter
@@ -263,44 +267,84 @@ class list_servers:
 #            order_by(Server.hostname):
 #                buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 #
-#        # list servers by hw_tag
-#        elif listby == 'hw_tag':
-#          if lookfor == None:
-#            raise ListServersError("you must supply a value to filter on")
-#          else:
-#            for serv in cfg.dbsess.query(Server).\
-#            filter(Server.hw_tag==lookfor):
-#                buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-#
-#
-#        # list servers by virtual
-#        elif listby == 'virtual':
-#          for serv in cfg.dbsess.query(Server).\
-#          filter(Server.virtual==True).\
-#          order_by(Server.hostname):
-#              buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-#
-#        # list servers by physical
-#        elif listby == 'physical':
-#          for serv in cfg.dbsess.query(Server).\
-#          filter(Server.virtual==False).\
-#          order_by(Server.hostname):
-#              buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-#
-#        # list servers by name
-#        elif listby == 'name':
-#          if lookfor == None:
-#            raise ListServersError("you must supply a value to filter on")
-#          else:
-#            search_string = '%' + lookfor + '%'
-#            for serv in cfg.dbsess.query(Server).\
-#            filter(Server.hostname.like(search_string)).\
-#            order_by(Server.hostname):
-#                buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-#
-        # list all servers by default
-        if not query:
+
+
+
+        # list all servers
+        if 'all' in query.keys():
           for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
               buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+
+        # list servers by name
+        if 'hostname' in query.keys():
+            if not query['hostname']:
+                if cfg.debug:
+                    print "you must supply a value to filter by hostname"
+                raise ListServersError("you must supply a value to filter by hostname")
+            else:
+                try:
+                    if cfg.debug:
+                        print "list_servers querying on name: %s" % query['hostname']
+                    search_string = '%' + query['hostname'] + '%'
+                    for serv in cfg.dbsess.query(Server).\
+                    filter(Server.hostname.like(search_string)).\
+                    order_by(Server.hostname):
+                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+                except:
+                    if cfg.debug:
+                        print "list_servers failed query for hostname: %s" % query['hostname'] 
+                    raise ListServersError("list_servers failed query for hostname: %s" % query['hostname'])
+
+        # list physical (bare metal, non-virtual) servers
+        if 'physical' in query.keys():
+            try:
+                if cfg.debug:
+                    print "list_servers querying for physical (baremetal) servers"
+                for serv in cfg.dbsess.query(Server).\
+                filter(Server.virtual==False).\
+                order_by(Server.hostname):
+                    buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+            except:
+                if cfg.debug:
+                    print "list_servers failed query for physical servers"
+                raise ListServersError("list_servers failed query for physical servers")
+
+        # list virtual servers
+        if 'virtual' in query.keys():
+            try:
+                if cfg.debug:
+                    print "list_servers querying for virtual servers"
+                for serv in cfg.dbsess.query(Server).\
+                    filter(Server.virtual==True).\
+                    order_by(Server.hostname):
+                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+            except:
+                if cfg.debug:
+                    print "list_servers failed query for virtual servers"
+                raise ListServersError("list_servers failed query for virtual servers")
+
+        # list servers by hw_tag
+        if 'hw_tag' in query.keys():
+            if not query['hw_tag']:
+                if cfg.debug:
+                    print "you must supply a value to search for a hw_tag"
+                raise ListServersError("you must supply a value to search for a hw_tag")
+            else:
+                try:
+                    if cfg.debug:
+                        print "list_servers querying on hw_tag: %s" % query['hw_tag'] 
+                    for serv in cfg.dbsess.query(Server).\
+                    filter(Server.hw_tag==query['hw_tag']):
+                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+                except:
+                    if cfg.debug:
+                        print "list_servers failed query for hw_tag: %s" % query['hw_tag']
+                    raise ListServersError("list_servers failed query for hw_tag: %s" % query['hw_tag'])
+
+
+
+
+
+
 
         return buf

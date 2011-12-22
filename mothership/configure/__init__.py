@@ -160,6 +160,10 @@ class Configure:
 
         # General settings
         genconfig = all_configs['general']
+        if 'debug' in genconfig and genconfig['debug']:
+            self.debug = genconfig['debug']
+        else:
+            self.debug = False
         if 'domain' in genconfig and genconfig['domain']:
             self.domain = genconfig['domain']
         else:

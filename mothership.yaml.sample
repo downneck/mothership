@@ -22,6 +22,9 @@ general:
   # a fqun in mothership is: username.realm.site_id.domain.tld
   # ex: dkovach.prod.area51.mywebsite.com
 
+  # Set this to True to enable debugging output
+  debug: False
+
   # the domain portion of the fqn
   domain: 'localhost.localdomain'
 
