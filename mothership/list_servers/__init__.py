@@ -128,7 +128,7 @@ class list_servers:
 
         [parameter info]
         required:
-            query: the query string being passed to us from the called URI 
+            query: the query string being passed to us from the called URI
 
         [return value]
         a list containing the names of servers matching the filters
@@ -137,70 +137,18 @@ class list_servers:
         cfg = self.cfg
         buf = []
 
-        if len(query) > self.metadata['methods']['lss']['optional_args']['max']:
+        if len(query.keys()) > self.metadata['methods']['lss']['optional_args']['max']:
             retval = "too many queries! max number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['max']
-            retval += "you tried to pass %s queries\n" % len(query)
+            retval += "you tried to pass %s queries\n" % len(query.keys())
             if cfg.debug:
                 print retval
             raise ListServersError(retval)
         else:
             if cfg.debug:
-                print "num queries: %s" % len(query)
+                print "num queries: %s" % len(query.keys())
                 print "max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max']
 
-#        # list servers by manufacturer
-#        elif listby == 'manufacturer':
-#          if lookfor == None:
-#            raise ListServersError("you must supply a value to filter on")
-#          else:
-#            search_string = '%' + lookfor + '%'
-#            for serv, hw in cfg.dbsess.query(Server, Hardware).\
-#            filter(Hardware.manufacturer.like(search_string)).\
-#            filter(Server.hw_tag==Hardware.hw_tag).\
-#            order_by(Server.hostname):
-#                buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 #
-#        # list servers by model name
-#        elif listby == 'model':
-#          if lookfor == None:
-#            raise ListServersError("you must supply a value to filter on")
-#          else:
-#            search_string = '%' + lookfor + '%'
-#            for serv, hw in cfg.dbsess.query(Server, Hardware).\
-#            filter(Hardware.model.like(search_string)).\
-#            filter(Server.hw_tag==Hardware.hw_tag).\
-#            order_by(Server.hostname):
-#                buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-#
-#        # list servers by cores
-#        elif listby == 'cores':
-#          if lookfor.isdigit():
-#            raise ListServersError("you must supply a value to filter on")
-#          else:
-#            for serv in cfg.dbsess.query(Server).\
-#            filter(Server.cores==lookfor).\
-#            order_by(Server.hostname):
-#                buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-#
-#        # list servers by ram
-#        elif listby == 'ram':
-#          if lookfor.isdigit():
-#            raise ListServersError("you must supply a value to filter on")
-#          else:
-#            for serv in cfg.dbsess.query(Server).\
-#            filter(Server.ram==lookfor).\
-#            order_by(Server.hostname):
-#                buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-#
-#        # list servers by disk
-#        elif listby == 'disk':
-#          if lookfor.isdigit():
-#            raise ListServersError("you must supply a value to filter on")
-#          else:
-#            for serv in cfg.dbsess.query(Server).\
-#            filter(Server.disk==lookfor).\
-#            order_by(Server.hostname):
-#                buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 #
 
 
@@ -378,8 +326,105 @@ class list_servers:
                         print "list_servers: failed query for realm: %s" % query['realm']
                     raise ListServersError("list_servers: failed query for realm: %s" % query['realm'])
 
+        # list servers by manufacturer
+        if 'manufacturer' in query.keys():
+            if not query['manufacturer']:
+                if cfg.debug:
+                    print "list_servers: you must supply a value to filter on manufacturer"
+                raise ListServersError("list_servers: you must supply a value to filter on manufacturer")
+            else:
+                try:
+                    if cfg.debug:
+                        print "list_servers: querying on manufacturer: %s" % query['manufacturer']
+                    search_string = '%' + query['manufacturer'] + '%'
+                    for serv, hw in cfg.dbsess.query(Server, Hardware).\
+                    filter(Hardware.manufacturer.like(search_string)).\
+                    filter(Server.hw_tag==Hardware.hw_tag).\
+                    order_by(Server.hostname):
+                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+                except:
+                    if cfg.debug:
+                        print "list_servers: failed query for manufacturer: %s" % query['manufacturer']
+                    raise ListServersError("list_servers: failed query for manufacturer: %s" % query['manufacturer'])
+
+        # list servers by model name
+        if 'model' in query.keys():
+            if not query['model']:
+                if cfg.debug:
+                    print "list_servers: you must supply a value to filter on model"
+                raise ListServersError("list_servers: you must supply a value to filter on model")
+            else:
+                try:
+                    if cfg.debug:
+                        print "list_servers: querying on model: %s" % query['model']
+                    search_string = '%' + query['model']+ '%'
+                    for serv, hw in cfg.dbsess.query(Server, Hardware).\
+                    filter(Hardware.model.like(search_string)).\
+                    filter(Server.hw_tag==Hardware.hw_tag).\
+                    order_by(Server.hostname):
+                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+                except:
+                    if cfg.debug:
+                        print "list_servers: failed query for model: %s" % query['model']
+                    raise ListServersError("list_servers: failed query for model: %s" % query['model'])
+
+        # list servers by cores
+        if 'cores' in query.keys():
+            if not query['cores'].isdigit():
+                if cfg.debug:
+                    print "list_servers: you must supply an int to filter by number of cores"
+                raise ListServersError("list_servers: you must supply an int to filter by number of cores")
+            else:
+                try:
+                    if cfg.debug:
+                        print "list_servers: querying on number of cores: %s" % query['cores']
+                    for serv in cfg.dbsess.query(Server).\
+                    filter(Server.cores==query['cores']).\
+                    order_by(Server.hostname):
+                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+                except:
+                    if cfg.debug:
+                        print "list_servers: query failed for number of cores: %s" % query['cores']
+                    raise ListServersError("list_servers: query failed for number of cores: %s" % query['cores'])
+
+        # list servers by ram
+        if 'ram' in query.keys():
+            if not query['ram'].isdigit():
+                if cfg.debug:
+                    print "list_servers: you must supply an int to filter by ram size (in GB)"
+                raise ListServersError("list_servers: you must supply an int to filter by ram size (in GB)")
+            else:
+                try:
+                    if cfg.debug:
+                        print "list_servers: querying on ram size in GB: %s" % query['ram']
+                    for serv in cfg.dbsess.query(Server).\
+                    filter(Server.ram==query['ram']).\
+                    order_by(Server.hostname):
+                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+                except:
+                    if cfg.debug:
+                        print "list_servers: query failed for ram size in GB: %s" % query['ram']
+                    raise ListServersError("list_servers: query failed for ram size in GB: %s" % query['ram'])
+
+        # list servers by disk
+        if 'disk' in query.keys():
+            if not query['disk'].isdigit():
+                if cfg.debug:
+                    print "list_servers: you must supply an int to filter by disk size (in GB)"
+                raise ListServersError("list_servers: you must supply an int to filter by disk size (in GB)")
+            else:
+                try:
+                    if cfg.debug:
+                        print "list_servers: querying on disk size in GB: %s" % query['disk']
+                    for serv in cfg.dbsess.query(Server).\
+                    filter(Server.disk==query['disk']).\
+                    order_by(Server.hostname):
+                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+                except:
+                    if cfg.debug:
+                        print "list_servers: query failed for disk size in GB: %s" % query['disk']
+                    raise ListServersError("list_servers: query failed for disk size in GB: %s" % query['disk'])
 
 
-
-
+        # return the list of servers we've found
         return buf
