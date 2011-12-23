@@ -32,7 +32,7 @@ class serverinfo:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.version = '1' # the version of this module
+        self.version = 1 # the version of this module
         self.name = 'serverinfo' # class name
         self.namespace = 'serverinfo' # class' namespace
         self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
@@ -98,11 +98,8 @@ class serverinfo:
         search for a host based on info supplied
 
         [parameter info]
-        optional:
-            hw_tag: the hardware tag to search for
-            ip: the ip to search for
-            mac: the mac address to search for
-            hostname: the hostname.realm.site_id to search for
+        required:
+            query: the query dict being passed to us from the called URI
 
         [return value]
         returns a dict of ORMobjects if successful, "None" if unsuccessful

@@ -32,15 +32,15 @@ class list_servers:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.version = '1'
+        self.version = 1
         self.name = 'list_servers'
         self.namespace = 'list_servers'
         self.metadata = {
             'config': {
                 'module_dependencies': {
-                    'kv': '1',
-                    'mothership_models': '1',
-                    'mothership': '1',
+                    'kv': 1,
+                    'mothership_models': 1,
+                    'mothership': 1,
                 },
             },
             'methods': {
@@ -128,7 +128,7 @@ class list_servers:
 
         [parameter info]
         required:
-            query: the query string being passed to us from the called URI
+            query: the query dict being passed to us from the called URI
 
         [return value]
         a list containing the names of servers matching the filters
