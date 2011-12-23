@@ -141,34 +141,7 @@ def favicon():
 
 @httpship.route("/test")
 def test():
-    query = {}
-    query = bottle.request.GET
-    if cfg.debug:
-        print "num query strings: %s" % len(query)
-    if query:
-        for k in query.keys():
-            print "key: %s, value: %s" % (k, query[k])
-    else:
-        buf = "Here are the possible query strings for module \"%s\"<BR><BR>required_args:<BR>" % 'list_servers'
-        try:
-            for req in module_metadata['list_servers'].metadata['methods']['lss']['required_args']['args'].keys():
-                if cfg.debug:
-                    print "required arg: %s" % req
-                buf += "%s (%s): %s<BR>" % (req, module_metadata['list_servers'].metadata['methods']['lss']['required_args']['args'][req]['vartype'], module_metadata['list_servers'].metadata['methods']['lss']['required_args']['args'][req]['desc'])
-        except:
-            buf += "No required_args found<BR>"
-        buf += "<BR><BR>optional_args:<BR>"
-        try:
-            for opt in module_metadata['list_servers'].metadata['methods']['lss']['optional_args']['args'].keys():
-                if cfg.debug:
-                    print "optional arg: %s" % opt
-                buf += "%s (%s): %s<BR>" % (opt, module_metadata['list_servers'].metadata['methods']['lss']['optional_args']['args'][opt]['vartype'], module_metadata['list_servers'].metadata['methods']['lss']['optional_args']['args'][opt]['desc'])
-        except:
-            buf += "No optional_args found<BR>"
-        if cfg.debug:
-            print buf
-        return buf
-
+    pass
 
 # the daemon
 bottle.run(httpship, host='0.0.0.0', port=8081, reloader=False)
