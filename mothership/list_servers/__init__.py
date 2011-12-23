@@ -138,43 +138,38 @@ class list_servers:
         buf = []
 
         if len(query.keys()) > self.metadata['methods']['lss']['optional_args']['max']:
-            retval = "too many queries! max number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['max']
-            retval += "you tried to pass %s queries\n" % len(query.keys())
+            retval = "list_servers/lss: too many queries! max number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['max']
+            retval += "list_servers/lss: you tried to pass %s queries\n" % len(query.keys())
             if cfg.debug:
                 print retval
             raise ListServersError(retval)
         else:
             if cfg.debug:
-                print "num queries: %s" % len(query.keys())
-                print "max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max']
-
-#
-#
-
-
+                print "list_servers/lss: num queries: %s" % len(query.keys())
+                print "list_servers/lss: max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max']
 
         # list all servers
         if 'all' in query.keys():
             if cfg.debug:
-                print "list_servers: querying for ALL servers"
+                print "list_servers/lss: querying for ALL servers"
             try:
                 for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
                     buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
             except:
                 if cfg.debug:
-                    print "list_servers: query failed for ALL servers"
-                raise ListServersError("list_servers: query failed for ALL servers")
+                    print "list_servers/lss: query failed for ALL servers"
+                raise ListServersError("list_servers/lss: query failed for ALL servers")
 
         # list servers by name
         if 'hostname' in query.keys():
             if not query['hostname']:
                 if cfg.debug:
-                    print "list_servers: you must supply a value to filter by hostname"
-                raise ListServersError("list_servers: you must supply a value to filter by hostname")
+                    print "list_servers/lss: you must supply a value to filter by hostname"
+                raise ListServersError("list_servers/lss: you must supply a value to filter by hostname")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on name: %s" % query['hostname']
+                        print "list_servers/lss: querying on name: %s" % query['hostname']
                     search_string = '%' + query['hostname'] + '%'
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.hostname.like(search_string)).\
@@ -182,65 +177,65 @@ class list_servers:
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
                 except:
                     if cfg.debug:
-                        print "list_servers: failed query for hostname: %s" % query['hostname']
-                    raise ListServersError("list_servers: failed query for hostname: %s" % query['hostname'])
+                        print "list_servers/lss: failed query for hostname: %s" % query['hostname']
+                    raise ListServersError("list_servers/lss: failed query for hostname: %s" % query['hostname'])
 
         # list physical (bare metal, non-virtual) servers
         if 'physical' in query.keys():
             try:
                 if cfg.debug:
-                    print "list_servers: querying for physical (baremetal) servers"
+                    print "list_servers/lss: querying for physical (baremetal) servers"
                 for serv in cfg.dbsess.query(Server).\
                 filter(Server.virtual==False).\
                 order_by(Server.hostname):
                     buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
             except:
                 if cfg.debug:
-                    print "list_servers: failed query for physical servers"
-                raise ListServersError("list_servers: failed query for physical servers")
+                    print "list_servers/lss: failed query for physical servers"
+                raise ListServersError("list_servers/lss: failed query for physical servers")
 
         # list virtual servers
         if 'virtual' in query.keys():
             try:
                 if cfg.debug:
-                    print "list_servers: querying for virtual servers"
+                    print "list_servers/lss: querying for virtual servers"
                 for serv in cfg.dbsess.query(Server).\
                     filter(Server.virtual==True).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
             except:
                 if cfg.debug:
-                    print "list_servers: failed query for virtual servers"
-                raise ListServersError("list_servers: failed query for virtual servers")
+                    print "list_servers/lss: failed query for virtual servers"
+                raise ListServersError("list_servers/lss: failed query for virtual servers")
 
         # list servers by hw_tag
         if 'hw_tag' in query.keys():
             if not query['hw_tag']:
                 if cfg.debug:
-                    print "list_servers: you must supply a value to filter by hw_tag"
-                raise ListServersError("list_servers: you must supply a value to filter by hw_tag")
+                    print "list_servers/lss: you must supply a value to filter by hw_tag"
+                raise ListServersError("list_servers/lss: you must supply a value to filter by hw_tag")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on hw_tag: %s" % query['hw_tag']
+                        print "list_servers/lss: querying on hw_tag: %s" % query['hw_tag']
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.hw_tag==query['hw_tag']):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
                 except:
                     if cfg.debug:
-                        print "list_servers: failed query for hw_tag: %s" % query['hw_tag']
-                    raise ListServersError("list_servers: failed query for hw_tag: %s" % query['hw_tag'])
+                        print "list_servers/lss: failed query for hw_tag: %s" % query['hw_tag']
+                    raise ListServersError("list_servers/lss: failed query for hw_tag: %s" % query['hw_tag'])
 
         # list servers by vlan
         if 'vlan' in query.keys():
             if not query['vlan']:
                 if cfg.debug:
-                    print "list_servers: you must supply a value to filter by vlan"
-                raise ListServersError("list_servers: you must supply a value to filter by vlan")
+                    print "list_servers/lss: you must supply a value to filter by vlan"
+                raise ListServersError("list_servers/lss: you must supply a value to filter by vlan")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on vlan: %s" % query['vlan']
+                        print "list_servers/lss: querying on vlan: %s" % query['vlan']
                     for serv, net in cfg.dbsess.query(Server, Network).\
                     filter(Network.ip!=None).\
                     filter(Network.vlan==query['vlan']).\
@@ -249,38 +244,38 @@ class list_servers:
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
                 except:
                     if cfg.debug:
-                        print "list_servers: failed query for vlan: %s" % query['vlan']
-                    raise ListServersError("list_servers: failed query for vlan: %s" % query['vlan'])
+                        print "list_servers/lss: failed query for vlan: %s" % query['vlan']
+                    raise ListServersError("list_servers/lss: failed query for vlan: %s" % query['vlan'])
 
         # list servers by site_id
         if 'site_id' in query.keys():
             if not query['site_id']:
                 if cfg.debug:
-                    print "list_servers: you must supply a value to filter by site_id"
-                raise ListServersError("list_servers: you must supply a value to filter by site_id")
+                    print "list_servers/lss: you must supply a value to filter by site_id"
+                raise ListServersError("list_servers/lss: you must supply a value to filter by site_id")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on site_id: %s" % query['site_id']
+                        print "list_servers/lss: querying on site_id: %s" % query['site_id']
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.site_id==query['site_id']).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
                 except:
                     if cfg.debug:
-                        print "list_servers: failed query for site_id: %s" % query['vlan']
-                    raise ListServersError("list_servers: failed query for site_id: %s" % query['vlan'])
+                        print "list_servers/lss: failed query for site_id: %s" % query['vlan']
+                    raise ListServersError("list_servers/lss: failed query for site_id: %s" % query['vlan'])
 
         # list servers by tag
         if 'tag' in query.keys():
             if not query['tag']:
                 if cfg.debug:
-                    print "list_servers: you must supply a value to filter by tag"
-                raise ListServersError("list_servers: you must supply a value to filter by tag")
+                    print "list_servers/lss: you must supply a value to filter by tag"
+                raise ListServersError("list_servers/lss: you must supply a value to filter by tag")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on tag: %s" % query['tag']
+                        print "list_servers/lss: querying on tag: %s" % query['tag']
                     servers_primary = []
                     for server in cfg.dbsess.query(Server).\
                     filter(Server.tag==query['tag']).\
@@ -304,38 +299,38 @@ class list_servers:
                         pass
                 except:
                     if cfg.debug:
-                        print "list_servers: failed query for tag: %s" % query['tag']
-                    raise ListServersError("list_servers: failed query for tag: %s" % query['tag'])
+                        print "list_servers/lss: failed query for tag: %s" % query['tag']
+                    raise ListServersError("list_servers/lss: failed query for tag: %s" % query['tag'])
 
         # list servers by realm
         if 'realm' in query.keys():
             if not query['realm']:
                 if cfg.debug:
-                    print "list_servers: you must supply a value to filter on realm"
-                raise ListServersError("list_servers: you must supply a value to filter on realm")
+                    print "list_servers/lss: you must supply a value to filter on realm"
+                raise ListServersError("list_servers/lss: you must supply a value to filter on realm")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on realm: %s" % query['realm']
+                        print "list_servers/lss: querying on realm: %s" % query['realm']
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.realm==query['realm']).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
                 except:
                     if cfg.debug:
-                        print "list_servers: failed query for realm: %s" % query['realm']
-                    raise ListServersError("list_servers: failed query for realm: %s" % query['realm'])
+                        print "list_servers/lss: failed query for realm: %s" % query['realm']
+                    raise ListServersError("list_servers/lss: failed query for realm: %s" % query['realm'])
 
         # list servers by manufacturer
         if 'manufacturer' in query.keys():
             if not query['manufacturer']:
                 if cfg.debug:
-                    print "list_servers: you must supply a value to filter on manufacturer"
-                raise ListServersError("list_servers: you must supply a value to filter on manufacturer")
+                    print "list_servers/lss: you must supply a value to filter on manufacturer"
+                raise ListServersError("list_servers/lss: you must supply a value to filter on manufacturer")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on manufacturer: %s" % query['manufacturer']
+                        print "list_servers/lss: querying on manufacturer: %s" % query['manufacturer']
                     search_string = '%' + query['manufacturer'] + '%'
                     for serv, hw in cfg.dbsess.query(Server, Hardware).\
                     filter(Hardware.manufacturer.like(search_string)).\
@@ -344,19 +339,19 @@ class list_servers:
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
                 except:
                     if cfg.debug:
-                        print "list_servers: failed query for manufacturer: %s" % query['manufacturer']
-                    raise ListServersError("list_servers: failed query for manufacturer: %s" % query['manufacturer'])
+                        print "list_servers/lss: failed query for manufacturer: %s" % query['manufacturer']
+                    raise ListServersError("list_servers/lss: failed query for manufacturer: %s" % query['manufacturer'])
 
         # list servers by model name
         if 'model' in query.keys():
             if not query['model']:
                 if cfg.debug:
-                    print "list_servers: you must supply a value to filter on model"
-                raise ListServersError("list_servers: you must supply a value to filter on model")
+                    print "list_servers/lss: you must supply a value to filter on model"
+                raise ListServersError("list_servers/lss: you must supply a value to filter on model")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on model: %s" % query['model']
+                        print "list_servers/lss: querying on model: %s" % query['model']
                     search_string = '%' + query['model']+ '%'
                     for serv, hw in cfg.dbsess.query(Server, Hardware).\
                     filter(Hardware.model.like(search_string)).\
@@ -365,65 +360,65 @@ class list_servers:
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
                 except:
                     if cfg.debug:
-                        print "list_servers: failed query for model: %s" % query['model']
-                    raise ListServersError("list_servers: failed query for model: %s" % query['model'])
+                        print "list_servers/lss: failed query for model: %s" % query['model']
+                    raise ListServersError("list_servers/lss: failed query for model: %s" % query['model'])
 
         # list servers by cores
         if 'cores' in query.keys():
             if not query['cores'].isdigit():
                 if cfg.debug:
-                    print "list_servers: you must supply an int to filter by number of cores"
-                raise ListServersError("list_servers: you must supply an int to filter by number of cores")
+                    print "list_servers/lss: you must supply an int to filter by number of cores"
+                raise ListServersError("list_servers/lss: you must supply an int to filter by number of cores")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on number of cores: %s" % query['cores']
+                        print "list_servers/lss: querying on number of cores: %s" % query['cores']
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.cores==query['cores']).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
                 except:
                     if cfg.debug:
-                        print "list_servers: query failed for number of cores: %s" % query['cores']
-                    raise ListServersError("list_servers: query failed for number of cores: %s" % query['cores'])
+                        print "list_servers/lss: query failed for number of cores: %s" % query['cores']
+                    raise ListServersError("list_servers/lss: query failed for number of cores: %s" % query['cores'])
 
         # list servers by ram
         if 'ram' in query.keys():
             if not query['ram'].isdigit():
                 if cfg.debug:
-                    print "list_servers: you must supply an int to filter by ram size (in GB)"
-                raise ListServersError("list_servers: you must supply an int to filter by ram size (in GB)")
+                    print "list_servers/lss: you must supply an int to filter by ram size (in GB)"
+                raise ListServersError("list_servers/lss: you must supply an int to filter by ram size (in GB)")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on ram size in GB: %s" % query['ram']
+                        print "list_servers/lss: querying on ram size in GB: %s" % query['ram']
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.ram==query['ram']).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
                 except:
                     if cfg.debug:
-                        print "list_servers: query failed for ram size in GB: %s" % query['ram']
-                    raise ListServersError("list_servers: query failed for ram size in GB: %s" % query['ram'])
+                        print "list_servers/lss: query failed for ram size in GB: %s" % query['ram']
+                    raise ListServersError("list_servers/lss: query failed for ram size in GB: %s" % query['ram'])
 
         # list servers by disk
         if 'disk' in query.keys():
             if not query['disk'].isdigit():
                 if cfg.debug:
-                    print "list_servers: you must supply an int to filter by disk size (in GB)"
-                raise ListServersError("list_servers: you must supply an int to filter by disk size (in GB)")
+                    print "list_servers/lss: you must supply an int to filter by disk size (in GB)"
+                raise ListServersError("list_servers/lss: you must supply an int to filter by disk size (in GB)")
             else:
                 try:
                     if cfg.debug:
-                        print "list_servers: querying on disk size in GB: %s" % query['disk']
+                        print "list_servers/lss: querying on disk size in GB: %s" % query['disk']
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.disk==query['disk']).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
                 except:
                     if cfg.debug:
-                        print "list_servers: query failed for disk size in GB: %s" % query['disk']
-                    raise ListServersError("list_servers: query failed for disk size in GB: %s" % query['disk'])
+                        print "list_servers/lss: query failed for disk size in GB: %s" % query['disk']
+                    raise ListServersError("list_servers/lss: query failed for disk size in GB: %s" % query['disk'])
 
 
         # return the list of servers we've found

@@ -109,20 +109,20 @@ class serverinfo:
         ret = {}
 
         if len(query) > self.metadata['methods']['get_host']['optional_args']['max']:
-            retval = "too many queries! max number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['max']
-            retval += "you tried to pass %s queries\n" % len(query)
+            retval = "serverinfo: too many queries! max number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['max']
+            retval += "serverinfo: you tried to pass %s queries\n" % len(query)
             if cfg.debug:
                 print retval
             raise ServerInfoError(retval)
         elif len(query) < self.metadata['methods']['get_host']['optional_args']['min']:
-            retval = "not enough queries! min number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['min']
-            retval += "you tried to pass %s queries\n" % len(query)
+            retval = "serverinfo: not enough queries! min number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['min']
+            retval += "serverinfo: you tried to pass %s queries\n" % len(query)
             if cfg.debug:
                 print retval
             raise ServerInfoError(retval)
         elif cfg.debug:
-            print "num queries: %s" % len(query)
-            print "max num queries: %s" % self.metadata['methods']['get_host']['optional_args']['max']
+            print "serverinfo: num queries: %s" % len(query)
+            print "serverinfo: max num queries: %s" % self.metadata['methods']['get_host']['optional_args']['max']
 
         if 'hw_tag' in query:
             try:
@@ -132,7 +132,7 @@ class serverinfo:
                 if s.hostname:
                     ret = self.__getserverinfo(s.hostname, s.realm, s.site_id)
             except TypeError:
-                raise ServerInfoError("no host found with hw_tag: %s" % query['hw_tag'])
+                raise ServerInfoError("serverinfo/get_host: no host found with hw_tag: %s" % query['hw_tag'])
         if 'ip' in query:
             # try the private ip
             try:
@@ -151,7 +151,7 @@ class serverinfo:
                 if s.hostname:
                     ret = self.__getserverinfo(s.hostname, s.realm, s.site_id)
             except TypeError:
-                raise ServerInfoError("no host found with public or private ip: %s" % query['ip'])
+                raise ServerInfoError("serverinfo/get_host: no host found with public or private ip: %s" % query['ip'])
         if 'mac' in query:
             try:
                 h, s = cfg.dbsess.query(Network, Server).\
@@ -161,7 +161,7 @@ class serverinfo:
                 if s.hostname:
                     ret = self.__getserverinfo(s.hostname, s.realm, s.site_id, cfg.debug)
             except TypeError:
-                raise ServerInfoError("no host found with MAC address: %s" % query['mac'])
+                raise ServerInfoError("serverinfo/get_host: no host found with MAC address: %s" % query['mac'])
         if 'hostname' in query:
             try:
                 # this won't work with our RESTness
@@ -172,14 +172,14 @@ class serverinfo:
                     print s
                 ret = self.__getserverinfo(s.hostname, s.realm, s.site_id)
             except:
-                raise ServerInfoError("no host found with name: %s" % query['hostname'])
+                raise ServerInfoError("serverinfo/get_host: no host found with name: %s" % query['hostname'])
 
         if ret:
             return ret
         else:
             if cfg.debug:
-                print "get_host: return value \"ret\" is empty!"
-            raise ServerInfoError("get_host: return value\"ret\" is empty!")
+                print "serverinfo/get_host: return value \"ret\" is empty!"
+            raise ServerInfoError("serverinfo/get_host: return value\"ret\" is empty!")
 
     def __getserverinfo(self, host, realm, site_id):
         """
