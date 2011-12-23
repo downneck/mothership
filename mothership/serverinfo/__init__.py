@@ -38,8 +38,8 @@ class serverinfo:
         self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
             'config': { # some basic module-wide config data
                 'module_dependencies': { # what other modules do we depend on?
-                    'kv': '1', # a module, and its minimum accepted version
-                    'mothership_models': '1', # another module, and its minimum accepted version
+                    'kv': 1, # a module, and its minimum accepted version
+                    'mothership_models': 1, # another module, and its minimum accepted version
                 },
             },
             'methods': { # a dict of methods we're presenting to the outside world
