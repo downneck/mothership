@@ -45,10 +45,6 @@ class serverinfo:
             'methods': { # a dict of methods we're presenting to the outside world
                 'get_host': { # a method identifier
                     'description': 'retrieve server info for a server identified by hostname.realm.site_id', # for generating help
-                    'url': '/'+self.namespace, # REST url we'd like to use
-                    'class': self.name, # our class name
-                    'namespace': self.namespace, # our desired namespace
-                    'version': self.version, # our version
                     'call': 'get_host', # the function call, stripped of () and args
                     'required_args': { # dict of info about arguments we just can't live without
                     },

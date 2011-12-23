@@ -46,10 +46,6 @@ class list_servers:
             'methods': {
                 'lss': {
                     'description': 'list all servers matching a particular criteria',
-                    'url': '/'+self.namespace,
-                    'class': self.name,
-                    'namespace': self.namespace,
-                    'version': self.version,
                     'call': 'lss',
                     'required_args': {
                     },
@@ -144,61 +140,14 @@ class list_servers:
         if len(query) > self.metadata['methods']['lss']['optional_args']['max']:
             retval = "too many queries! max number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['max']
             retval += "you tried to pass %s queries\n" % len(query)
-            print retval
+            if cfg.debug:
+                print retval
             raise ListServersError(retval)
         else:
-            print "num queries: %s" % len(query)
-            print "max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max']
+            if cfg.debug:
+                print "num queries: %s" % len(query)
+                print "max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max']
 
-#
-#        # list servers by site_id
-#        elif listby == 'site_id':
-#          if lookfor == None:
-#            raise ListServersError("you must supply a value to filter on")
-#          else:
-#            for serv in cfg.dbsess.query(Server).\
-#            filter(Server.site_id==lookfor).\
-#            order_by(Server.hostname):
-#                buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-#
-#        # list servers by tag
-#        elif listby == 'tag':
-#          if lookfor == None:
-#            raise ListServersError("you must supply a value to filter on")
-#          else:
-#            servers_primary = []
-#            for server in cfg.dbsess.query(Server).\
-#            filter(Server.tag==lookfor).\
-#            order_by(Server.hostname):
-#              servers_primary.append(server)
-#            servers_kv = []
-#            kvs = mothership.kv.collect(cfg, None, key='tag')
-#            for i in kvs:
-#               namespace,key = str(i).split(' ')
-#               if key == "tag="+lookfor:
-#                 servers_kv.append(i.hostname+"."+i.realm+"."+i.site_id)
-#               else:
-#                 pass
-#            if servers_primary:
-#              for serv in servers_primary:
-#                buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-#            elif servers_kv:
-#              for serv in servers_kv:
-#                buf.append(serv)
-#            else:
-#              pass
-#
-#        # list servers by realm
-#        elif listby == 'realm':
-#          if lookfor == None:
-#            raise ListServersError("you must supply a value to filter on")
-#          else:
-#            for serv in cfg.dbsess.query(Server).\
-#            filter(Server.realm==lookfor).\
-#            order_by(Server.hostname):
-#              buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-#
-#
 #        # list servers by manufacturer
 #        elif listby == 'manufacturer':
 #          if lookfor == None:
@@ -258,15 +207,22 @@ class list_servers:
 
         # list all servers
         if 'all' in query.keys():
-          for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
-              buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+            if cfg.debug:
+                print "list_servers: querying for ALL servers"
+            try:
+                for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
+                    buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+            except:
+                if cfg.debug:
+                    print "list_servers: query failed for ALL servers"
+                raise ListServersError("list_servers: query failed for ALL servers")
 
         # list servers by name
         if 'hostname' in query.keys():
             if not query['hostname']:
                 if cfg.debug:
-                    print "you must supply a value to filter by hostname"
-                raise ListServersError("you must supply a value to filter by hostname")
+                    print "list_servers: you must supply a value to filter by hostname"
+                raise ListServersError("list_servers: you must supply a value to filter by hostname")
             else:
                 try:
                     if cfg.debug:
@@ -313,8 +269,8 @@ class list_servers:
         if 'hw_tag' in query.keys():
             if not query['hw_tag']:
                 if cfg.debug:
-                    print "you must supply a value to filter by hw_tag"
-                raise ListServersError("you must supply a value to filter by hw_tag")
+                    print "list_servers: you must supply a value to filter by hw_tag"
+                raise ListServersError("list_servers: you must supply a value to filter by hw_tag")
             else:
                 try:
                     if cfg.debug:
@@ -331,8 +287,8 @@ class list_servers:
         if 'vlan' in query.keys():
             if not query['vlan']:
                 if cfg.debug:
-                    print "you must supply a value to filter by vlan"
-                raise ListServersError("you must supply a value to filter by vlan")
+                    print "list_servers: you must supply a value to filter by vlan"
+                raise ListServersError("list_servers: you must supply a value to filter by vlan")
             else:
                 try:
                     if cfg.debug:
@@ -348,7 +304,79 @@ class list_servers:
                         print "list_servers: failed query for vlan: %s" % query['vlan']
                     raise ListServersError("list_servers: failed query for vlan: %s" % query['vlan'])
 
+        # list servers by site_id
+        if 'site_id' in query.keys():
+            if not query['site_id']:
+                if cfg.debug:
+                    print "list_servers: you must supply a value to filter by site_id"
+                raise ListServersError("list_servers: you must supply a value to filter by site_id")
+            else:
+                try:
+                    if cfg.debug:
+                        print "list_servers: querying on site_id: %s" % query['site_id']
+                    for serv in cfg.dbsess.query(Server).\
+                    filter(Server.site_id==query['site_id']).\
+                    order_by(Server.hostname):
+                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+                except:
+                    if cfg.debug:
+                        print "list_servers: failed query for site_id: %s" % query['vlan']
+                    raise ListServersError("list_servers: failed query for site_id: %s" % query['vlan'])
 
+        # list servers by tag
+        if 'tag' in query.keys():
+            if not query['tag']:
+                if cfg.debug:
+                    print "list_servers: you must supply a value to filter by tag"
+                raise ListServersError("list_servers: you must supply a value to filter by tag")
+            else:
+                try:
+                    if cfg.debug:
+                        print "list_servers: querying on tag: %s" % query['tag']
+                    servers_primary = []
+                    for server in cfg.dbsess.query(Server).\
+                    filter(Server.tag==query['tag']).\
+                    order_by(Server.hostname):
+                        servers_primary.append(server)
+                    servers_kv = []
+                    kvs = mothership.kv.collect(cfg, None, key='tag')
+                    for i in kvs:
+                        namespace,key = str(i).split(' ')
+                        if key == "tag="+query['tag']:
+                            servers_kv.append(i.hostname+"."+i.realm+"."+i.site_id)
+                        else:
+                            pass
+                    if servers_primary:
+                        for serv in servers_primary:
+                            buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+                    elif servers_kv:
+                        for serv in servers_kv:
+                            buf.append(serv)
+                    else:
+                        pass
+                except:
+                    if cfg.debug:
+                        print "list_servers: failed query for tag: %s" % query['tag']
+                    raise ListServersError("list_servers: failed query for tag: %s" % query['tag'])
+
+        # list servers by realm
+        if 'realm' in query.keys():
+            if not query['realm']:
+                if cfg.debug:
+                    print "list_servers: you must supply a value to filter on realm"
+                raise ListServersError("list_servers: you must supply a value to filter on realm")
+            else:
+                try:
+                    if cfg.debug:
+                        print "list_servers: querying on realm: %s" % query['realm']
+                    for serv in cfg.dbsess.query(Server).\
+                    filter(Server.realm==query['realm']).\
+                    order_by(Server.hostname):
+                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+                except:
+                    if cfg.debug:
+                        print "list_servers: failed query for realm: %s" % query['realm']
+                    raise ListServersError("list_servers: failed query for realm: %s" % query['realm'])
 
 
 
