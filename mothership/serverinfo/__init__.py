@@ -124,7 +124,7 @@ class serverinfo:
             print "serverinfo: num queries: %s" % len(query)
             print "serverinfo: max num queries: %s" % self.metadata['methods']['get_host']['optional_args']['max']
 
-        if 'hw_tag' in query:
+        if 'hw_tag' in query.keys():
             try:
                 s = cfg.dbsess.query(Server).\
                     filter(Server.hw_tag==query['hw_tag']).\
@@ -133,7 +133,7 @@ class serverinfo:
                     ret = self.__getserverinfo(s.hostname, s.realm, s.site_id)
             except TypeError:
                 raise ServerInfoError("serverinfo/get_host: no host found with hw_tag: %s" % query['hw_tag'])
-        if 'ip' in query:
+        if 'ip' in query.keys():
             # try the private ip
             try:
                 s, n = cfg.dbsess.query(Server, Network).\
@@ -152,7 +152,7 @@ class serverinfo:
                     ret = self.__getserverinfo(s.hostname, s.realm, s.site_id)
             except TypeError:
                 raise ServerInfoError("serverinfo/get_host: no host found with public or private ip: %s" % query['ip'])
-        if 'mac' in query:
+        if 'mac' in query.keys():
             try:
                 h, s = cfg.dbsess.query(Network, Server).\
                     filter(Network.hw_tag==Server.hw_tag).\
@@ -162,7 +162,7 @@ class serverinfo:
                     ret = self.__getserverinfo(s.hostname, s.realm, s.site_id, cfg.debug)
             except TypeError:
                 raise ServerInfoError("serverinfo/get_host: no host found with MAC address: %s" % query['mac'])
-        if 'hostname' in query:
+        if 'hostname' in query.keys():
             try:
                 # this won't work with our RESTness
                 #unqdn = mothership.validate.v_get_fqn(cfg, name=query['hostname'])

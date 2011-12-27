@@ -16,7 +16,6 @@ except ImportError:
 # uncomment to debug bottle
 bottle.debug(True)
 
-
 # instantiate a bottle
 httpship = bottle.Bottle()
 # suck in our configure object
@@ -65,7 +64,7 @@ def index():
             print 'route: /'
             print 'metadata key: '+k
         try:
-            buf += "/"+module_metadata[k].namespace+"<BR>"
+            buf += "<A HREF=\"/%s\">/%s</A><BR>" % (module_metadata[k].namespace, module_metadata[k].namespace)
             if cfg.debug:
                 print buf
         except:
@@ -75,7 +74,7 @@ def index():
 @httpship.route("/:pname")
 def namespace_path(pname):
     buf = "Callable functions:<BR><BR>"
-    buf += "/"+pname+"/metadata<BR>"
+    buf += "<A HREF=\"/%s/metadata\">/%s/metadata</A><BR>" % (pname, pname)
     if cfg.debug:
         print "buf: "+buf
         print "pname: "+pname
@@ -84,7 +83,7 @@ def namespace_path(pname):
     for meth in module_metadata[pname].metadata['methods']:
         if cfg.debug:
             print meth
-        buf += "/%s/%s<BR>" % (pname, meth)
+        buf += "<A HREF=\"/%s/%s\">/%s/%s</A><BR>" % (pname, meth, pname, meth)
     return buf
 
 @httpship.route("/:pname/:callpath")
@@ -118,7 +117,10 @@ def callable_path(pname, callpath):
             for opt in module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'].keys():
                 if cfg.debug:
                     print "optional arg: %s" % opt
-                buf += "%s (%s): %s<BR>" % (opt, module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'][opt]['vartype'], module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'][opt]['desc'])
+                if module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'][opt]['vartype'] == "None":
+                    buf += "<A HREF=\"/%s/%s?%s\">/%s/%s?%s</A> (%s): %s<BR>" % (pname, callpath, opt, pname, callpath, opt, module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'][opt]['vartype'], module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'][opt]['desc'])
+                else:
+                    buf += "/%s/%s?%s (%s): %s<BR>" % (pname, callpath, opt, module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'][opt]['vartype'], module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'][opt]['desc'])
         except:
             buf += "No optional_args found<BR>"
         if cfg.debug:

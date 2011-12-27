@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-    supports the listing of various types of values 
+    supports the listing of various types of values
 """
 
 # imports
@@ -45,30 +45,30 @@ class list_values:
                         'min': 1,
                         'max': 1,
                         'args': {
-#                            'available_hardware': {
-#                                'vartype': 'None',
-#                                'desc': 'all hardware available for provisioning servers on',
-#                            },
-#                            'ips': {
-#                                'vartype': 'None',
-#                                'desc': 'all ip addresses in use',
-#                            },
+                            'available_hardware': {
+                                'vartype': 'None',
+                                'desc': 'all hardware available for provisioning servers on',
+                            },
+                            'ips': {
+                                'vartype': 'None',
+                                'desc': 'all ip addresses in use',
+                            },
                             'vlans': {
                                 'vartype': 'None',
                                 'desc': 'all vlans',
                             },
-#                            'tags': {
-#                                'vartype': 'None',
-#                                'desc': 'all tags',
-#                            },
-#                            'groups': {
-#                                'vartype': 'None',
-#                                'desc': 'all groups',
-#                            },
-#                            'users': {
-#                                'vartype': 'None',
-#                                'desc': 'all users',
-#                            },
+                            'tags': {
+                                'vartype': 'None',
+                                'desc': 'all tags',
+                            },
+                            'groups': {
+                                'vartype': 'None',
+                                'desc': 'all groups',
+                            },
+                            'users': {
+                                'vartype': 'None',
+                                'desc': 'all users',
+                            },
                         },
                     },
                     'cmdln_aliases': [
@@ -79,7 +79,7 @@ class list_values:
                         'list_value',
                     ],
                     'return': {
-                        'values': 'list',
+                        'values': 'list', # in the case of users and groups, this will be a list of dicts
                     },
                 },
             },
@@ -123,7 +123,7 @@ class list_values:
         # look up all vlans
         if 'vlans' in query.keys():
             if cfg.debug:
-                print "querying for all vlans"
+                print "list_values/lsv: querying for all vlans"
             try:
                 for result in cfg.dbsess.query(Network.vlan).\
                     filter(Network.vlan!=0).\
@@ -137,42 +137,81 @@ class list_values:
                     print "list_values/lsv: query failed for: vlans"
                 raise ListValuesError("list_values/lsv: query failed for: vlans")
 
-#        elif listing == 'ip' or listing == 'ips':
-#            for net in cfg.dbsess.query(Network).order_by(Network.ip):
-#                if net.ip != '0.0.0.0' and net.ip != None:
-#                    print net.ip
-#        elif listing == 'tag' or listing == 'tags':
-#            for tag in cfg.dbsess.query(Tag):
-#              print tag.name
-#        elif listing == 'group' or listing == 'groups':
-#            if not quiet:
-#                print "GID, Group Name, Location"
-#                print "--------------------------------------------------"
-#            for g in cfg.dbsess.query(Groups):
-#                print "%s %s %s.%s" % (g.gid, g.groupname, g.realm, g.site_id)
-#        elif listing == 'user' or listing == 'users':
-#            if not quiet:
-#                print "UID, User Name, Location"
-#                print "--------------------------------------------------"
-#            for u in cfg.dbsess.query(Users):
-#                print "%s %s %s.%s" % (u.uid, u.username, u.realm, u.site_id)
-#        elif listing == 'available_hardware' or listing == 'free_hardware':
-#            # setting up some vars
-#            all_hw = []
-#            alloc_hw = []
-#            unalloc_hw = []
-#            # fetch list of all hardware tags
-#            for h in cfg.dbsess.query(Hardware):
-#                all_hw.append(h.hw_tag)
-#            # fetch list of all hardware tags assigned to servers
-#            for s in cfg.dbsess.query(Server):
-#                alloc_hw.append(s.hw_tag)
-#            # diff 'em
-#            unalloc_hw = [item for item in all_hw if not item in alloc_hw]
-#            # display the diff
-#            if not quiet:
-#                print "unallocated hardware tags:"
-#            print '\n'.join(unalloc_hw)
+        elif 'ips' in query.keys():
+            if cfg.debug:
+                print "list_values/lsv: querying for all ips"
+            try:
+                for net in cfg.dbsess.query(Network).order_by(Network.ip):
+                    if net.ip != '0.0.0.0' and net.ip != None:
+                        buf.append(net.ip)
+                if cfg.debug:
+                    print buf
+            except:
+                if cfg.debug:
+                    print "list_values/lsv: query failed for: ips"
+                raise ListValuesError("list_values/lsv: query failed for: ips")
+
+        elif 'tags' in query.keys():
+            if cfg.debug:
+                print "list_values/lsv: querying for all tags"
+            try:
+                for tag in cfg.dbsess.query(Tag):
+                    buf.append(tag.name)
+                if cfg.debug:
+                    print buf
+            except:
+                if cfg.debug:
+                    print "list_values/lsv: query failed for tags"
+                raise ListValuesError("list_values/lsv: query failed for tags")
+
+        elif 'groups' in query.keys():
+            if cfg.debug:
+                print "list_values/lsv: querying for all groups"
+            try:
+                for g in cfg.dbsess.query(Groups):
+                    buf.append(g.to_dict())
+                if cfg.debug:
+                    print buf
+            except:
+                if cfg.debug:
+                    print "list_values/lsv: query failed for groups"
+                raise ListValuesError("list_values/lsv: query failed for groups")
+
+        elif 'users' in query.keys():
+            if cfg.debug:
+                print "list_values/lsv: querying for all users"
+            try:
+                for u in cfg.dbsess.query(Users):
+                    buf.append(u.to_dict())
+                if cfg.debug:
+                    print buf
+            except:
+                if cfg.debug:
+                    print "list_values/lsv: query failed for groups"
+                raise ListValuesError("list_values/lsv: query failed for groups")
+
+        elif 'available_hardware' in query.keys():
+            if cfg.debug:
+                print "list_values/lsv: querying for all available hardware"
+            try:
+                # setting up some vars
+                all_hw = []
+                alloc_hw = []
+                # fetch list of all hardware tags
+                for h in cfg.dbsess.query(Hardware):
+                    all_hw.append(h.hw_tag)
+                # fetch list of all hardware tags assigned to servers
+                for s in cfg.dbsess.query(Server):
+                    alloc_hw.append(s.hw_tag)
+                # diff 'em
+                buf = [item for item in all_hw if not item in alloc_hw]
+                if cfg.debug:
+                    print buf
+            except:
+                if cfg.debug:
+                    print "list_values/lsv: query failed for available_hardware"
+                raise ListValuesError("list_values/lsv: query failed for available_hardware")
+
 
         # return our listing
         return buf
