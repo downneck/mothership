@@ -48,12 +48,14 @@ def get_master(cfg, realm_path):
     fqn = mothership.validate.v_get_fqn(cfg, realm_path)
     realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
 
-    serv = str(mothership.kv.select(cfg, realm_path, key='ldap_master_server')).split('=')[1]
+    serv = None
 
-    if serv:
-        return serv
-    else:
-        return None
+    try:
+        serv = str(mothership.kv.select(cfg, realm_path, key='ldap_master_server')).split('=')[1]
+    except:
+        pass 
+
+    return serv
 
 
 def ld_connect(cfg, ldap_master, realm, site_id):
