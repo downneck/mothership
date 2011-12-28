@@ -179,7 +179,7 @@ class XenServerAPI:
             self.get_license_expiration()
         for h in self.specs.keys():
             if h == 'off': continue
-            if self.specs[h]['name'] == host:
+            if self.specs[h]['name'] == host.split('.')[0]:
                 print 'License for %s expires in %s day(s)' % (
                     host, self.specs[h]['expires'])
                 return
