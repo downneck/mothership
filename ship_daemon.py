@@ -30,7 +30,10 @@ def load_modules():
     """
     scans our main path for modules, loads valid modules
     """
+    if cfg.debug:
+            print "loadmodules() called directly"
     # clear module metadata
+    old_metadata = cfg.module_metadata
     cfg.module_metadata = {}
     # base path we're being called from, to find our modules
     basepath = sys.path[0]
@@ -42,6 +45,13 @@ def load_modules():
                 # from it's main class
                 if cfg.debug:
                     print "\nimporting mothership.%s:" % i
+                if i in old_metadata.keys():
+                    try:
+                        del sys.modules['mothership.'+i]
+                    except:
+                        pass
+                    if cfg.debug:
+                        print "module unloaded: mothership."+i
                 mod = __import__("mothership."+i)
                 if cfg.debug:
                     print "import complete"
@@ -56,10 +66,7 @@ def load_modules():
                     print inst
                 cfg.module_metadata[i] = inst
             except:
-                if cfg.debug:
-                    print "module \"%s\" does not have a valid main class" % i
-                else:
-                    pass
+                pass
     except ImportError, e:
         print "problem importing "+i
         print "error: "+e
