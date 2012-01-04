@@ -18,8 +18,10 @@ bottle.debug(True)
 
 # instantiate a bottle
 httpship = bottle.Bottle()
+
 # suck in our configure object
 cfg = configure.Configure('mothership.yaml')
+
 # set our debugging flag
 cfg.debug = cfg.debug
 
@@ -79,6 +81,9 @@ def load_modules():
 load_modules()
 
 
+# main url, currently spits back info about loaded modules and such
+# will probably change quite a lot before the rewrite gets going
+# more than likely will merge with /modules route below
 @httpship.route('/')
 def index():
     buf = "<P>loaded modules:<BR><BR>"
@@ -93,9 +98,28 @@ def index():
         except:
             continue
     buf += "<BR><BR>to reload modules call:<BR><A HREF=\"/loadmodules\">/loadmodules</A><BR>"
+    buf += "<BR><BR>to get JSON list of loaded modules call:<BR><A HREF=\"/modules\">/modules</A><BR>"
     return buf
 
 
+# returns a list of currently loaded modules
+@httpship.route('/modules')
+def loaded_modules():
+    buf = []
+    for k in cfg.module_metadata.keys():
+        if cfg.debug:
+            print 'route: /'
+            print 'metadata key: '+k
+        try:
+            buf.append(cfg.module_metadata[k].namespace)
+            if cfg.debug:
+                print buf
+        except:
+            continue
+    return myjson.JSONEncoder().encode(buf)
+
+
+# returns data about a namespace's public functions
 @httpship.route("/:pname")
 def namespace_path(pname):
     buf = "Callable functions:<BR><BR>"
@@ -112,6 +136,8 @@ def namespace_path(pname):
     return buf
 
 
+# returns data about a function call or calls the function.
+# will probably change significantly before the rewrite
 @httpship.route("/:pname/:callpath")
 def callable_path(pname, callpath):
     query = bottle.request.GET
@@ -164,11 +190,13 @@ def callable_path(pname, callpath):
             return myjson.JSONEncoder().encode(buf(query))
 
 
+# why? because i made a spaceship.
 @httpship.route("/favicon.ico")
 def favicon():
     return bottle.static_file('favicon.ico', root=sys.path[0])
 
 
+# this does nothing and it does it well.
 @httpship.route("/test")
 def test():
     pass
