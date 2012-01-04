@@ -43,7 +43,7 @@ class puppet:
             'methods': {
                 'classify': {
                     'description': 'classify a puppet node',
-                    'call': 'classify',
+                    'rest_type': 'GET',
                     'required_args': {
                         'args': {
                             'hostname': {

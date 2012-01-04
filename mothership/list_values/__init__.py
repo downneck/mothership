@@ -38,7 +38,7 @@ class list_values:
             'methods': {
                 'lsv': {
                     'description': 'list all values of a given type',
-                    'call': 'lsv',
+                    'rest_type': 'GET',
                     'required_args': {
                     },
                     'optional_args': {

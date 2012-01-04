@@ -44,26 +44,9 @@ class list_servers:
                 },
             },
             'methods': {
-                'countmeout': {
-                    'description': 'for testing dynamic mod loading',
-                    'call': 'countmeout',
-                    'required_args': {
-                    },
-                    'optional_args': {
-                        'min': 0,
-                        'max': 0,
-                    },
-                    'cmdln_aliases': [
-                        'countmeout',
-                        'blarg,'
-                    ],
-                    'return': {
-                        'result': 'string',
-                    },
-                },
                 'lss': {
                     'description': 'list all servers matching a particular criteria',
-                    'call': 'lss',
+                    'rest_type': 'GET',
                     'required_args': {
                     },
                     'optional_args': {
@@ -440,8 +423,3 @@ class list_servers:
 
         # return the list of servers we've found
         return buf
-
-    
-    # test funk
-    def countmeout(self):
-        return "good"

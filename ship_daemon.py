@@ -47,6 +47,8 @@ def load_modules():
                     print "\nimporting mothership.%s:" % i
                 if i in old_metadata.keys():
                     try:
+                        if cfg.debug:
+                            print "unloading module: %s" % sys.modules['mothership.'+i]
                         del sys.modules['mothership.'+i]
                     except:
                         pass
@@ -65,8 +67,9 @@ def load_modules():
                 if cfg.debug:
                     print inst
                 cfg.module_metadata[i] = inst
-            except:
-                pass
+            except Exception, e:
+                if cfg.debug:
+                    print "import error: %s" % e
     except ImportError, e:
         print "problem importing "+i
         print "error: "+e
@@ -152,12 +155,12 @@ def callable_path(pname, callpath):
     # we got an actual callpath! do stuff.
     else:
         if cfg.debug:
-            print "method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath]['call'])
-            buf = getattr(cfg.module_metadata[pname], cfg.module_metadata[pname].metadata['methods'][callpath]['call'])
+            print "method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath])
+            buf = getattr(cfg.module_metadata[pname], callpath)
             print myjson.JSONEncoder(indent=4).encode(buf(query))
             return myjson.JSONEncoder().encode(buf(query))
         else:
-            buf = getattr(cfg.module_metadata[pname], cfg.module_metadata[pname].metadata['methods'][callpath]['call'])
+            buf = getattr(cfg.module_metadata[pname], callpath)
             return myjson.JSONEncoder().encode(buf(query))
 
 
