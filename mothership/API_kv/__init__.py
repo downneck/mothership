@@ -118,38 +118,43 @@ class API_kv:
                 raise KVError("API_kv/select: mothership.get_unqdn(query['fqdn']) failed!")
 
             # get stuff from the db
-            try:
-                results = cfg.dbsess.query(KV).\
-                    filter(KV.hostname==hostname).\
-                    filter(KV.realm==realm).\
-                    filter(KV.site_id==site_id).\
-                    filter(KV.key==query['key'])
-            except:
-                if cfg.debug:
-                    print "API_kv/select: query for fqdn failed: %s" % query['fqdn']
-                    print "API_kv/select: hostname=%s, realm=%s, site_id=%s, key=%s" % (hostname, realm, site_id, query['key'])
-                raise KVError("API_kv/select: query for fqdn failed: %s" % query['fqdn'])
-
             # query on value if we're asked to
             if 'value' in query.keys() and query['value']:
                 if cfg.debug:
                     print "API_kv/select: querying for value: %s" % query['value']
                 try:
-                    results = results.filter(KV.value==query['value'])
-                except:
+                    kv_entry = cfg.dbsess.query(KV).\
+                        filter(KV.hostname==hostname).\
+                        filter(KV.realm==realm).\
+                        filter(KV.site_id==site_id).\
+                        filter(KV.key==query['key']).\
+                        filter(KV.value==query['value']).first()
+                    if not kv_entry:
+                        raise KVError("API_kv/select: kv_entry is empty! (value provided)")
+                except Exception, e:
                     if cfg.debug:
-                        print "API_kv/select: query for value failed: %s" % query['value']
-                    raise KVError("API_kv/select: query for value failed: %s" % query['value'])
+                        print "API_kv/select: query for value failed: %s\nerror: %s" % (query['value'], e)
+                    raise KVError("API_kv/select: query for value failed: %s\nerror: %s" % (query['value'], e))
             elif 'value' in query.keys() and not query['value']:
                 if cfg.debug:
                     print "API_kv/select: you must provide a (string) value in order to query by value"
                 raise KVError("API_kv/select: you must provide a (string) value in order to query by value")
+            # if we don't get a value
             else:
-                pass
+                try:
+                    kv_entry = cfg.dbsess.query(KV).\
+                        filter(KV.hostname==hostname).\
+                        filter(KV.realm==realm).\
+                        filter(KV.site_id==site_id).\
+                        filter(KV.key==query['key']).first()
+                except Exception, e:
+                    if cfg.debug:
+                        print "API_kv/select: query for fqdn failed: %s\nerror: %s" % (query['fqdn'], e)
+                        print "API_kv/select: hostname=%s, realm=%s, site_id=%s, key=%s" % (hostname, realm, site_id, query['key'])
+                    raise KVError("API_kv/select: query for fqdn failed: %s]nerror: %s" % (query['fqdn'], e))
 
             # just need one result
             try:
-                kv_entry = results.first()
                 return kv_entry.to_dict()
             except Exception, e:
                 if cfg.debug:
