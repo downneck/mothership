@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-mothership.puppet
+mothership.API_puppet
 
 module controlling various puppet interactions
 """
@@ -25,13 +25,13 @@ from mothership.mothership_models import *
 class PuppetError(Exception):
     pass
 
-class puppet:
+class API_puppet:
 
     def __init__(self, cfg):
         self.cfg = cfg
         self.version = 1
-        self.name = 'puppet'
-        self.namespace = 'puppet'
+        self.name = 'API_puppet'
+        self.namespace = 'API_puppet'
         self.metadata = {
             'config': {
                 'module_dependencies': {
@@ -98,11 +98,11 @@ class puppet:
             name = query['hostname']
             if name:
                 if cfg.debug:
-                    print "puppet/classify: querying for hostname: %s" % name
+                    print "API_puppet/classify: querying for hostname: %s" % name
             else:
                 if cfg.debug:
-                    print "puppet/classify: you must specify a (string) value in order to query by hostname"
-                raise PuppetError("puppet/classify: you must specify a (string) value in order to query by hostname")
+                    print "API_puppet/classify: you must specify a (string) value in order to query by hostname"
+                raise PuppetError("API_puppet/classify: you must specify a (string) value in order to query by hostname")
 
             hostname, realm, site_id = mothership.get_unqdn(cfg, name)
 
@@ -192,7 +192,7 @@ class puppet:
 
         except:
             if cfg.debug:
-                print "puppet/classify: query failed for hostname: %s" % name
-            raise PuppetError("puppet/classify: query failed for hostname: %s" % name)
+                print "API_puppet/classify: query failed for hostname: %s" % name
+            raise PuppetError("API_puppet/classify: query failed for hostname: %s" % name)
 
         return node
