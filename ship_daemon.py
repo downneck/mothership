@@ -181,7 +181,7 @@ def callable_path(pname, callpath):
     # we got an actual callpath! do stuff.
     else:
         if cfg.debug:
-            print "method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath])
+            #print "method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath])
             buf = getattr(cfg.module_metadata[pname], callpath)
             print myjson.JSONEncoder(indent=4).encode(buf(query))
             return myjson.JSONEncoder().encode(buf(query))

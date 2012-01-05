@@ -47,11 +47,11 @@ class API_kv:
                         'args': {
                             'fqdn': {
                                 'vartype': 'string',
-                                'desc': 'fqdn/unqdn/realm_path of the entry',
+                                'desc': 'fqdn/unqdn/realm_path of the entry. enter any portion or none',
                             },
                             'key': {
                                 'vartype': 'string',
-                                'desc': 'key to filter on (use "%" for all keys)',
+                                'desc': 'key to filter on (leave blank for all keys)',
                             },
                         },
                     },
@@ -93,113 +93,181 @@ class API_kv:
         # assigning stuff
         cfg = self.cfg
         holdplease = None
+        hostname = None
+        realm = None
+        site_id = None
 
         try:
             # check for reasonable query values
-            if 'fqdn' in query.keys() and query['fqdn']:
+            if not 'fqdn' in query.keys():
                 if cfg.debug:
-                    print "API_kv/select: querying for fqdn: %s" % query['fqdn']
-            else:
-                if cfg.debug:
-                    print "API_kv/select: you must specify a (string) fqdn"
-                raise KVError("API_kv/select: you must specify a (string) fqdn")
+                    print "API_kv/select: you must specify a fqdn querykey"
+                raise KVError("API_kv/select: you must specify a fqdn querykey")
 
-            if 'key' in query.keys() and query['key']:
+            if not 'key' in query.keys():
                 if cfg.debug:
-                    print "API_kv/select: querying for key: %s" % query['key']
-            else:
-                if cfg.debug:
-                    print "API_kv/select: you must specify a (string) key"
-                raise KVError("API_kv/select: you must specify a (string) key")
-
-            # translate our fqdn to hostname, realm, site_id
-            try:
-                hostname, realm, site_id = mothership.split_fqdn(query['fqdn'])
-                if cfg.debug:
-                    print "fqdn=%s, hostname=%s, realm=%s, site_id=%s" % (query['fqdn'], hostname, realm, site_id)
-            except Exception, e:
-                if cfg.debug:
-                    print "API_kv/select: mothership.get_unqdn(query['fqdn']) failed!\nerror: %s" % e
-                raise KVError("API_kv/select: mothership.get_unqdn(query['fqdn']) failed!\nerror: %s" % e)
-
-            # get stuff from the db
-            try:
-                if cfg.debug:
-                    buf = "API_kv/select: key=%s" % query['key']
-                kv_entry = cfg.dbsess.query(KV).\
-                    filter(KV.key==query['key'])
-            except Exception, e:
-                if cfg.debug:
-                    print "API_kv/select: query on key failed: %s\nerror: %s" % (query['key'], e)
-                raise KVerror("API_kv/select: query on key failed: %s\nerror: %s" % (query['key'], e))
-
-            # start narrowing things down by site_id
-            if site_id:
-                holdplease = kv_entry.filter(KV.site_id==site_id).first()
-            else:
-                holdplease = None
-            if holdplease:
-                if cfg.debug:
-                    buf += ", site_id=%s" % site_id
-                kv_entry.filter(KV.site_id==site_id)
-            else:
-                if cfg.debug:
-                    print buf
-                return kv_entry.first().to_dict()
-
-            # further narrow things down by realm
-            if realm:
-                holdplease = kv_entry.filter(KV.realm==realm).first()
-            else:
-                holdplease = None
-            if holdplease:
-                if cfg.debug:
-                    buf += ", realm=%s" % realm
-                kv_entry.filter(KV.realm==realm)
-            else:
-                if cfg.debug:
-                    print buf
-                return kv_entry.first().to_dict()
-
-            # further narrow things down by hostname
-            if hostname:
-                holdplease = kv_entry.filter(KV.hostname==hostname).first()
-            else:
-                holdplease = None
-            if holdplease:
-                if cfg.debug:
-                    buf += ", hostname=%s" % hostname
-                kv_entry.filter(KV.hostname==hostname)
-            else:
-                if cfg.debug:
-                    print buf
-                return kv_entry.first().to_dict()
-
-            # if we get a value, narrow it down further
-            if 'value' in query.keys() and query['value']:
-                try:
-                    holdplease = kv_entry.filter(KV.value==query['value']).first()
-                except:
-                    holdplease = None
-                if holdplease:
-                    if cfg.debug:
-                        buf += ", value=%s" % query['value']
-                    kv_entry.filter(KV.value==query['value'])
-                    return kv_entry.first().to_dict()
-                else:
-                    if cfg.debug:
-                        print buf
-                    # we tried to search by value and failed.
-                    return None
+                    print "API_kv/select: you must specify a key querykey"
+                raise KVError("API_kv/select: you must specify a key querykey")
             # if the key named 'value' doesn't have a value. mildly confusing
-            elif 'value' in query.keys() and not query['value']:
+            if 'value' in query.keys() and not query['value']:
                 if cfg.debug:
                     print "API_kv/select: you must provide a (string) value in order to query by value"
                 raise KVError("API_kv/select: you must provide a (string) value in order to query by value")
+
+            # quick out if we don't get values for anything, search
+            # globally and return the first record
+            if not query['fqdn'] and not query['key'] and 'values' not in query.keys():
+                if cfg.debug:
+                    print "API_kv/select: querying globally for all keys"
+                kv_entry = cfg.dbsess.query(KV).first()
+
+            # translate our fqdn to hostname, realm, site_id
+            try:
+                if query['fqdn']:
+                    hostname, realm, site_id = mothership.split_fqdn(query['fqdn'])
+            except Exception, e:
+                if cfg.debug:
+                    print "API_kv/select: mothership.split_fqdn(query['fqdn']) failed!\nerror: %s" % e
+                raise KVError("API_kv/select: mothership.split_fqdn(query['fqdn']) failed!\nerror: %s" % e)
+
+            # site_id, nothing else
+            if site_id and not query['key'] and not hostname and not realm and 'value' not in query.keys():
+                if cfg.debug:
+                    print "API_kv/select: querying for: site_id" % site_id
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['key']).\
+                               filter(KV.site_id==site_id).first()
+
+            # site_id, realm, nothing else
+            if site_id and realm and not query['key'] and 'value' not in query.keys() and not hostname:
+                if cfg.debug:
+                    print "API_kv/select: querying for: realm=%s, site_id=%s" % (realm, site_id)
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.site_id==site_id).\
+                               filter(KV.realm==realm).first()
+
+            # site_id, realm, hostname, nothing else
+            if site_id and realm and hostname and not query['key'] and 'value' not in query.keys():
+                if cfg.debug:
+                    print "API_kv/select: querying for: hostname=%s, realm=%s, site_id=%s" % (hostname, realm, site_id)
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.site_id==site_id).\
+                               filter(KV.realm==realm).\
+                               filter(KV.hostname==hostname).first()
+
+            # value, nothing else
+            if 'value' in query.keys() and query['value'] and not query['fqdn'] and not query['key']:
+                if cfg.debug:
+                    print "API_kv/select: querying for: value=%s" % query['value']
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.value==query['value']).first()
+
+            # value, site_id
+            if site_id and 'value' in query.keys() and query['value'] and not hostname and not realm and not query['key']:
+                if cfg.debug:
+                    print "API_kv/select: querying for: value=%s, site_id=%s" % (query['value'], site_id)
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['value']).\
+                               filter(KV.site_id==site_id).first()
+
+            # value, site_id, realm
+            if site_id and realm and 'value' in query.keys() and query['value'] and not hostname and not query['key']:
+                if cfg.debug:
+                    print "API_kv/select: querying for: value=%s, realm=%s, site_id=%s" % (query['value'], realm, site_id)
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['value']).\
+                               filter(KV.site_id==site_id).\
+                               filter(KV.realm==realm).first()
+
+            # value, site_id, realm, hostname
+            if site_id and realm and hostname and 'value' in query.keys() and query['value'] and not query['key']:
+                if cfg.debug:
+                    print "API_kv/select: querying for: value=%s, realm=%s, site_id=%s" % (query['value'], realm, site_id)
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['value']).\
+                               filter(KV.site_id==site_id).\
+                               filter(KV.realm==realm).\
+                               filter(KV.hostname==hostname).first()
+
+            # key, nothing else
+            if query['key'] and not query['fqdn'] and 'value' not in query.keys():
+                if cfg.debug:
+                    print "API_kv/select: querying for: key=%s" % query['key']
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['key']).first()
+
+            # site_id, key
+            if site_id and query['key'] and not hostname and not realm and 'value' not in query.keys():
+                if cfg.debug:
+                    print "API_kv/select: querying for: key=%s, site_id=%s" % (query['key'], site_id)
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['key']).\
+                               filter(KV.site_id==site_id).first()
+
+            # realm, site_id, key
+            if realm and site_id and query['key'] and not hostname and 'value' not in query.keys():
+                if cfg.debug:
+                    print "API_kv/select: querying for: key=%s, site_id=%s, realm=%s" % (query['key'], site_id, realm)
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['key']).\
+                               filter(KV.site_id==site_id).\
+                               filter(KV.realm==realm).first()
+
+            # hostname, realm, site_id, key
+            if hostname and realm and site_id and query['key'] and 'value' not in query.keys():
+                if cfg.debug:
+                    print "API_kv/select: querying for: key=%s, site_id=%s, realm=%s, hostname=%s" % (query['key'], site_id, realm, hostname)
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['key']).\
+                               filter(KV.site_id==site_id).\
+                               filter(KV.realm==realm).\
+                               filter(KV.hostname==hostname).first()
+
+            # key, value, nothing else
+            if 'value' in query.keys() and query['value'] and query['key'] and not query['fqdn']:
+                if cfg.debug:
+                    print "API_kv/select: querying on: key=%s, value=%s" % (query['key'], query['value'])
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['key']).\
+                               filter(KV.value==query['value']).first()
+
+            # key, value, site_id
+            if site_id and 'value' in query.keys() and query['value'] and query['key'] and not hostname and not realm:
+                if cfg.debug:
+                    print "API_kv/select: querying on: key=%s, value=%s, site_id=%s" % (query['key'], query['value'], site_id)
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['key']).\
+                               filter(KV.value==query['value']).\
+                               filter(KV.site_id==site_id).first()
+
+            # key, value, site_id, realm
+            if site_id and realm and 'value' in query.keys() and query['value'] and query['key'] and not hostname:
+                if cfg.debug:
+                    print "API_kv/select: querying on: key=%s, value=%s, realm=%s, site_id=%s" % (query['key'], query['value'], realm, site_id)
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['key']).\
+                               filter(KV.value==query['value']).\
+                               filter(KV.site_id==site_id).\
+                               filter(KV.realm==realm).first()
+
+            # hostname, realm, site_id, key, value
+            if hostname and realm and site_id and query['key'] and 'value' in query.keys() and query['value']:
+                if cfg.debug:
+                    print "API_kv/select: querying for: key=%s, site_id=%s, realm=%s, hostname=%s, value=%s" % (query['key'], site_id, realm, hostname, query['value'])
+                kv_entry = cfg.dbsess.query(KV).\
+                               filter(KV.key==query['key']).\
+                               filter(KV.site_id==site_id).\
+                               filter(KV.realm==realm).\
+                               filter(KV.hostname==hostname).\
+                               filter(KV.value==query['value']).first()
+
+            if kv_entry:
+                return kv_entry.to_dict()
             else:
                 if cfg.debug:
-                    print buf
-                return kv_entry.first().to_dict()
+                    print "API_kv/select: no results found for query"
+                return None
+
         except Exception, e:
             raise KVError(e)
 
