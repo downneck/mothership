@@ -249,7 +249,6 @@ def expire_server(cfg, hostname, when, delete_entry=True):
             except Exception, e:
                 print e
                 if not 'does not exist' in str(e):
-                    # return only if failure due to non-existence
                     return
             # clear server info from network table
             clear_serverinfo_from_network(cfg, cols['delid'])
@@ -395,13 +394,43 @@ def modify_server_column(cfg, hostname, col, value, force=False):
         will be removed from this function since it belongs to the
         network table)
     """
-    unqdn = '.'.join(mothership.get_unqdn(cfg, hostname))
+    host,realm,site_id = mothership.get_unqdn(cfg, hostname)
+    unqdn = '.'.join([host,realm,site_id])
     row = retrieve_server_row_by_unqdn(cfg, unqdn)
     curr_val = getattr(row, col)
     if force or confirm_column_change(curr_val, value, col, row.__tablename__):
         setattr(row, col, value)
         cfg.dbsess.commit()
         print "Changes committed.  %s is now %s" % (col, value)
+        if col == 'hostname':
+            # update or add groupname for host
+            oldgroupname = unqdn.replace('.', '_')
+            newgroupname = oldgroupname.replace(host, value)
+            g = cfg.dbsess.query(Groups).\
+                filter(Groups.groupname==oldgroupname).\
+                filter(Groups.realm==realm).\
+                filter(Groups.site_id==site_id).first()
+            if g:
+                print "changing group %s to %s" % (oldgroupname, newgroupname)
+                setattr(g, 'groupname', newgroupname)
+                cfg.dbsess.commit()
+            else:
+                print "adding group: %s" % newgroupname
+                mothership.users.gadd(cfg, newgroupname+"."+realm+"."+site_id)
+            # create a group for the new machine's sudoers
+            oldsudogroup = oldgroupname+'_sudo'
+            newsudogroup = newgroupname+'_sudo'
+            g = cfg.dbsess.query(Groups).\
+                filter(Groups.groupname==oldsudogroup).\
+                filter(Groups.realm==realm).\
+                filter(Groups.site_id==site_id).first()
+            if g:
+                print "changing sudo group %s to %s" % (oldsudogroup, newsudogroup)
+                setattr(g, 'groupname', newsudogroup)
+                cfg.dbsess.commit()
+            else:
+                print "adding sudo group: %s" % newsudogroup
+                mothership.users.gadd(cfg, newsudogroup+"."+realm+"."+site_id)
     else:
         print "Nothing confirmed. Nothing modified"
 
@@ -610,7 +639,6 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         print "group exists, skipping: %s" % newgroupname
     else:
         mothership.users.gadd(cfg, newgroupname+"."+realm+"."+site_id)
-    return server_id
 
     # create a group for the new machine's sudoers
     newsudogroup = newgroupname+'_sudo'
@@ -623,6 +651,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
     else:
         print "creating sudo group (default commands = ALL, use gmodify to change): "+newsudogroup
         mothership.users.gadd(cfg, newsudogroup+"."+realm+"."+site_id, sudo_cmds='ALL')
+    return server_id
 
 
 def remove_method_keys(dict, empty=False):
