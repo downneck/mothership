@@ -45,7 +45,7 @@ class API_serverinfo:
             'methods': { # a dict of methods we're presenting to the outside world (public only!)
                 'get_host': { # a method identifier
                     'description': 'retrieve server info for a server identified by hostname.realm.site_id', # duh
-                    'rest_type': 'GET', # the REST method we want to use for this call
+                    'rest_type': 'GET', # the REST method we want to use for this call: GET, POST, PUT, DELETE
                     'required_args': { # dict of info about arguments we just can't live without
                     },
                     'optional_args': { # dict holding optional argument info
