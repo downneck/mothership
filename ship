@@ -1206,8 +1206,6 @@ class ShipCli(cmdln.Cmdln):
                   help="import from yaml file (name.yaml)")
     @cmdln.option("-s", "--snmp", action="store_true",
                   help="import from snmpwalk of switches (source-ignored)")
-    @cmdln.option("-d", "--drac", action="store_true",
-                  help="import from drac (drac-ipaddress)")
     @cmdln.option("-c", "--cobbler", action="store_true",
                   help="import from cobbler (system-name)")
     def do_import_from(self, subcmd, opts, source):
@@ -1227,13 +1225,6 @@ class ShipCli(cmdln.Cmdln):
         info = {}
         if opts.yaml:
             info = yaml.load(open(source).read())
-        elif opts.drac:
-            import mothership.idrac6
-            data = mothership.idrac6.sysinfo(mothership.idrac6.query_idrac(self.cfg, source))
-            host,realm,site_id = mothership.get_unqdn(self.cfg, 'localhost')
-            drac.update({'power_switch':source, 'site_id':site_id, 'realm':realm})
-            mothership.convert_drac_dict_to_network(self.cfg, data, source)
-            info['hardware'] = [data]
         elif opts.cobbler:
             if source == 'list':
                 for system in cc.list_all_systems(): print system['name']
