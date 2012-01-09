@@ -170,9 +170,9 @@ class API_serverinfo:
                 s = mothership.validate.v_get_host_obj(cfg, query['hostname'])
                 if cfg.debug:
                     print s
-                ret = self.__getAPI_serverinfo(s.hostname, s.realm, s.site_id)
-            except:
-                raise ServerInfoError("API_serverinfo/get_host: no host found with name: %s" % query['hostname'])
+                ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
+            except Exception, e:
+                raise ServerInfoError("API_serverinfo/get_host: no host found with name: %s\nerror: %s" % (query['hostname']), e)
 
         if ret:
             return ret
@@ -241,7 +241,7 @@ class API_serverinfo:
 
         except TypeError:
           raise ServerInfoError("host \"%s\" not found" % host)
-        except:
-          raise ServerInfoError("something horrible happened")
+        except Exception, e:
+          raise ServerInfoError("something horrible happened\nerror: %s" % e)
 
         return ret
