@@ -94,13 +94,16 @@ def calculate_next_baremetal_vlan_ipaddress(cfg, vlan):
         filter(Network.vlan==vlan).\
         filter(Network.ip!=cfg.dbnull).\
         filter(Network.hw_tag!=cfg.dbnull)
+    lowest = mothership.network_mapper.remap(cfg, '1st_static_ip', vlan=int(vlan))
     try:
         first = data.order_by(Network.ip).first().ip
         last = data.order_by(Network.ip.desc()).first().ip
         #print 'RANGE: %s - %s' % (first, last)
     except:
-        first = mothership.network_mapper.remap(cfg, '1st_static_ip', vlan=int(vlan))
+        first = lowest
         last = first
+    if first < lowest:
+        first = lowest
 
     # compare the sequential list to the shiplist
     shiplist = []
@@ -402,7 +405,7 @@ def modify_server_column(cfg, hostname, col, value, force=False):
         setattr(row, col, value)
         cfg.dbsess.commit()
         print "Changes committed.  %s is now %s" % (col, value)
-        if col == 'hostname':
+        if not force and col == 'hostname':
             # update or add groupname for host
             oldgroupname = unqdn.replace('.', '_')
             newgroupname = oldgroupname.replace(host, value)
@@ -887,6 +890,12 @@ def swap_server(cfg, when, hosts=[]):
         if s['virtual']:
             print 'Only baremetal hosts can be swapped!'
             return
+    if swaplist[0]['realm'] != swaplist[1]['realm']:
+        print 'Swap hosts must be in the same realm!'
+        return
+    if swaplist[0]['site_id'] != swaplist[1]['site_id']:
+        print 'Swap hosts must have the same site_id!'
+        return
     # First, copy them to the server_graveyard
     for i in range(0,len(swaplist)):
         del swaplist[i]['id']
