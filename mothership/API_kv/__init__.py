@@ -68,7 +68,7 @@ class API_kv:
                         'key_value_select',
                     ],
                     'return': {
-                        'kv_entry': 'dict',
+                        'kv_entry': 'KVObject dict',
                     },
                 },
                 'collect': {
@@ -110,6 +110,8 @@ class API_kv:
 
 
     # select a single query
+    # there's definitely a more elegant way to do this
+    # feel free to rewrite it :)
     def select(self, query):
         """
         [description]
@@ -333,10 +335,6 @@ class API_kv:
 
             if fqdn != None:
                 hostname, realm, site_id = mothership.split_fqdn(fqdn)
-                #results = results.\
-                #    filter(or_(KV.site_id==site_id, KV.site_id==None)).\
-                #    filter(or_(KV.realm==realm, KV.realm==None)).\
-                #    filter(or_(KV.hostname==hostname, KV.hostname==None))
                 results = results.\
                     filter(KV.site_id==site_id).\
                     filter(KV.realm==realm).\

@@ -114,7 +114,7 @@ class API_list_servers:
                         'list_server',
                     ],
                     'return': {
-                        'servers': 'list',
+                        'servers': ['fqdn', 'fqdn',],
                     },
                 },
             },

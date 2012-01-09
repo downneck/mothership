@@ -79,7 +79,7 @@ class API_list_values:
                         'list_value',
                     ],
                     'return': {
-                        'values': 'list', # in the case of users and groups, this will be a list of dicts
+                        'values': ['value', 'value',], # in the case of users and groups, this will be a list of dicts
                     },
                 },
             },

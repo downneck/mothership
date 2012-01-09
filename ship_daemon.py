@@ -25,6 +25,9 @@ cfg = configure.Configure('mothership.yaml')
 # set our debugging flag
 cfg.debug = cfg.debug
 
+# generic mothership exception type
+class ShipDaemonError(Exception):
+    pass
 
 # scans our main path for modules, loads valid modules
 @httpship.route('/loadmodules')
@@ -175,6 +178,10 @@ def callable_path(pname, callpath):
                     buf += "/%s/%s?%s (%s): %s<BR>" % (pname, callpath, opt, cfg.module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'][opt]['vartype'], cfg.module_metadata[pname].metadata['methods'][callpath]['optional_args']['args'][opt]['desc'])
         except:
             buf += "<BR><BR>optional_args:<BR>No optional_args found<BR>"
+        try:
+            buf += "<BR><BR>return:<BR>%s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath]['return'])
+        except:
+            buf += "<BR><BR>return:<BR>ERROR: improperly formed return metadata"
         if cfg.debug:
             print buf
         return buf
@@ -182,12 +189,18 @@ def callable_path(pname, callpath):
     else:
         if cfg.debug:
             #print "method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath])
-            buf = getattr(cfg.module_metadata[pname], callpath)
-            print myjson.JSONEncoder(indent=4).encode(buf(query))
-            return myjson.JSONEncoder().encode(buf(query))
+            if bottle.request.method == cfg.module_metadata[pname].metadata['methods'][callpath]['rest_type']:
+                buf = getattr(cfg.module_metadata[pname], callpath)
+                print myjson.JSONEncoder(indent=4).encode(buf(query))
+                return myjson.JSONEncoder().encode(buf(query))
+            else:
+                raise ShipDaemonError("request method \"%s\" does not match allowed type \"%s\" for call \"/%s/%s\"" % (bottle.request.method, cfg.module_metadata[pname].metadata['methods'][callpath]['rest_type'], pname, callpath))
         else:
-            buf = getattr(cfg.module_metadata[pname], callpath)
-            return myjson.JSONEncoder().encode(buf(query))
+            if bottle.request.method == cfg.module_metadata[pname].metadata['methods'][callpath]['rest_type']:
+                buf = getattr(cfg.module_metadata[pname], callpath)
+                return myjson.JSONEncoder().encode(buf(query))
+            else:
+                raise ShipDaemonError("request method \"%s\" does not match allowed type \"%s\" for call \"/%s/%s\"" % (bottle.request.method, cfg.module_metadata[pname].metadata['methods'][callpath]['rest_type'], pname, callpath))
 
 
 # why? because i made a spaceship.

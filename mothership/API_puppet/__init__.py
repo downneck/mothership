@@ -60,7 +60,22 @@ class API_puppet:
                         'classify_puppet',
                     ],
                     'return': {
-                        'node': 'dict',
+                        'node': {
+                            'environment': 'realm',
+                            'classes': [
+                                'tag',
+                                'tag',
+                            ],
+                            'parameters': {
+                                'parameter1': 'string',
+                                'parameter2': 'string',
+                                'parameter3': [
+                                    'sub-parameter',
+                                    'sub-parameter',
+                                ],
+                                'parameter4': 'string',
+                            },
+                        },
                     },
                 },
             },
