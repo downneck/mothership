@@ -244,7 +244,13 @@ def expire_server(cfg, hostname, when, delete_entry=True):
             # remove the server's group
             server_groupname = unqdn.replace('.', '_') + \
                 "." + cols['realm'] + "." + cols['site_id']
-            mothership.users.gremove(cfg, server_groupname)
+            try:
+                mothership.users.gremove(cfg, server_groupname)
+            except Exception, e:
+                print e
+                if not 'does not exist' in str(e):
+                    # return only if failure due to non-existence
+                    return
             # clear server info from network table
             clear_serverinfo_from_network(cfg, cols['delid'])
             # Remove server from servers table and related tables
