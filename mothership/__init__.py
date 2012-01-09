@@ -58,6 +58,14 @@ def rm_tag(cfg, name):
     if not r:
         raise MothershipError("tag \"%s\" not found, aborting" % name)
 
+    # modify all servers entries with pending delete tag
+    for s in cfg.dbsess.query(Server).\
+        filter(Server.tag==name):
+        unqdn = '.'.join([s.hostname, s.realm, s.site_id])
+        print '%s has primary tag: %s' % (unqdn, s.tag)
+        ans = raw_input("specify replacement primary tag for %s: " % unqdn)
+        mothership.modify_server_column(cfg, unqdn, 'tag', ans, True)
+    # remove all kv entries with pending delete tag
     kvs = mothership.kv.collect(cfg, fqdn=None, key='tag', value=name)
     if kvs:
         print 'The following hosts have tag=%s:' % name
@@ -412,6 +420,12 @@ def modify_server_column(cfg, hostname, col, value, force=False):
     unqdn = '.'.join([host,realm,site_id])
     row = retrieve_server_row_by_unqdn(cfg, unqdn)
     curr_val = getattr(row, col)
+    if col == 'tag':
+        tags = []
+        for tag in cfg.dbsess.query(Tag):
+            tags.append(tag.name)
+        if value not in tags:
+            raise MothershipError('You specified an invalid tag: %s' % value)
     if force or confirm_column_change(curr_val, value, col, row.__tablename__):
         setattr(row, col, value)
         cfg.dbsess.commit()
