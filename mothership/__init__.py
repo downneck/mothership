@@ -58,10 +58,21 @@ def rm_tag(cfg, name):
     if not r:
         raise MothershipError("tag \"%s\" not found, aborting" % name)
 
+    kvs = mothership.kv.collect(cfg, fqdn=None, key='tag', value=name)
+    if kvs:
+        print 'The following hosts have tag=%s:' % name
+        for k in kvs:
+            unqdn = '.'.join([k.hostname, k.realm, k.site_id])
+            print '\t%s' % unqdn
     ans = raw_input("to delete tag \"%s\" please type \"delete_%s\": " % (name, name))
     if ans != "delete_%s" % name:
         raise MothershipError("aborted by user")
     else:
+        for k in kvs:
+            unqdn = '.'.join([k.hostname, k.realm, k.site_id])
+            print 'Removing tag=%s from %s' % (name, unqdn)
+            mothership.kv.delete(cfg, unqdn, key='tag', value=name)
+        print 'Deleting tag: %s' % name
         cfg.dbsess.delete(r)
         cfg.dbsess.commit()
 
