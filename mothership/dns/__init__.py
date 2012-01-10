@@ -52,15 +52,20 @@ $TTL 86400
 
 """ % (domainname, domainname, contact, serial, domainname, domainname)
 
-def generate_dns_output(cfg, domain, outdir, usecobbler=False):
+def generate_dns_arecords(cfg, realm, site_id):
+    """
+    Retrieves server list from mothership to create A records
+    """
+    return '; to be added later\n'
+
+def generate_dns_output(cfg, domain, opts):
     """
     Turns the dns_addendum table into usable zonefiles
-    Optionally, will insert the zone into cobbler
     """
     head = []
     da = DnsAddendum
     check,tld = filter_domain_query(cfg.dbsess.query(da.realm,da.site_id), da, domain)
-    if not outdir:
+    if not opts.outdir:
         if check.distinct().count() > 1:
             print 'More than one domain matches %s in mothership:' % domain
             count = 0
@@ -78,43 +83,25 @@ def generate_dns_output(cfg, domain, outdir, usecobbler=False):
     data,tld = filter_domain_query(cfg.dbsess.query(da), da, domain)
     data = data.order_by(da.site_id, da.realm, da.record_type, da.host).all()
     for dns in data:
-        zone = '%s/%s.%s.%s' % (outdir, dns.realm, dns.site_id, tld)
+        f = sys.stdout
+        zone = '%s/%s.%s.%s' % (opts.outdir, dns.realm, dns.site_id, tld)
         if '%s.%s' % (dns.realm,dns.site_id) not in head:
             head.append('%s.%s' % (dns.realm,dns.site_id))
-            if outdir:
-                if usecobbler:
-                    if os.path.exists(zone+'_header'):
-                        print 'Using header: %s_header' % zone
-                        shutil.copyfile(zone+'_header', zone)
-                        print 'Updating %s/%s.%s.%s with dns_addendum table' \
-                            % (outdir, dns.realm, dns.site_id, tld)
-                        f = open(zone, 'a')
-                    else:
-                        print '\nFile does not exist: %s_header' % zone
-                        print 'Using stdout instead:'
-                        f = sys.stdout
-                        f.write(generate_dns_header('%s.%s.%s' \
-                            % (dns.realm, dns.site_id, tld), cfg.contact))
-                else:
-                    print 'Generating boilerplate header for %s/%s.%s.%s' \
-                        % (outdir, dns.realm, dns.site_id, tld)
-                    f = open(zone, 'w')
-                    f.write(generate_dns_header('%s.%s.%s' \
-                        % (dns.realm, dns.site_id, tld), cfg.contact))
-                    f = open(zone, 'a')
-            else:
-                f = sys.stdout
-                f.write(generate_dns_header('%s.%s.%s' \
-                    % (dns.realm, dns.site_id, tld), cfg.contact))
-        # if last octet of target is non-numerical and does not end with
-        # period, add one
+            if opts.outdir:
+                print 'Generating header for %s' % zone
+                f = open(zone, 'w')
+            f.write(generate_dns_header('%s.%s.%s' \
+                % (dns.realm, dns.site_id, tld), cfg.contact))
+            f.write(generate_dns_arecords(cfg, dns.realm, dns.site_id))
+            if opts.outdir:
+                # append the rest
+                f = open(zone, 'a')
+        # append period if last octet of target is non-numerical
         target = dns.target
         if not re.search('\d+',dns.target.split('.')[-1]):
             if not target.endswith('.'):
                 target += '.'
         f.write("%-20s\tIN\t%-8s%-16s\n" % (dns.host, dns.record_type, target))
-    if usecobbler:
-        f.write("\n$host_record\n")
 
 def update_table_dnsaddendum(cfg, info, delete=False):
     """

@@ -966,26 +966,18 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("gendns")
     @cmdln.alias("gen_dns")
     @cmdln.option("-s", "--sync", action="store_true",
-                  help="sync cobbler after updating zone_templates")
-    @cmdln.option("-c", "--cobbler", action="store_true",
-                  help="output to cobbler zone_templates")
+                  help="sync zone files/config after confirmation of changes")
     @cmdln.option("-o", "--outdir",
                   help="output to directory as realm.site_id.domain")
     def do_generate_dns(self, subcmd, opts, domain):
         """${cmd_name}: Generate DNS entries from dns_addendum table.
-        For outdir/cobbler, all files that match the domain specified will be generated.
+        For outdir, all files that match the domain specified will be generated.
         For stdout, if more than one realm.site_id matches, a selection prompt will display.
 
         ${cmd_usage}
         ${cmd_option_list}
         """
-        outdir = None
-        if opts.outdir: outdir = opts.outdir
-        if opts.cobbler: outdir = '/etc/cobbler/zone_templates'
-        mothership.dns.generate_dns_output(self.cfg, domain, outdir, opts.cobbler)
-        if opts.cobbler and opts.sync:
-            cc = mothership.cobbler.CobblerAPI(self.cfg)
-            cc.sync_cobbler()
+        mothership.dns.generate_dns_output(self.cfg, domain, opts)
 
     @cmdln.alias("add")
     @cmdln.alias("add_serv")
