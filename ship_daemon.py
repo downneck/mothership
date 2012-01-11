@@ -141,7 +141,7 @@ def namespace_path(pname):
 
 # returns data about a function call or calls the function.
 # will probably change significantly before the rewrite
-@httpship.route("/:pname/:callpath")
+@httpship.route("/:pname/:callpath", method=('GET', 'POST', 'PUT', 'DELETE'))
 def callable_path(pname, callpath):
     query = bottle.request.GET
     if cfg.debug:
@@ -191,14 +191,16 @@ def callable_path(pname, callpath):
             #print "method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath])
             if bottle.request.method == cfg.module_metadata[pname].metadata['methods'][callpath]['rest_type']:
                 buf = getattr(cfg.module_metadata[pname], callpath)
-                print myjson.JSONEncoder(indent=4).encode(buf(query))
-                return myjson.JSONEncoder().encode(buf(query))
+                returnme = buf(query)
+                print myjson.JSONEncoder(indent=4).encode(returnme)
+                return myjson.JSONEncoder().encode(returnme)
             else:
                 raise ShipDaemonError("request method \"%s\" does not match allowed type \"%s\" for call \"/%s/%s\"" % (bottle.request.method, cfg.module_metadata[pname].metadata['methods'][callpath]['rest_type'], pname, callpath))
         else:
             if bottle.request.method == cfg.module_metadata[pname].metadata['methods'][callpath]['rest_type']:
                 buf = getattr(cfg.module_metadata[pname], callpath)
-                return myjson.JSONEncoder().encode(buf(query))
+                returnme = buf(query)
+                return myjson.JSONEncoder().encode(returnme)
             else:
                 raise ShipDaemonError("request method \"%s\" does not match allowed type \"%s\" for call \"/%s/%s\"" % (bottle.request.method, cfg.module_metadata[pname].metadata['methods'][callpath]['rest_type'], pname, callpath))
 
