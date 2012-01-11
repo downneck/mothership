@@ -298,6 +298,23 @@ class Configure:
         else:
             self.ldap_default_gid = '401'
 
+
+        # DNS settings
+        dnsconfig = all_configs['dns']
+        if 'active' in dnsconfig and dnsconfig['active']:
+            self.dns_active = dnsconfig['active']
+        else:
+            self.dns_active = False
+        if 'configfile' in dnsconfig and dnsconfig['configfile']:
+            self.dns_conf = dnsconfig['configfile']
+        else:
+            self.dns_conf = '/etc/named.conf'
+        if 'zonedir' in dnsconfig and dnsconfig['zonedir']:
+            self.dns_zone = dnsconfig['zonedir']
+        else:
+            self.dns_zone = '/var/named/'
+
+
     def close_connections(self):
         """
             Close out connections

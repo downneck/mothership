@@ -965,15 +965,12 @@ class ShipCli(cmdln.Cmdln):
 
     @cmdln.alias("gendns")
     @cmdln.alias("gen_dns")
-    @cmdln.option("-s", "--sync", action="store_true",
-                  help="sync zone files/config after confirmation of changes")
+    @cmdln.option("-s", "--system", action="store_true",
+                  help="output to system files/config after confirmation of changes")
     @cmdln.option("-o", "--outdir",
                   help="output to directory as realm.site_id.domain")
     def do_generate_dns(self, subcmd, opts, domain):
         """${cmd_name}: Generate DNS entries from dns_addendum table.
-        For outdir, all files that match the domain specified will be generated.
-        For stdout, if more than one realm.site_id matches, a selection prompt will display.
-
         ${cmd_usage}
         ${cmd_option_list}
         """

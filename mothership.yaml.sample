@@ -280,3 +280,14 @@ ldap:
   # associated to the first entry of default_groups array
   default_gid: '401'
 
+# DNS module options
+dns:
+  # Location of the dns configuration file
+  configfile: /etc/named.conf
+
+  # Location of the dns zone files (with trailing slash)
+  zonedir: /var/named/
+
+  # Forward zones will be determined by the realms and site_ids
+  # Reverse zones will be determined by the network map
+

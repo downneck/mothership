@@ -22,18 +22,14 @@ import shutil
 import sys
 import time
 from mothership.mothership_models import *
+import mothership.validate
 
 
-def filter_domain_query(query, table, domain):
-    sub = domain.split('.')
-    if len(sub) >= 4:
-        query = query.filter(table.realm==sub[-4:-3][0])
-    if len(sub) >= 3:
-        query = query.filter(table.site_id==sub[-3:-2][0])
-    return query, '.'.join(sub[-2:])
-
-def generate_dns_header(domainname, contact):
-    """Prints out a DNS Zone header for domainname"""
+def generate_dns_header(cfg, fqdn):
+    """
+    Returns zone header for fqdn
+    """
+    contact = cfg.contact
     serial = int(time.time())
     if '@' in contact: contact = contact.replace('@','.')
     return """
@@ -50,58 +46,56 @@ $TTL 86400
                         IN      NS      ns1.%s.
                         IN      NS      ns2.%s.
 
-""" % (domainname, domainname, contact, serial, domainname, domainname)
+""" % (fqdn, fqdn, contact, serial, fqdn, fqdn)
 
-def generate_dns_arecords(cfg, realm, site_id):
+def generate_dns_arecords(cfg, realm, site_id, domain):
     """
     Retrieves server list from mothership to create A records
     """
-    return '; to be added later\n'
+    alist = ''
+    for s,n in cfg.dbsess.query(Server, Network).\
+        filter(Network.server_id==Server.id).\
+        filter(Network.site_id==site_id).\
+        filter(Network.realm==realm).\
+        order_by(Server.hostname).all():
+        if n.ip:
+            alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
+    return alist
 
-def generate_dns_output(cfg, domain, opts):
+def generate_dns_addendum(cfg, realm, site_id, domain):
     """
-    Turns the dns_addendum table into usable zonefiles
+    Turns the dns_addendum table into usable records
     """
-    head = []
-    da = DnsAddendum
-    check,tld = filter_domain_query(cfg.dbsess.query(da.realm,da.site_id), da, domain)
-    if not opts.outdir:
-        if check.distinct().count() > 1:
-            print 'More than one domain matches %s in mothership:' % domain
-            count = 0
-            selection = []
-            for pair in check.distinct().all():
-                count += 1
-                print str(count) + ') %s.%s.' % pair + tld
-                selection.append('%s.%s.' % pair + tld)
-            ans = raw_input('Please select the one you want to generate: ')
-            if int(ans) < 1 or int(ans) > count:
-                print 'Generate DNS aborted.'
-                return
-            else:
-                domain = selection[int(ans)-1]
-    data,tld = filter_domain_query(cfg.dbsess.query(da), da, domain)
-    data = data.order_by(da.site_id, da.realm, da.record_type, da.host).all()
-    for dns in data:
-        f = sys.stdout
-        zone = '%s/%s.%s.%s' % (opts.outdir, dns.realm, dns.site_id, tld)
-        if '%s.%s' % (dns.realm,dns.site_id) not in head:
-            head.append('%s.%s' % (dns.realm,dns.site_id))
-            if opts.outdir:
-                print 'Generating header for %s' % zone
-                f = open(zone, 'w')
-            f.write(generate_dns_header('%s.%s.%s' \
-                % (dns.realm, dns.site_id, tld), cfg.contact))
-            f.write(generate_dns_arecords(cfg, dns.realm, dns.site_id))
-            if opts.outdir:
-                # append the rest
-                f = open(zone, 'a')
-        # append period if last octet of target is non-numerical
+    alist = ''
+    for dns in cfg.dbsess.query(DnsAddendum).\
+        filter(DnsAddendum.site_id==site_id).\
+        filter(DnsAddendum.realm==realm).\
+        order_by(DnsAddendum.record_type, DnsAddendum.host).all():
         target = dns.target
         if not re.search('\d+',dns.target.split('.')[-1]):
             if not target.endswith('.'):
                 target += '.'
-        f.write("%-20s\tIN\t%-8s%-16s\n" % (dns.host, dns.record_type, target))
+        alist += '%-20s\tIN\t%-8s%-16s\n' % (dns.host, dns.record_type, target)
+    return alist
+
+def generate_dns_output(cfg, domain, opts):
+    """
+    Creates the zonefile for the specified domain
+    """
+    fqn = mothership.validate.v_get_fqn(cfg, domain)
+    sfqn = mothership.validate.v_split_fqn(fqn)
+    forward = generate_dns_header(cfg, fqn)
+    forward += generate_dns_arecords(cfg, *sfqn)
+    forward += generate_dns_addendum(cfg, *sfqn)
+    f = sys.stdout
+    if opts.outdir:
+        zone = '%s/%s' % (opts.outdir, fqn)
+        f = open(zone, 'w')
+    else:
+        print '-'*60 + '\n\nDNS forward zone for %s:\n' % fqn  + '-'*60
+    f.write(forward)
+    if opts.outdir:
+       f.close()
 
 def update_table_dnsaddendum(cfg, info, delete=False):
     """
