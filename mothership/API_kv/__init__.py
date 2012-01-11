@@ -150,6 +150,41 @@ class API_kv:
                         'true/false': 'bool',
                     },
                 },
+                'delete': {
+                    'description': 'delete a KV entry',
+                    'rest_type': 'DELETE',
+                    'required_args': {
+                        'args': {
+                            'unqdn': {
+                                'vartype': 'string',
+                                'desc': 'unqdn/realm_path of the entry. enter any portion or none',
+                            },
+                            'key': {
+                                'vartype': 'string',
+                                'desc': 'key to remove',
+                            },
+                            'value': {
+                                'vartype': 'string',
+                                'desc': 'value to remove',
+                            },
+                        },
+                    },
+                    'optional_args': {
+                        'min': 0,
+                        'max': 0,
+                        'args': {
+                        },
+                    },
+                    'cmdln_aliases': [
+                        'kv_delete',
+                        'key_value_delete',
+                        'kv_remove',
+                        'key_value_remove',
+                    ],
+                    'return': {
+                        'true/false': 'bool',
+                    },
+                },
             },
         }
 
@@ -493,19 +528,13 @@ class API_kv:
         # setting variables
         # config object. love this guy.
         cfg = self.cfg
-        # setting up a debug buffer
-        hostname = None
-        realm = None
-        site_id = None
-        # our return value
-        kv_entry = []
         # setting our valid query keys
         valid_qkeys = []
-        if self.metadata['methods']['collect']['required_args']['args']:
-            for i in self.metadata['methods']['collect']['required_args']['args'].keys():
+        if self.metadata['methods']['add']['required_args']['args']:
+            for i in self.metadata['methods']['add']['required_args']['args'].keys():
                 valid_qkeys.append(i)
-        if self.metadata['methods']['collect']['optional_args']['args']:
-            for i in self.metadata['methods']['collect']['optional_args']['args'].keys():
+        if self.metadata['methods']['add']['optional_args']['args']:
+            for i in self.metadata['methods']['add']['optional_args']['args'].keys():
                 valid_qkeys.append(i)
 
         try:
@@ -524,8 +553,8 @@ class API_kv:
                 key = query['key']
             if 'value' not in query.keys() or not query['value']:
                 if cfg.debug:
-                    print "API_kv/add: no key provided!"
-                raise KVError("API_kv/add: no key provided!")
+                    print "API_kv/add: no value provided!"
+                raise KVError("API_kv/add: no value provided!")
             else:
                 value = query['value']
 
@@ -572,18 +601,97 @@ class API_kv:
 #    cfg.dbsess.add(kv)
 #    cfg.dbsess.commit()
 #    return kv
-#
-#def delete(cfg, fqdn, key, value):
-#    """
-#    Delete a row matching both key and value.
-#    """
-#    kv = select(cfg, fqdn, key, value=value)
-#    if kv:
-#        cfg.dbsess.delete(kv)
-#        cfg.dbsess.commit()
-#    else:
-#        print "key=value not found, exiting."
 
+    def delete(self, query):
+        """
+        [description]
+        delete a KV entry
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns true if successful, raises an error if not
+        """
+        # setting variables
+        # config object. love this guy.
+        cfg = self.cfg
+        # setting up a debug buffer
+        buf = "API_kv/delete: querying for "
+        hostname = None
+        realm = None
+        site_id = None
+        # our return value
+        kv_entries = []
+        # setting our valid query keys
+        valid_qkeys = []
+        if self.metadata['methods']['delete']['required_args']['args']:
+            for i in self.metadata['methods']['delete']['required_args']['args'].keys():
+                valid_qkeys.append(i)
+        if self.metadata['methods']['delete']['optional_args']['args']:
+            for i in self.metadata['methods']['delete']['optional_args']['args'].keys():
+                valid_qkeys.append(i)
+
+        try:
+            # to make our conditionals easier
+            if 'unqdn' not in query.keys():
+                unqdn = None
+            else:
+                unqdn = query['unqdn']
+            if 'key' not in query.keys():
+                key = None
+            else:
+                key = query['key']
+            if 'value' not in query.keys():
+                value = None
+            else:
+                value = query['value']
+            if 'all' not in query.keys():
+                all = None
+            else:
+                all = True
+
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    if cfg.debug:
+                        print "API_kv/delete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys)
+                    raise KVError("API_kv/delete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # get the whole damn KV table
+
+            # filtery by unqdn (or any portion thereof)
+            if unqdn != None:
+                hostname, realm, site_id = mothership.split_fqdn(unqdn)
+                if cfg.debug:
+                    buf += "unqdn=%s hostname=%s realm=%s site_id=%s " % (unqdn, hostname, realm, site_id)
+            else:
+                if cfg.debug:
+                    buf += "unqdn=(global!) hostname=%s realm=%s site_id=%s " % (hostname, realm, site_id)
+            # try to find an existing entry
+            result = cfg.dbsess.query(KV).\
+                filter(KV.site_id==site_id).\
+                filter(KV.realm==realm).\
+                filter(KV.hostname==hostname).\
+                filter(KV.key==key).\
+                filter(KV.value==value).first()
+
+            # check to see if we have an entry, if so...annihilate it!
+            if result:
+                cfg.dbsess.delete(result)
+                if cfg.debug:
+                    print "stuff"
+                cfg.dbsess.commit()
+                if cfg.debug:
+                    print "API_kv/delete: delete successful for unqdn=%s key=%s value=%s" % (unqdn, key, value)
+                return 'success!'
+            else:
+                if cfg.debug:
+                    print "API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value)
+                raise KVError("API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value))
+        except Exception, e:
+            raise KVError(e)
 
     # create a new KV object, return it. for use internally only
     def __new(self, unqdn, key, value):
