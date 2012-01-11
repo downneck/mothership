@@ -969,6 +969,8 @@ class ShipCli(cmdln.Cmdln):
                   help="output to system files/config after confirmation of changes")
     @cmdln.option("-o", "--outdir",
                   help="output to directory as realm.site_id.domain")
+    @cmdln.option("-r", "--reverse", action="store_true",
+                  help="generate reverse zone file for realm.site_id.domain")
     def do_generate_dns(self, subcmd, opts, domain):
         """${cmd_name}: Generate DNS entries from dns_addendum table.
         ${cmd_usage}

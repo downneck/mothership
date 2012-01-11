@@ -282,12 +282,15 @@ ldap:
 
 # DNS module options
 dns:
-  # Location of the dns configuration file
-  configfile: /etc/named.conf
+  # Location of the dns zone configuration file
+  zonecfg: /etc/named/zones.conf
 
   # Location of the dns zone files (with trailing slash)
   zonedir: /var/named/
 
   # Forward zones will be determined by the realms and site_ids
   # Reverse zones will be determined by the network map
+
+  # Default TTL of zone headers
+  zonettl: 300
 

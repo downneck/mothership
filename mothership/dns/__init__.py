@@ -21,32 +21,51 @@ import os
 import shutil
 import sys
 import time
-from mothership.mothership_models import *
+import mothership.kv
 import mothership.validate
+import mothership.network_mapper
+from mothership.mothership_models import *
 
 
-def generate_dns_header(cfg, fqdn):
+class DNSError(Exception):
+    pass
+
+def generate_dns_header(cfg, fqdn, realm, site_id, domain):
     """
     Returns zone header for fqdn
     """
     contact = cfg.contact
     serial = int(time.time())
     if '@' in contact: contact = contact.replace('@','.')
-    return """
+    header = """
 $ORIGIN %s.
-$TTL 86400
+$TTL %s
 @                       IN      SOA     %s. %s. (
                                         %s   ; Serial
                                         21600        ; Refresh
                                         3600         ; Retry
                                         604800       ; Expire
-                                        86400        ; TTL
+                                        %-5d        ; TTL
                                         )
 
-                        IN      NS      ns1.%s.
-                        IN      NS      ns2.%s.
-
-""" % (fqdn, fqdn, contact, serial, fqdn, fqdn)
+""" % (fqdn, cfg.dns_ttl, fqdn, contact, serial, cfg.dns_ttl)
+    key = 'nameservers'
+    ns = mothership.kv.collect(cfg, realm+'.'+site_id, key)
+    if not ns:
+        raise DNSError('''
+No nameservers defined for %s.%s or %s, use:
+    ship kv -a %s.%s nameservers=<ns1>[,<nsN>]
+to configure one or more nameservers
+''' % (realm, site_id, domain, realm, site_id))
+    for n in ns:
+        slist = n.value.split(',')
+        if n.hostname == realm+'.'+site_id:
+            continue
+    nlist = ''
+    for server in slist:
+        nlist += '%-20s\tIN\t%-8s%-16s\n' % ('', 'NS', server)
+    header += nlist
+    return header
 
 def generate_dns_arecords(cfg, realm, site_id, domain):
     """
@@ -61,6 +80,27 @@ def generate_dns_arecords(cfg, realm, site_id, domain):
         if n.ip:
             alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
     return alist
+
+def generate_dns_arpa(cfg, cidr, fqdn, realm, site_id, domain):
+    """
+    Retrieves server list from mothership to create arpa records
+    """
+    net = mothership.network_mapper.get_network(cidr)
+    num = 0
+    while re.search('\.0+$', net):
+        net = re.sub('\.0+$', '', net)
+        num += 1
+    alist = ''
+    for s,n in cfg.dbsess.query(Server, Network).\
+        filter(Network.server_id==Server.id).\
+        filter(Network.site_id==site_id).\
+        filter(Network.realm==realm).\
+        order_by(Network.ip).all():
+        if mothership.network_mapper.within(n.ip, cidr):
+            alist += '%-20s\tIN\t%-8s%s.%s.\n' % (
+                '.'.join(reversed(n.ip.split('.')[-num:])),
+                'PTR', s.hostname, fqdn)
+    return net, alist
 
 def generate_dns_addendum(cfg, realm, site_id, domain):
     """
@@ -80,20 +120,51 @@ def generate_dns_addendum(cfg, realm, site_id, domain):
 
 def generate_dns_output(cfg, domain, opts):
     """
-    Creates the zonefile for the specified domain
+    Creates DNS zonefiles
+    """
+    if opts.reverse:
+        generate_dns_reverse(cfg, domain, opts)
+    else:
+        generate_dns_forward(cfg, domain, opts)
+
+def generate_dns_forward(cfg, domain, opts):
+    """
+    Creates the forward zonefile for the specified domain
     """
     fqn = mothership.validate.v_get_fqn(cfg, domain)
     sfqn = mothership.validate.v_split_fqn(fqn)
-    forward = generate_dns_header(cfg, fqn)
+    forward = generate_dns_header(cfg, fqn, *sfqn)
     forward += generate_dns_arecords(cfg, *sfqn)
     forward += generate_dns_addendum(cfg, *sfqn)
     f = sys.stdout
     if opts.outdir:
         zone = '%s/%s' % (opts.outdir, fqn)
+        print 'Writing DNS forward zone for %s to %s' % (fqn, zone)
         f = open(zone, 'w')
     else:
-        print '-'*60 + '\n\nDNS forward zone for %s:\n' % fqn  + '-'*60
+        print '\n' + '-'*60 + '\nDNS forward zone for %s:\n' % fqn  + '-'*60
     f.write(forward)
+    if opts.outdir:
+       f.close()
+
+def generate_dns_reverse(cfg, domain, opts):
+    """
+    Creates the reverse zonefile for the specified domain
+    """
+    fqn = mothership.validate.v_get_fqn(cfg, domain)
+    sfqn = mothership.validate.v_split_fqn(fqn)
+    cidr = mothership.network_mapper.remap(cfg, 'cidr', domain=fqn)
+    net, rev = generate_dns_arpa(cfg, cidr, fqn, *sfqn)
+    reverse = generate_dns_header(cfg, fqn, *sfqn)
+    reverse += rev
+    f = sys.stdout
+    if opts.outdir:
+        zone = '%s/%s' % (opts.outdir, net)
+        print 'Writing DNS reverse zone for %s to %s' % (net, zone)
+        f = open(zone, 'w')
+    else:
+        print '\n' + '-'*60 + '\nDNS reverse zone for %s:\n' % net  + '-'*60
+    f.write(reverse)
     if opts.outdir:
        f.close()
 

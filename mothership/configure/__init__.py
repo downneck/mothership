@@ -305,14 +305,18 @@ class Configure:
             self.dns_active = dnsconfig['active']
         else:
             self.dns_active = False
-        if 'configfile' in dnsconfig and dnsconfig['configfile']:
-            self.dns_conf = dnsconfig['configfile']
+        if 'zonecfg' in dnsconfig and dnsconfig['zonecfg']:
+            self.dns_conf = dnsconfig['zonecfg']
         else:
-            self.dns_conf = '/etc/named.conf'
+            self.dns_conf = '/etc/named/zones.conf'
         if 'zonedir' in dnsconfig and dnsconfig['zonedir']:
             self.dns_zone = dnsconfig['zonedir']
         else:
             self.dns_zone = '/var/named/'
+        if 'zonettl' in dnsconfig and dnsconfig['zonettl']:
+            self.dns_ttl = dnsconfig['zonettl']
+        else:
+            self.dns_ttl = '86400'
 
 
     def close_connections(self):
