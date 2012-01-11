@@ -182,7 +182,44 @@ class API_kv:
                         'key_value_remove',
                     ],
                     'return': {
-                        'true/false': 'bool',
+                        'string': 'success!',
+                    },
+                },
+                'update': {
+                    'description': 'update a KV entry',
+                    'rest_type': 'PUT',
+                    'required_args': {
+                        'args': {
+                            'unqdn': {
+                                'vartype': 'string',
+                                'desc': 'unqdn/realm_path of the entry. enter any portion or none',
+                            },
+                            'key': {
+                                'vartype': 'string',
+                                'desc': 'key to update',
+                            },
+                            'value': {
+                                'vartype': 'string',
+                                'desc': 'value to update',
+                            },
+                            'new_value': {
+                                'vartype': 'string',
+                                'desc': 'new value to update to',
+                            },
+                        },
+                    },
+                    'optional_args': {
+                        'min': 0,
+                        'max': 0,
+                        'args': {
+                        },
+                    },
+                    'cmdln_aliases': [
+                        'kv_update',
+                        'key_value_update',
+                    ],
+                    'return': {
+                        'string': 'success!',
                     },
                 },
             },
@@ -588,19 +625,89 @@ class API_kv:
             raise KVError(e)
 
 
-#def upsert(cfg, fqdn, key, value):
-#    """
-#    Insert a new value or update existing.
-#    """
-#    kv = select(cfg, fqdn, key)
-#    if not kv:
-#        print "key=value not found, adding"
-#        kv = new(fqdn, key, value)
-#    print "key=value found, updating"
-#    kv.value = value
-#    cfg.dbsess.add(kv)
-#    cfg.dbsess.commit()
-#    return kv
+    def update(self, query):
+        """
+        [description]
+        update a KV entry
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns true if successful, raises an error if not
+        """
+        # setting variables
+        # config object. love this guy.
+        cfg = self.cfg
+        # setting up a debug buffer
+        buf = "API_kv/update: update successful for "
+        hostname = None
+        realm = None
+        site_id = None
+        # setting our valid query keys
+        valid_qkeys = []
+        if self.metadata['methods']['update']['required_args']['args']:
+            for i in self.metadata['methods']['update']['required_args']['args'].keys():
+                valid_qkeys.append(i)
+        if self.metadata['methods']['update']['optional_args']['args']:
+            for i in self.metadata['methods']['update']['optional_args']['args'].keys():
+                valid_qkeys.append(i)
+
+        try:
+            # to make our conditionals easier
+            if 'unqdn' not in query.keys():
+                unqdn = None
+            else:
+                unqdn = query['unqdn']
+            if 'key' not in query.keys() or not query['key']:
+                raise KVError("API_kv/update: no key supplied")
+            else:
+                key = query['key']
+            if 'value' not in query.keys() or not query['value']:
+                raise KVError("API_kv/update: no value supplied")
+            else:
+                value = query['value']
+            if 'new_value' not in query.keys() or not query['new_value']:
+                raise KVError("API_kv/update: no new_value supplied")
+            else:
+                new_value = query['new_value']
+
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    if cfg.debug:
+                        print "API_kv/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys)
+                    raise KVError("API_kv/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # get the whole damn KV table
+
+            # filtery by unqdn (or any portion thereof)
+            if unqdn != None:
+                hostname, realm, site_id = mothership.split_fqdn(unqdn)
+                if cfg.debug:
+                    buf += "unqdn=%s hostname=%s realm=%s site_id=%s " % (unqdn, hostname, realm, site_id)
+            else:
+                if cfg.debug:
+                    buf += "unqdn=(global!) hostname=%s realm=%s site_id=%s " % (hostname, realm, site_id)
+            # try to find an existing entry
+            result = cfg.dbsess.query(KV).\
+                filter(KV.site_id==site_id).\
+                filter(KV.realm==realm).\
+                filter(KV.hostname==hostname).\
+                filter(KV.key==key).\
+                filter(KV.value==value).first()
+            if result:
+                if cfg.debug:
+                    print buf
+                result.value = new_value
+                cfg.dbsess.add(result)
+                cfg.dbsess.commit()
+                return 'success!'
+            else:
+                raise KVError("API_kv/update: query failed for unqdn=%s key=%s value=%s, no record to update" % (unqdn, key, value))
+        except Exception, e:
+            raise KVError(e)
 
     def delete(self, query):
         """
@@ -618,12 +725,10 @@ class API_kv:
         # config object. love this guy.
         cfg = self.cfg
         # setting up a debug buffer
-        buf = "API_kv/delete: querying for "
+        buf = "API_kv/delete: delete successful for "
         hostname = None
         realm = None
         site_id = None
-        # our return value
-        kv_entries = []
         # setting our valid query keys
         valid_qkeys = []
         if self.metadata['methods']['delete']['required_args']['args']:
@@ -639,18 +744,14 @@ class API_kv:
                 unqdn = None
             else:
                 unqdn = query['unqdn']
-            if 'key' not in query.keys():
-                key = None
+            if 'key' not in query.keys() or not query['key']:
+                raise KVError("API_kv/update: no key supplied")
             else:
                 key = query['key']
-            if 'value' not in query.keys():
-                value = None
+            if 'value' not in query.keys() or not query['value']:
+                raise KVError("API_kv/update: no value supplied")
             else:
                 value = query['value']
-            if 'all' not in query.keys():
-                all = None
-            else:
-                all = True
 
             # check for wierd query keys, explode
             for qk in query.keys():
@@ -680,11 +781,9 @@ class API_kv:
             # check to see if we have an entry, if so...annihilate it!
             if result:
                 cfg.dbsess.delete(result)
-                if cfg.debug:
-                    print "stuff"
                 cfg.dbsess.commit()
                 if cfg.debug:
-                    print "API_kv/delete: delete successful for unqdn=%s key=%s value=%s" % (unqdn, key, value)
+                    print buf
                 return 'success!'
             else:
                 if cfg.debug:
