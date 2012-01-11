@@ -966,16 +966,21 @@ class ShipCli(cmdln.Cmdln):
     @cmdln.alias("gendns")
     @cmdln.alias("gen_dns")
     @cmdln.option("-s", "--system", action="store_true",
-                  help="output to system files/config after confirmation of changes")
-    @cmdln.option("-o", "--outdir",
-                  help="output to directory as realm.site_id.domain")
+                  help="sync system files/config after confirmation of changes")
+    @cmdln.option("-a", "--all", action="store_true",
+                  help="generate ALL zone files defined in mothership.yaml")
     @cmdln.option("-r", "--reverse", action="store_true",
                   help="generate reverse zone file for realm.site_id.domain")
-    def do_generate_dns(self, subcmd, opts, domain):
+    @cmdln.option("-o", "--outdir",
+                  help="output zone file to specified directory")
+    def do_generate_dns(self, subcmd, opts, domain=None):
         """${cmd_name}: Generate DNS entries from dns_addendum table.
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if not domain and not opts.all:
+            cmdln.Cmdln.do_help(self, ['', subcmd])
+            return
         mothership.dns.generate_dns_output(self.cfg, domain, opts)
 
     @cmdln.alias("add")

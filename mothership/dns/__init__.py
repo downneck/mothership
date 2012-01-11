@@ -21,6 +21,7 @@ import os
 import shutil
 import sys
 import time
+import difflib
 import mothership.kv
 import mothership.validate
 import mothership.network_mapper
@@ -122,10 +123,34 @@ def generate_dns_output(cfg, domain, opts):
     """
     Creates DNS zonefiles
     """
-    if opts.reverse:
-        generate_dns_reverse(cfg, domain, opts)
+    tmpdir = '/tmp'
+    tmpzones = []
+    if opts.system:
+        opts.outdir = tmpdir + cfg.dns_zone
+    if opts.outdir:
+        if not os.path.exists(opts.outdir):
+            os.makedirs(opts.outdir)
+    if opts.all:
+        print 'Generating ALL mothership DNS files'
+        for site_id in cfg.site_ids:
+            for realm in cfg.realms:
+                fqn = mothership.validate.v_get_fqn(cfg, realm+'.'+site_id)
+                zone = generate_dns_forward(cfg, fqn, opts)
+                if zone: tmpzones.append(zone)
+                zone = generate_dns_reverse(cfg, fqn, opts)
+                if zone: tmpzones.append(zone)
+    elif opts.reverse:
+        zone = generate_dns_reverse(cfg, domain, opts)
+        if zone: tmpzones.append(zone)
     else:
-        generate_dns_forward(cfg, domain, opts)
+        zone = generate_dns_forward(cfg, domain, opts)
+        if zone: tmpzones.append(zone)
+    if opts.system:
+        for zone in tmpzones:
+            print 'Diff %s %s' % (zone, re.sub('^'+tmpdir, '', zone))
+            tempdata = open(zone).read().split('\n')
+            livedata = open(re.sub('^'+tmpdir, '', zone)).read().split('\n')
+            print '\n'.join(difflib.Differ().compare(tempdata, livedata))
 
 def generate_dns_forward(cfg, domain, opts):
     """
@@ -146,6 +171,8 @@ def generate_dns_forward(cfg, domain, opts):
     f.write(forward)
     if opts.outdir:
        f.close()
+       return zone
+    return None
 
 def generate_dns_reverse(cfg, domain, opts):
     """
@@ -167,6 +194,8 @@ def generate_dns_reverse(cfg, domain, opts):
     f.write(reverse)
     if opts.outdir:
        f.close()
+       return zone
+    return None
 
 def update_table_dnsaddendum(cfg, info, delete=False):
     """

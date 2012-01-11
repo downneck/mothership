@@ -285,8 +285,8 @@ dns:
   # Location of the dns zone configuration file
   zonecfg: /etc/named/zones.conf
 
-  # Location of the dns zone files (with trailing slash)
-  zonedir: /var/named/
+  # Location of the dns zone files
+  zonedir: /var/named
 
   # Forward zones will be determined by the realms and site_ids
   # Reverse zones will be determined by the network map
