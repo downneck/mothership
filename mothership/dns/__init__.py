@@ -18,10 +18,11 @@ various dns operations
 # import some useful stuff
 import re
 import os
-import shutil
 import sys
 import time
+import shutil
 import difflib
+import datetime
 import mothership.kv
 import mothership.validate
 import mothership.network_mapper
@@ -42,14 +43,15 @@ def generate_dns_header(cfg, fqdn, realm, site_id, domain):
 $ORIGIN %s.
 $TTL %s
 @                       IN      SOA     %s. %s. (
-                                        %s   ; Serial
-                                        21600        ; Refresh
-                                        3600         ; Retry
-                                        604800       ; Expire
-                                        %-5d        ; TTL
+                                        %-10d   ; Serial
+                                        %-10d   ; Refresh
+                                        %-10d   ; Retry
+                                        %-10d   ; Expire
+                                        %-10d   ; TTL
                                         )
 
-""" % (fqdn, cfg.dns_ttl, fqdn, contact, serial, cfg.dns_ttl)
+""" % (fqdn, cfg.dns_ttl, fqdn, contact, serial, cfg.dns_refresh,
+        cfg.dns_retry, cfg.dns_expire, cfg.dns_ttl)
     key = 'nameservers'
     ns = mothership.kv.collect(cfg, realm+'.'+site_id, key)
     if not ns:
@@ -124,7 +126,8 @@ def generate_dns_output(cfg, domain, opts):
     Creates DNS zonefiles
     """
     tmpdir = '/tmp'
-    tmpzones = []
+    reload = False
+    zones = []
     if opts.system:
         opts.outdir = tmpdir + cfg.dns_zone
     if opts.outdir:
@@ -135,22 +138,107 @@ def generate_dns_output(cfg, domain, opts):
         for site_id in cfg.site_ids:
             for realm in cfg.realms:
                 fqn = mothership.validate.v_get_fqn(cfg, realm+'.'+site_id)
-                zone = generate_dns_forward(cfg, fqn, opts)
-                if zone: tmpzones.append(zone)
-                zone = generate_dns_reverse(cfg, fqn, opts)
-                if zone: tmpzones.append(zone)
+                zones.append(generate_dns_forward(cfg, fqn, opts))
+                zones.append(generate_dns_reverse(cfg, fqn, opts))
+        reload = reload or validate_zone_config(cfg, tmpdir, zones)
     elif opts.reverse:
-        zone = generate_dns_reverse(cfg, domain, opts)
-        if zone: tmpzones.append(zone)
+        zones.append(generate_dns_reverse(cfg, domain, opts))
     else:
-        zone = generate_dns_forward(cfg, domain, opts)
-        if zone: tmpzones.append(zone)
+        zones.append(generate_dns_forward(cfg, domain, opts))
     if opts.system:
-        for zone in tmpzones:
-            print 'Diff %s %s' % (zone, re.sub('^'+tmpdir, '', zone))
-            tempdata = open(zone).read().split('\n')
-            livedata = open(re.sub('^'+tmpdir, '', zone)).read().split('\n')
-            print '\n'.join(difflib.Differ().compare(tempdata, livedata))
+        reload = reload or validate_zone_files(tmpdir, zones)
+        if reload:
+            try:
+                print 'Reloading named...',
+                os.system('/sbin/service named reload')
+                print 'done'
+            except:
+                raise DNSError('Error reloading named!')
+
+def validate_zone_files(prefix, tmpzones):
+    reload = False
+    for tempzone in tmpzones:
+        livezone = re.sub('^'+prefix, '', tempzone)
+        reload = reload or compare_files(livezone, tempzone)
+    return reload
+
+def validate_zone_config(cfg, prefix, tmpzones):
+    tempconf = prefix + cfg.dns_conf
+    zoneconf = ''
+    for zone in tmpzones:
+        name = os.path.basename(zone)
+        isreverse = False
+        if re.match('[\d\.]', name):
+            isreverse = True
+        zoneconf += create_zone_block(name, reverse=isreverse)
+    print 'Creating temporary zone config: %s' % tempconf
+    if not os.path.exists(os.path.dirname(tempconf)):
+        os.makedirs(os.path.dirname(tempconf))
+    f = open(tempconf, 'w')
+    f.write(zoneconf)
+    f.close()
+    return compare_files(cfg.dns_conf, tempconf)
+
+def create_zone_block(name, reverse=False):
+    if reverse:
+        header = '%s.in-addr.arpa' % '.'.join(reversed(name.split('.')))
+    else:
+        header = name
+    return 'zone "%s" in {\n\ttype master;\n\tname "%s";\n}\n\n' \
+        % (header, name)
+
+def confirm_change(prefix, zone):
+    ans = raw_input('\nTo approve this change, type "%s_%s": ' % (prefix, zone))
+    if ans != '%s_%s' % (prefix, zone):
+        raise DNSError('Rollout of "%s" zone file aborted.' % (zone))
+        print 'Rollout of "%s" zone file aborted.' % (zone)
+        return False
+    else:
+        return True
+
+def rollout_changes(oldfile, newfile):
+    if os.path.exists(oldfile):
+        backup = oldfile + '.bak'
+        if os.path.exists(backup):
+            print 'Removing old backup: %s' % backup
+            os.remove(backup)
+        stamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        print 'Making snapshot: %s.%s' % (newfile, stamp)
+        shutil.copy(oldfile, newfile+'.'+stamp)
+        print 'Making backup: %s' % backup
+        shutil.move(oldfile, backup)
+    print 'Overwriting %s with %s' % (oldfile, newfile)
+    if not os.path.exists(os.path.dirname(oldfile)):
+        os.makedirs(os.path.dirname(oldfile))
+    shutil.copy(newfile, oldfile)
+
+def compare_files(oldfile, newfile):
+    reload = False
+    print 'Comparing %s %s' % (oldfile, newfile)
+    # Ignore extra spaces for comparison
+    olddata = []
+    if os.path.exists(oldfile):
+        olddata = [ re.sub('\s+',' ',x) for x in open(oldfile).readlines() ]
+    newdata = [ re.sub('\s+',' ',x) for x in open(newfile).readlines() ]
+    diff = difflib.Differ().compare(olddata, newdata)
+    changes = False
+    for d in diff:
+        if 'Serial' in d or not re.match('[-+]', d):
+            continue
+        if not changes:
+            print '-'*60
+        changes = True
+        print d
+    if not changes:
+        print 'Skipping %s, no changes discovered' % oldfile
+        return reload
+    else:
+        print '-'*60
+    if changes:
+        if confirm_change('dns', os.path.basename(oldfile)):
+            rollout_changes(oldfile, newfile)
+            reload = True
+    return reload
 
 def generate_dns_forward(cfg, domain, opts):
     """
@@ -180,7 +268,7 @@ def generate_dns_reverse(cfg, domain, opts):
     """
     fqn = mothership.validate.v_get_fqn(cfg, domain)
     sfqn = mothership.validate.v_split_fqn(fqn)
-    cidr = mothership.network_mapper.remap(cfg, 'cidr', domain=fqn)
+    cidr = mothership.network_mapper.remap(cfg, 'cidr', dom='.'+fqn)
     net, rev = generate_dns_arpa(cfg, cidr, fqn, *sfqn)
     reverse = generate_dns_header(cfg, fqn, *sfqn)
     reverse += rev

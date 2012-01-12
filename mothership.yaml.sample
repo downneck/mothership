@@ -294,3 +294,8 @@ dns:
   # Default TTL of zone headers
   zonettl: 300
 
+  # Other default zone timings
+  refresh: 21600
+  retry: 3600
+  expire: 604800
+

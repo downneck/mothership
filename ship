@@ -981,6 +981,9 @@ class ShipCli(cmdln.Cmdln):
         if not domain and not opts.all:
             cmdln.Cmdln.do_help(self, ['', subcmd])
             return
+        if opts.system and os.getuid() > 0:
+            print "You are not privileged to generate system DNS! Please sudo"
+            return
         mothership.dns.generate_dns_output(self.cfg, domain, opts)
 
     @cmdln.alias("add")

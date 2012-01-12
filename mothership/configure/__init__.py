@@ -317,7 +317,18 @@ class Configure:
             self.dns_ttl = dnsconfig['zonettl']
         else:
             self.dns_ttl = '86400'
-
+        if 'refresh' in dnsconfig and dnsconfig['refresh']:
+            self.dns_refresh = dnsconfig['refresh']
+        else:
+            self.dns_refresh = '21600'
+        if 'retry' in dnsconfig and dnsconfig['retry']:
+            self.dns_retry = dnsconfig['retry']
+        else:
+            self.dns_retry = '3600'
+        if 'expire' in dnsconfig and dnsconfig['expire']:
+            self.dns_expire = dnsconfig['expire']
+        else:
+            self.dns_expire = '604800'
 
     def close_connections(self):
         """
