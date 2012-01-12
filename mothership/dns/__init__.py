@@ -140,14 +140,14 @@ def generate_dns_output(cfg, domain, opts):
                 fqn = mothership.validate.v_get_fqn(cfg, realm+'.'+site_id)
                 zones.append(generate_dns_forward(cfg, fqn, opts))
                 zones.append(generate_dns_reverse(cfg, fqn, opts))
-        reload = reload or validate_zone_config(cfg, tmpdir, zones)
-    elif opts.reverse:
-        zones.append(generate_dns_reverse(cfg, domain, opts))
+        validated = validate_zone_config(cfg, tmpdir, zones)
+        reload = reload or validated
     else:
         zones.append(generate_dns_forward(cfg, domain, opts))
+        zones.append(generate_dns_reverse(cfg, domain, opts))
     if opts.system:
-        reload = reload or validate_zone_files(tmpdir, zones)
-        if reload:
+        validated = validate_zone_files(tmpdir, zones)
+        if reload or validated:
             try:
                 print 'Reloading named...',
                 os.system('/sbin/service named reload')
@@ -159,7 +159,8 @@ def validate_zone_files(prefix, tmpzones):
     reload = False
     for tempzone in tmpzones:
         livezone = re.sub('^'+prefix, '', tempzone)
-        reload = reload or compare_files(livezone, tempzone)
+        compared = compare_files(livezone, tempzone)
+        reload = reload or compared
     return reload
 
 def validate_zone_config(cfg, prefix, tmpzones):

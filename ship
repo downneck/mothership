@@ -969,8 +969,6 @@ class ShipCli(cmdln.Cmdln):
                   help="sync system files/config after confirmation of changes")
     @cmdln.option("-a", "--all", action="store_true",
                   help="generate ALL zone files defined in mothership.yaml")
-    @cmdln.option("-r", "--reverse", action="store_true",
-                  help="generate reverse zone file for realm.site_id.domain")
     @cmdln.option("-o", "--outdir",
                   help="output zone file to specified directory")
     def do_generate_dns(self, subcmd, opts, domain=None):
@@ -1105,13 +1103,16 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if opts.sync and os.getuid() > 0:
+            print "You are not privileged to sync cobbler! Please sudo"
+            return
         unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
         host,realm,site_id = unqdn.split('.')
         cc = mothership.cobbler.CobblerAPI(self.cfg, site_id=site_id)
         if opts.remove:
             cc.delete_system(unqdn)
             if opts.sync:
-                cc.sync_cobbler()
+                cc.sync_cobbler(unqdn)
         else:
             sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, unqdn, opts.xen)
             if opts.kick:
@@ -1144,7 +1145,7 @@ class ShipCli(cmdln.Cmdln):
                     print 'API: clear out puppet key before we proceed'
                 # netboot must come before sync for xenserver post-sync triggers
                 cc.set_system_netboot(unqdn, True)
-                if opts.sync: cc.sync_cobbler()
+                if opts.sync: cc.sync_cobbler(unqdn)
                 cc.set_system_power(unqdn, 'reboot', virtual=sysdict['virtual'])
                 if self.cfg.zenlive:
                     zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))
@@ -1158,7 +1159,7 @@ class ShipCli(cmdln.Cmdln):
                     z.add_host(unqdn, tag)
             else:
                 if opts.sync:
-                    cc.sync_cobbler()
+                    cc.sync_cobbler(unqdn)
 
     @cmdln.alias("drac")
     @cmdln.option("-t", "--telnet", default=0,
