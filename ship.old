@@ -34,15 +34,15 @@ import mothership
 import mothership.kv
 import mothership.xen
 import mothership.cobbler
-import mothership.puppet
-import mothership.serverinfo
+#import mothership.puppet
+#import mothership.serverinfo
 import mothership.mgmt_vlan
 import mothership.dns
 import mothership.users
-import mothership.list_values
+#import mothership.list_values
 import mothership.zenoss
 import mothership.ldap
-from mothership.list_servers import *
+#from mothership.list_servers import *
 from mothership.mothership_models import *
 from mothership.configure import Configure
 import mothership.zabbix
