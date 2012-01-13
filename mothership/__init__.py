@@ -170,19 +170,25 @@ def confirm_column_change(curr_val, new_val, colname, tblname):
         return True
 
 def convert_drac_dict_to_network(cfg, drac_sysinfo, ip):
-    siteid = drac_sysinfo['site_id']
+    dracip, siteid = mothership.network_mapper.remap(cfg,
+        ['ip','siteid'], nic='drac', ip=ip)
+    mgmtip = mothership.network_mapper.remap(cfg,
+        'ip', nic='eth0', siteid=siteid)
     for k in sorted(drac_sysinfo.keys()):
         netdrac_sysinfo = drac_sysinfo.copy()
+        netdrac_sysinfo.update({'realm':None,
+            'interface':k, 'mac':netdrac_sysinfo[k]})
         if not k.startswith('eth') and k != 'drac': continue
         print 'Importing %s' % k
-        net = mothership.network_mapper.remap(cfg, ['vlan','mask','ip'], nic=k, siteid=siteid)
-        dracip = mothership.network_mapper.remap(cfg, 'ip', nic='drac', siteid=siteid)
+        net = mothership.network_mapper.remap(cfg,
+            ['vlan','mask','ip', 'dom'], nic=k, siteid=siteid)
         if net:
+            realm = mothership.validate.v_split_fqn(net[3])[1]
             if k!='eth1': # due to multiple vlans
-                if ip.startswith(dracip):
-                    netdrac_sysinfo.update({'ip':ip.replace(dracip,net[2])})
-                netdrac_sysinfo.update({'vlan':net[0], 'netmask':net[1]})
-        netdrac_sysinfo.update({'interface':k, 'mac':netdrac_sysinfo[k]})
+                if net[2] == mgmtip:
+                    netdrac_sysinfo.update({'ip':ip.replace(dracip,mgmtip)})
+            netdrac_sysinfo.update({'vlan':net[0],
+                'netmask':net[1], 'realm':realm})
         update_table_network(cfg, netdrac_sysinfo)
 
 def convert_table_objects_to_dict(tables):
