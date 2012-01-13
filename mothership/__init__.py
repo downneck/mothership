@@ -653,11 +653,14 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
                 opts.public_ip = None
             # never retrieve the gw without ip=, especially when eth1
             if ip:
-                static_route, netmask = mothership.network_mapper.remap(cfg, ['gw', 'mask'],
+                domain,static_route,netmask = mothership.network_mapper.remap(
+                    cfg, ['dom', 'gw', 'mask'],
                     nic=interface, ip=ip, siteid=site_id)
+                realm = mothership.validate.v_split_fqn(domain)[1]
             else:
                 static_route = None
                 netmask = None
+                realm = None
             bond_options = None
             net_info = build_model_dict(Network('','','',''), opts, locals())
             update_table_network(cfg, net_info)
