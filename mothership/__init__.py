@@ -618,7 +618,11 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         update_table_network(cfg, net_info)
 
         # update network for eth0
-        mgmt_info = {'server_id': server_id, 'interface':'eth0', 'ip':iplist[0]}
+        realm = mothership.validate.v_split_fqn(
+            mothership.network_mapper.remap(cfg,
+               'dom', nic='eth0', siteid=site_id))[1]
+        mgmt_info = {'server_id': server_id, 'realm':realm,
+            'interface':'eth0', 'ip':iplist[0]}
         update_table_network(cfg, mgmt_info)
         print 'Added virtual host %s to mothership' % fqdn
     else:
