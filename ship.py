@@ -74,17 +74,36 @@ if __name__ == "__main__":
         response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/modules')
         module_list = myjson.loads(response.read())
 
-        # command line-y stuff
-        if len(sys.argv) <2:
-            print "Available subcommands:\n----------------------"
+        # command line-y stuff. this all sucks and is wrong.
+        if len(sys.argv) < 2:
+            print "Available submodules:\n----------------------"
             for i in module_list:
-                print i
-        elif len(sys.argv) == 2 and sys.argv[1] in module_list:
-            response= urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/'+sys.argv[1]+'/metadata')
-            mmeta = myjson.loads(response.read())
-            print "Available module commands:\n--------------------------"
-            for k in mmeta['methods'].keys():
-                print k
+                print i.split('_')[1]
+            print "----------------------\nRun \"ship <submodule>\" for more information"
+        elif len(sys.argv) == 2:
+            if 'API_'+sys.argv[1] in module_list:
+                response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
+                mmeta = myjson.loads(response.read())
+                print "Available module commands:\n--------------------------"
+                for k in mmeta['methods'].keys():
+                    print sys.argv[1]+'_'+k
+            elif 'API_'+sys.argv[1].rsplit('_', 1)[0] in module_list:
+                module, call = sys.argv[1].rsplit('_', 1)
+                response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
+                mmeta = myjson.loads(response.read())
+                print "Arguments:"
+                if mmeta['methods'][call]['required_args']['args'].keys():
+                    print "Required arguments:\n----------------"
+                    for k in mmeta['methods'][call]['required_args']['args'].keys():
+                        print "%s (%s): %s" % (k, mmeta['methods'][call]['required_args']['args'][k]['vartype'], mmeta['methods'][call]['required_args']['args'][k]['desc'])
+                if mmeta['methods'][call]['optional_args']['args'].keys():
+                    print "Optional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['methods'][call]['required_args']['min'], mmeta['methods'][call]['required_args']['max'])
+                    for k in mmeta['methods'][call]['optional_args']['args'].keys():
+                        print "%s (%s): %s" % (k, mmeta['methods'][call]['optional_args']['args'][k]['vartype'], mmeta['methods'][call]['optional_args']['args'][k]['desc'])
+            else:
+                print "Command not found"
+        else:
+            print "Module not found"
 
     except IOError, e:
         print "Missing file named %s" % cfgfile
