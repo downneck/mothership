@@ -226,7 +226,10 @@ def compare_files(oldfile, newfile):
     diff = difflib.Differ().compare(olddata, newdata)
     changes = False
     for d in diff:
-        if 'Serial' in d or not re.match('[-+]', d):
+        # exclude comments, blank/common lines, Serial
+        if re.match('[-+]\s+(;|$)', d) \
+            or not re.match('[-+]', d) \
+            or 'Serial' in d:
             continue
         if not changes:
             print '-'*60
