@@ -18,12 +18,23 @@
 import sys
 import optparse
 import textwrap
+import time
+import datetime
+import os
+import urllib2
+# for >=2.6 use json, >2.6 use simplejson
+try:
+    import json as myjson
+except ImportError:
+    import simplejson as myjson
+
+# mothership imports
+from mothership.configure import Configure, ConfigureCli
 
 
 if __name__ == "__main__":
     # the global config. useful everywhere
-    cfgfile = 'mothership.yaml'
-    cfg = Configure(cfgfile)
+    cfg = ConfigureCli('mothership_cli.yaml')
 
     # useful global values
     today = datetime.date.today()
@@ -56,14 +67,25 @@ if __name__ == "__main__":
         print "logline dump:"
         print "%s %s: %s: %s" % (ltz, timestamp, username, command_run)
         alog.close()
-        sys.exit(1)
-
+    # main execution block
     try:
-        ship = ShipCli(cfg)
-        retval = ship.main()
-        # Properly close DB connection
-        cfg.close_connections()
-        sys.exit(retval)
+        # grab a list of loaded modules from the API server, decode the
+        # json into a list object
+        response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/modules')
+        module_list = myjson.loads(response.read())
+
+        # command line-y stuff
+        if len(sys.argv) <2:
+            print "Available subcommands:\n----------------------"
+            for i in module_list:
+                print i
+        elif len(sys.argv) == 2 and sys.argv[1] in module_list:
+            response= urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/'+sys.argv[1]+'/metadata')
+            mmeta = myjson.loads(response.read())
+            print "Available module commands:\n--------------------------"
+            for k in mmeta['methods'].keys():
+                print k
+
     except IOError, e:
         print "Missing file named %s" % cfgfile
         print "ERROR: %s" % e

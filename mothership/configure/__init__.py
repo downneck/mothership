@@ -33,6 +33,58 @@ class ConfigureError(Exception):
 # a config_file (mothership.yaml)
 load_paths = ['.', '~', '/etc', '/usr/local/etc']
 
+
+class ConfigureCli:
+    def __init__(self, config_file):
+        """
+            Takes a config_file name as a parameter and searches through the following
+            dirs to load the configuration file:  /etc, CWD
+        """
+        # Read settings from configuration yaml
+        try:
+            yaml_config = open(self.load_path(config_file)).read()
+            all_configs = yaml.load(yaml_config)
+        except Exception, e:
+            raise ConfigureError("Error loading config file: %s\nConfig search paths: %s\nError: %s" % (config_file, load_paths, e))
+
+        # General settings
+        genconfig = all_configs['general']
+        if 'debug' in genconfig and genconfig['debug']:
+            self.debug = genconfig['debug']
+        else:
+            self.debug = False
+        if 'api_server' in genconfig and genconfig['api_server']:
+            self.api_server = genconfig['api_server']
+        else:
+            self.api_server = 'localhost'
+        if 'api_port' in genconfig and genconfig['api_port']:
+            self.api_port = genconfig['api_port']
+        else:
+            self.api_port = '8081'
+        if 'audit_log_file' in genconfig and genconfig['audit_log_file']:
+            self.audit_log_file = genconfig['audit_log_file']
+        else:
+            self.audit_log_file = '/var/log/mothership_audit.log'
+
+    def close_connections(self):
+        """
+            Close out connections
+        """
+        self.dbconn.close()
+        self.dbsess.close()
+        self.dbengine.dispose()
+
+    def load_path(self, config_file):
+        """
+            Try to guess where the path is or return empty string
+        """
+        for load_path in load_paths:
+            file_path = os.path.join(load_path, config_file)
+            if os.path.isfile(file_path):
+                return file_path
+        return ''
+
+
 class Configure:
     def __init__(self, config_file):
         """
@@ -48,6 +100,7 @@ class Configure:
             all_configs = yaml.load(yaml_config)
         except:
             # we discovered this was more annoying than helpful, so we stopped
+            # this is being retained as historical evidence of our folly
             #sys.stderr.write('No config file found, copying defaults into your home directory')
             #@srccfgyaml = sys.path[0] + '/mothership.yaml.sample'
             #dstcfgyaml = os.path.expanduser('~') + '/mothership.yaml'
