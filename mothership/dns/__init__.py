@@ -219,8 +219,10 @@ def compare_files(oldfile, newfile):
     # Ignore extra spaces for comparison
     olddata = []
     if os.path.exists(oldfile):
-        olddata = [ re.sub('\s+',' ',x) for x in open(oldfile).readlines() ]
-    newdata = [ re.sub('\s+',' ',x) for x in open(newfile).readlines() ]
+        olddata = sorted([ re.sub('\s+',' ',x)
+            for x in open(oldfile).readlines() ])
+    newdata = sorted([ re.sub('\s+',' ',x)
+        for x in open(newfile).readlines() ])
     diff = difflib.Differ().compare(olddata, newdata)
     changes = False
     for d in diff:
