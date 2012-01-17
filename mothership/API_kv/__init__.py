@@ -35,6 +35,7 @@ class API_kv:
         self.namespace = 'API_kv'
         self.metadata = {
             'config': {
+                'description': 'allows interaction with the KeyValue table',
                 'module_dependencies': {
                     'mothership_models': 1,
                 },

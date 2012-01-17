@@ -74,11 +74,13 @@ if __name__ == "__main__":
         response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/modules')
         module_list = myjson.loads(response.read())
 
-        # command line-y stuff. this all sucks and is wrong.
+        # command line-y stuff. 
         if len(sys.argv) < 2:
             print "Available submodules:\n----------------------"
             for i in module_list:
-                print i.split('_')[1]
+                response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
+                mmeta = myjson.loads(response.read())
+                print i.split('API_')[-1]+': '+mmeta['config']['description']
             print "----------------------\nRun \"ship <submodule>\" for more information"
         elif len(sys.argv) == 2:
             if 'API_'+sys.argv[1] in module_list:
@@ -86,18 +88,18 @@ if __name__ == "__main__":
                 mmeta = myjson.loads(response.read())
                 print "Available module commands:\n--------------------------"
                 for k in mmeta['methods'].keys():
-                    print sys.argv[1]+'_'+k
-            elif 'API_'+sys.argv[1].rsplit('_', 1)[0] in module_list:
-                module, call = sys.argv[1].rsplit('_', 1)
+                    print sys.argv[1]+'/'+k
+            elif 'API_'+sys.argv[1].rsplit('/', 1)[0] in module_list:
+                module, call = sys.argv[1].rsplit('/')
                 response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
                 mmeta = myjson.loads(response.read())
                 print "Arguments:"
-                if mmeta['methods'][call]['required_args']['args'].keys():
+                if mmeta['methods'][call]['required_args'].keys() and mmeta['methods'][call]['required_args'].has_key('args'):
                     print "Required arguments:\n----------------"
                     for k in mmeta['methods'][call]['required_args']['args'].keys():
                         print "%s (%s): %s" % (k, mmeta['methods'][call]['required_args']['args'][k]['vartype'], mmeta['methods'][call]['required_args']['args'][k]['desc'])
-                if mmeta['methods'][call]['optional_args']['args'].keys():
-                    print "Optional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['methods'][call]['required_args']['min'], mmeta['methods'][call]['required_args']['max'])
+                if mmeta['methods'][call]['optional_args'].keys() and mmeta['methods'][call]['optional_args'].has_key('args'):
+                    print "Optional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['methods'][call]['optional_args']['min'], mmeta['methods'][call]['optional_args']['max'])
                     for k in mmeta['methods'][call]['optional_args']['args'].keys():
                         print "%s (%s): %s" % (k, mmeta['methods'][call]['optional_args']['args'][k]['vartype'], mmeta['methods'][call]['optional_args']['args'][k]['desc'])
             else:
@@ -106,8 +108,8 @@ if __name__ == "__main__":
             print "Module not found"
 
     except IOError, e:
-        print "Missing file named %s" % cfgfile
+        print "Missing config file: mothership_cli.yaml" 
         print "ERROR: %s" % e
         sys.exit(1)
     except Exception, e:
-        print e
+        print "Error: %s" % e 

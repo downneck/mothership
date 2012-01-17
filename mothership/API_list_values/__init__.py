@@ -31,6 +31,7 @@ class API_list_values:
         self.namespace = 'API_list_values'
         self.metadata = {
             'config': {
+                'description': 'retrieves and lists values from the database',
                 'module_dependencies': {
                     'mothership_models': 1,
                 },

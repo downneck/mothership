@@ -34,6 +34,7 @@ class API_puppet:
         self.namespace = 'API_puppet'
         self.metadata = {
             'config': {
+                'description': 'creates a puppet manifest for a server (puppet\'s External Node Classifier)',
                 'module_dependencies': {
                     'mothership_models': 1,
                     'mothership.kv': 1,

@@ -37,6 +37,7 @@ class API_list_servers:
         self.namespace = 'API_list_servers'
         self.metadata = {
             'config': {
+                'description': 'lists servers according to certain criteria',
                 'module_dependencies': {
                     'kv': 1,
                     'mothership_models': 1,
