@@ -89,8 +89,8 @@ if __name__ == "__main__":
                 print "Available module commands:\n--------------------------"
                 for k in mmeta['methods'].keys():
                     print sys.argv[1]+'/'+k
-            elif 'API_'+sys.argv[1].rsplit('/', 1)[0] in module_list:
-                module, call = sys.argv[1].rsplit('/')
+            elif 'API_'+sys.argv[1].split('/')[0] in module_list:
+                module, call = sys.argv[1].split('/')
                 response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
                 mmeta = myjson.loads(response.read())
                 print "Arguments:"
@@ -104,6 +104,17 @@ if __name__ == "__main__":
                         print "--%s (-%s): %s" % (k, mmeta['methods'][call]['optional_args']['args'][k]['ol'], mmeta['methods'][call]['optional_args']['args'][k]['desc'])
             else:
                 print "Command not found"
+        elif len(sys.argv) >= 3:
+            if 'API_'+sys.argv[1].split('/')[0] in module_list:
+                module, call = sys.argv[1].split('/')
+                response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
+                mmeta = myjson.loads(response.read())
+                options = []
+                n = 2
+                while n <= len(sys.argv):
+                    options.append(sys.argv[n])
+                    n += 1
+                print options
         else:
             print "Module not found"
 
