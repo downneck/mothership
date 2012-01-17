@@ -22,6 +22,7 @@ import sys
 import mothership
 import mothership.kv
 import mothership.validate
+import mothership.API_common
 from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
@@ -31,6 +32,7 @@ class ServerInfoError(Exception):
 class API_serverinfo:
 
     def __init__(self, cfg):
+        self.common = MothershipCommon()
         self.cfg = cfg
         self.version = 1 # the version of this module
         self.name = 'API_serverinfo' # class name
@@ -112,13 +114,14 @@ class API_serverinfo:
             retval = "API_serverinfo: too many queries! max number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['max']
             retval += "API_serverinfo: you tried to pass %s queries\n" % len(query)
             if cfg.debug:
-                print retval
+                self.cm.debug(retval)
             raise ServerInfoError(retval)
+
         elif len(query) < self.metadata['methods']['get_host']['optional_args']['min']:
             retval = "API_serverinfo: not enough queries! min number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['min']
             retval += "API_serverinfo: you tried to pass %s queries\n" % len(query)
             if cfg.debug:
-                print retval
+                self.cm.debug(retval )
             raise ServerInfoError(retval)
         elif cfg.debug:
             print "API_serverinfo: num queries: %s" % len(query)
