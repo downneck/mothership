@@ -52,23 +52,26 @@ $TTL %s
 
 """ % (fqdn, cfg.dns_ttl, fqdn, contact, serial, cfg.dns_refresh,
         cfg.dns_retry, cfg.dns_expire, cfg.dns_ttl)
-    key = 'nameservers'
-    ns = mothership.kv.collect(cfg, realm+'.'+site_id, key)
-    if not ns:
-        raise DNSError('''
-No nameservers defined for %s.%s or %s, use:
-    ship kv -a %s.%s nameservers=<ns1>[,<nsN>]
-to configure one or more nameservers
-''' % (realm, site_id, domain, realm, site_id))
-    for n in ns:
-        slist = n.value.split(',')
-        if n.hostname == realm+'.'+site_id:
-            continue
-    nlist = ''
-    for server in slist:
-        nlist += '%-20s\tIN\t%-8s%-16s\n' % ('', 'NS', server)
-    header += nlist
+    for rec in ['ns', 'mx']:
+        header += generate_root_records(cfg, realm+'.'+site_id, domain, rec)
     return header
+
+def generate_root_records(cfg, unqdn, domain, key):
+    rec = mothership.kv.collect(cfg, unqdn, key)
+    if not rec:
+        raise DNSError('''
+No %s defined for %s or %s, use:
+    ship kv -a %s %s=<ns1>[,<nsN>]
+to configure one or more %s
+''' % (key, unqdn, domain, unqdn, key, key))
+    for r in rec:
+        slist = r.value.split(',')
+        if r.hostname == unqdn:
+            continue
+    records = ''
+    for server in slist:
+        records += '%-20s\tIN\t%-8s%-16s\n' % ('', key.upper(), server)
+    return records
 
 def generate_dns_arecords(cfg, realm, site_id, domain):
     """
