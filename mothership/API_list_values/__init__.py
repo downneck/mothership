@@ -49,36 +49,35 @@ class API_list_values:
                             'available_hardware': {
                                 'vartype': 'None',
                                 'desc': 'all hardware available for provisioning servers on',
+                                'ol': 'a',
                             },
                             'ips': {
                                 'vartype': 'None',
                                 'desc': 'all ip addresses in use',
+                                'ol': 'i',
                             },
                             'vlans': {
                                 'vartype': 'None',
                                 'desc': 'all vlans',
+                                'ol': 'v',
                             },
                             'tags': {
                                 'vartype': 'None',
                                 'desc': 'all tags',
+                                'ol': 't',
                             },
                             'groups': {
                                 'vartype': 'None',
                                 'desc': 'all groups',
+                                'ol': 'g',
                             },
                             'users': {
                                 'vartype': 'None',
                                 'desc': 'all users',
+                                'ol': 'u',
                             },
                         },
                     },
-                    'cmdln_aliases': [
-                        'lsv',
-                        'listvalues',
-                        'API_list_values',
-                        'listvalue',
-                        'list_value',
-                    ],
                     'return': {
                         'values': ['value', 'value',], # in the case of users and groups, this will be a list of dicts
                     },

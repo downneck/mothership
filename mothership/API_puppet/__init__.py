@@ -50,6 +50,7 @@ class API_puppet:
                             'hostname': {
                                 'vartype': 'string',
                                 'desc': 'hostname of the server to classify',
+                                'ol': 'n',
                             },
                         },
                     },

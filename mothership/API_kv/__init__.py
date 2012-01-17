@@ -55,25 +55,25 @@ class API_kv:
                             'unqdn': {
                                 'vartype': 'string',
                                 'desc': 'unqdn/realm_path of the entry. enter any portion or none',
+                                'ol': 'u',
                             },
                             'key': {
                                 'vartype': 'string',
                                 'desc': 'key to filter on (leave blank or omit for all keys)',
+                                'ol': 'k',
                             },
                             'value': {
                                 'vartype': 'string',
                                 'desc': 'value to filter on',
+                                'ol': 'v',
                             },
                             'any': {
                                 'vartype': 'None',
                                 'desc': 'return the first entry we can find',
+                                'ol': 'a',
                             },
                         },
                     },
-                    'cmdln_aliases': [
-                        'kv_select',
-                        'key_value_select',
-                    ],
                     'return': {
                         'kv_entry': 'KVObject dict',
                     },
@@ -92,25 +92,25 @@ class API_kv:
                             'unqdn': {
                                 'vartype': 'string',
                                 'desc': 'unqdn/realm_path of the entries. enter any portion or none',
+                                'ol': 'u',
                             },
                             'key': {
                                 'vartype': 'string',
                                 'desc': 'key to filter on (leave blank or omit for all keys)',
+                                'ol': 'k',
                             },
                             'value': {
                                 'vartype': 'string',
                                 'desc': 'value to filter on',
+                                'ol': 'v',
                             },
                             'all': {
                                 'vartype': 'None',
                                 'desc': 'gimme everything! (return all KV entries)',
+                                'ol': 'a',
                             },
                         },
                     },
-                    'cmdln_aliases': [
-                        'kv_select',
-                        'key_value_select',
-                    ],
                     'return': {
                         'kv_entries': [
                             'KVobject dict',
@@ -126,14 +126,17 @@ class API_kv:
                             'unqdn': {
                                 'vartype': 'string',
                                 'desc': 'unqdn/realm_path of the entry. enter any portion or none',
+                                'ol': 'u',
                             },
                             'key': {
                                 'vartype': 'string',
                                 'desc': 'key to add',
+                                'ol': 'k',
                             },
                             'value': {
                                 'vartype': 'string',
                                 'desc': 'value to add',
+                                'ol': 'v',
                             },
                         },
                     },
@@ -143,10 +146,6 @@ class API_kv:
                         'args': {
                         },
                     },
-                    'cmdln_aliases': [
-                        'kv_add',
-                        'key_value_add',
-                    ],
                     'return': {
                         'true/false': 'bool',
                     },
@@ -159,14 +158,17 @@ class API_kv:
                             'unqdn': {
                                 'vartype': 'string',
                                 'desc': 'unqdn/realm_path of the entry. enter any portion or none',
+                                'ol': 'u',
                             },
                             'key': {
                                 'vartype': 'string',
                                 'desc': 'key to remove',
+                                'ol': 'k',
                             },
                             'value': {
                                 'vartype': 'string',
                                 'desc': 'value to remove',
+                                'ol': 'v',
                             },
                         },
                     },
@@ -176,12 +178,6 @@ class API_kv:
                         'args': {
                         },
                     },
-                    'cmdln_aliases': [
-                        'kv_delete',
-                        'key_value_delete',
-                        'kv_remove',
-                        'key_value_remove',
-                    ],
                     'return': {
                         'string': 'success!',
                     },
@@ -215,10 +211,6 @@ class API_kv:
                         'args': {
                         },
                     },
-                    'cmdln_aliases': [
-                        'kv_update',
-                        'key_value_update',
-                    ],
                     'return': {
                         'string': 'success!',
                     },

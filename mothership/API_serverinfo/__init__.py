@@ -56,26 +56,25 @@ class API_serverinfo:
                             'hw_tag': { # an arg
                                 'vartype': 'string', # its type
                                 'desc': 'search for a hw_tag (hardware tag)', # its description
+                                'ol': 'w', # the one-letter designation for this option (ie -w)
                             },
                             'ip': { # an arg
                                 'vartype': 'string', # its type
                                 'desc': 'search for an ip (public or private)', # its description
+                                'ol': 'i', # the one-letter designation for this option (ie -w)
                             },
                             'mac': { # an arg
                                 'vartype': 'string', # its type
                                 'desc': 'search for a MAC address', # its description
+                                'ol': 'm', # the one-letter designation for this option (ie -w)
                             },
                             'hostname': { # an arg
                                 'vartype': 'string', # its type
                                 'desc': 'search for a hostname', # its description
+                                'ol': 'n', # the one-letter designation for this option (ie -w)
                             },
                         },
                     },
-                    'cmdln_aliases': [ # list of desired subcommand aliases for our command line
-                        'si', # alias
-                        'server_info', # another alias
-                        'API_serverinfo', # yet another alias
-                    ],
                     'return': { # a dict defining what our return value looks like
                         'server': 'ORMobject', # a server table object
                         'hardware': 'ORMobject', # a hardware table object
