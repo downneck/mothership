@@ -74,7 +74,7 @@ if __name__ == "__main__":
         response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/modules')
         module_list = myjson.loads(response.read())
 
-        # command line-y stuff. 
+        # command line-y stuff.
         if len(sys.argv) < 2:
             print "Available submodules:\n----------------------"
             for i in module_list:
@@ -97,19 +97,19 @@ if __name__ == "__main__":
                 if mmeta['methods'][call]['required_args'].keys() and mmeta['methods'][call]['required_args'].has_key('args'):
                     print "Required arguments:\n----------------"
                     for k in mmeta['methods'][call]['required_args']['args'].keys():
-                        print "%s (%s): %s" % (k, mmeta['methods'][call]['required_args']['args'][k]['vartype'], mmeta['methods'][call]['required_args']['args'][k]['desc'])
+                        print "--%s (-%s): %s" % (k, mmeta['methods'][call]['required_args']['args'][k]['ol'], mmeta['methods'][call]['required_args']['args'][k]['desc'])
                 if mmeta['methods'][call]['optional_args'].keys() and mmeta['methods'][call]['optional_args'].has_key('args'):
                     print "Optional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['methods'][call]['optional_args']['min'], mmeta['methods'][call]['optional_args']['max'])
                     for k in mmeta['methods'][call]['optional_args']['args'].keys():
-                        print "%s (%s): %s" % (k, mmeta['methods'][call]['optional_args']['args'][k]['vartype'], mmeta['methods'][call]['optional_args']['args'][k]['desc'])
+                        print "--%s (-%s): %s" % (k, mmeta['methods'][call]['optional_args']['args'][k]['ol'], mmeta['methods'][call]['optional_args']['args'][k]['desc'])
             else:
                 print "Command not found"
         else:
             print "Module not found"
 
     except IOError, e:
-        print "Missing config file: mothership_cli.yaml" 
+        print "Missing config file: mothership_cli.yaml"
         print "ERROR: %s" % e
         sys.exit(1)
     except Exception, e:
-        print "Error: %s" % e 
+        print "Error: %s" % e

@@ -50,7 +50,7 @@ class API_kv:
                     },
                     'optional_args': {
                         'min': 1,
-                        'max': 1,
+                        'max': 3,
                         'args': {
                             'unqdn': {
                                 'vartype': 'string',
@@ -69,7 +69,7 @@ class API_kv:
                             },
                             'any': {
                                 'vartype': 'None',
-                                'desc': 'return the first entry we can find',
+                                'desc': 'return the first entry we can find (overrides all other options)',
                                 'ol': 'a',
                             },
                         },
@@ -87,7 +87,7 @@ class API_kv:
                     },
                     'optional_args': {
                         'min': 1,
-                        'max': 1,
+                        'max': 3,
                         'args': {
                             'unqdn': {
                                 'vartype': 'string',
@@ -106,7 +106,7 @@ class API_kv:
                             },
                             'all': {
                                 'vartype': 'None',
-                                'desc': 'gimme everything! (return all KV entries)',
+                                'desc': 'gimme everything! (return all KV entries, overrides all other options)',
                                 'ol': 'a',
                             },
                         },
