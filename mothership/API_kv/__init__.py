@@ -82,8 +82,6 @@ class API_kv:
                     'description': 'get all kv entries that match a query',
                     'rest_type': 'GET',
                     'required_args': {
-                        'args': {
-                        },
                     },
                     'optional_args': {
                         'min': 1,
@@ -141,10 +139,6 @@ class API_kv:
                         },
                     },
                     'optional_args': {
-                        'min': 0,
-                        'max': 0,
-                        'args': {
-                        },
                     },
                     'return': {
                         'true/false': 'bool',
@@ -173,10 +167,6 @@ class API_kv:
                         },
                     },
                     'optional_args': {
-                        'min': 0,
-                        'max': 0,
-                        'args': {
-                        },
                     },
                     'return': {
                         'string': 'success!',
@@ -206,10 +196,6 @@ class API_kv:
                         },
                     },
                     'optional_args': {
-                        'min': 0,
-                        'max': 0,
-                        'args': {
-                        },
                     },
                     'return': {
                         'string': 'success!',

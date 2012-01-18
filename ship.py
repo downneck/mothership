@@ -31,6 +31,44 @@ except ImportError:
 # mothership imports
 from mothership.configure import Configure, ConfigureCli
 
+# if someone runs: ship
+def print_submodules(cfg, module_list):
+    print "Available submodules:\n"
+    for i in module_list:
+        response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
+        mmeta = myjson.loads(response.read())
+        print i.split('API_')[-1]+': '+mmeta['config']['description']
+    print "\nRun \"ship <submodule>\" for more information"
+
+# if someone runs: ship <module>
+def print_commands(cfg, module_list):
+    response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
+    mmeta = myjson.loads(response.read())
+    print "Available module commands:\n"
+    for k in mmeta['methods'].keys():
+        print sys.argv[1]+'/'+k
+    print "\nRun \"ship <submodule>/<command>\" for more information"
+
+# if someone runs: ship <module>/<command>
+def print_command_args(cfg, module_list):
+    module, call = sys.argv[1].split('/')
+    response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
+    mmeta = myjson.loads(response.read())
+    if 'args' in mmeta['methods'][call]['required_args']:
+        print "\nRequired arguments:"
+        for k in mmeta['methods'][call]['required_args']['args'].keys():
+            print "--%s (-%s): %s" % (k, mmeta['methods'][call]['required_args']['args'][k]['ol'], mmeta['methods'][call]['required_args']['args'][k]['desc'])
+    if 'args' in mmeta['methods'][call]['optional_args']:
+        print "\nOptional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['methods'][call]['optional_args']['min'], mmeta['methods'][call]['optional_args']['max'])
+        for k in mmeta['methods'][call]['optional_args']['args'].keys():
+            print "--%s (-%s): %s" % (k, mmeta['methods'][call]['optional_args']['args'][k]['ol'], mmeta['methods'][call]['optional_args']['args'][k]['desc'])
+    print ""
+
+
+def call_command(cfg, module_list):
+    pass
+
+
 
 if __name__ == "__main__":
     # the global config. useful everywhere
@@ -76,34 +114,11 @@ if __name__ == "__main__":
 
         # command line-y stuff.
         if len(sys.argv) < 2:
-            print "Available submodules:\n----------------------"
-            for i in module_list:
-                response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
-                mmeta = myjson.loads(response.read())
-                print i.split('API_')[-1]+': '+mmeta['config']['description']
-            print "----------------------\nRun \"ship <submodule>\" for more information"
-        elif len(sys.argv) == 2:
-            if 'API_'+sys.argv[1] in module_list:
-                response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
-                mmeta = myjson.loads(response.read())
-                print "Available module commands:\n--------------------------"
-                for k in mmeta['methods'].keys():
-                    print sys.argv[1]+'/'+k
-            elif 'API_'+sys.argv[1].split('/')[0] in module_list:
-                module, call = sys.argv[1].split('/')
-                response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
-                mmeta = myjson.loads(response.read())
-                print "Arguments:"
-                if mmeta['methods'][call]['required_args'].keys() and mmeta['methods'][call]['required_args'].has_key('args'):
-                    print "Required arguments:\n----------------"
-                    for k in mmeta['methods'][call]['required_args']['args'].keys():
-                        print "--%s (-%s): %s" % (k, mmeta['methods'][call]['required_args']['args'][k]['ol'], mmeta['methods'][call]['required_args']['args'][k]['desc'])
-                if mmeta['methods'][call]['optional_args'].keys() and mmeta['methods'][call]['optional_args'].has_key('args'):
-                    print "Optional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['methods'][call]['optional_args']['min'], mmeta['methods'][call]['optional_args']['max'])
-                    for k in mmeta['methods'][call]['optional_args']['args'].keys():
-                        print "--%s (-%s): %s" % (k, mmeta['methods'][call]['optional_args']['args'][k]['ol'], mmeta['methods'][call]['optional_args']['args'][k]['desc'])
-            else:
-                print "Command not found"
+            print_submodules(cfg, module_list)
+        elif len(sys.argv) == 2 and 'API_'+sys.argv[1] in module_list:
+            print_commands(cfg, module_list)
+        elif len(sys.argv) == 2 and 'API_'+sys.argv[1].split('/')[0] in module_list:
+            print_command_args(cfg, module_list)
         elif len(sys.argv) >= 3:
             if 'API_'+sys.argv[1].split('/')[0] in module_list:
                 module, call = sys.argv[1].split('/')
