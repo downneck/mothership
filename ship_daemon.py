@@ -145,7 +145,6 @@ def namespace_path(pname):
 # will probably change significantly before the rewrite
 @httpship.route("/:pname/:callpath", method=('GET', 'POST', 'PUT', 'DELETE'))
 def callable_path(pname, callpath):
-    response.content_type='application/json'
     query = bottle.request.GET
     if cfg.debug:
         print "query keys: %s" % query.keys()
@@ -191,6 +190,7 @@ def callable_path(pname, callpath):
         return buf
     # we got an actual callpath! do stuff.
     else:
+        response.content_type='application/json'
         if cfg.debug:
             #print "method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath])
             if bottle.request.method == cfg.module_metadata[pname].metadata['methods'][callpath]['rest_type']:

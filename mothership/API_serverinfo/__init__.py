@@ -39,7 +39,7 @@ class API_serverinfo:
         self.version = 1 # the version of this module
         self.name = 'API_serverinfo' # class name
         self.namespace = 'API_serverinfo' # class' namespace
-                self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
+        self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
             'config': { # some basic module-wide config data
                 'description': 'retrieves critical information about a server',
                 'module_dependencies': { # what other modules do we depend on?
