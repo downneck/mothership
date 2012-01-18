@@ -37,6 +37,7 @@ class API_list_servers:
         self.namespace = 'API_list_servers'
         self.metadata = {
             'config': {
+                'description': 'lists servers according to certain criteria',
                 'module_dependencies': {
                     'kv': 1,
                     'mothership_models': 1,
@@ -56,63 +57,70 @@ class API_list_servers:
                             'all': {
                                 'vartype': 'None',
                                 'desc': 'retrieve all servers',
+                                'ol': 'a',
                             },
                             'tag': {
                                 'vartype': 'string',
                                 'desc': 'filter by tag',
+                                'ol': 't',
                             },
                             'hw_tag': {
                                 'vartype': 'string',
                                 'desc': 'filter by hardware tag',
+                                'ol': 'w',
                             },
                             'hostname': {
                                 'vartype': 'string',
                                 'desc': 'filter by hostname',
+                                'ol': 'n',
                             },
                             'virtual': {
                                 'vartype': 'bool',
                                 'desc': 'filter by physical/virtual',
+                                'ol': 'V',
                             },
                             'disk': {
                                 'vartype': 'int',
                                 'desc': 'filter by disk (in GB)',
+                                'ol': 'd',
                             },
                             'ram': {
                                 'vartype': 'int',
                                 'desc': 'filter by ram (in GB)',
+                                'ol': 'R',
                             },
                             'cores': {
                                 'vartype': 'int',
                                 'desc': 'filter by number of cores',
+                                'ol': 'c',
                             },
                             'model': {
                                 'vartype': 'string',
                                 'desc': 'filter by model',
+                                'ol': 'm',
                             },
                             'manufacturer': {
                                 'vartype': 'string',
                                 'desc': 'filter by manufacturer',
+                                'ol': 'M',
                             },
                             'realm': {
                                 'vartype': 'string',
                                 'desc': 'filter by realm',
+                                'ol': 'r',
                             },
                             'site_id': {
                                 'vartype': 'string',
                                 'desc': 'filter by site_id',
+                                'ol': 's',
                             },
                             'vlan': {
                                 'vartype': 'int',
                                 'desc': 'filter by (numeric) vlan id',
+                                'ol': 'v',
                             },
                         },
                     },
-                    'cmdln_aliases': [
-                        'lss',
-                        'listservers',
-                        'listserver',
-                        'list_server',
-                    ],
                     'return': {
                         'servers': ['fqdn', 'fqdn',],
                     },

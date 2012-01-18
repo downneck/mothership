@@ -41,6 +41,7 @@ class API_serverinfo:
         self.namespace = 'API_serverinfo' # class' namespace
                 self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
             'config': { # some basic module-wide config data
+                'description': 'retrieves critical information about a server',
                 'module_dependencies': { # what other modules do we depend on?
                     'kv': 1, # a module, and its minimum accepted version
                     'mothership_models': 1, # another module, and its minimum accepted version
@@ -59,26 +60,25 @@ class API_serverinfo:
                             'hw_tag': { # an arg
                                 'vartype': 'string', # its type
                                 'desc': 'search for a hw_tag (hardware tag)', # its description
+                                'ol': 'w', # the one-letter designation for this option (ie -w)
                             },
                             'ip': { # an arg
                                 'vartype': 'string', # its type
                                 'desc': 'search for an ip (public or private)', # its description
+                                'ol': 'i', # the one-letter designation for this option (ie -w)
                             },
                             'mac': { # an arg
                                 'vartype': 'string', # its type
                                 'desc': 'search for a MAC address', # its description
+                                'ol': 'm', # the one-letter designation for this option (ie -w)
                             },
                             'hostname': { # an arg
                                 'vartype': 'string', # its type
                                 'desc': 'search for a hostname', # its description
+                                'ol': 'n', # the one-letter designation for this option (ie -w)
                             },
                         },
                     },
-                    'cmdln_aliases': [ # list of desired subcommand aliases for our command line
-                        'si', # alias
-                        'server_info', # another alias
-                        'API_serverinfo', # yet another alias
-                    ],
                     'return': { # a dict defining what our return value looks like
                         'server': 'ORMobject', # a server table object
                         'hardware': 'ORMobject', # a hardware table object
