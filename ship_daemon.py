@@ -2,6 +2,7 @@
 
 # imports
 from mothership import configure
+from bottle import response
 import os
 import sys
 import bottle
@@ -119,6 +120,7 @@ def loaded_modules():
                 print buf
         except:
             continue
+    response.content_type = 'application/json'
     return myjson.JSONEncoder().encode(buf)
 
 
@@ -143,6 +145,7 @@ def namespace_path(pname):
 # will probably change significantly before the rewrite
 @httpship.route("/:pname/:callpath", method=('GET', 'POST', 'PUT', 'DELETE'))
 def callable_path(pname, callpath):
+    response.content_type='application/json'
     query = bottle.request.GET
     if cfg.debug:
         print "query keys: %s" % query.keys()
@@ -154,6 +157,7 @@ def callable_path(pname, callpath):
             buf = myjson.JSONEncoder().encode(cfg.module_metadata[pname].metadata)
             return buf
         else:
+            return buf
             buf = myjson.JSONEncoder().encode(cfg.module_metadata[pname].metadata)
             return buf
     # everyone wants query strings, blow up and spit out information if

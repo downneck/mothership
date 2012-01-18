@@ -19,15 +19,17 @@
 
 # import some modules
 import sys
+import yaml
 import mothership
 import mothership.kv
 import mothership.validate
-import mothership.API_common
+from mothership.API_common import *
 from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
 class ServerInfoError(Exception):
     pass
+
 
 class API_serverinfo:
 
@@ -37,63 +39,65 @@ class API_serverinfo:
         self.version = 1 # the version of this module
         self.name = 'API_serverinfo' # class name
         self.namespace = 'API_serverinfo' # class' namespace
-        self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
-            'config': { # some basic module-wide config data
-                'module_dependencies': { # what other modules do we depend on?
-                    'kv': 1, # a module, and its minimum accepted version
-                    'mothership_models': 1, # another module, and its minimum accepted version
-                },
-            },
-            'methods': { # a dict of methods we're presenting to the outside world (public only!)
-                'get_host': { # a method identifier
-                    'description': 'retrieve server info for a server identified by hostname.realm.site_id', # duh
-                    'rest_type': 'GET', # the REST method we want to use for this call: GET, POST, PUT, DELETE
-                    'required_args': { # dict of info about arguments we just can't live without
-                    },
-                    'optional_args': { # dict holding optional argument info
-                        'min': 1, # minimum number of optional args we'll accept
-                        'max': 1, # maximum number of optional args we'll accept
-                        'args': { # the argument definitions themselves
-                            'hw_tag': { # an arg
-                                'vartype': 'string', # its type
-                                'desc': 'search for a hw_tag (hardware tag)', # its description
-                            },
-                            'ip': { # an arg
-                                'vartype': 'string', # its type
-                                'desc': 'search for an ip (public or private)', # its description
-                            },
-                            'mac': { # an arg
-                                'vartype': 'string', # its type
-                                'desc': 'search for a MAC address', # its description
-                            },
-                            'hostname': { # an arg
-                                'vartype': 'string', # its type
-                                'desc': 'search for a hostname', # its description
-                            },
-                        },
-                    },
-                    'cmdln_aliases': [ # list of desired subcommand aliases for our command line
-                        'si', # alias
-                        'server_info', # another alias
-                        'API_serverinfo', # yet another alias
-                    ],
-                    'return': { # a dict defining what our return value looks like
-                        'server': 'ORMobject', # a server table object
-                        'hardware': 'ORMobject', # a hardware table object
-                        'network': [ # a list of network objects, may be 1 to N objects
-                            'ORMobject', # a network table object
-                            'ORMobject', # a second network table object
-                            ],
-                        'kv': [ # a list of kv objects describing tags that apply to the machine, may be 0 to N objects
-                            'ORMobject', # a kv table object
-                            'ORMobject', # a second kv table object
-                        ],
-                    },
-                },
-            },
-        }
+        self.metadata = yaml.load(open('/web/mothership/mothership/API_serverinfo/metadata.yaml','r'))
 
+    def __get_host_from_hwtag(self, key):
+        try:
+            s = self.cfg.dbsess.query(Server).\
+                filter(Server.hw_tag==key).\
+                filter(Server.virtual==False).first()
+            if s.hostname:
+                ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
+            return ret
+        except TypeError:
+            raise ServerInfoError("API_serverinfo/get_host: no host found with hw_tag: %s" % key)
+            
+    def __get_host_from_ip(self, key):
+        # try the private ip
+        try:
+            s, n = self.cfg.dbsess.query(Server, Network).\
+                   filter(Server.id==Network.server_id).\
+                   filter(Network.ip==key).first()
+            if s.hostname:
+                ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
+            return ret
+        except TypeError:
+            pass
+        # try the public ip
+        try:
+            s, n = cfg.dbsess.query(Server, Network).\
+                   filter(Server.id==Network.server_id).\
+                   filter(Network.public_ip==key).first()
+            if s.hostname:
+                ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
+        except TypeError:
+            raise ServerInfoError("API_serverinfo/get_host: no host found with public or private ip: %s" % key)
 
+    def __get_host_from_mac(self, key):
+        try:
+            h, s = self.cfg.dbsess.query(Network, Server).\
+                   filter(Network.hw_tag==Server.hw_tag).\
+                   filter(Network.mac==key).\
+                   filter(Server.virtual==False).first()
+            if s.hostname:
+                ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id, cfg.debug)
+            return ret
+        except TypeError:
+            raise ServerInfoError("API_serverinfo/get_host: no host found with MAC address: %s" % key)
+
+    def __get_host_from_hostname(self, key):
+        try:
+            # this won't work with our RESTness
+            #unqdn = mothership.validate.v_get_fqn(cfg, name=query['hostname'])
+            #
+            s = mothership.validate.v_get_host_obj(self.cfg, key)
+            if self.cfg.debug:
+                self.common.debug(s)
+            ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
+            return ret
+        except Exception, e:
+            raise ServerInfoError("API_serverinfo/get_host: no host found with name: %s\nerror: %s" % (key, e))
+            
     def get_host(self, query):
         """
         [description]
@@ -106,82 +110,54 @@ class API_serverinfo:
         [return value]
         returns a dict of ORMobjects if successful, "None" if unsuccessful
         """
-
+        
         cfg = self.cfg
-        ret = {}
+        cm = self.common
+        metadata = self.metadata
+        ret = None
+        
+        maxargs = metadata['methods']['get_host']['optional_args']['max']
+        minargs = metadata['methods']['get_host']['optional_args']['min']
 
-        if len(query) > self.metadata['methods']['get_host']['optional_args']['max']:
-            retval = "API_serverinfo: too many queries! max number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['max']
-            retval += "API_serverinfo: you tried to pass %s queries\n" % len(query)
+        if not cm.check_max_num_args(len(query), metadata['methods']['get_host']['optional_args']['max']):
             if cfg.debug:
-                self.cm.debug(retval)
+                retval = "API_serverinfo: too many queries! max number of queries is: %s\n" % maxargs
+                retval += "API_serverinfo: you tried to pass %s queries\n" % len(query)
+                cm.debug(retval)
             raise ServerInfoError(retval)
 
-        elif len(query) < self.metadata['methods']['get_host']['optional_args']['min']:
-            retval = "API_serverinfo: not enough queries! min number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['min']
-            retval += "API_serverinfo: you tried to pass %s queries\n" % len(query)
+        if not cm.check_min_num_args(len(query), metadata['methods']['get_host']['optional_args']['min']):
             if cfg.debug:
+                retval = "API_serverinfo: not enough queries! min number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['min']
+                retval += "API_serverinfo: you tried to pass %s queries\n" % len(query)
                 self.cm.debug(retval )
             raise ServerInfoError(retval)
-        elif cfg.debug:
-            print "API_serverinfo: num queries: %s" % len(query)
-            print "API_serverinfo: max num queries: %s" % self.metadata['methods']['get_host']['optional_args']['max']
 
-        if 'hw_tag' in query.keys():
-            try:
-                s = cfg.dbsess.query(Server).\
-                    filter(Server.hw_tag==query['hw_tag']).\
-                    filter(Server.virtual==False).first()
-                if s.hostname:
-                    ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
-            except TypeError:
-                raise ServerInfoError("API_serverinfo/get_host: no host found with hw_tag: %s" % query['hw_tag'])
-        if 'ip' in query.keys():
-            # try the private ip
-            try:
-                s, n = cfg.dbsess.query(Server, Network).\
-                    filter(Server.id==Network.server_id).\
-                    filter(Network.ip==query['ip']).first()
-                if s.hostname:
-                    ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
-            except TypeError:
-                pass
-            # try the public ip
-            try:
-                s, n = cfg.dbsess.query(Server, Network).\
-                    filter(Server.id==Network.server_id).\
-                    filter(Network.public_ip==query['ip']).first()
-                if s.hostname:
-                    ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
-            except TypeError:
-                raise ServerInfoError("API_serverinfo/get_host: no host found with public or private ip: %s" % query['ip'])
-        if 'mac' in query.keys():
-            try:
-                h, s = cfg.dbsess.query(Network, Server).\
-                    filter(Network.hw_tag==Server.hw_tag).\
-                    filter(Network.mac==query['mac']).\
-                    filter(Server.virtual==False).first()
-                if s.hostname:
-                    ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id, cfg.debug)
-            except TypeError:
-                raise ServerInfoError("API_serverinfo/get_host: no host found with MAC address: %s" % query['mac'])
-        if 'hostname' in query.keys():
-            try:
-                # this won't work with our RESTness
-                #unqdn = mothership.validate.v_get_fqn(cfg, name=query['hostname'])
-                #
-                s = mothership.validate.v_get_host_obj(cfg, query['hostname'])
-                if cfg.debug:
-                    print s
-                ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
-            except Exception, e:
-                raise ServerInfoError("API_serverinfo/get_host: no host found with name: %s\nerror: %s" % (query['hostname']), e)
+        if cfg.debug:
+            retval = "API_serverinfo: num queries: %s " % len(query)
+            retval += "API_serverinfo: max num queries: %s" % metadata['methods']['get_host']['optional_args']['max']
+            cm.debug(retval)
 
+        keys = query.keys()
+        for key  in keys:
+            if key == 'hw_tag':
+                ret = self.__get_host_from_hwtag(query[key])
+                break
+            if key == 'ip':
+                ret = __get_host_from_ip(query[key])
+                break
+            if key == 'hostname':
+                ret = self.__get_host_from_hostname(query['hostname'])
+                break
+            if key == 'mac':
+                ret =__get_host_from_mac(query[key])
+                break
+            
         if ret:
             return ret
         else:
             if cfg.debug:
-                print "API_serverinfo/get_host: return value \"ret\" is empty!"
+                cm.debug("API_serverinfo/get_host: return value \"ret\" is empty!")
             raise ServerInfoError("API_serverinfo/get_host: return value\"ret\" is empty!")
 
     def __get_serverinfo(self, host, realm, site_id):
@@ -208,10 +184,10 @@ class API_serverinfo:
         try:
           # hardware and server entries
           h, s = cfg.dbsess.query(Hardware, Server).\
-          filter(Server.hostname==host).\
-          filter(Server.realm==realm).\
-          filter(Server.site_id==site_id).\
-          filter(Hardware.hw_tag==Server.hw_tag).first()
+                 filter(Server.hostname==host).\
+                 filter(Server.realm==realm).\
+                 filter(Server.site_id==site_id).\
+                 filter(Hardware.hw_tag==Server.hw_tag).first()
 
           ret['server'] = s.to_dict() # add server object to return dict
           if cfg.debug:
@@ -247,4 +223,4 @@ class API_serverinfo:
         except Exception, e:
           raise ServerInfoError("something horrible happened\nerror: %s" % e)
 
-        return ret
+        return dict(ret)

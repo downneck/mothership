@@ -8,6 +8,10 @@ class MothershipCommon(object):
             os.mkdir(MS_LOGDIR)
         logging.basicConfig(filename=MS_LOGDIR+'mothership.log',level=logging.DEBUG)
 
+    def check_min_num_args(self, len, min):
+        return True
+    def check_max_num_args(self, len, max):
+        return True
 
     def debug(self,message):
         logging.debug(message)
