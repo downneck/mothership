@@ -124,18 +124,15 @@ def call_command(cfg, module_list):
                 if a:
                     if buf:
                         buf += '&'
-                    buf += k+'='+str(a)
-                elif arglist[k] == True:
-                    if buf:
-                        buf += '&'
-                    buf += k
-            print buf
+                    if a != True:
+                        buf += k+'='+str(a)
+                    else:
+                        buf += k
+            callresponse = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/'+call+'?'+buf)
+            callreturnjson = myjson.loads(callresponse.read())
+            print callreturnjson
 
-            #options = []
-            #n = 2
-            #while n < len(sys.argv):
-            #    options.append(sys.argv[n])
-            #    n += 1
+
     except Exception, e:
         if cfg.debug:
             print "Error: %s" % e
