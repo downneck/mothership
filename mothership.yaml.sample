@@ -285,3 +285,22 @@ ldap:
   # associated to the first entry of default_groups array
   default_gid: '401'
 
+# DNS module options
+dns:
+  # Location of the dns zone configuration file
+  zonecfg: /etc/named/zones.conf
+
+  # Location of the dns zone files
+  zonedir: /var/named
+
+  # Forward zones will be determined by the realms and site_ids
+  # Reverse zones will be determined by the network map
+
+  # Default TTL of zone headers
+  zonettl: 300
+
+  # Other default zone timings
+  refresh: 21600
+  retry: 3600
+  expire: 604800
+

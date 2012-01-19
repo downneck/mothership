@@ -985,18 +985,23 @@ class ShipCli(cmdln.Cmdln):
 
     @cmdln.alias("gendns")
     @cmdln.alias("gen_dns")
-    @cmdln.option("-s", "--sync", action="store_true",
-                  help="sync zone files/config after confirmation of changes")
+    @cmdln.option("-s", "--system", action="store_true",
+                  help="sync system files/config after confirmation of changes")
+    @cmdln.option("-a", "--all", action="store_true",
+                  help="generate ALL zone files defined in mothership.yaml")
     @cmdln.option("-o", "--outdir",
-                  help="output to directory as realm.site_id.domain")
-    def do_generate_dns(self, subcmd, opts, domain):
+                  help="output zone file to specified directory")
+    def do_generate_dns(self, subcmd, opts, domain=None):
         """${cmd_name}: Generate DNS entries from dns_addendum table.
-        For outdir, all files that match the domain specified will be generated.
-        For stdout, if more than one realm.site_id matches, a selection prompt will display.
-
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if not domain and not opts.all:
+            cmdln.Cmdln.do_help(self, ['', subcmd])
+            return
+        if opts.system and os.getuid() > 0:
+            print "You are not privileged to generate system DNS! Please sudo"
+            return
         mothership.dns.generate_dns_output(self.cfg, domain, opts)
 
     @cmdln.alias("add")
@@ -1122,13 +1127,16 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
+        if opts.sync and os.getuid() > 0:
+            print "You are not privileged to sync cobbler! Please sudo"
+            return
         unqdn = '.'.join(mothership.get_unqdn(self.cfg, hostname))
         host,realm,site_id = unqdn.split('.')
         cc = mothership.cobbler.CobblerAPI(self.cfg, site_id=site_id)
         if opts.remove:
             cc.delete_system(unqdn)
             if opts.sync:
-                cc.sync_cobbler()
+                cc.sync_cobbler(unqdn)
         else:
             sysdict = mothership.retrieve_cobbler_system_dict(self.cfg, unqdn, opts.xen)
             if opts.kick:
@@ -1161,7 +1169,7 @@ class ShipCli(cmdln.Cmdln):
                     print 'API: clear out puppet key before we proceed'
                 # netboot must come before sync for xenserver post-sync triggers
                 cc.set_system_netboot(unqdn, True)
-                if opts.sync: cc.sync_cobbler()
+                if opts.sync: cc.sync_cobbler(unqdn)
                 cc.set_system_power(unqdn, 'reboot', virtual=sysdict['virtual'])
                 if self.cfg.zenlive:
                     zhost = '.'.join(mothership.get_unqdn(self.cfg, str(mothership.kv.select(self.cfg, '', 'zenoss_server')).split('=')[1]))
@@ -1175,7 +1183,7 @@ class ShipCli(cmdln.Cmdln):
                     z.add_host(unqdn, tag)
             else:
                 if opts.sync:
-                    cc.sync_cobbler()
+                    cc.sync_cobbler(unqdn)
 
     @cmdln.alias("drac")
     @cmdln.option("-t", "--telnet", default=0,

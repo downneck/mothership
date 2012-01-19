@@ -298,6 +298,38 @@ class Configure:
         else:
             self.ldap_default_gid = '401'
 
+
+        # DNS settings
+        dnsconfig = all_configs['dns']
+        if 'active' in dnsconfig and dnsconfig['active']:
+            self.dns_active = dnsconfig['active']
+        else:
+            self.dns_active = False
+        if 'zonecfg' in dnsconfig and dnsconfig['zonecfg']:
+            self.dns_conf = dnsconfig['zonecfg']
+        else:
+            self.dns_conf = '/etc/named/zones.conf'
+        if 'zonedir' in dnsconfig and dnsconfig['zonedir']:
+            self.dns_zone = dnsconfig['zonedir']
+        else:
+            self.dns_zone = '/var/named/'
+        if 'zonettl' in dnsconfig and dnsconfig['zonettl']:
+            self.dns_ttl = dnsconfig['zonettl']
+        else:
+            self.dns_ttl = '86400'
+        if 'refresh' in dnsconfig and dnsconfig['refresh']:
+            self.dns_refresh = dnsconfig['refresh']
+        else:
+            self.dns_refresh = '21600'
+        if 'retry' in dnsconfig and dnsconfig['retry']:
+            self.dns_retry = dnsconfig['retry']
+        else:
+            self.dns_retry = '3600'
+        if 'expire' in dnsconfig and dnsconfig['expire']:
+            self.dns_expire = dnsconfig['expire']
+        else:
+            self.dns_expire = '604800'
+
     def close_connections(self):
         """
             Close out connections
