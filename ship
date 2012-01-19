@@ -49,18 +49,19 @@ from mothership.configure import Configure
 import mothership.zabbix
 
 def is_server_provisioning_allowed(config):
-    if config['general']['min_time'] and config['general']['max_time']:
-        tzone = False
-        try:
-            tzone = os.environ['TZ']
-        except KeyError:
-            pass
-        os.environ['TZ'] = 'US/Eastern'
-        now = datetime.datetime.now()
-        if tzone:
-            os.environ['TZ'] = tzone
-        else:
-            os.environ['TZ'] = ''
+    if config['general'].has_key('min_time') and config['general'].has_key('max_time'):
+        if config['general']['min_time'] and config['general']['max_time']:
+            tzone = False
+            try:
+                tzone = os.environ['TZ']
+            except KeyError:
+                pass
+            os.environ['TZ'] = 'US/Eastern'
+            now = datetime.datetime.now()
+            if tzone:
+                os.environ['TZ'] = tzone
+            else:
+                os.environ['TZ'] = ''
             if now.hour > config['general']['min_time'] and now.hour < config['general']['max_time']:
                 return False
             else:
