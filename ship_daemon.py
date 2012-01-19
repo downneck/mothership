@@ -22,7 +22,7 @@ httpship = bottle.Bottle()
 
 # suck in our configure object
 cfg = configure.Configure('mothership.yaml')
-cm = MothershipCommon('ship_daemon.log')
+cm = MothershipCommon('ship_daemon.log', to_file=False)
 
 # generic mothership exception type
 class ShipDaemonError(Exception):
