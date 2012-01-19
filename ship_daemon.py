@@ -1,11 +1,15 @@
 #!/usr/bin/python26
+
+# system imports
 import os
 import sys
-
+import datetime
 import bottle
 from bottle import static_file
 from bottle import response
+from socket import gethostname
 
+# mothership imports
 from mothership import configure
 from mothership.common import MothershipCommon
 
@@ -28,6 +32,15 @@ cm = MothershipCommon('ship_daemon.log', to_file=False)
 # generic mothership exception type
 class ShipDaemonError(Exception):
     pass
+
+# create a json-able dict of important info
+def __generate_json_header():
+    jbuf = {}
+    jbuf['status'] = 0
+    jbuf['timestamp'] = str(datetime.datetime.now())
+    jbuf['nodename'] = gethostname()
+    return jbuf
+
 
 @httpship.route('/loadmodules')
 def load_modules():
@@ -80,18 +93,21 @@ def index():
     will probably change quite a lot before the rewrite gets going
     more than likely will merge with /modules route below
     """
-    buf = "<P>loaded modules:<BR><BR>"
+    response.content_type='application/json'
+    jbuf = __generate_json_header()
+    jbuf['request'] = '/'
+    jbuf['data'] = "loaded modules: "
     for k in cfg.module_metadata.keys():
         cm.debug('route: /')
         cm.debug('metadata key: '+k)
         try:
-            buf += "<A HREF=\"/%s\">/%s</A><BR>" % (cfg.module_metadata[k].namespace, cfg.module_metadata[k].namespace)
-            cm.debug(buf)
+            jbuf['data'] += " %s" % cfg.module_metadata[k].namespace
         except:
             continue
-    buf += "<BR><BR>to reload modules call:<BR><A HREF=\"/loadmodules\">/loadmodules</A><BR>"
-    buf += "<BR><BR>to get JSON list of loaded modules call:<BR><A HREF=\"/modules\">/modules</A><BR>"
-    return buf
+    jbuf['data'] += ". for more info on a module, call /<modulename>"
+    jbuf['data'] += ". to reload modules call: /loadmodules"
+    jbuf['data'] += ". to get JSON list of loaded modules call: /modules"
+    return myjson.JSONEncoder().encode(jbuf)
 
 
 @httpship.route('/modules')
@@ -99,32 +115,38 @@ def loaded_modules():
     """
     returns a list of currently loaded modules
     """
-    buf = []
+    response.content_type='application/json'
+    jbuf = __generate_json_header()
+    jbuf['request'] = '/modules'
+    jbuf['data'] = []
     for k in cfg.module_metadata.keys():
         cm.debug('route: /')
         cm.debug('metadata key: '+k)
         try:
-            buf.append(cfg.module_metadata[k].namespace)
-            cm.debug(buf)
+            jbuf['data'].append(cfg.module_metadata[k].namespace)
+            cm.debug(jbuf)
         except:
             continue
     response.content_type = 'application/json'
-    return myjson.JSONEncoder().encode(buf)
+    return myjson.JSONEncoder().encode(jbuf)
 
 @httpship.route("/:pname")
 def namespace_path(pname):
     """
     returns data about a namespace's public functions
     """
-    buf = "Callable functions:<BR><BR>"
-    buf += "<A HREF=\"/%s/metadata\">/%s/metadata</A><BR>" % (pname, pname)
-    cm.debug("buf: %s" % buf)
+    response.content_type='application/json'
+    jbuf = __generate_json_header()
+    jbuf['request'] = "/%s" % pname
+    jbuf['data'] = {}
+    jbuf['data']['callable_functions'] = []
+    cm.debug("jbuf: %s" % jbuf)
     cm.debug("pname: %s" %pname)
     cm.debug("cfg.module_metadata[pname]: %s " %cfg.module_metadata[pname].metadata)
     for meth in cfg.module_metadata[pname].metadata['methods']:
         cm.debug(meth)
-        buf += "<A HREF=\"/%s/%s\">/%s/%s</A><BR>" % (pname, meth, pname, meth)
-    return buf
+        jbuf['data']['callable_functions'].append("/%s" % meth)
+    return myjson.JSONEncoder().encode(jbuf)
 
 @httpship.route("/:pname/:callpath", method=('GET', 'POST', 'PUT', 'DELETE'))
 def callable_path(pname, callpath):
@@ -132,17 +154,19 @@ def callable_path(pname, callpath):
     returns data about a function call or calls the function.
     will probably change significantly before the rewrite
     """
+    response.content_type='application/json'
+    jbuf = __generate_json_header()
+    jbuf['request'] = "/%s/%s" % (pname, callpath)
     query = bottle.request.GET
     pnameMetadata = cfg.module_metadata[pname]
-        
+
     cm.debug("query keys: %s" % query.keys())
     # everyone has a 'metadata' construct
     # hard wire it into callpath options
     if callpath == 'metadata':
         cm.debug(myjson.JSONEncoder(indent=4).encode(pnameMetadata.metadata))
-        buf = myjson.JSONEncoder().encode(pnameMetadata.metadata)
-        response.content_type='application/json'
-        return buf
+        jbuf['data'] = pnameMetadata.metadata
+        return myjson.JSONEncoder().encode(jbuf)
     else:
         pnameCallpath = pnameMetadata.metadata['methods'][callpath]
 
@@ -151,38 +175,30 @@ def callable_path(pname, callpath):
         cm.debug("method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath]))
         if bottle.request.method == pnameCallpath['rest_type']:
             buf = getattr(pnameMetadata, callpath)
-            returnme = buf(query)
-            cm.debug(myjson.JSONEncoder(indent=4).encode(returnme))
-            response.content_type='application/json'
-            return myjson.JSONEncoder().encode(returnme)
+            jbuf['data'] = buf(query)
+            cm.debug(myjson.JSONEncoder(indent=4).encode(jbuf))
+            return myjson.JSONEncoder().encode(jbuf)
         else:
             raise ShipDaemonError("request method \"%s\" does not match allowed type \"%s\" for call \"/%s/%s\"" % (bottle.request.method, pnameCallpath['rest_type'], pname, callpath))
     # everyone wants query strings, blow up and spit out information if
     # we don't get any query strings
     else:
-        buf = "Here are the possible query strings for \"/%s/%s\"<BR><BR>required_args:<BR>" % (pname, callpath)
+        jbuf['data'] = {}
+        jbuf['data']['available_query_strings'] = {}
         try:
             for req in pnameMetadata.metadata['methods'][callpath]['required_args']['args'].keys():
                 cm.debug("required arg: %s" % req)
-                buf += "%s (%s): %s<BR>" % (req, pnameCallpath['required_args']['args'][req]['vartype'], pnameCallpath['required_args']['args'][req]['desc'])
+            jbuf['data']['available_query_strings']['required_args'] = pnameCallpath['required_args']
         except:
-            buf += "No required_args found<BR>"
+            pass
         try:
-            buf += "<BR><BR>optional_args, please supply at least %s but not more than %s of the following:<BR>" % (pnameCallpath['optional_args']['min'], pnameCallpath['optional_args']['max'])
+            jbuf['data']['available_query_strings']['optional_args'] = pnameCallpath['optional_args']
             for opt in pnameCallpath['optional_args']['args'].keys():
                 cm.debug("optional arg: %s" % opt)
-                if pnameCallpath['optional_args']['args'][opt]['vartype'] == "None":
-                    buf += "<A HREF=\"/%s/%s?%s\">/%s/%s?%s</A> (%s): %s<BR>" % (pname, callpath, opt, pname, callpath, opt, pnameCallpath['optional_args']['args'][opt]['vartype'], pnameCallpath['optional_args']['args'][opt]['desc'])
-                else:
-                    buf += "/%s/%s?%s (%s): %s<BR>" % (pname, callpath, opt, pnameCallpath['optional_args']['args'][opt]['vartype'], pnameCallpath['optional_args']['args'][opt]['desc'])
         except:
-            buf += "<BR><BR>optional_args:<BR>No optional_args found<BR>"
-        try:
-            buf += "<BR><BR>return:<BR>%s" % myjson.JSONEncoder(indent=4).encode(pnameCallpath['return'])
-        except:
-            buf += "<BR><BR>return:<BR>ERROR: improperly formed return metadata"
-        cm.debug(buf)
-        return buf
+            pass
+        return myjson.JSONEncoder(indent=4).encode(jbuf)
+        cm.debug(jbuf)
 
 @httpship.route('/favicon.ico')
 def get_favicon():

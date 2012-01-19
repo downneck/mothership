@@ -39,7 +39,7 @@ def print_submodules(cfg, module_list):
         for i in module_list:
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
             mmeta = myjson.loads(response.content)
-            print i.split('API_')[-1]+': '+mmeta['config']['description']
+            print i.split('API_')[-1]+' : '+mmeta['data']['config']['description']
         print "\nRun \"ship <submodule>\" for more information"
     except Exception, e:
         if cfg.debug:
@@ -52,7 +52,7 @@ def print_commands(cfg, module_list):
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
         mmeta = myjson.loads(response.content)
         print "Available module commands:\n"
-        for k in mmeta['methods'].keys():
+        for k in mmeta['data']['methods'].keys():
             print sys.argv[1]+'/'+k
         print "\nRun \"ship <submodule>/<command>\" for more information"
     except Exception, e:
@@ -66,14 +66,14 @@ def print_command_args(cfg, module_list):
         module, call = sys.argv[1].split('/')
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
         mmeta = myjson.loads(response.content)
-        if 'args' in mmeta['methods'][call]['required_args']:
+        if 'args' in mmeta['data']['methods'][call]['required_args']:
             print "\nRequired arguments:"
-            for k in mmeta['methods'][call]['required_args']['args'].keys():
-                print "--%s (-%s): %s" % (k, mmeta['methods'][call]['required_args']['args'][k]['ol'], mmeta['methods'][call]['required_args']['args'][k]['desc'])
-        if 'args' in mmeta['methods'][call]['optional_args']:
-            print "\nOptional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['methods'][call]['optional_args']['min'], mmeta['methods'][call]['optional_args']['max'])
-            for k in mmeta['methods'][call]['optional_args']['args'].keys():
-                print "--%s (-%s): %s" % (k, mmeta['methods'][call]['optional_args']['args'][k]['ol'], mmeta['methods'][call]['optional_args']['args'][k]['desc'])
+            for k in mmeta['data']['methods'][call]['required_args']['args'].keys():
+                print "--%s (-%s): %s" % (k, mmeta['data']['methods'][call]['required_args']['args'][k]['ol'], mmeta['data']['methods'][call]['required_args']['args'][k]['desc'])
+        if 'args' in mmeta['data']['methods'][call]['optional_args']:
+            print "\nOptional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['data']['methods'][call]['optional_args']['min'], mmeta['data']['methods'][call]['optional_args']['max'])
+            for k in mmeta['data']['methods'][call]['optional_args']['args'].keys():
+                print "--%s (-%s): %s" % (k, mmeta['data']['methods'][call]['optional_args']['args'][k]['ol'], mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'])
         print ""
     except Exception, e:
         if cfg.debug:
@@ -93,28 +93,28 @@ def call_command(cfg, module_list):
             # change this to argparse if we upgrade past python 2.7
             parser = OptionParser()
             arglist = {}
-            if 'args' in mmeta['methods'][call]['required_args']:
-                for k in mmeta['methods'][call]['required_args']['args'].keys():
-                    if mmeta['methods'][call]['required_args']['args'][k]['vartype'] != "None":
-                        parser.add_option('-'+mmeta['methods'][call]['required_args']['args'][k]['ol'],\
-                                          '--'+k, help=mmeta['methods'][call]['required_args']['args'][k]['desc'])
-                        arglist[k] = mmeta['methods'][call]['required_args']['args'][k]['vartype']
+            if 'args' in mmeta['data']['methods'][call]['required_args']:
+                for k in mmeta['data']['methods'][call]['required_args']['args'].keys():
+                    if mmeta['data']['methods'][call]['required_args']['args'][k]['vartype'] != "None":
+                        parser.add_option('-'+mmeta['data']['methods'][call]['required_args']['args'][k]['ol'],\
+                                          '--'+k, help=mmeta['data']['methods'][call]['required_args']['args'][k]['desc'])
+                        arglist[k] = mmeta['data']['methods'][call]['required_args']['args'][k]['vartype']
                     else:
-                        parser.add_option('-'+mmeta['methods'][call]['required_args']['args'][k]['ol'],\
-                                          '--'+k, help=mmeta['methods'][call]['required_args']['args'][k]['desc'],\
+                        parser.add_option('-'+mmeta['data']['methods'][call]['required_args']['args'][k]['ol'],\
+                                          '--'+k, help=mmeta['data']['methods'][call]['required_args']['args'][k]['desc'],\
                                           action="store_true")
-                        arglist[k] = mmeta['methods'][call]['required_args']['args'][k]['vartype']
-            elif 'args' in mmeta['methods'][call]['optional_args']:
-                for k in mmeta['methods'][call]['optional_args']['args'].keys():
-                    if mmeta['methods'][call]['optional_args']['args'][k]['vartype'] != "None":
-                        parser.add_option('-'+mmeta['methods'][call]['optional_args']['args'][k]['ol'],\
-                                          '--'+k, help=mmeta['methods'][call]['optional_args']['args'][k]['desc'])
-                        arglist[k] = mmeta['methods'][call]['optional_args']['args'][k]['vartype']
+                        arglist[k] = mmeta['data']['methods'][call]['required_args']['args'][k]['vartype']
+            elif 'args' in mmeta['data']['methods'][call]['optional_args']:
+                for k in mmeta['data']['methods'][call]['optional_args']['args'].keys():
+                    if mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype'] != "None":
+                        parser.add_option('-'+mmeta['data']['methods'][call]['optional_args']['args'][k]['ol'],\
+                                          '--'+k, help=mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'])
+                        arglist[k] = mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype']
                     else:
-                        parser.add_option('-'+mmeta['methods'][call]['optional_args']['args'][k]['ol'],\
-                                          '--'+k, help=mmeta['methods'][call]['optional_args']['args'][k]['desc'],\
+                        parser.add_option('-'+mmeta['data']['methods'][call]['optional_args']['args'][k]['ol'],\
+                                          '--'+k, help=mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'],\
                                           action="store_true")
-                        arglist[k] = mmeta['methods'][call]['optional_args']['args'][k]['vartype']
+                        arglist[k] = mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype']
             else:
                 raise Exception("Error: no arguments defined")
 
@@ -133,9 +133,9 @@ def call_command(cfg, module_list):
 
             # make the call out to our API service, expect JSON back,
             # load the JSON into the equivalent python variable type
-            if mmeta['methods'][call]['rest_type'] == 'GET':
+            if mmeta['data']['methods'][call]['rest_type'] == 'GET':
                 callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/'+call+'?'+buf)
-            elif mmeta['methods'][call]['rest_type'] == 'POST':
+            elif mmeta['data']['methods'][call]['rest_type'] == 'POST':
                 callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/'+call+'?'+buf)
             responsedata = myjson.loads(callresponse.content)
 
@@ -192,7 +192,8 @@ if __name__ == "__main__":
         # grab a list of loaded modules from the API server, decode the
         # json into a list object
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/modules')
-        module_list = myjson.loads(response.content)
+        response_dict = myjson.loads(response.content)
+        module_list = response_dict['data']
 
         # command line-y stuff.
         if len(sys.argv) < 2:
