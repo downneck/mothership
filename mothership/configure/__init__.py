@@ -183,6 +183,14 @@ class Configure:
             self.audit_log_file = genconfig['audit_log_file']
         else:
             self.audit_log_file = '/var/log/mothership_audit.log'
+        if 'max_time' in genconfig and genconfig['max_time']:
+            self.max_time = genconfig['max_time']
+        else:
+            self.max_time = None
+        if 'min_time' in genconfig and genconfig['min_time']:
+            self.min_time = genconfig['min_time']
+        else:
+            self.min_time = None
 
         # Virtual Machine settings
         vmconfig = all_configs['vm']
