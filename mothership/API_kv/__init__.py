@@ -230,13 +230,7 @@ class API_kv:
         # return value
         kv_entry = None
         # setting our valid query keys
-        valid_qkeys = []
-        if self.metadata['methods']['select']['required_args']['args']:
-            for i in self.metadata['methods']['select']['required_args']['args'].keys():
-                valid_qkeys.append(i)
-        if self.metadata['methods']['select']['optional_args']['args']:
-            for i in self.metadata['methods']['select']['optional_args']['args'].keys():
-                valid_qkeys.append(i)
+        valid_qkeys = self.__get_valid_qkeys('select')
 
         try:
             # to make our conditionals easier
@@ -449,13 +443,7 @@ class API_kv:
         # our return value
         kv_entries = []
         # setting our valid query keys
-        valid_qkeys = []
-        if self.metadata['methods']['collect']['required_args']['args']:
-            for i in self.metadata['methods']['collect']['required_args']['args'].keys():
-                valid_qkeys.append(i)
-        if self.metadata['methods']['collect']['optional_args']['args']:
-            for i in self.metadata['methods']['collect']['optional_args']['args'].keys():
-                valid_qkeys.append(i)
+        valid_qkeys = self.__get_valid_qkeys('collect')
 
         try:
             # to make our conditionals easier
@@ -545,13 +533,7 @@ class API_kv:
         # config object. love this guy.
         cfg = self.cfg
         # setting our valid query keys
-        valid_qkeys = []
-        if self.metadata['methods']['add']['required_args']['args']:
-            for i in self.metadata['methods']['add']['required_args']['args'].keys():
-                valid_qkeys.append(i)
-        if self.metadata['methods']['add']['optional_args']['args']:
-            for i in self.metadata['methods']['add']['optional_args']['args'].keys():
-                valid_qkeys.append(i)
+        valid_qkeys = self.__get_valid_qkeys('add')
 
         try:
             # to make our conditionals easier
@@ -625,13 +607,7 @@ class API_kv:
         realm = None
         site_id = None
         # setting our valid query keys
-        valid_qkeys = []
-        if self.metadata['methods']['update']['required_args']['args']:
-            for i in self.metadata['methods']['update']['required_args']['args'].keys():
-                valid_qkeys.append(i)
-        if self.metadata['methods']['update']['optional_args']['args']:
-            for i in self.metadata['methods']['update']['optional_args']['args'].keys():
-                valid_qkeys.append(i)
+        valid_qkeys = self.__get_valid_qkeys('update')
 
         try:
             # to make our conditionals easier
@@ -709,13 +685,7 @@ class API_kv:
         realm = None
         site_id = None
         # setting our valid query keys
-        valid_qkeys = []
-        if self.metadata['methods']['delete']['required_args']['args']:
-            for i in self.metadata['methods']['delete']['required_args']['args'].keys():
-                valid_qkeys.append(i)
-        if self.metadata['methods']['delete']['optional_args']['args']:
-            for i in self.metadata['methods']['delete']['optional_args']['args'].keys():
-                valid_qkeys.append(i)
+        valid_qkeys = self.__get_valid_qkeys('delete')
 
         try:
             # to make our conditionals easier
@@ -789,3 +759,26 @@ class API_kv:
         hostname, realm, site_id = mothership.split_fqdn(unqdn)
         kv = KV(key, value, hostname, realm, site_id)
         return kv
+
+
+    # return a list of valid query keys
+    def __get_valid_qkeys(self, call):
+        """
+        [description]
+        collect our list of valid query keys
+
+        [parameter info]
+            required:
+                call: the function we're being called from
+
+        [return]
+        Returns a list of valid query keys for this
+        """
+        valid_qkeys = []
+        if 'args' in self.metadata['methods'][call]['required_args'].keys():
+            for i in self.metadata['methods'][call]['required_args']['args'].keys():
+                valid_qkeys.append(i)
+        if 'args' in self.metadata['methods'][call]['optional_args'].keys():
+            for i in self.metadata['methods'][call]['optional_args']['args'].keys():
+                valid_qkeys.append(i)
+        return valid_qkeys

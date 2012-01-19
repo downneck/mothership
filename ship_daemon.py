@@ -146,12 +146,12 @@ def callable_path(pname, callpath):
     
     # we got an actual callpath! do stuff.
     if query:
-        response.content_type='application/json'
         cm.debug("method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath]))
         if bottle.request.method == pnameCallpath['rest_type']:
             buf = getattr(pnameMetadata, callpath)
             returnme = buf(query)
             cm.debug(myjson.JSONEncoder(indent=4).encode(returnme))
+            response.content_type='application/json'
             return myjson.JSONEncoder().encode(returnme)
         else:
             raise ShipDaemonError("request method \"%s\" does not match allowed type \"%s\" for call \"/%s/%s\"" % (bottle.request.method, pnameCallpath['rest_type'], pname, callpath))
