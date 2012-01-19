@@ -23,9 +23,6 @@ httpship = bottle.Bottle()
 # suck in our configure object
 cfg = configure.Configure('mothership.yaml')
 
-# set our debugging flag
-cfg.debug = cfg.debug
-
 # generic mothership exception type
 class ShipDaemonError(Exception):
     pass
