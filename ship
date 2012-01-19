@@ -48,6 +48,26 @@ from mothership.mothership_models import *
 from mothership.configure import Configure
 import mothership.zabbix
 
+def is_server_provisioning_allowed(config):
+    if config.general.min_time and config.general.max_time:
+        tzone = False
+        try:
+            tzone = os.environ['TZ']
+        except KeyError:
+            pass
+        os.environ['TZ'] = 'US/Eastern'
+        now = datetime.datetime.now()
+        if tzone:
+            os.environ['TZ'] = tzone
+        else:
+            os.environ['TZ'] = ''
+            if now.hour > confing.general.min_time and now.hour < config.general.max_time:
+                return False
+            else:
+                return True
+    else:
+        return True
+    
 class ShipCli(cmdln.Cmdln):
     def __init__(self, cfg):
         cmdln.Cmdln.__init__(self)
@@ -1011,16 +1031,20 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        added = False
-        unqdn = ".".join(mothership.get_unqdn(self.cfg, hostname))
-        osdict = mothership.cobbler.CobblerAPI(self.cfg).get_os_dict(self.cfg)
-        added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict, opts)
-        if added:
-            if self.cfg.zab_active:
-                # cloned portions of do_zabbix, to add when new servers are provisioned
-                zs_unqdn = '.'.join(mothership.get_unqdn(self.cfg, self.cfg.dbsess.query(Server).\
-                    filter(Server.tag=="zabbix_server").first().hostname))
-                mothership.zabbix.add(self.cfg, unqdn, zs_unqdn, zabbix_template=None)
+        if is_server_provisionig_allowed(self.cfg):
+            added = False
+            unqdn = ".".join(mothership.get_unqdn(self.cfg, hostname))
+            osdict = mothership.cobbler.CobblerAPI(self.cfg).get_os_dict(self.cfg)
+            added = mothership.provision_server(self.cfg, unqdn, vlan, today, osdict, opts)
+            if added:
+                if self.cfg.zab_active:
+                    # cloned portions of do_zabbix, to add when new servers are provisioned
+                    zs_unqdn = '.'.join(mothership.get_unqdn(self.cfg, self.cfg.dbsess.query(Server).\
+                                                             filter(Server.tag=="zabbix_server").first().hostname))
+                    mothership.zabbix.add(self.cfg, unqdn, zs_unqdn, zabbix_template=None)
+        else:
+            print 'Sorry dude you can\'t provision server now'
+            exit(1)
 
     @cmdln.alias("rms")
     @cmdln.alias("rm_serv")
@@ -1522,9 +1546,16 @@ if __name__ == "__main__":
     try:
         alog = open(cfg.audit_log_file, 'a')
         tformat = "%Y-%m-%d %H:%M:%S"
-        buffer = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, command_run)
-        alog.write(buffer)
-        alog.close()
+        timestamp = datetime.datetime.now()
+        if sys.stdin.isatty():
+            username = os.getlogin()
+        else:
+            username = "nottyUID=" + str(os.geteuid())
+        cmd = ' '.join(sys.argv)
+        if sys.argv[0] != 'puppet':
+            buf = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, cmd)
+            alog.write(buf)
+            alog.close()
     except Exception, e:
         print "Exception: " + str(e)
         print "Problem writing to audit log file!"

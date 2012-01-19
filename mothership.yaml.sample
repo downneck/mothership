@@ -57,6 +57,11 @@ general:
   # run in mothership with a timestamp and the user who ran it
   audit_log_file: '/var/log/mothership_audit.log'
 
+  # Timeframe in which we can't provision stuff
+  # Set it if you want control when someone can provision servers (or vm)
+  #min_time: 11
+  #max_time: 14
+
 # Database options
 db:
 
