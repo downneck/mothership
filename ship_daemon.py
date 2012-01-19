@@ -134,16 +134,17 @@ def callable_path(pname, callpath):
     """
     query = bottle.request.GET
     pnameMetadata = cfg.module_metadata[pname]
-    pnameCallpath = pnameMetadata.metadata['methods'][callpath]
-    
+        
     cm.debug("query keys: %s" % query.keys())
     # everyone has a 'metadata' construct
     # hard wire it into callpath options
     if callpath == 'metadata':
         cm.debug(myjson.JSONEncoder(indent=4).encode(pnameMetadata.metadata))
-        buf = myjson.JSONEncoder().encode(cfg.module_metadata[pname].metadata)
+        buf = myjson.JSONEncoder().encode(pnameMetadata.metadata)
         return buf
-    
+    else:
+        pnameCallpath = pnameMetadata.metadata['methods'][callpath]
+
     # we got an actual callpath! do stuff.
     if query:
         cm.debug("method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath]))
