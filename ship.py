@@ -33,40 +33,69 @@ from mothership.configure import Configure, ConfigureCli
 
 # if someone runs: ship
 def print_submodules(cfg, module_list):
-    print "Available submodules:\n"
-    for i in module_list:
-        response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
-        mmeta = myjson.loads(response.read())
-        print i.split('API_')[-1]+': '+mmeta['config']['description']
-    print "\nRun \"ship <submodule>\" for more information"
+    try:
+        print "Available submodules:\n"
+        for i in module_list:
+            response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
+            mmeta = myjson.loads(response.read())
+            print i.split('API_')[-1]+': '+mmeta['config']['description']
+        print "\nRun \"ship <submodule>\" for more information"
+    except Exception, e:
+        if cfg.debug:
+            print "Error: %s" % e
+        raise Exception("Error: %s" % e)
 
 # if someone runs: ship <module>
 def print_commands(cfg, module_list):
-    response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
-    mmeta = myjson.loads(response.read())
-    print "Available module commands:\n"
-    for k in mmeta['methods'].keys():
-        print sys.argv[1]+'/'+k
-    print "\nRun \"ship <submodule>/<command>\" for more information"
+    try:
+        response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
+        mmeta = myjson.loads(response.read())
+        print "Available module commands:\n"
+        for k in mmeta['methods'].keys():
+            print sys.argv[1]+'/'+k
+        print "\nRun \"ship <submodule>/<command>\" for more information"
+    except Exception, e:
+        if cfg.debug:
+            print "Error: %s" % e
+        raise Exception("Error: %s" % e)
 
 # if someone runs: ship <module>/<command>
 def print_command_args(cfg, module_list):
-    module, call = sys.argv[1].split('/')
-    response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
-    mmeta = myjson.loads(response.read())
-    if 'args' in mmeta['methods'][call]['required_args']:
-        print "\nRequired arguments:"
-        for k in mmeta['methods'][call]['required_args']['args'].keys():
-            print "--%s (-%s): %s" % (k, mmeta['methods'][call]['required_args']['args'][k]['ol'], mmeta['methods'][call]['required_args']['args'][k]['desc'])
-    if 'args' in mmeta['methods'][call]['optional_args']:
-        print "\nOptional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['methods'][call]['optional_args']['min'], mmeta['methods'][call]['optional_args']['max'])
-        for k in mmeta['methods'][call]['optional_args']['args'].keys():
-            print "--%s (-%s): %s" % (k, mmeta['methods'][call]['optional_args']['args'][k]['ol'], mmeta['methods'][call]['optional_args']['args'][k]['desc'])
-    print ""
+    try:
+        module, call = sys.argv[1].split('/')
+        response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
+        mmeta = myjson.loads(response.read())
+        if 'args' in mmeta['methods'][call]['required_args']:
+            print "\nRequired arguments:"
+            for k in mmeta['methods'][call]['required_args']['args'].keys():
+                print "--%s (-%s): %s" % (k, mmeta['methods'][call]['required_args']['args'][k]['ol'], mmeta['methods'][call]['required_args']['args'][k]['desc'])
+        if 'args' in mmeta['methods'][call]['optional_args']:
+            print "\nOptional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['methods'][call]['optional_args']['min'], mmeta['methods'][call]['optional_args']['max'])
+            for k in mmeta['methods'][call]['optional_args']['args'].keys():
+                print "--%s (-%s): %s" % (k, mmeta['methods'][call]['optional_args']['args'][k]['ol'], mmeta['methods'][call]['optional_args']['args'][k]['desc'])
+        print ""
+    except Exception, e:
+        if cfg.debug:
+            print "Error: %s" % e
+        raise Exception("Error: %s" % e)
 
 
 def call_command(cfg, module_list):
-    pass
+    try:
+        if 'API_'+sys.argv[1].split('/')[0] in module_list:
+            module, call = sys.argv[1].split('/')
+            response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
+            mmeta = myjson.loads(response.read())
+            options = []
+            n = 2
+            while n <= len(sys.argv):
+                options.append(sys.argv[n])
+                n += 1
+            print options
+    except Exception, e:
+        if cfg.debug:
+            print "Error: %s" % e
+        raise Exception("Error: %s" % e)
 
 
 
@@ -81,8 +110,7 @@ if __name__ == "__main__":
     if sys.stdin.isatty():
         if os.getlogin() == 'root':
             print "Please do not run ship as root"
-            print "Your effective uid: " + os.geteuid()
-            sys.exit(1)
+            raise Exception("Your effective uid: " + os.geteuid())
 
     # write out the command line we were called with to an audit log
     try:
@@ -105,6 +133,7 @@ if __name__ == "__main__":
         print "logline dump:"
         print "%s %s: %s: %s" % (ltz, timestamp, username, command_run)
         alog.close()
+
     # main execution block
     try:
         # grab a list of loaded modules from the API server, decode the
@@ -120,18 +149,9 @@ if __name__ == "__main__":
         elif len(sys.argv) == 2 and 'API_'+sys.argv[1].split('/')[0] in module_list:
             print_command_args(cfg, module_list)
         elif len(sys.argv) >= 3:
-            if 'API_'+sys.argv[1].split('/')[0] in module_list:
-                module, call = sys.argv[1].split('/')
-                response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
-                mmeta = myjson.loads(response.read())
-                options = []
-                n = 2
-                while n <= len(sys.argv):
-                    options.append(sys.argv[n])
-                    n += 1
-                print options
+            call_command(cfg, module_list)
         else:
-            print "Module not found"
+            raise Exception("bad command line:\n%s" % sys.argv)
 
     except IOError, e:
         print "Missing config file: mothership_cli.yaml"

@@ -31,7 +31,7 @@ class LDAPError(Exception):
     pass
 
 # figure out what ldap server to talk to
-def get_master(cfg, realm_path):
+def __get_master(cfg, realm_path):
     """
     [description]
     looks up the ldap master for a given realm_path
@@ -122,7 +122,7 @@ def uadd(cfg, username):
         if not u.active:
             raise LDAPError("user %s is not active. please set the user active, first." % u.username)
         # get ldap master info
-        ldap_master = get_master(cfg, u.realm+'.'+u.site_id)
+        ldap_master = __get_master(cfg, u.realm+'.'+u.site_id)
     else:
         raise LDAPError("user \"%s\" not found, aborting" % username)
 
@@ -189,7 +189,7 @@ def uremove(cfg, username):
 
     if u:
         # get ldap master info, stitch together some dn info
-        ldap_master = get_master(cfg, u.realm+'.'+u.site_id)
+        ldap_master = __get_master(cfg, u.realm+'.'+u.site_id)
         dn = "uid=%s,ou=%s,dc=" % (u.username, cfg.ldap_users_ou)
         dn += ',dc='.join(d)
     else:
@@ -225,7 +225,7 @@ def urefresh(cfg, realm_path):
 
     dnlist = []
     userlist = []
-    ldap_master = get_master(cfg, realm+'.'+site_id)
+    ldap_master = __get_master(cfg, realm+'.'+site_id)
     dn ="ou=%s,dc=" % cfg.ldap_users_ou
     dn += ',dc='.join(d)
     ldcon = ld_connect(cfg, ldap_master)
@@ -274,7 +274,7 @@ def udisplay(cfg, username):
 
     if u:
         # get ldap master info, stitch together some dn info
-        ldap_master = get_master(cfg, u.realm+'.'+u.site_id)
+        ldap_master = __get_master(cfg, u.realm+'.'+u.site_id)
         dn = "uid=%s,ou=%s,dc=" % (u.username, cfg.ldap_users_ou)
         dn += ',dc='.join(d)
     else:
@@ -314,7 +314,7 @@ def uupdate(cfg, username):
         if not u.active:
             raise LDAPError("user %s is not active. please set the user active, first." % u.username)
         # get ldap master info
-        ldap_master = get_master(cfg, u.realm+'.'+u.site_id)
+        ldap_master = __get_master(cfg, u.realm+'.'+u.site_id)
     else:
         raise LDAPError("user \"%s\" not found, aborting" % username)
 
@@ -363,7 +363,7 @@ def gadd(cfg, groupname):
 
     if g:
         # get ldap master info
-        ldap_master = get_master(cfg, g.realm+'.'+g.site_id)
+        ldap_master = __get_master(cfg, g.realm+'.'+g.site_id)
         # construct the list of users in this group
         userlist = []
         for ugmap in cfg.dbsess.query(UserGroupMapping).\
@@ -424,7 +424,7 @@ def gupdate(cfg, groupname):
 
     if g:
         # get ldap master info
-        ldap_master = get_master(cfg, g.realm+'.'+g.site_id)
+        ldap_master = __get_master(cfg, g.realm+'.'+g.site_id)
         # construct the list of users in this group
         userlist = []
         for ugmap in cfg.dbsess.query(UserGroupMapping).\
@@ -475,7 +475,7 @@ def gremove(cfg, groupname):
 
     if g:
         # get ldap master info, stitch together some dn info
-        ldap_master = get_master(cfg, g.realm+'.'+g.site_id)
+        ldap_master = __get_master(cfg, g.realm+'.'+g.site_id)
         dn = "cn=%s,ou=%s,dc=" % (g.groupname, cfg.ldap_groups_ou)
         dn += ',dc='.join(d)
     else:
@@ -512,7 +512,7 @@ def grefresh(cfg, realm_path):
 
     dnlist = []
     grouplist = []
-    ldap_master = get_master(cfg, realm+'.'+site_id)
+    ldap_master = __get_master(cfg, realm+'.'+site_id)
     dn ="ou=%s,dc=" % cfg.ldap_groups_ou
     dn += ',dc='.join(d)
     ldcon = ld_connect(cfg, ldap_master)
@@ -561,7 +561,7 @@ def gdisplay(cfg, groupname):
 
     if g:
         # get ldap master info, stitch together some dn info
-        ldap_master = get_master(cfg, g.realm+'.'+g.site_id)
+        ldap_master = __get_master(cfg, g.realm+'.'+g.site_id)
         dn = "cn=%s,ou=%s,dc=" % (g.groupname, cfg.ldap_groups_ou)
         dn += ',dc='.join(d)
     else:
@@ -590,7 +590,7 @@ def ldapimport(cfg, realm_path):
         realm_path: the realm.site_id to import
 
     [return value]
-    no explicit return 
+    no explicit return
     """
 
     fqn = mothership.validate.v_get_fqn(cfg, realm_path)
@@ -598,7 +598,7 @@ def ldapimport(cfg, realm_path):
     # an array made of the domain parts.
     d = cfg.domain.split('.')
 
-    ldap_master = get_master(cfg, realm+'.'+site_id)
+    ldap_master = __get_master(cfg, realm+'.'+site_id)
     dn ="ou=%s,dc=" % cfg.ldap_groups_ou
     dn += ',dc='.join(d)
     ldcon = ld_connect(cfg, ldap_master)
@@ -804,7 +804,7 @@ def update_ldap_passwd(cfg, username):
     u = mothership.validate.v_get_user_obj(cfg, username)
     d = cfg.domain.split('.')
     if u:
-        ldap_master = get_master(cfg, u.realm+'.'+u.site_id)
+        ldap_master = __get_master(cfg, u.realm+'.'+u.site_id)
         dn = "uid=%s,ou=%s,dc=" % (u.username, cfg.ldap_users_ou)
         dn += ',dc='.join(d)
     else:

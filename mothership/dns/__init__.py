@@ -32,7 +32,7 @@ def filter_domain_query(query, table, domain):
         query = query.filter(table.site_id==sub[-3:-2][0])
     return query, '.'.join(sub[-2:])
 
-def generate_dns_header(domainname, contact):
+def __generate_dns_header(domainname, contact):
     """Prints out a DNS Zone header for domainname"""
     serial = int(time.time())
     if '@' in contact: contact = contact.replace('@','.')
@@ -93,18 +93,18 @@ def generate_dns_output(cfg, domain, outdir, usecobbler=False):
                         print '\nFile does not exist: %s_header' % zone
                         print 'Using stdout instead:'
                         f=sys.stdout
-                        f.write(generate_dns_header('%s.%s.%s' \
+                        f.write(__generate_dns_header('%s.%s.%s' \
                             % (dns.realm, dns.site_id, tld), cfg.contact))
                 else:
                     print 'Generating boilerplate header for %s/%s.%s.%s' \
                         % (outdir, dns.realm, dns.site_id, tld)
                     f=open(zone, 'w')
-                    f.write(generate_dns_header('%s.%s.%s' \
+                    f.write(__generate_dns_header('%s.%s.%s' \
                         % (dns.realm, dns.site_id, tld), cfg.contact))
                     f=open(zone, 'a')
             else:
                 f=sys.stdout
-                f.write(generate_dns_header('%s.%s.%s' \
+                f.write(__generate_dns_header('%s.%s.%s' \
                     % (dns.realm, dns.site_id, tld), cfg.contact))
         # if last octet of target is non-numerical and does not end with
         # period, add one
