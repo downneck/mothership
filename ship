@@ -49,7 +49,7 @@ from mothership.configure import Configure
 import mothership.zabbix
 
 def is_server_provisioning_allowed(config):
-    if config.general.min_time and config.general.max_time:
+    if config['general']['min_time'] and config['general']['max_time']:
         tzone = False
         try:
             tzone = os.environ['TZ']
@@ -61,7 +61,7 @@ def is_server_provisioning_allowed(config):
             os.environ['TZ'] = tzone
         else:
             os.environ['TZ'] = ''
-            if now.hour > confing.general.min_time and now.hour < config.general.max_time:
+            if now.hour > config['general']['min_time'] and now.hour < config['general']['max_time']:
                 return False
             else:
                 return True
@@ -1036,7 +1036,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        if is_server_provisionig_allowed(self.cfg):
+        if is_server_provisioning_allowed(self.cfg):
             added = False
             unqdn = ".".join(mothership.get_unqdn(self.cfg, hostname))
             osdict = mothership.cobbler.CobblerAPI(self.cfg).get_os_dict(self.cfg)
