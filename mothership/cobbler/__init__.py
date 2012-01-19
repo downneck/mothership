@@ -21,6 +21,7 @@ import sys
 import types
 import xmlrpclib
 import subprocess
+import mothership.validate
 import mothership.network_mapper
 from mothership.transkey import transkey
 
@@ -109,6 +110,7 @@ class CobblerAPI:
             }
 
         # set up primary cobbler control
+        self.cfg = cfg
         self.coblive = cfg.coblive
         self.cobremote = None
         self.cobtoken = None
@@ -388,7 +390,13 @@ class CobblerAPI:
             print 'API: set handle = remote.get_system_handle(hostname, token)'
             print 'API: remote.power_system(handle, state, token)'
 
-    def sync_cobbler(self):
+    def sync_cobbler(self, hostname):
+        class opts:
+            all = False
+            system = True
+        fqdn = mothership.validate.v_get_fqn(self.cfg, hostname)
+        domain = re.sub('^\w+\.', '', fqdn)
+        mothership.dns.generate_dns_output(self.cfg, domain, opts)
         self._sync_cobbler(self.cobremote, self.cobtoken)
         if self.subremote is not None:
             self._sync_cobbler(self.subremote, self.subtoken)
