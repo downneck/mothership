@@ -7,7 +7,7 @@ from bottle import static_file
 from bottle import response
 
 from mothership import configure
-from mothership.API_common import *
+from mothership.common import MothershipCommon
 
 # for >=2.6 use json, >2.6 use simplejson
 try:

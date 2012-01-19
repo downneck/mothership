@@ -23,7 +23,7 @@ import yaml
 import mothership
 import mothership.kv
 import mothership.validate
-from mothership.API_common import *
+from mothership.common import MothershipCommon
 from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
