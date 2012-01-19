@@ -1,11 +1,12 @@
 #!/usr/bin/python26
-
-# imports
-from mothership import configure
-from bottle import response
 import os
 import sys
+
 import bottle
+from bottle import response
+
+from mothership import configure
+from mothership import API_common
 
 # for >=2.6 use json, >2.6 use simplejson
 try:
@@ -14,7 +15,6 @@ except ImportError:
     import simplejson as myjson
 
 #### cfg.debugGING ####
-# uncomment to debug bottle
 bottle.debug(True)
 
 # instantiate a bottle
@@ -22,9 +22,7 @@ httpship = bottle.Bottle()
 
 # suck in our configure object
 cfg = configure.Configure('mothership.yaml')
-
-# set our debugging flag
-cfg.debug = cfg.debug
+cm = MothershipCommon(filename='ship_daemon.log')
 
 # generic mothership exception type
 class ShipDaemonError(Exception):
@@ -37,7 +35,7 @@ def load_modules():
     scans our main path for modules, loads valid modules
     """
     if cfg.debug:
-            print "loadmodules() called directly"
+        cm.debug("loadmodules() called directly")
     # clear module metadata
     old_metadata = cfg.module_metadata
     cfg.module_metadata = {}
@@ -49,23 +47,18 @@ def load_modules():
             try:
                 # import each module in the list above, grab the metadata
                 # from it's main class
-                if cfg.debug:
-                    print "\nimporting mothership.%s:" % i
+                cm.debug("importing mothership.%s:" % i)
                 if i in old_metadata.keys():
                     try:
-                        if cfg.debug:
-                            print "unloading module: %s" % sys.modules['mothership.'+i]
+                        cm.debug("unloading module: %s" % sys.modules['mothership.'+i])
                         del sys.modules['mothership.'+i]
                     except:
                         pass
-                    if cfg.debug:
-                        print "module unloaded: mothership."+i
+                    cm.debug("module unloaded: mothership."+i)
                 mod = __import__("mothership."+i)
-                if cfg.debug:
-                    print "import complete"
+                cm.debug("import complete")
                 foo = getattr(mod, i)
-                if cfg.debug:
-                    print foo
+                cm.debug(foo)
                 bar = getattr(foo, i)
                 if cfg.debug:
                     print bar
