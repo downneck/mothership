@@ -6,7 +6,7 @@ import bottle
 from bottle import response
 
 from mothership import configure
-from mothership import API_common
+from mothership.API_common import *
 
 # for >=2.6 use json, >2.6 use simplejson
 try:
@@ -22,10 +22,7 @@ httpship = bottle.Bottle()
 
 # suck in our configure object
 cfg = configure.Configure('mothership.yaml')
-<<<<<<< HEAD
-cm = MothershipCommon(filename='ship_daemon.log')
-=======
->>>>>>> 3d658d0e8e32e49d0a1a34b735c0453cff9e6257
+cm = MothershipCommon('ship_daemon.log')
 
 # generic mothership exception type
 class ShipDaemonError(Exception):
@@ -203,19 +200,6 @@ def callable_path(pname, callpath):
                 return myjson.JSONEncoder().encode(returnme)
             else:
                 raise ShipDaemonError("request method \"%s\" does not match allowed type \"%s\" for call \"/%s/%s\"" % (bottle.request.method, cfg.module_metadata[pname].metadata['methods'][callpath]['rest_type'], pname, callpath))
-
-
-# why? because i made a spaceship.
-@httpship.route("/favicon.ico")
-def favicon():
-    return bottle.static_file('favicon.ico', root=sys.path[0])
-
-
-# this does nothing and it does it well.
-@httpship.route("/test")
-def test():
-    pass
-
 
 # the daemon
 bottle.run(httpship, host='0.0.0.0', port=8081, reloader=False)

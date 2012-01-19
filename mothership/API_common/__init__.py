@@ -3,12 +3,13 @@ import os
 
 MS_LOGDIR='/var/log/mothership/'
 
-class MothershipCommon(object, filnename='mothership.log', debug_level='DEBUG'):
-    def __init__(self):
+class MothershipCommon(object):
+    def __init__(self, logfile='motherhship.log', debug_level='DEBUG'):
         if not os.path.exists(MS_LOGDIR):
             os.mkdir(MS_LOGDIR)
-        logging.basicConfig(filename=MS_LOGDIR+filename,level=logging.DEBUG)
-        logging.setlevel(debug_level)
+        logging.basicConfig(filename=MS_LOGDIR+logfile,level=logging.DEBUG)
+        logger = logging.getLogger()
+        logger.setLevel(debug_level)
 
     def check_min_num_args(self, len, min):
         return True
