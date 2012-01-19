@@ -22,7 +22,7 @@ import time
 import datetime
 import os
 import urllib2
-import optparse
+from optparse import OptionParser
 
 # for >=2.6 use json, >2.6 use simplejson
 try:
@@ -82,24 +82,66 @@ def print_command_args(cfg, module_list):
             print "Error: %s" % e
         raise Exception("Error: %s" % e)
 
-
+# if someone runs: ship <module>/<command> --option1=bleh -o2 foo
 def call_command(cfg, module_list):
     try:
         if 'API_'+sys.argv[1].split('/')[0] in module_list:
+            buf = "" # our argument buffer for urlencoding
             module, call = sys.argv[1].split('/')
             response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
             mmeta = myjson.loads(response.read())
-            options = []
-            n = 2
-            while n < len(sys.argv):
-                options.append(sys.argv[n])
-                n += 1
-            print options
-            print sys.argv[2:]
+            parser = OptionParser()
+            arglist = {}
+            # remember to tell it to use 2:, later
+            if 'args' in mmeta['methods'][call]['required_args']:
+                for k in mmeta['methods'][call]['required_args']['args'].keys():
+                    if mmeta['methods'][call]['required_args']['args'][k]['vartype'] != "None":
+                        parser.add_option('-'+mmeta['methods'][call]['required_args']['args'][k]['ol'],\
+                                          '--'+k, help=mmeta['methods'][call]['required_args']['args'][k]['desc'])
+                        arglist[k] = mmeta['methods'][call]['required_args']['args'][k]['vartype']
+                    else:
+                        parser.add_option('-'+mmeta['methods'][call]['required_args']['args'][k]['ol'],\
+                                          '--'+k, help=mmeta['methods'][call]['required_args']['args'][k]['desc'],\
+                                          action="store_true")
+                        arglist[k] = mmeta['methods'][call]['required_args']['args'][k]['vartype']
+            elif 'args' in mmeta['methods'][call]['optional_args']:
+                for k in mmeta['methods'][call]['optional_args']['args'].keys():
+                    if mmeta['methods'][call]['optional_args']['args'][k]['vartype'] != "None":
+                        parser.add_option('-'+mmeta['methods'][call]['optional_args']['args'][k]['ol'],\
+                                          '--'+k, help=mmeta['methods'][call]['optional_args']['args'][k]['desc'])
+                        arglist[k] = mmeta['methods'][call]['optional_args']['args'][k]['vartype']
+                    else:
+                        parser.add_option('-'+mmeta['methods'][call]['optional_args']['args'][k]['ol'],\
+                                          '--'+k, help=mmeta['methods'][call]['optional_args']['args'][k]['desc'],\
+                                          action="store_true")
+                        arglist[k] = mmeta['methods'][call]['optional_args']['args'][k]['vartype']
+            else:
+                raise Exception("Error: no arguments defined")
+
+            (options, args) = parser.parse_args(sys.argv[2:])
+            for k in arglist.keys():
+                a = vars(options)[k]
+                if a:
+                    if buf:
+                        buf += '&'
+                    buf += k+'='+str(a)
+                elif arglist[k] == True:
+                    if buf:
+                        buf += '&'
+                    buf += k
+            print buf
+
+            #options = []
+            #n = 2
+            #while n < len(sys.argv):
+            #    options.append(sys.argv[n])
+            #    n += 1
     except Exception, e:
         if cfg.debug:
             print "Error: %s" % e
         raise Exception("Error: %s" % e)
+
+
 
 
 # main execution block
