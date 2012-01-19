@@ -98,7 +98,7 @@ def call_command(cfg, module_list):
         raise Exception("Error: %s" % e)
 
 
-
+# main execution block
 if __name__ == "__main__":
     # the global config. useful everywhere
     cfg = ConfigureCli('mothership_cli.yaml')
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         print "%s %s: %s: %s" % (ltz, timestamp, username, command_run)
         alog.close()
 
-    # main execution block
+    # doin stuff 
     try:
         # grab a list of loaded modules from the API server, decode the
         # json into a list object
