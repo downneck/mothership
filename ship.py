@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python26
 
 # Copyright 2011 Gilt Groupe, INC
 #
@@ -21,14 +21,12 @@ import textwrap
 import time
 import datetime
 import os
-import urllib2
+import pprint
+# urllib2 sucks when you need to use POST and you don't know beforehand
+# that you need to use POST, so we use 'requests' instead.
+import requests
 from optparse import OptionParser
-
-# for >=2.6 use json, >2.6 use simplejson
-try:
-    import json as myjson
-except ImportError:
-    import simplejson as myjson
+import json as myjson
 
 
 # mothership imports
@@ -39,8 +37,8 @@ def print_submodules(cfg, module_list):
     try:
         print "Available submodules:\n"
         for i in module_list:
-            response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
-            mmeta = myjson.loads(response.read())
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
+            mmeta = myjson.loads(response.content)
             print i.split('API_')[-1]+': '+mmeta['config']['description']
         print "\nRun \"ship <submodule>\" for more information"
     except Exception, e:
@@ -51,8 +49,8 @@ def print_submodules(cfg, module_list):
 # if someone runs: ship <module>
 def print_commands(cfg, module_list):
     try:
-        response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
-        mmeta = myjson.loads(response.read())
+        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
+        mmeta = myjson.loads(response.content)
         print "Available module commands:\n"
         for k in mmeta['methods'].keys():
             print sys.argv[1]+'/'+k
@@ -66,8 +64,8 @@ def print_commands(cfg, module_list):
 def print_command_args(cfg, module_list):
     try:
         module, call = sys.argv[1].split('/')
-        response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
-        mmeta = myjson.loads(response.read())
+        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
+        mmeta = myjson.loads(response.content)
         if 'args' in mmeta['methods'][call]['required_args']:
             print "\nRequired arguments:"
             for k in mmeta['methods'][call]['required_args']['args'].keys():
@@ -88,11 +86,13 @@ def call_command(cfg, module_list):
         if 'API_'+sys.argv[1].split('/')[0] in module_list:
             buf = "" # our argument buffer for urlencoding
             module, call = sys.argv[1].split('/')
-            response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
-            mmeta = myjson.loads(response.read())
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
+            mmeta = myjson.loads(response.content)
+
+            # set up our command line options through optparse. will
+            # change this to argparse if we upgrade past python 2.7
             parser = OptionParser()
             arglist = {}
-            # remember to tell it to use 2:, later
             if 'args' in mmeta['methods'][call]['required_args']:
                 for k in mmeta['methods'][call]['required_args']['args'].keys():
                     if mmeta['methods'][call]['required_args']['args'][k]['vartype'] != "None":
@@ -118,6 +118,8 @@ def call_command(cfg, module_list):
             else:
                 raise Exception("Error: no arguments defined")
 
+            # parse our options and build a urlencode string to pass
+            # over to the API service
             (options, args) = parser.parse_args(sys.argv[2:])
             for k in arglist.keys():
                 a = vars(options)[k]
@@ -128,10 +130,18 @@ def call_command(cfg, module_list):
                         buf += k+'='+str(a)
                     else:
                         buf += k
-            callresponse = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/'+call+'?'+buf)
-            callreturnjson = myjson.loads(callresponse.read())
-            print callreturnjson
 
+            # make the call out to our API service, expect JSON back,
+            # load the JSON into the equivalent python variable type
+            if mmeta['methods'][call]['rest_type'] == 'GET':
+                callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/'+call+'?'+buf)
+            elif mmeta['methods'][call]['rest_type'] == 'POST':
+                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/'+call+'?'+buf)
+            responsedata = myjson.loads(callresponse.content)
+
+            # print. prettily.
+            pp = pprint.PrettyPrinter(indent=4)
+            pp.pprint(responsedata)
 
     except Exception, e:
         if cfg.debug:
@@ -181,25 +191,25 @@ if __name__ == "__main__":
     try:
         # grab a list of loaded modules from the API server, decode the
         # json into a list object
-        response = urllib2.urlopen('http://'+cfg.api_server+':'+cfg.api_port+'/modules')
-        module_list = myjson.loads(response.read())
+        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/modules')
+        module_list = myjson.loads(response.content)
 
         # command line-y stuff.
         if len(sys.argv) < 2:
             if cfg.debug:
-                print "print_submodules called"
+                print "print_submodules called()"
             print_submodules(cfg, module_list)
         elif len(sys.argv) == 2 and 'API_'+sys.argv[1] in module_list:
             if cfg.debug:
-                print "print_commands called"
+                print "print_commands called()"
             print_commands(cfg, module_list)
         elif len(sys.argv) == 2 and 'API_'+sys.argv[1].split('/')[0] in module_list:
             if cfg.debug:
-                print "print_command_args called"
+                print "print_command_args called()"
             print_command_args(cfg, module_list)
         elif len(sys.argv) >= 3:
             if cfg.debug:
-                print "call_command called"
+                print "call_command called()"
             call_command(cfg, module_list)
         else:
             raise Exception("bad command line:\n" % sys.argv)

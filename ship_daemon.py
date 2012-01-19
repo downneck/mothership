@@ -141,6 +141,7 @@ def callable_path(pname, callpath):
     if callpath == 'metadata':
         cm.debug(myjson.JSONEncoder(indent=4).encode(pnameMetadata.metadata))
         buf = myjson.JSONEncoder().encode(pnameMetadata.metadata)
+        response.content_type='application/json'
         return buf
     else:
         pnameCallpath = pnameMetadata.metadata['methods'][callpath]
