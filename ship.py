@@ -22,11 +22,14 @@ import time
 import datetime
 import os
 import urllib2
+import optparse
+
 # for >=2.6 use json, >2.6 use simplejson
 try:
     import json as myjson
 except ImportError:
     import simplejson as myjson
+
 
 # mothership imports
 from mothership.configure import Configure, ConfigureCli
@@ -88,10 +91,11 @@ def call_command(cfg, module_list):
             mmeta = myjson.loads(response.read())
             options = []
             n = 2
-            while n <= len(sys.argv):
+            while n < len(sys.argv):
                 options.append(sys.argv[n])
                 n += 1
             print options
+            print sys.argv[2:]
     except Exception, e:
         if cfg.debug:
             print "Error: %s" % e
@@ -134,7 +138,7 @@ if __name__ == "__main__":
         print "%s %s: %s: %s" % (ltz, timestamp, username, command_run)
         alog.close()
 
-    # doin stuff 
+    # doin stuff
     try:
         # grab a list of loaded modules from the API server, decode the
         # json into a list object
@@ -143,19 +147,27 @@ if __name__ == "__main__":
 
         # command line-y stuff.
         if len(sys.argv) < 2:
+            if cfg.debug:
+                print "print_submodules called"
             print_submodules(cfg, module_list)
         elif len(sys.argv) == 2 and 'API_'+sys.argv[1] in module_list:
+            if cfg.debug:
+                print "print_commands called"
             print_commands(cfg, module_list)
         elif len(sys.argv) == 2 and 'API_'+sys.argv[1].split('/')[0] in module_list:
+            if cfg.debug:
+                print "print_command_args called"
             print_command_args(cfg, module_list)
         elif len(sys.argv) >= 3:
+            if cfg.debug:
+                print "call_command called"
             call_command(cfg, module_list)
         else:
-            raise Exception("bad command line:\n%s" % sys.argv)
+            raise Exception("bad command line:\n" % sys.argv)
 
     except IOError, e:
         print "Missing config file: mothership_cli.yaml"
         print "ERROR: %s" % e
         sys.exit(1)
     except Exception, e:
-        print "Error: %s" % e
+        print "Error in __main__: %s" % e
