@@ -15,7 +15,7 @@ class MothershipCommon(object):
     
 class MothershipLogging(object):
     def __init__(self, cfg):
-        if not os.path.exists(cfg.logdir):
+        if not os.path.exists(cfg.logdir)
             os.mkdir(cfg.logdir)
         if cfg.to_file:
             logging.basicConfig(filename=cfg.logdir+cfg.logfile,level=logging.DEBUG)
