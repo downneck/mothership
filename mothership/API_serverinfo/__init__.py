@@ -48,7 +48,7 @@ class API_serverinfo:
                 },
             },
             'methods': { # a dict of methods we're presenting to the outside world (public only!)
-                'get_host': { # a method identifier
+                'si': { # a method identifier
                     'description': 'retrieve server info for a server identified by hostname.realm.site_id', # duh
                     'rest_type': 'GET', # the REST method we want to use for this call: GET, POST, PUT, DELETE
                     'required_args': { # dict of info about arguments we just can't live without
@@ -105,7 +105,7 @@ class API_serverinfo:
             return ret
         except TypeError:
             raise ServerInfoError("API_serverinfo/get_host: no host found with hw_tag: %s" % key)
-            
+
     def __get_host_from_ip(self, key):
         # try the private ip
         try:
@@ -151,8 +151,8 @@ class API_serverinfo:
             return ret
         except Exception, e:
             raise ServerInfoError("API_serverinfo/get_host: no host found with name: %s\nerror: %s" % (key, e))
-            
-    def get_host(self, query):
+
+    def si(self, query):
         """
         [description]
         search for a host based on info supplied
@@ -164,32 +164,32 @@ class API_serverinfo:
         [return value]
         returns a dict of ORMobjects if successful, "None" if unsuccessful
         """
-        
+
         cfg = self.cfg
         cm = self.common
         metadata = self.metadata
         ret = None
-        
-        maxargs = metadata['methods']['get_host']['optional_args']['max']
-        minargs = metadata['methods']['get_host']['optional_args']['min']
 
-        if not cm.check_max_num_args(len(query), metadata['methods']['get_host']['optional_args']['max']):
+        maxargs = metadata['methods']['si']['optional_args']['max']
+        minargs = metadata['methods']['si']['optional_args']['min']
+
+        if not cm.check_max_num_args(len(query), metadata['methods']['si']['optional_args']['max']):
             if cfg.debug:
                 retval = "API_serverinfo: too many queries! max number of queries is: %s\n" % maxargs
                 retval += "API_serverinfo: you tried to pass %s queries\n" % len(query)
                 cm.debug(retval)
             raise ServerInfoError(retval)
 
-        if not cm.check_min_num_args(len(query), metadata['methods']['get_host']['optional_args']['min']):
+        if not cm.check_min_num_args(len(query), metadata['methods']['si']['optional_args']['min']):
             if cfg.debug:
-                retval = "API_serverinfo: not enough queries! min number of queries is: %s\n" % self.metadata['methods']['get_host']['optional_args']['min']
+                retval = "API_serverinfo: not enough queries! min number of queries is: %s\n" % self.metadata['methods']['si']['optional_args']['min']
                 retval += "API_serverinfo: you tried to pass %s queries\n" % len(query)
                 self.cm.debug(retval )
             raise ServerInfoError(retval)
 
         if cfg.debug:
             retval = "API_serverinfo: num queries: %s " % len(query)
-            retval += "API_serverinfo: max num queries: %s" % metadata['methods']['get_host']['optional_args']['max']
+            retval += "API_serverinfo: max num queries: %s" % metadata['methods']['si']['optional_args']['max']
             cm.debug(retval)
 
         keys = query.keys()
@@ -206,13 +206,13 @@ class API_serverinfo:
             if key == 'mac':
                 ret =__get_host_from_mac(query[key])
                 break
-            
+
         if ret:
             return ret
         else:
             if cfg.debug:
-                cm.debug("API_serverinfo/get_host: return value \"ret\" is empty!")
-            raise ServerInfoError("API_serverinfo/get_host: return value\"ret\" is empty!")
+                cm.debug("API_serverinfo/si: return value \"ret\" is empty!")
+            raise ServerInfoError("API_serverinfo/si: return value\"ret\" is empty!")
 
     def __get_serverinfo(self, host, realm, site_id):
         """

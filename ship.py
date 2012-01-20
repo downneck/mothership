@@ -39,6 +39,9 @@ def print_submodules(cfg, module_list):
         for i in module_list:
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
             mmeta = myjson.loads(response.content)
+            if mmeta['status'] != 0:
+                print "Error occurred:\n%s" % mmeta['data']
+                sys.exit(1)
             print i.split('API_')[-1]+' : '+mmeta['data']['config']['description']
         print "\nRun \"ship <submodule>\" for more information"
     except Exception, e:
@@ -51,6 +54,9 @@ def print_commands(cfg, module_list):
     try:
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
         mmeta = myjson.loads(response.content)
+        if mmeta['status'] != 0:
+            print "Error occurred:\n%s" % mmeta['data']
+            sys.exit(1)
         print "Available module commands:\n"
         for k in mmeta['data']['methods'].keys():
             print sys.argv[1]+'/'+k
@@ -66,6 +72,9 @@ def print_command_args(cfg, module_list):
         module, call = sys.argv[1].split('/')
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
         mmeta = myjson.loads(response.content)
+        if mmeta['status'] != 0:
+            print "Error occurred:\n%s" % mmeta['data']
+            sys.exit(1)
         if 'args' in mmeta['data']['methods'][call]['required_args']:
             print "\nRequired arguments:"
             for k in mmeta['data']['methods'][call]['required_args']['args'].keys():
@@ -88,6 +97,9 @@ def call_command(cfg, module_list):
             module, call = sys.argv[1].split('/')
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
             mmeta = myjson.loads(response.content)
+            if mmeta['status'] != 0:
+                print "Error occurred:\n%s" % mmeta['data']
+                sys.exit(1)
 
             # set up our command line options through optparse. will
             # change this to argparse if we upgrade past python 2.7
@@ -138,10 +150,17 @@ def call_command(cfg, module_list):
             elif mmeta['data']['methods'][call]['rest_type'] == 'POST':
                 callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/'+call+'?'+buf)
             responsedata = myjson.loads(callresponse.content)
+            if responsedata['status'] != 0:
+                print "Error occurred:\n%s" % responsedata['data']
+                sys.exit(1)
 
             # print. prettily.
-            pp = pprint.PrettyPrinter(indent=4)
-            pp.pprint(responsedata)
+            if type(responsedata['data']) == list:
+                for i in responsedata['data']:
+                    print i
+            else:
+                pp = pprint.PrettyPrinter(indent=4)
+                pp.pprint(responsedata['data'])
 
     except Exception, e:
         if cfg.debug:
@@ -193,6 +212,9 @@ if __name__ == "__main__":
         # json into a list object
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/modules')
         response_dict = myjson.loads(response.content)
+        if response_dict['status'] != 0:
+            print "Error occurred:\n%s" % response_dict['data']
+            sys.exit(1)
         module_list = response_dict['data']
 
         # command line-y stuff.
@@ -213,7 +235,7 @@ if __name__ == "__main__":
                 print "call_command called()"
             call_command(cfg, module_list)
         else:
-            raise Exception("bad command line:\n" % sys.argv)
+            raise Exception("bad command line:\n%s" % " ".join(sys.argv))
 
     except IOError, e:
         print "Missing config file: mothership_cli.yaml"
