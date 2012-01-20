@@ -48,7 +48,7 @@ from mothership.mothership_models import *
 from mothership.configure import Configure
 import mothership.zabbix
 
-def is_server_provisioning_allowed(config):
+def is_ship_allowed_to_run(config):
     if config.min_time and config.max_time:
         tzone = False
         try:
@@ -73,6 +73,10 @@ class ShipCli(cmdln.Cmdln):
         cmdln.Cmdln.__init__(self)
         self.cfg = cfg
         self.name = "ship"
+
+        # if not is_server_provisioning_allowed(self.cfg):
+        #     print 'Sorry we are in the no changes zone..exiting'
+        #     sys.exit(1)
 
     # Zabbix API interaction
     @cmdln.alias("zabbix_api")
@@ -996,13 +1000,16 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        if not domain and not opts.all:
-            cmdln.Cmdln.do_help(self, ['', subcmd])
-            return
-        if opts.system and os.getuid() > 0:
-            print "You are not privileged to generate system DNS! Please sudo"
-            return
-        mothership.dns.generate_dns_output(self.cfg, domain, opts)
+        if is_ship_allowed_to_run(self.cfg):
+            if not domain and not opts.all:
+                cmdln.Cmdln.do_help(self, ['', subcmd])
+                return
+            if opts.system and os.getuid() > 0:
+                print "You are not privileged to generate system DNS! Please sudo"
+                return
+            mothership.dns.generate_dns_output(self.cfg, domain, opts)
+        else:
+            print 'Sorry dude but i can\'t generete dns zone now, try again later. :)'
 
     @cmdln.alias("add")
     @cmdln.alias("add_serv")
@@ -1036,7 +1043,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        if is_server_provisioning_allowed(self.cfg):
+        if is_ship_allowed_to_run(self.cfg):
             added = False
             unqdn = ".".join(mothership.get_unqdn(self.cfg, hostname))
             osdict = mothership.cobbler.CobblerAPI(self.cfg).get_os_dict(self.cfg)
