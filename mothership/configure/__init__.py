@@ -39,6 +39,9 @@ class Configure:
             Takes a config_file name as a parameter and searches through the following
             dirs to load the configuration file:  /etc, CWD
         """
+        # module metadata for API module loader
+        self.module_metadata = {}
+        
         # Read settings from configuration yaml
         try:
             yaml_config = open(self.load_path(config_file)).read()
