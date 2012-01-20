@@ -36,6 +36,10 @@ from mothership.configure import Configure, ConfigureCli
 class ShipCLIError(Exception):
     pass
 
+# swap a dict around
+def swap_dict(odict):
+    return dict([(v, k) for (k, v) in odict.iteritems()])
+
 # if someone runs: ship
 def print_submodules(cfg, module_map):
     try:
@@ -44,41 +48,40 @@ def print_submodules(cfg, module_map):
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
-                print "Error occurred:\n%s" % mmeta['data']
+                print "Error occurred:\n%s" % mmeta['msg']
                 sys.exit(1)
             print "%s (%s): %s" % (module_map[i], i.split('API_')[1], mmeta['data']['config']['description'])
         print "\nRun \"ship <submodule>\" for more information"
     except Exception, e:
-        if cfg.debug:
-            print "Error: %s" % e
         raise ShipCLIError("Error: %s" % e)
 
 # if someone runs: ship <module>
 def print_commands(cfg, module_map):
     try:
-        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
+        revmodule_map = swap_dict(module_map)
+        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[sys.argv[1]]+'/metadata')
         mmeta = myjson.loads(response.content)
         if mmeta['status'] != 0:
-            print "Error occurred:\n%s" % mmeta['data']
+            print "Error occurred:\n%s" % mmeta['msg']
             sys.exit(1)
         print "Available module commands:\n"
         for k in mmeta['data']['methods'].keys():
             print sys.argv[1]+'/'+k
         print "\nRun \"ship <submodule>/<command>\" for more information"
     except Exception, e:
-        if cfg.debug:
-            print "Error: %s" % e
         raise ShipCLIError("Error: %s" % e)
 
 # if someone runs: ship <module>/<command>
 def print_command_args(cfg, module_map):
     try:
+        revmodule_map = swap_dict(module_map)
         module, call = sys.argv[1].split('/')
-        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
+        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata')
         mmeta = myjson.loads(response.content)
         if mmeta['status'] != 0:
-            print "Error occurred:\n%s" % mmeta['data']
-            sys.exit(1)
+            raise ShipCLIError("Error:\n%s" % mmeta['msg'])
+        if not call in mmeta['data']['methods'].keys():
+            raise ShipCLIError("Invalid command issued: %s" % sys.argv[1].split('/')[1])
         if 'args' in mmeta['data']['methods'][call]['required_args']:
             print "\nRequired arguments:"
             for k in mmeta['data']['methods'][call]['required_args']['args'].keys():
@@ -89,20 +92,19 @@ def print_command_args(cfg, module_map):
                 print "--%s (-%s): %s" % (k, mmeta['data']['methods'][call]['optional_args']['args'][k]['ol'], mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'])
         print ""
     except Exception, e:
-        if cfg.debug:
-            print "Error: %s" % e
-        raise ShipCLIError("Error: %s" % e)
+        raise ShipCLIError(e)
 
 # if someone runs: ship <module>/<command> --option1=bleh -o2 foo
 def call_command(cfg, module_map):
     try:
-        if 'API_'+sys.argv[1].split('/')[0] in module_list:
+        revmodule_map = swap_dict(module_map)
+        module, call = sys.argv[1].split('/')
+        if revmodule_map[module]:
             buf = "" # our argument buffer for urlencoding
-            module, call = sys.argv[1].split('/')
-            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata')
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
-                print "Error occurred:\n%s" % mmeta['data']
+                print "Error occurred:\n%s" % mmeta['msg']
                 sys.exit(1)
 
             # set up our command line options through optparse. will
@@ -150,12 +152,12 @@ def call_command(cfg, module_map):
             # make the call out to our API service, expect JSON back,
             # load the JSON into the equivalent python variable type
             if mmeta['data']['methods'][call]['rest_type'] == 'GET':
-                callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/'+call+'?'+buf)
+                callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
             elif mmeta['data']['methods'][call]['rest_type'] == 'POST':
-                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/'+call+'?'+buf)
+                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
             responsedata = myjson.loads(callresponse.content)
             if responsedata['status'] != 0:
-                print "Error occurred:\n%s" % responsedata['data']
+                print "Error occurred:\n%s" % responsedata['msg']
                 sys.exit(1)
 
             # print. prettily.
@@ -165,10 +167,9 @@ def call_command(cfg, module_map):
             else:
                 pp = pprint.PrettyPrinter(indent=4)
                 pp.pprint(responsedata['data'])
-
+        else:
+            raise ShipCLIError("Invalid module specified: %s" % sys.argv[1].split('/')[0])
     except Exception, e:
-        if cfg.debug:
-            print "Error: %s" % e
         raise ShipCLIError("Error: %s" % e)
 
 
@@ -216,7 +217,7 @@ if __name__ == "__main__":
         # check the status on our JSON response. 0 = good, anything
         # else = bad. expect error information in the 'data' payload
         if response_dict['status'] != 0:
-            print "Error occurred:\n%s" % response_dict['data']
+            print "Error occurred:\n%s" % response_dict['msg']
             sys.exit(1)
         # populate the module list
         module_list = response_dict['data']
@@ -225,6 +226,7 @@ if __name__ == "__main__":
             response = requests.get('http://'+cfg.api_server+":"+cfg.api_port+'/'+i+'/metadata')
             response_dict = myjson.loads(response.content)
             module_map[i] = response_dict['data']['config']['shortname']
+        revmodule_map = swap_dict(module_map)
 
         # command line-y stuff. the order of the if statements is very
         # important. please be careful if you have to move things
@@ -235,20 +237,20 @@ if __name__ == "__main__":
                 print "print_submodules called()"
             print_submodules(cfg, module_map)
         # user ran: ship <valid module>
-        elif len(sys.argv) == 2 and 'API_'+sys.argv[1] in module_map.values():
+        elif len(sys.argv) == 2 and sys.argv[1] in module_map.values():
             if cfg.debug:
                 print "print_commands called()"
             print_commands(cfg, module_map)
         # user ran: ship <valid module>/<valid command>
-        elif len(sys.argv) == 2 and 'API_'+sys.argv[1].split('/')[0] in module_map.values():
+        elif len(sys.argv) == 2 and sys.argv[1].split('/')[0] in module_map.values():
             if cfg.debug:
                 print "print_command_args called()"
             print_command_args(cfg, module_map)
         # user ran: ship <invalid module>/<invalid command>
-        elif len(sys.argv) == 2 and 'API_'+sys.argv[1].split('/')[0] not in module_map.values():
+        elif len(sys.argv) == 2 and sys.argv[1].split('/')[0] not in module_map.values():
             raise ShipCLIError("Requested module does not exist: %s" % "API_"+sys.argv[1].split('/')[0])
         # user ran: ship <invalid module>
-        elif len(sys.argv) == 2 and 'API_'+sys.argv[1] not in module_map.values():
+        elif len(sys.argv) == 2 and sys.argv[1] not in module_map.values():
             raise ShipCLIError("Requested module does not exist: %s" % "API_"+sys.argv[1])
         # user ran: ship <valid module>/<valid command> --valid=args -a
         elif len(sys.argv) >= 3:

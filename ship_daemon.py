@@ -38,6 +38,8 @@ class ShipDaemonError(Exception):
 def __generate_json_header():
     jbuf = {}
     jbuf['status'] = 0
+    jbuf['nodeID'] = 0
+    jbuf['msg'] = ""
     jbuf['timestamp'] = str(datetime.datetime.now())
     jbuf['nodename'] = gethostname()
     return jbuf
@@ -91,7 +93,8 @@ def load_modules():
         return myjson.JSONEncoder().encode(jbuf)
     except Exception, e:
         jbuf['status'] = 1
-        jbuf['data'] = "Exception in load_modules(). Error: %s" % e
+        jbuf['data'] = ""
+        jbuf['msg'] = "Exception in load_modules(). Error: %s" % e
         return myjson.JSONEncoder().encode(jbuf)
 
 
@@ -146,7 +149,8 @@ def loaded_modules():
         return myjson.JSONEncoder().encode(jbuf)
     except Exception, e:
         jbuf['status'] = 1
-        jbuf['data'] = "Exception in loaded_modules(). Error: %s" % e
+        jbuf['data'] = ""
+        jbuf['msg'] = "Exception in loaded_modules(). Error: %s" % e
         return myjson.JSONEncoder().encode(jbuf)
 
 
@@ -170,7 +174,8 @@ def namespace_path(pname):
         return myjson.JSONEncoder().encode(jbuf)
     except Exception, e:
         jbuf['status'] = 1
-        jbuf['data'] = "Exception in namespace_path(). Error: %s" % e
+        jbuf['data'] = ""
+        jbuf['msg'] = "Exception in namespace_path(). Error: %s" % e
         return myjson.JSONEncoder().encode(jbuf)
 
 @httpship.route("/:pname/:callpath", method=('GET', 'POST', 'PUT', 'DELETE'))
@@ -225,7 +230,8 @@ def callable_path(pname, callpath):
             cm.debug(jbuf)
     except Exception, e:
         jbuf['status'] = 1
-        jbuf['data'] = "Exception in callable_path(). Error: %s" % e
+        jbuf['data'] = ""
+        jbuf['msg'] = "Exception in callable_path(). Error: %s" % e
         return myjson.JSONEncoder().encode(jbuf)
 
 @httpship.route('/favicon.ico')
@@ -239,7 +245,8 @@ def get_favicon():
         jbuf = __generate_json_header()
         jbuf['request'] = "/favicon.ico"
         jbuf['status'] = 1
-        jbuf['data'] = "Exception in get_favicon(). Error: %s" % e
+        jbuf['data'] = ""
+        jbuf['msg'] = "Exception in get_favicon(). Error: %s" % e
         return myjson.JSONEncoder().encode(jbuf)
 
 
