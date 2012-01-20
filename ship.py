@@ -46,7 +46,7 @@ def print_submodules(cfg, module_map):
             if mmeta['status'] != 0:
                 print "Error occurred:\n%s" % mmeta['data']
                 sys.exit(1)
-            print module_map[i]+' : '+mmeta['data']['config']['description']
+            print "%s (%s): %s" % (module_map[i], i.split('API_')[1], mmeta['data']['config']['description'])
         print "\nRun \"ship <submodule>\" for more information"
     except Exception, e:
         if cfg.debug:
@@ -224,8 +224,7 @@ if __name__ == "__main__":
         for i in module_list:
             response = requests.get('http://'+cfg.api_server+":"+cfg.api_port+'/'+i+'/metadata')
             response_dict = myjson.loads(response.content)
-            module_map[i] = [response_dict['data']['config']['shortname']]
-
+            module_map[i] = response_dict['data']['config']['shortname']
 
         # command line-y stuff. the order of the if statements is very
         # important. please be careful if you have to move things
