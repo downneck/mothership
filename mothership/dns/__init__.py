@@ -32,15 +32,18 @@ from mothership.mothership_models import *
 class DNSError(Exception):
     pass
 
-def generate_dns_header(cfg, fqdn, realm, site_id, domain):
+def generate_dns_header(cfg, origin, fqdn, realm, site_id, domain):
     """
     Returns zone header for fqdn
     """
     contact = cfg.contact
     serial = int(time.time())
     if '@' in contact: contact = contact.replace('@','.')
-    header = """
-$ORIGIN %s.
+    if origin:
+        header = '$ORIGIN %s.' % fqdn
+    else:
+        header = ''
+    header += """
 $TTL %s
 @                       IN      SOA     %s. %s. (
                                         %-10d   ; Serial
@@ -50,7 +53,7 @@ $TTL %s
                                         %-10d   ; TTL
                                         )
 
-""" % (fqdn, cfg.dns_ttl, fqdn, contact, serial, cfg.dns_refresh,
+""" % (cfg.dns_ttl, fqdn, contact, serial, cfg.dns_refresh,
         cfg.dns_retry, cfg.dns_expire, cfg.dns_ttl)
     for rec in ['ns', 'mx']:
         header += generate_root_records(cfg, realm+'.'+site_id, domain, rec)
@@ -143,6 +146,8 @@ def generate_dns_output(cfg, domain, opts):
                 fqn = mothership.validate.v_get_fqn(cfg, realm+'.'+site_id)
                 zones.append(generate_dns_forward(cfg, fqn, opts))
                 zones.append(generate_dns_reverse(cfg, fqn, opts))
+        # Remove empty zones
+        zones = [ z for z in zones if z ]
         validated = validate_zone_config(cfg, tmpdir, zones)
         reload = reload or validated
     else:
@@ -188,7 +193,7 @@ def create_zone_block(name, reverse=False):
         header = '%s.in-addr.arpa' % '.'.join(reversed(name.split('.')))
     else:
         header = name
-    return 'zone "%s" in {\n\ttype master;\n\tname "%s";\n}\n\n' \
+    return 'zone "%s" in {\n\ttype master;\n\tfile "%s";\n};\n\n' \
         % (header, name)
 
 def confirm_change(prefix, zone):
@@ -255,7 +260,7 @@ def generate_dns_forward(cfg, domain, opts):
     """
     fqn = mothership.validate.v_get_fqn(cfg, domain)
     sfqn = mothership.validate.v_split_fqn(fqn)
-    forward = generate_dns_header(cfg, fqn, *sfqn)
+    forward = generate_dns_header(cfg, True, fqn, *sfqn)
     forward += generate_dns_arecords(cfg, *sfqn)
     forward += generate_dns_addendum(cfg, *sfqn)
     f = sys.stdout
@@ -278,8 +283,11 @@ def generate_dns_reverse(cfg, domain, opts):
     fqn = mothership.validate.v_get_fqn(cfg, domain)
     sfqn = mothership.validate.v_split_fqn(fqn)
     cidr = mothership.network_mapper.remap(cfg, 'cidr', dom='.'+fqn)
+    if not cidr:
+        print 'Skipping reverse zone for %s, undefined in mothership.yaml' % domain
+        return False
     net, rev = generate_dns_arpa(cfg, cidr, fqn, *sfqn)
-    reverse = generate_dns_header(cfg, fqn, *sfqn)
+    reverse = generate_dns_header(cfg, False, fqn, *sfqn)
     reverse += rev
     f = sys.stdout
     if opts.outdir:
