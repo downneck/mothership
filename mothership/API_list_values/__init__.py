@@ -27,10 +27,10 @@ class API_list_values:
     def __init__(self, cfg):
         self.cfg = cfg
         self.version = 1
-        self.name = 'API_list_values'
         self.namespace = 'API_list_values'
         self.metadata = {
             'config': {
+                'shortname': 'lsv',
                 'description': 'retrieves and lists values from the database',
                 'module_dependencies': {
                     'mothership_models': 1,

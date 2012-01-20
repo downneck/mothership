@@ -33,10 +33,10 @@ class API_list_servers:
     def __init__(self, cfg):
         self.cfg = cfg
         self.version = 1
-        self.name = 'API_list_servers'
         self.namespace = 'API_list_servers'
         self.metadata = {
             'config': {
+                'shortname': 'lss',
                 'description': 'lists servers according to certain criteria',
                 'module_dependencies': {
                     'kv': 1,

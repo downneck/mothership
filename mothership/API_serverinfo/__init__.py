@@ -37,10 +37,10 @@ class API_serverinfo:
         self.common = MothershipCommon()
         self.cfg = cfg
         self.version = 1 # the version of this module
-        self.name = 'API_serverinfo' # class name
         self.namespace = 'API_serverinfo' # class' namespace
         self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
             'config': { # some basic module-wide config data
+                'shortname': 'si' # shortened class name (for CLI)
                 'description': 'retrieves critical information about a server',
                 'module_dependencies': { # what other modules do we depend on?
                     'kv': 1, # a module, and its minimum accepted version

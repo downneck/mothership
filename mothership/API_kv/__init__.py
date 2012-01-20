@@ -31,10 +31,10 @@ class API_kv:
     def __init__(self, cfg):
         self.cfg = cfg
         self.version = 1
-        self.name = 'API_kv'
         self.namespace = 'API_kv'
         self.metadata = {
             'config': {
+                'shortname': 'kv',
                 'description': 'allows interaction with the KeyValue table',
                 'module_dependencies': {
                     'mothership_models': 1,

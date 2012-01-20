@@ -30,10 +30,10 @@ class API_puppet:
     def __init__(self, cfg):
         self.cfg = cfg
         self.version = 1
-        self.name = 'API_puppet'
         self.namespace = 'API_puppet'
         self.metadata = {
             'config': {
+                'shortname': 'p',
                 'description': 'creates a puppet manifest for a server (puppet\'s External Node Classifier)',
                 'module_dependencies': {
                     'mothership_models': 1,

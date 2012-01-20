@@ -32,25 +32,29 @@ import json as myjson
 # mothership imports
 from mothership.configure import Configure, ConfigureCli
 
+# our exception class
+class ShipCLIError(Exception):
+    pass
+
 # if someone runs: ship
-def print_submodules(cfg, module_list):
+def print_submodules(cfg, module_map):
     try:
         print "Available submodules:\n"
-        for i in module_list:
+        for i in module_map.keys():
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
                 print "Error occurred:\n%s" % mmeta['data']
                 sys.exit(1)
-            print i.split('API_')[-1]+' : '+mmeta['data']['config']['description']
+            print module_map[i]+' : '+mmeta['data']['config']['description']
         print "\nRun \"ship <submodule>\" for more information"
     except Exception, e:
         if cfg.debug:
             print "Error: %s" % e
-        raise Exception("Error: %s" % e)
+        raise ShipCLIError("Error: %s" % e)
 
 # if someone runs: ship <module>
-def print_commands(cfg, module_list):
+def print_commands(cfg, module_map):
     try:
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+sys.argv[1]+'/metadata')
         mmeta = myjson.loads(response.content)
@@ -64,10 +68,10 @@ def print_commands(cfg, module_list):
     except Exception, e:
         if cfg.debug:
             print "Error: %s" % e
-        raise Exception("Error: %s" % e)
+        raise ShipCLIError("Error: %s" % e)
 
 # if someone runs: ship <module>/<command>
-def print_command_args(cfg, module_list):
+def print_command_args(cfg, module_map):
     try:
         module, call = sys.argv[1].split('/')
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/API_'+module+'/metadata')
@@ -87,10 +91,10 @@ def print_command_args(cfg, module_list):
     except Exception, e:
         if cfg.debug:
             print "Error: %s" % e
-        raise Exception("Error: %s" % e)
+        raise ShipCLIError("Error: %s" % e)
 
 # if someone runs: ship <module>/<command> --option1=bleh -o2 foo
-def call_command(cfg, module_list):
+def call_command(cfg, module_map):
     try:
         if 'API_'+sys.argv[1].split('/')[0] in module_list:
             buf = "" # our argument buffer for urlencoding
@@ -128,7 +132,7 @@ def call_command(cfg, module_list):
                                           action="store_true")
                         arglist[k] = mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype']
             else:
-                raise Exception("Error: no arguments defined")
+                raise ShipCLIError("Error: no arguments defined")
 
             # parse our options and build a urlencode string to pass
             # over to the API service
@@ -165,24 +169,21 @@ def call_command(cfg, module_list):
     except Exception, e:
         if cfg.debug:
             print "Error: %s" % e
-        raise Exception("Error: %s" % e)
+        raise ShipCLIError("Error: %s" % e)
 
 
 
 
 # main execution block
 if __name__ == "__main__":
-    # the global config. useful everywhere
+    # the global CLI config. useful everywhere
     cfg = ConfigureCli('mothership_cli.yaml')
-
-    # useful global values
-    today = datetime.date.today()
 
     # prevent root from running ship
     if sys.stdin.isatty():
         if os.getlogin() == 'root':
             print "Please do not run ship as root"
-            raise Exception("Your effective uid: " + os.geteuid())
+            raise ShipCLIError("Your effective uid: " + os.geteuid())
 
     # write out the command line we were called with to an audit log
     try:
@@ -208,34 +209,56 @@ if __name__ == "__main__":
 
     # doin stuff
     try:
-        # grab a list of loaded modules from the API server, decode the
-        # json into a list object
+        # grab a list of loaded modules from the API server
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/modules')
+        # decode the response into a dict
         response_dict = myjson.loads(response.content)
+        # check the status on our JSON response. 0 = good, anything
+        # else = bad. expect error information in the 'data' payload
         if response_dict['status'] != 0:
             print "Error occurred:\n%s" % response_dict['data']
             sys.exit(1)
+        # populate the module list
         module_list = response_dict['data']
+        module_map = {}
+        for i in module_list:
+            response = requests.get('http://'+cfg.api_server+":"+cfg.api_port+'/'+i+'/metadata')
+            response_dict = myjson.loads(response.content)
+            module_map[i] = [response_dict['data']['config']['shortname']]
 
-        # command line-y stuff.
+
+        # command line-y stuff. the order of the if statements is very
+        # important. please be careful if you have to move things
+        #
+        # user ran: ship
         if len(sys.argv) < 2:
             if cfg.debug:
                 print "print_submodules called()"
-            print_submodules(cfg, module_list)
-        elif len(sys.argv) == 2 and 'API_'+sys.argv[1] in module_list:
+            print_submodules(cfg, module_map)
+        # user ran: ship <valid module>
+        elif len(sys.argv) == 2 and 'API_'+sys.argv[1] in module_map.values():
             if cfg.debug:
                 print "print_commands called()"
-            print_commands(cfg, module_list)
-        elif len(sys.argv) == 2 and 'API_'+sys.argv[1].split('/')[0] in module_list:
+            print_commands(cfg, module_map)
+        # user ran: ship <valid module>/<valid command>
+        elif len(sys.argv) == 2 and 'API_'+sys.argv[1].split('/')[0] in module_map.values():
             if cfg.debug:
                 print "print_command_args called()"
-            print_command_args(cfg, module_list)
+            print_command_args(cfg, module_map)
+        # user ran: ship <invalid module>/<invalid command>
+        elif len(sys.argv) == 2 and 'API_'+sys.argv[1].split('/')[0] not in module_map.values():
+            raise ShipCLIError("Requested module does not exist: %s" % "API_"+sys.argv[1].split('/')[0])
+        # user ran: ship <invalid module>
+        elif len(sys.argv) == 2 and 'API_'+sys.argv[1] not in module_map.values():
+            raise ShipCLIError("Requested module does not exist: %s" % "API_"+sys.argv[1])
+        # user ran: ship <valid module>/<valid command> --valid=args -a
         elif len(sys.argv) >= 3:
             if cfg.debug:
                 print "call_command called()"
-            call_command(cfg, module_list)
+            call_command(cfg, module_map)
+        # user ran some real ugly crap.
         else:
-            raise Exception("bad command line:\n%s" % " ".join(sys.argv))
+            raise ShipCLIError("bad command line:\n%s" % " ".join(sys.argv))
 
     except IOError, e:
         print "Missing config file: mothership_cli.yaml"
