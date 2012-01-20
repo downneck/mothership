@@ -193,11 +193,15 @@ class Configure:
             self.min_time = None
 
         # Logging settings
-         if 'logdir' in logconfig and logconfig['logdir']:
+        logconfig = all_configs['logconfig']
+        if 'logdir' in logconfig and logconfig['logdir']:
             self.logdir = logconfig['logdir']
         else:
             self.logdir = '/var/log/mothership/'
-
+        if 'to_file' in logconfig and logconfig['to_file']:
+            self.to_file = logconfig['to_file']
+        else:
+            self.to_file = False 
         if 'logfile' in logconfig and logconfig['logfile']:
             self.logfile = logconfig['logfile']
         else:

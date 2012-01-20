@@ -13,7 +13,7 @@ class MothershipCommon(object):
         return True
 
 
-class MothershipLogging(object):
+class MothershipLogger(object):
     def __init__(self, cfg):
         if not os.path.exists(cfg.logdir):
             os.mkdir(cfg.logdir)
