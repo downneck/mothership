@@ -670,6 +670,10 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
                 update_table_network(cfg, net_info)
         print 'Added baremetal host %s to mothership' % hostname
 
+    # reset realm and site_id before handling groups
+    host, realm, site_id, domain = mothership.validate.v_split_fqn(
+        mothership.validate.v_get_fqn(cfg, fqdn))
+
     # create a group for the new machine
     newgroupname = fqdn.replace('.', '_')
     g = cfg.dbsess.query(Groups).\
