@@ -150,7 +150,7 @@ class API_serverinfo:
             ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
             return ret
         except Exception, e:
-            raise ServerInfoError("API_serverinfo/get_host: no host found with name: %s\nerror: %s" % (key, e))
+            raise ServerInfoError("API_serverinfo/get_host: no host found with name: %s. Error: %s" % (key, e))
 
     def si(self, query):
         """
@@ -175,15 +175,13 @@ class API_serverinfo:
 
         if not cm.check_max_num_args(len(query), metadata['methods']['si']['optional_args']['max']):
             if cfg.debug:
-                retval = "API_serverinfo: too many queries! max number of queries is: %s\n" % maxargs
-                retval += "API_serverinfo: you tried to pass %s queries\n" % len(query)
+                retval = "API_serverinfo: too many queries! max number of queries is: %s. You passed: %s" % (maxargs, len(query))
                 cm.debug(retval)
             raise ServerInfoError(retval)
 
         if not cm.check_min_num_args(len(query), metadata['methods']['si']['optional_args']['min']):
             if cfg.debug:
-                retval = "API_serverinfo: not enough queries! min number of queries is: %s\n" % self.metadata['methods']['si']['optional_args']['min']
-                retval += "API_serverinfo: you tried to pass %s queries\n" % len(query)
+                retval = "API_serverinfo: not enough queries! min number of queries is: %s. You passed: %s" % (self.metadata['methods']['si']['optional_args']['min'], len(query))
                 self.cm.debug(retval )
             raise ServerInfoError(retval)
 
@@ -275,6 +273,6 @@ class API_serverinfo:
         except TypeError:
           raise ServerInfoError("host \"%s\" not found" % host)
         except Exception, e:
-          raise ServerInfoError("something horrible happened\nerror: %s" % e)
+          raise ServerInfoError("something horrible happened. Error: %s" % e)
 
         return dict(ret)
