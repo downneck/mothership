@@ -61,9 +61,14 @@ class Configure:
         try:
             engine = ''
             # PostgreSQL
-            if dbconfig['engine'] == 'postgresql':
+            # old sqlalchemy
+            if dbconfig['engine'] == 'postgres':
                 dbtuple = (dbconfig['user'], dbconfig['hostname'], dbconfig['dbname'])
                 engine = sqlalchemy.create_engine("postgres://%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
+            # new sqlalchemy
+            elif dbconfig['engine'] == 'postgresql':
+                dbtuple = (dbconfig['user'], dbconfig['hostname'], dbconfig['dbname'])
+                engine = sqlalchemy.create_engine("postgresql://%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
             # MySql
             elif dbconfig['engine'] == 'mysql':
                 dbtuple = (dbconfig['user'], dbconfig['pass'], dbconfig['hostname'], dbconfig['dbname'])

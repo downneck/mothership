@@ -50,6 +50,8 @@ def load_modules():
     """
     scans our main path for modules, loads valid modules
     """
+    jbuf = __generate_json_header()
+    jbuf['request'] = "/loadmodules"
     response.content_type='application/json'
     log.debug("loadmodules() called directly")
     # clear module metadata
@@ -86,8 +88,6 @@ def load_modules():
             except Exception, e:
                 if cfg.debug:
                     log.debug("import error: %s" % e)
-        jbuf = __generate_json_header()
-        jbuf['request'] = "/loadmodules"
         jbuf['data'] = "reloaded modules:"
         for k in cfg.module_metadata.keys():
             jbuf['data'] += " %s" % cfg.module_metadata[k].namespace
