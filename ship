@@ -1531,6 +1531,15 @@ class ShipCli(cmdln.Cmdln):
         """
         mothership.verify_host_data(self.cfg, hostname)
 
+    @cmdln.alias("info")
+    def do_version(self, subcmd, opts):
+        """ ${cmd_name}: print mothership version
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        print 'Mothership version 0.0.3'
+        sys.exit(0)
 
 if __name__ == "__main__":
     # the global config. useful everywhere
