@@ -177,19 +177,19 @@ class API_serverinfo:
         if not cm.check_max_num_args(len(query), metadata['methods']['si']['optional_args']['max']):
             if cfg.debug:
                 retval = "API_serverinfo: too many queries! max number of queries is: %s. You passed: %s" % (maxargs, len(query))
-                cm.debug(retval)
+                self.log.debug(retval)
             raise ServerInfoError(retval)
 
         if not cm.check_min_num_args(len(query), metadata['methods']['si']['optional_args']['min']):
             if cfg.debug:
                 retval = "API_serverinfo: not enough queries! min number of queries is: %s. You passed: %s" % (self.metadata['methods']['si']['optional_args']['min'], len(query))
-                self.cm.debug(retval )
+                self.log.debug(retval )
             raise ServerInfoError(retval)
 
         if cfg.debug:
             retval = "API_serverinfo: num queries: %s " % len(query)
             retval += "API_serverinfo: max num queries: %s" % metadata['methods']['si']['optional_args']['max']
-            cm.debug(retval)
+            self.log.debug(retval)
 
         keys = query.keys()
         for key  in keys:
@@ -210,7 +210,7 @@ class API_serverinfo:
             return ret
         else:
             if cfg.debug:
-                cm.debug("API_serverinfo/si: return value \"ret\" is empty!")
+                self.log.debug("API_serverinfo/si: return value \"ret\" is empty!")
             raise ServerInfoError("API_serverinfo/si: return value\"ret\" is empty!")
 
     def __get_serverinfo(self, host, realm, site_id):
