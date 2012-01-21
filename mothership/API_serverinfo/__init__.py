@@ -23,7 +23,7 @@ import yaml
 import mothership
 import mothership.kv
 import mothership.validate
-from mothership.common import MothershipCommon
+from mothership.common import *
 from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
@@ -36,6 +36,7 @@ class API_serverinfo:
     def __init__(self, cfg):
         self.common = MothershipCommon()
         self.cfg = cfg
+        self.log = MothershipLogger(self.cfg)
         self.version = 1 # the version of this module
         self.namespace = 'API_serverinfo' # class' namespace
         self.metadata = { # the metadata dict, communicates to the outside world what we're capable of
@@ -146,7 +147,7 @@ class API_serverinfo:
             #
             s = mothership.validate.v_get_host_obj(self.cfg, key)
             if self.cfg.debug:
-                self.common.debug(s)
+                self.logger.debug(s)
             ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
             return ret
         except Exception, e:
