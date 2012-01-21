@@ -33,6 +33,58 @@ class ConfigureError(Exception):
 # a config_file (mothership.yaml)
 load_paths = ['.', '~', '/etc', '/usr/local/etc']
 
+
+class ConfigureCli:
+    def __init__(self, config_file):
+        """
+            Takes a config_file name as a parameter and searches through the following
+            dirs to load the configuration file:  /etc, CWD
+        """
+        # Read settings from configuration yaml
+        try:
+            yaml_config = open(self.load_path(config_file)).read()
+            all_configs = yaml.load(yaml_config)
+        except Exception, e:
+            raise ConfigureError("Error loading config file: %s\nConfig search paths: %s\nError: %s" % (config_file, load_paths, e))
+
+        # General settings
+        genconfig = all_configs['general']
+        if 'debug' in genconfig and genconfig['debug']:
+            self.debug = genconfig['debug']
+        else:
+            self.debug = False
+        if 'api_server' in genconfig and genconfig['api_server']:
+            self.api_server = genconfig['api_server']
+        else:
+            self.api_server = 'localhost'
+        if 'api_port' in genconfig and genconfig['api_port']:
+            self.api_port = genconfig['api_port']
+        else:
+            self.api_port = '8081'
+        if 'audit_log_file' in genconfig and genconfig['audit_log_file']:
+            self.audit_log_file = genconfig['audit_log_file']
+        else:
+            self.audit_log_file = '/var/log/mothership_audit.log'
+
+    def close_connections(self):
+        """
+            Close out connections
+        """
+        self.dbconn.close()
+        self.dbsess.close()
+        self.dbengine.dispose()
+
+    def load_path(self, config_file):
+        """
+            Try to guess where the path is or return empty string
+        """
+        for load_path in load_paths:
+            file_path = os.path.join(load_path, config_file)
+            if os.path.isfile(file_path):
+                return file_path
+        return ''
+
+
 class Configure:
     def __init__(self, config_file):
         """
@@ -41,13 +93,14 @@ class Configure:
         """
         # module metadata for API module loader
         self.module_metadata = {}
-        
+
         # Read settings from configuration yaml
         try:
             yaml_config = open(self.load_path(config_file)).read()
             all_configs = yaml.load(yaml_config)
         except:
             # we discovered this was more annoying than helpful, so we stopped
+            # this is being retained as historical evidence of our folly
             #sys.stderr.write('No config file found, copying defaults into your home directory')
             #@srccfgyaml = sys.path[0] + '/mothership.yaml.sample'
             #dstcfgyaml = os.path.expanduser('~') + '/mothership.yaml'
@@ -61,14 +114,9 @@ class Configure:
         try:
             engine = ''
             # PostgreSQL
-            # old sqlalchemy
-            if dbconfig['engine'] == 'postgres':
+            if dbconfig['engine'] == 'postgresql':
                 dbtuple = (dbconfig['user'], dbconfig['hostname'], dbconfig['dbname'])
                 engine = sqlalchemy.create_engine("postgres://%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
-            # new sqlalchemy
-            elif dbconfig['engine'] == 'postgresql':
-                dbtuple = (dbconfig['user'], dbconfig['hostname'], dbconfig['dbname'])
-                engine = sqlalchemy.create_engine("postgresql://%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
             # MySql
             elif dbconfig['engine'] == 'mysql':
                 dbtuple = (dbconfig['user'], dbconfig['pass'], dbconfig['hostname'], dbconfig['dbname'])
@@ -88,11 +136,20 @@ class Configure:
             raise ConfigureError('Database configuration error')
 
         # Cobbler related settings
-        self.cobconfig = all_configs['cobbler']
+        cobconfig = all_configs['cobbler']
         # Only ping cobbler server if configured to
         self.coblive = False
-        if self.cobconfig.has_key('active'):
-            self.coblive = self.cobconfig['active']
+        if cobconfig.has_key('active'):
+            self.coblive = cobconfig['active']
+        if self.coblive:
+            try:
+                self.remote = xmlrpclib.Server('http://%s/cobbler_api' % cobconfig['host'])
+                self.token = self.remote.login(cobconfig['user'], cobconfig['pass'])
+            except:
+                sys.stderr.write('Cobbler configuration error.  Check cobbler API server')
+        else:
+            self.cobremote = 'API: set remote = xmlrpclib.Server(\'http://server/cobbler_api\')'
+            self.cobtoken = 'API: set token = remote.login(user, pass)'
 
         # Power related settings
         pwrconfig = all_configs['power']
@@ -142,10 +199,6 @@ class Configure:
             self.snmpver = snmpconfig['version']
         else:
             self.snmpver = '2c'
-        if 'exclude' in snmpconfig and snmpconfig['exclude']:
-            self.snmpskip = snmpconfig['exclude']
-        else:
-            self.snmpskip = ['No Such']
 
         # KV settings
         kvconfig = all_configs['kv']
@@ -163,6 +216,10 @@ class Configure:
 
         # General settings
         genconfig = all_configs['general']
+        if 'debug' in genconfig and genconfig['debug']:
+            self.debug = genconfig['debug']
+        else:
+            self.debug = False
         if 'domain' in genconfig and genconfig['domain']:
             self.domain = genconfig['domain']
         else:
@@ -191,33 +248,6 @@ class Configure:
             self.audit_log_file = genconfig['audit_log_file']
         else:
             self.audit_log_file = '/var/log/mothership_audit.log'
-        if 'max_time' in genconfig and genconfig['max_time']:
-            self.max_time = genconfig['max_time']
-        else:
-            self.max_time = None
-        if 'min_time' in genconfig and genconfig['min_time']:
-            self.min_time = genconfig['min_time']
-        else:
-            self.min_time = None
-
-        # Logging settings
-        logconfig = all_configs['logconfig']
-        if 'logdir' in logconfig and logconfig['logdir']:
-            self.logdir = logconfig['logdir']
-        else:
-            self.logdir = '/var/log/mothership/'
-        if 'to_file' in logconfig and logconfig['to_file']:
-            self.to_file = logconfig['to_file']
-        else:
-            self.to_file = False 
-        if 'logfile' in logconfig and logconfig['logfile']:
-            self.logfile = logconfig['logfile']
-        else:
-            self.logfile = 'mothership.log'
-        if 'debug_level' in logconfig and logconfig['debug_level']:
-            self.debug_level = logconfig['debug_level']
-        else:
-            self.debug_level = 'DEBUG'
 
         # Virtual Machine settings
         vmconfig = all_configs['vm']
@@ -235,7 +265,7 @@ class Configure:
                 'ram': 1,
                 'disk': 25
             }
-            
+
         # Zabbix settings
         zabconfig = all_configs['zabbix']
         if 'active' in zabconfig and zabconfig['active']:
@@ -333,38 +363,25 @@ class Configure:
         else:
             self.ldap_default_gid = '401'
 
-
-        # DNS settings
-        dnsconfig = all_configs['dns']
-        if 'active' in dnsconfig and dnsconfig['active']:
-            self.dns_active = dnsconfig['active']
+        # Logging settings
+        logconfig = all_configs['logconfig']
+        if 'logdir' in logconfig and logconfig['logdir']:
+            self.logdir = logconfig['logdir']
         else:
-            self.dns_active = False
-        if 'zonecfg' in dnsconfig and dnsconfig['zonecfg']:
-            self.dns_conf = dnsconfig['zonecfg']
+            self.logdir = '/var/log/mothership/'
+        if 'to_file' in logconfig and logconfig['to_file']:
+            self.to_file = logconfig['to_file']
         else:
-            self.dns_conf = '/etc/named/zones.conf'
-        if 'zonedir' in dnsconfig and dnsconfig['zonedir']:
-            self.dns_zone = dnsconfig['zonedir']
+            self.to_file = False 
+        if 'logfile' in logconfig and logconfig['logfile']:
+            self.logfile = logconfig['logfile']
         else:
-            self.dns_zone = '/var/named/'
-        if 'zonettl' in dnsconfig and dnsconfig['zonettl']:
-            self.dns_ttl = dnsconfig['zonettl']
+            self.logfile = 'mothership.log'
+        if 'debug_level' in logconfig and logconfig['debug_level']:
+            self.debug_level = logconfig['debug_level']
         else:
-            self.dns_ttl = '86400'
-        if 'refresh' in dnsconfig and dnsconfig['refresh']:
-            self.dns_refresh = dnsconfig['refresh']
-        else:
-            self.dns_refresh = '21600'
-        if 'retry' in dnsconfig and dnsconfig['retry']:
-            self.dns_retry = dnsconfig['retry']
-        else:
-            self.dns_retry = '3600'
-        if 'expire' in dnsconfig and dnsconfig['expire']:
-            self.dns_expire = dnsconfig['expire']
-        else:
-            self.dns_expire = '604800'
-
+            self.debug_level = 'DEBUG'
+            
     def close_connections(self):
         """
             Close out connections

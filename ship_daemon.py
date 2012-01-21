@@ -55,9 +55,8 @@ def load_modules():
     response.content_type='application/json'
     log.debug("loadmodules() called directly")
     # clear module metadata
-    if cfg.module_metadata:
-        old_metadata = cfg.module_metadata
-        cfg.module_metadata = {}
+    old_metadata = cfg.module_metadata
+    cfg.module_metadata = {}
     # base path we're being called from, to find our modules
     basepath = sys.path[0]
     try:
