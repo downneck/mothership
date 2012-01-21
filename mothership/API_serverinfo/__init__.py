@@ -147,7 +147,7 @@ class API_serverinfo:
             #
             s = mothership.validate.v_get_host_obj(self.cfg, key)
             if self.cfg.debug:
-                self.logger.debug(s)
+                self.log.debug(s)
             ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
             return ret
         except Exception, e:
