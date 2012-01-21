@@ -145,9 +145,10 @@ class API_serverinfo:
             # this won't work with our RESTness
             #unqdn = mothership.validate.v_get_fqn(cfg, name=query['hostname'])
             #
+            log = self.log
             s = mothership.validate.v_get_host_obj(self.cfg, key)
             if self.cfg.debug:
-                self.log.debug(s)
+                log.debug(s)
             ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
             return ret
         except Exception, e:
@@ -168,6 +169,7 @@ class API_serverinfo:
 
         cfg = self.cfg
         cm = self.common
+        log = self.log
         metadata = self.metadata
         ret = None
 
@@ -177,19 +179,19 @@ class API_serverinfo:
         if not cm.check_max_num_args(len(query), metadata['methods']['si']['optional_args']['max']):
             if cfg.debug:
                 retval = "API_serverinfo: too many queries! max number of queries is: %s. You passed: %s" % (maxargs, len(query))
-                self.log.debug(retval)
+                log.debug(retval)
             raise ServerInfoError(retval)
 
         if not cm.check_min_num_args(len(query), metadata['methods']['si']['optional_args']['min']):
             if cfg.debug:
                 retval = "API_serverinfo: not enough queries! min number of queries is: %s. You passed: %s" % (self.metadata['methods']['si']['optional_args']['min'], len(query))
-                self.log.debug(retval )
+                log.debug(retval )
             raise ServerInfoError(retval)
 
         if cfg.debug:
             retval = "API_serverinfo: num queries: %s " % len(query)
             retval += "API_serverinfo: max num queries: %s" % metadata['methods']['si']['optional_args']['max']
-            self.log.debug(retval)
+            log.debug(retval)
 
         keys = query.keys()
         for key  in keys:
@@ -210,7 +212,7 @@ class API_serverinfo:
             return ret
         else:
             if cfg.debug:
-                self.log.debug("API_serverinfo/si: return value \"ret\" is empty!")
+                log.debug("API_serverinfo/si: return value \"ret\" is empty!")
             raise ServerInfoError("API_serverinfo/si: return value\"ret\" is empty!")
 
     def __get_serverinfo(self, host, realm, site_id):
