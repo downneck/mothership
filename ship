@@ -1576,10 +1576,10 @@ if __name__ == "__main__":
         else:
             username = "nottyUID=" + str(os.geteuid())
         cmd = ' '.join(sys.argv)
-        if sys.argv[1] != 'puppet':
+        if sys.argv[1] in ['classify', 'p', 'puppet']:
             alog = open(cfg.audit_log_file, 'a')
         else:
-            alog = open(cfg.puppet_audit_log_file, 'a')
+            alog = open(cfg.puppet_log_file, 'a')
         buf = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, cmd)
         alog.write(buf)
         alog.close()
