@@ -21,7 +21,7 @@ import textwrap
 import time
 import datetime
 import os
-import pprint
+import jinja2
 # urllib2 sucks when you need to use POST and you don't know beforehand
 # that you need to use POST, so we use 'requests' instead.
 import requests
@@ -159,20 +159,26 @@ def call_command(cfg, module_map):
             if responsedata['status'] != 0:
                 print "Error occurred:\n%s" % responsedata['msg']
                 sys.exit(1)
-
             # print. prettily.
-            if type(responsedata['data']) == list:
-                for i in responsedata['data']:
-                    print i
-            else:
-                pp = pprint.PrettyPrinter(indent=4)
-                pp.pprint(responsedata['data'])
+            print_responsedata(responsedata, mmeta)
         else:
             raise ShipCLIError("Invalid module specified: %s" % sys.argv[1].split('/')[0])
     except Exception, e:
         raise ShipCLIError("Error: %s" % e)
 
 
+# prints out response data, according to a jinja2 template defined in
+# the module
+def print_responsedata(responsedata, mmeta):
+    """
+    prints out response data according to a jinja2 template defined in the module
+
+    this frontend always uses "mothership/<modulename>template.cmdln" for its template file
+    """
+    module = mmeta['request'].split('/metadata')[0].split('/')[1]
+    env = jinja2.Environment(loader=jinja2.PackageLoader('mothership', module))
+    template = env.get_template('template.cmdln')
+    print template.render(r=responsedata)
 
 
 # main execution block

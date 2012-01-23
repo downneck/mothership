@@ -1,0 +1,13 @@
+hostname:               {{r['data']['server']['hostname']}}.{{r['data']['server']['realm']}}.{{r['data']['server']['site_id']}}
+provisioned on:	        {{r['data']['server']['provision_date']}}
+purchased on:	        {{r['data']['hardware']['purchase_date']}}	
+primary tag, index:	{{r['data']['server']['tag']}}, r['data']['server']['tag_index']
+ancillary tags:	        {
+security level:		{{security_level}}
+cobbler_profile:        {{cobbler_profile}}
+manufacturer, model:	
+hardware tag:		
+cores:			
+ram (GB):		
+disk:			
+cpu speed:		
