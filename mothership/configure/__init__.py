@@ -186,7 +186,8 @@ class Configure:
         if 'puppet_audit_log_file' in genconfig and genconfig['puppet_audit_log_file']:
             self.puppet_audit_log_file = genconfig['puppet_audit_log_file']
         else:
-            self.audit_log_file = '/var/log/mothership_puppet_audit.log'
+            self.puppet_audit_log_file = '/var/log/mothership_puppet_audit.log'
+
         if 'max_time' in genconfig and genconfig['max_time']:
             self.max_time = genconfig['max_time']
         else:
