@@ -96,7 +96,7 @@ class API_serverinfo:
             },
         }
 
-    def __get_host_from_hwtag(self, key):
+    def _get_host_from_hwtag(self, key):
         try:
             s = self.cfg.dbsess.query(Server).\
                 filter(Server.hw_tag==key).\
@@ -107,7 +107,7 @@ class API_serverinfo:
         except TypeError:
             raise ServerInfoError("API_serverinfo/get_host: no host found with hw_tag: %s" % key)
 
-    def __get_host_from_ip(self, key):
+    def _get_host_from_ip(self, key):
         # try the private ip
         try:
             s, n = self.cfg.dbsess.query(Server, Network).\
@@ -128,7 +128,7 @@ class API_serverinfo:
         except TypeError:
             raise ServerInfoError("API_serverinfo/get_host: no host found with public or private ip: %s" % key)
 
-    def __get_host_from_mac(self, key):
+    def _get_host_from_mac(self, key):
         try:
             h, s = self.cfg.dbsess.query(Network, Server).\
                    filter(Network.hw_tag==Server.hw_tag).\
@@ -140,7 +140,7 @@ class API_serverinfo:
         except TypeError:
             raise ServerInfoError("API_serverinfo/get_host: no host found with MAC address: %s" % key)
 
-    def __get_host_from_hostname(self, key):
+    def _get_host_from_hostname(self, key):
         try:
             # this won't work with our RESTness
             #unqdn = mothership.validate.v_get_fqn(cfg, name=query['hostname'])
@@ -199,13 +199,13 @@ class API_serverinfo:
                 ret = self.__get_host_from_hwtag(query[key])
                 break
             if key == 'ip':
-                ret = __get_host_from_ip(query[key])
+                ret = self._get_host_from_ip(query[key])
                 break
             if key == 'hostname':
-                ret = self.__get_host_from_hostname(query['hostname'])
+                ret = self._get_host_from_hostname(query['hostname'])
                 break
             if key == 'mac':
-                ret =__get_host_from_mac(query[key])
+                ret = self._get_host_from_mac(query[key])
                 break
 
         if ret:
@@ -215,7 +215,7 @@ class API_serverinfo:
                 log.debug("API_serverinfo/si: return value \"ret\" is empty!")
             raise ServerInfoError("API_serverinfo/si: return value\"ret\" is empty!")
 
-    def __get_serverinfo(self, host, realm, site_id):
+    def _get_serverinfo(self, host, realm, site_id):
         """
         [description]
         return all information for a server, identified by host.realm.site_id
