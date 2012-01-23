@@ -149,7 +149,7 @@ class API_serverinfo:
             s = mothership.validate.v_get_host_obj(self.cfg, key)
             if self.cfg.debug:
                 log.debug(s)
-            ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
+            ret = self._get_serverinfo(s.hostname, s.realm, s.site_id)
             return ret
         except Exception, e:
             raise ServerInfoError("API_serverinfo/get_host: no host found with name: %s. Error: %s" % (key, e))
