@@ -1568,7 +1568,7 @@ if __name__ == "__main__":
     timestamp = datetime.datetime.now()
     command_run = ' '.join(sys.argv)
     try:
-        alog = open(cfg.audit_log_file, 'a')
+
         tformat = "%Y-%m-%d %H:%M:%S"
         timestamp = datetime.datetime.now()
         if sys.stdin.isatty():
@@ -1576,10 +1576,13 @@ if __name__ == "__main__":
         else:
             username = "nottyUID=" + str(os.geteuid())
         cmd = ' '.join(sys.argv)
-        if sys.argv[0] != 'puppet':
-            buf = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, cmd)
-            alog.write(buf)
-            alog.close()
+        if sys.argv[1] != 'puppet':
+            alog = open(cfg.audit_log_file, 'a')
+        else:
+            alog = open(cfg.puppet_audit_log_file, 'a')
+        buf = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, cmd)
+        alog.write(buf)
+        alog.close()
     except Exception, e:
         print "Exception: " + str(e)
         print "Problem writing to audit log file!"
