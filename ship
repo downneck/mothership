@@ -1538,7 +1538,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        print 'Mothership version 0.0.6'
+        print 'Mothership version 0.0.7'
         sys.exit(0)
 
 if __name__ == "__main__":
@@ -1577,7 +1577,7 @@ if __name__ == "__main__":
             username = "nottyUID=" + str(os.geteuid())
         cmd = ' '.join(sys.argv)
         if sys.argv[1] in ['classify', 'p', 'puppet']:
-            alog = open(cfg.puppet_log_file, 'a')
+            alog = open(cfg.puppet_audit_log_file, 'a')
         else:
             alog = open(cfg.audit_log_file, 'a')
         buf = "%s %s: %s: %s\n" % (ltz, timestamp.strftime(tformat), username, cmd)
