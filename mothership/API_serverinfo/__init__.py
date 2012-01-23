@@ -102,7 +102,7 @@ class API_serverinfo:
                 filter(Server.hw_tag==key).\
                 filter(Server.virtual==False).first()
             if s.hostname:
-                ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
+                ret = self._get_serverinfo(s.hostname, s.realm, s.site_id)
             return ret
         except TypeError:
             raise ServerInfoError("API_serverinfo/get_host: no host found with hw_tag: %s" % key)
@@ -114,7 +114,7 @@ class API_serverinfo:
                    filter(Server.id==Network.server_id).\
                    filter(Network.ip==key).first()
             if s.hostname:
-                ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
+                ret = self._get_serverinfo(s.hostname, s.realm, s.site_id)
             return ret
         except TypeError:
             pass
@@ -124,7 +124,7 @@ class API_serverinfo:
                    filter(Server.id==Network.server_id).\
                    filter(Network.public_ip==key).first()
             if s.hostname:
-                ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id)
+                ret = self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
             raise ServerInfoError("API_serverinfo/get_host: no host found with public or private ip: %s" % key)
 
@@ -135,7 +135,7 @@ class API_serverinfo:
                    filter(Network.mac==key).\
                    filter(Server.virtual==False).first()
             if s.hostname:
-                ret = self.__get_serverinfo(s.hostname, s.realm, s.site_id, cfg.debug)
+                ret = self._get_serverinfo(s.hostname, s.realm, s.site_id, cfg.debug)
             return ret
         except TypeError:
             raise ServerInfoError("API_serverinfo/get_host: no host found with MAC address: %s" % key)
