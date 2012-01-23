@@ -1,13 +1,19 @@
+
 hostname:               {{r['data']['server']['hostname']}}.{{r['data']['server']['realm']}}.{{r['data']['server']['site_id']}}
 provisioned on:	        {{r['data']['server']['provision_date']}}
 purchased on:	        {{r['data']['hardware']['purchase_date']}}	
-primary tag, index:	{{r['data']['server']['tag']}}, r['data']['server']['tag_index']
-ancillary tags:	        {
+primary tag, index:	{{r['data']['server']['tag']}}, {{r['data']['server']['tag_index']}}
+ancillary tags:	        {% for kv in r['data']['kv'] %}{{kv['value']}} {% endfor %}
 security level:		{{r['data']['server']['security_level']}}
 cobbler_profile:        {{r['data']['server']['cobbler_profile']}}
-manufacturer, model:	{{r['data']['hardware']['manufacturer']}}, {{r['data']['server']['model']
+manufacturer, model:	{{r['data']['hardware']['manufacturer']}}, {{r['data']['server']['model']}}
 hardware tag:		{{r['data']['server']['hw_tag']}}
 cores:			{{r['data']['server']['cores']}}
 ram (GB):		{{r['data']['server']['ram']}}
 disk:			{{r['data']['server']['disk']}}
 cpu speed:		{{r['data']['hardware']['cpu_speed']}}
+
+{% for iface in r['data']['network'] %}
+{{iface['interface']}}| mac: {{iface['mac']}} | ip: {{iface['ip']}} | public_ip: {{iface['public_ip']}}
+{{iface['interface']}}| vlan: {{iface['vlan']}} | switch: {{iface['switch']}} | switch_port: {{iface['switch_port']}}
+{% endfor %}

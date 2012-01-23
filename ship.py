@@ -21,7 +21,7 @@ import textwrap
 import time
 import datetime
 import os
-import jinja2
+from jinja2 import Environment, FileSystemLoader
 # urllib2 sucks when you need to use POST and you don't know beforehand
 # that you need to use POST, so we use 'requests' instead.
 import requests
@@ -176,7 +176,7 @@ def print_responsedata(responsedata, mmeta):
     this frontend always uses "mothership/<modulename>template.cmdln" for its template file
     """
     module = mmeta['request'].split('/metadata')[0].split('/')[1]
-    env = jinja2.Environment(loader=jinja2.PackageLoader('mothership', module))
+    env = Environment(loader=FileSystemLoader('mothership/'+module))
     template = env.get_template('template.cmdln')
     print template.render(r=responsedata)
 
