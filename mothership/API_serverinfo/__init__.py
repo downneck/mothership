@@ -231,7 +231,6 @@ class API_serverinfo:
         """
 
         cfg = self.cfg
-        kvs = [] # stores kv objects to return
         nets = [] # stores network objects to return
         ret = {} # dict of objects to return (except network and kv, which are lists of objects)
 
@@ -258,10 +257,11 @@ class API_serverinfo:
           filter(Server.site_id==site_id).\
           filter(Hardware.hw_tag==Server.hw_tag):
             fqdn = '.'.join([host,realm,site_id])
-            kvs = mothership.kv.collect(cfg, fqdn, key='tag')
-          ret['kv'] = kvs # add list of kv objects to return dict
-          if cfg.debug:
-              print kvs
+          ret['kv'] = []
+          for kv in mothership.kv.collect(cfg, fqdn, key='tag'):
+              ret['kv'].append(kv.to_dict())
+              if cfg.debug:
+                  print kv.to_dict()
 
           # network entries
           for n in cfg.dbsess.query(Network).\
