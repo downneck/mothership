@@ -1,0 +1,8 @@
+classes:
+{% for class in r['data']['classes'] %}- {{class}}
+{% endfor %}environment: {{r['data']['environment']}}
+parameters:{% for param in r['data']['parameters']|sort %}
+  {% if param == "groups" or param == "mtags" %}{{param}}:{% for thing in r['data']['parameters'][param] %}
+  - {{thing}}{%endfor%}{% else %}{{param}}: {{r['data']['parameters'][param]}}{%endif%}{%endfor%}
+
+

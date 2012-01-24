@@ -1,0 +1,2 @@
+{% for value in r['data'] %}
+{{value}}{% endfor %}

@@ -132,10 +132,10 @@ class API_list_values:
                         buf.append(result.vlan)
                 if cfg.debug:
                     print buf
-            except:
+            except Exception, e:
                 if cfg.debug:
-                    print "API_list_values/lsv: query failed for: vlans"
-                raise ListValuesError("API_list_values/lsv: query failed for: vlans")
+                    print "API_list_values/lsv: query failed for: vlans. Error: %s" % e
+                raise ListValuesError("API_list_values/lsv: query failed for: vlans. Error: %s" % e)
 
         elif 'ips' in query.keys():
             if cfg.debug:
@@ -146,10 +146,10 @@ class API_list_values:
                         buf.append(net.ip)
                 if cfg.debug:
                     print buf
-            except:
+            except Exception, e:
                 if cfg.debug:
-                    print "API_list_values/lsv: query failed for: ips"
-                raise ListValuesError("API_list_values/lsv: query failed for: ips")
+                    print "API_list_values/lsv: query failed for: ips. Error: %s" % e
+                raise ListValuesError("API_list_values/lsv: query failed for: ips. Error: %s" % e)
 
         elif 'tags' in query.keys():
             if cfg.debug:
@@ -159,36 +159,40 @@ class API_list_values:
                     buf.append(tag.name)
                 if cfg.debug:
                     print buf
-            except:
+            except Exception, e:
                 if cfg.debug:
-                    print "API_list_values/lsv: query failed for tags"
-                raise ListValuesError("API_list_values/lsv: query failed for tags")
+                    print "API_list_values/lsv: query failed for tags. Error: %s" % e
+                raise ListValuesError("API_list_values/lsv: query failed for tags. Error: %s" % e)
 
         elif 'groups' in query.keys():
             if cfg.debug:
                 print "API_list_values/lsv: querying for all groups"
             try:
                 for g in cfg.dbsess.query(Groups):
-                    buf.append(g.to_dict())
+                    buf.append("%s.%s.%s gid:%s" % (g.groupname, g.realm, g.site_id, g.gid))
                 if cfg.debug:
                     print buf
-            except:
+            except Exception, e:
                 if cfg.debug:
-                    print "API_list_values/lsv: query failed for groups"
-                raise ListValuesError("API_list_values/lsv: query failed for groups")
+                    print "API_list_values/lsv: query failed for groups. Error: %s" % e
+                raise ListValuesError("API_list_values/lsv: query failed for groups. Error: %s" % e)
 
         elif 'users' in query.keys():
             if cfg.debug:
                 print "API_list_values/lsv: querying for all users"
             try:
                 for u in cfg.dbsess.query(Users):
-                    buf.append(u.to_dict())
+                    if u.active:
+                        act = "active"
+                    else:
+                        act = "inactive"
+                    buf.append("%s.%s.%s uid:%s %s" % (u.username, u.realm, u.site_id, u.uid, act))
                 if cfg.debug:
                     print buf
-            except:
+            except Exception, e:
                 if cfg.debug:
-                    print "API_list_values/lsv: query failed for groups"
-                raise ListValuesError("API_list_values/lsv: query failed for groups")
+                    print "API_list_values/lsv: query failed for users. Error: %s" % e
+                raise ListValuesError("API_list_values/lsv: query failed for groups. Error: %s" % e)
 
         elif 'available_hardware' in query.keys():
             if cfg.debug:

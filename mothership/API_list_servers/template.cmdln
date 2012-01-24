@@ -1,0 +1,2 @@
+{% for serv in r['data']|sort %}
+{{serv}}{% endfor %}

@@ -155,12 +155,25 @@ def call_command(cfg, module_map):
                 callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
             elif mmeta['data']['methods'][call]['rest_type'] == 'POST':
                 callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
+            elif mmeta['data']['methods'][call]['rest_type'] == 'DELETE':
+                callresponse = requests.delete('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
+            elif mmeta['data']['methods'][call]['rest_type'] == 'PUT':
+                callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
             responsedata = myjson.loads(callresponse.content)
             if responsedata['status'] != 0:
                 print "Error occurred:\n%s" % responsedata['msg']
                 sys.exit(1)
-            # print. prettily.
-            print_responsedata(responsedata, mmeta)
+            # if we get just a unicode string back, it's a status
+            # message. print it. otherwise, we got back a dict or list
+            # or something similar, fire it off at the template engine
+            if isinstance(responsedata['data'], unicode):
+                print responsedata['data']
+            else:
+                try:
+                    print_responsedata(responsedata, mmeta)
+                except Exception, e:
+                    print "Error: %s\n\n" % e
+                    print responsedata
         else:
             raise ShipCLIError("Invalid module specified: %s" % sys.argv[1].split('/')[0])
     except Exception, e:
@@ -177,7 +190,10 @@ def print_responsedata(responsedata, mmeta):
     """
     module = mmeta['request'].split('/metadata')[0].split('/')[1]
     env = Environment(loader=FileSystemLoader('mothership/'+module))
-    template = env.get_template('template.cmdln')
+    try:
+        template = env.get_template('template.cmdln')
+    except Exception, e:
+        raise ShipCLIError("template.cmdln not found for module: %s\nError: %s" % (module, e))
     print template.render(r=responsedata)
 
 

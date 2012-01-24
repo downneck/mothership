@@ -146,17 +146,13 @@ class API_puppet:
                 for network in networks:
                     if network.interface=='eth1':
                         if network.static_route:
-                            default_gateway = network.static_route
-                            parameters['default_gateway'] = default_gateway
+                            parameters['default_gateway'] = network.static_route
                         if network.ip:
-                            bond_ip = network.ip
-                            parameters['bond_ip'] = bond_ip
+                            parameters['primary_ip'] = network.ip
                         if network.netmask:
-                            bond_netmask = network.netmask
-                            parameters['bond_netmask'] = bond_netmask
+                            parameters['bond_netmask'] = network.netmask
                         if network.bond_options:
-                            bond_options = network.bond_options
-                            parameters['bond_options'] = bond_options
+                            parameters['bond_options'] = network.bond_options
 
             # Tag
             if mtag and mtag.name:
@@ -172,28 +168,23 @@ class API_puppet:
                 security_level = mtag.security_level
 
             if server and server.security_level != None:
-                security_level = server.security_level
-
-            if security_level != None:
-                classes.append("security%s" % security_level)
-                parameters['security_level'] = security_level
+                classes.append("security%s" % server.security_level)
+                parameters['security_level'] = server.security_level
 
             # Key/values
             kvs = mothership.kv.collect(cfg, unqdn)
             for kv in kvs:
-                key = kv.key
-                value = kv.value
-                if key == 'environment':
-                    environment = value
-                elif key == 'tag':
-                    mtags.append(value)
-                    classes.append("tags::%s" % value)
-                elif key == 'class':
-                    classes.append(value)
-                elif key == 'group':
-                    groups.append(value)
+                if kv.key == 'environment':
+                    environment = kv.value
+                elif kv.key == 'tag':
+                    mtags.append(kv.value)
+                    classes.append("tags::%s" % kv.value)
+                elif kv.key == 'class':
+                    classes.append(kv.value)
+                elif kv.key == 'group':
+                    groups.append(kv.value)
                 else:
-                    parameters[key] = value
+                    parameters[kv.key] = kv.value
 
             # sudoers
             sudoers = mothership.users.gen_sudoers_groups(cfg, unqdn)
