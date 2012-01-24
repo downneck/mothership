@@ -18,7 +18,7 @@ class MothershipLogger(object):
         if not os.path.exists(cfg.logdir):
             os.mkdir(cfg.logdir)
         if cfg.to_file:
-            logging.basicConfig(filename=cfg.logdir+cfg.logfile,level=logging.DEBUG)
+            logging.basicConfig(filename=cfg.logdir+'/'+cfg.logfile,level=logging.DEBUG)
         else:
             logging.basicConfig(level=logging.DEBUG)
         logger = logging.getLogger()

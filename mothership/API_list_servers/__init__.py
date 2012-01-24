@@ -20,7 +20,7 @@
 # import some modules
 import mothership
 import sys
-import mothership.kv
+import mothership.API_kv
 from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
@@ -32,6 +32,7 @@ class API_list_servers:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        kvobj = mothership.API_kv.API_kv(cfg)
         self.version = 1
         self.namespace = 'API_list_servers'
         self.metadata = {
@@ -39,9 +40,8 @@ class API_list_servers:
                 'shortname': 'lss',
                 'description': 'lists servers according to certain criteria',
                 'module_dependencies': {
-                    'kv': 1,
+                    'API_kv': 1,
                     'mothership_models': 1,
-                    'mothership': 1,
                 },
             },
             'methods': {
@@ -290,7 +290,7 @@ class API_list_servers:
                     order_by(Server.hostname):
                         servers_primary.append(server)
                     servers_kv = []
-                    kvs = mothership.kv.collect(cfg, None, key='tag')
+                    kvs = kvobj.collect(cfg, None, key='tag')
                     for i in kvs:
                         namespace,key = str(i).split(' ')
                         if key == "tag="+query['tag']:

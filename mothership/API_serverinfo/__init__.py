@@ -27,6 +27,7 @@ from mothership.mothership_models import *
 
 from sqlalchemy import or_, desc, MetaData
 
+
 class ServerInfoError(Exception):
     pass
 
@@ -46,6 +47,8 @@ class API_serverinfo:
                 'module_dependencies': { # what other modules do we depend on?
                     'API_kv': 1, # a module, and its minimum accepted version
                     'mothership_models': 1, # another module, and its minimum accepted version
+                    'common': 1, # another module, and its minimum accepted version
+                    'validate': 1, # another module, and its minimum accepted version
                 },
             },
             'methods': { # a dict of methods we're presenting to the outside world (public only!)

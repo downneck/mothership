@@ -30,3 +30,9 @@ general:
 
   # Set this to the port of your api server, default: 8081
   api_port: '8081'
+
+  # log directory, default is /var/log/mothership
+  logdir: '/var/log/mothership'
+
+  # audit log filename, default is mothership_audit.log
+  audit_log_file: 'mothership_audit.log'

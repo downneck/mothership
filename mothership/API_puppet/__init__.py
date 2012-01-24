@@ -18,7 +18,7 @@ module controlling various puppet interactions
 """
 
 import mothership
-import mothership.kv
+import mothership.API_kv
 import mothership.users
 from mothership.mothership_models import *
 
@@ -29,6 +29,7 @@ class API_puppet:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        self.kvobj = mothership.API_kv.API_kv(cfg)
         self.version = 1
         self.namespace = 'API_puppet'
         self.metadata = {
@@ -37,7 +38,7 @@ class API_puppet:
                 'description': 'creates a puppet manifest for a server (puppet\'s External Node Classifier)',
                 'module_dependencies': {
                     'mothership_models': 1,
-                    'mothership.kv': 1,
+                    'mothership.API_kv': 1,
                     'mothership.users': 1,
                 },
             },
@@ -97,6 +98,7 @@ class API_puppet:
         returns a dict of information if successful
         """
         cfg = self.cfg
+        kvobj = self.kvobj
         classes = []
         mtags = []
         environment = ""
@@ -172,7 +174,8 @@ class API_puppet:
                 parameters['security_level'] = server.security_level
 
             # Key/values
-            kvs = mothership.kv.collect(cfg, unqdn)
+            query = {'unqdn': unqdn}
+            kvs = kvobj.collect(query)
             for kv in kvs:
                 if kv.key == 'environment':
                     environment = kv.value
@@ -198,9 +201,9 @@ class API_puppet:
             node['environment'] = environment
             node['parameters'] = parameters
 
-        except:
+        except Exception, e:
             if cfg.debug:
-                print "API_puppet/classify: query failed for hostname: %s" % name
-            raise PuppetError("API_puppet/classify: query failed for hostname: %s" % name)
+                print "API_puppet/classify: query failed for hostname: %s. Error: %s" % (name, e)
+            raise PuppetError("API_puppet/classify: query failed for hostname: %s. Error: %s" % (name, e))
 
         return node

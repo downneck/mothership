@@ -61,10 +61,26 @@ class ConfigureCli:
             self.api_port = genconfig['api_port']
         else:
             self.api_port = '8081'
+        if 'logdir' in genconfig and genconfig['logdir']:
+            self.logdir = genconfig['logdir']
+        else:
+            self.logdir = '/var/log/mothership'
         if 'audit_log_file' in genconfig and genconfig['audit_log_file']:
             self.audit_log_file = genconfig['audit_log_file']
         else:
-            self.audit_log_file = '/var/log/mothership_audit.log'
+            self.audit_log_file = 'mothership_audit.log'
+        if 'to_file' in genconfig and genconfig['to_file']:
+            self.to_file = genconfig['to_file']
+        else:
+            self.to_file = True
+        if 'logfile' in genconfig and genconfig['logfile']:
+            self.logfile = genconfig['logfile']
+        else:
+            self.logfile = 'mothership_cli.log'
+        if 'debug_level' in genconfig and genconfig['debug_level']:
+            self.debug_level = genconfig['debug_level']
+        else:
+            self.debug_level = 'DEBUG'
 
     def close_connections(self):
         """
@@ -372,7 +388,7 @@ class Configure:
         if 'to_file' in logconfig and logconfig['to_file']:
             self.to_file = logconfig['to_file']
         else:
-            self.to_file = False 
+            self.to_file = False
         if 'logfile' in logconfig and logconfig['logfile']:
             self.logfile = logconfig['logfile']
         else:
@@ -381,7 +397,7 @@ class Configure:
             self.debug_level = logconfig['debug_level']
         else:
             self.debug_level = 'DEBUG'
-            
+
     def close_connections(self):
         """
             Close out connections

@@ -31,11 +31,16 @@ import json as myjson
 
 # mothership imports
 from mothership.configure import Configure, ConfigureCli
+from mothership.common import *
 
 
 # our exception class
 class ShipCLIError(Exception):
     pass
+
+
+# our logger
+
 
 
 # swap a dict around
@@ -51,8 +56,7 @@ def print_submodules(cfg, module_map):
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata')
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
-                print "Error occurred:\n%s" % mmeta['msg']
-                sys.exit(1)
+                raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
             print "%s (%s): %s" % (module_map[i], i.split('API_')[1], mmeta['data']['config']['description'])
         print "\nRun \"ship <submodule>\" for more information"
     except Exception, e:
@@ -66,8 +70,7 @@ def print_commands(cfg, module_map):
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[sys.argv[1]]+'/metadata')
         mmeta = myjson.loads(response.content)
         if mmeta['status'] != 0:
-            print "Error occurred:\n%s" % mmeta['msg']
-            sys.exit(1)
+            raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
         print "Available module commands:\n"
         for k in mmeta['data']['methods'].keys():
             print sys.argv[1]+'/'+k
@@ -110,8 +113,7 @@ def call_command(cfg, module_map):
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata')
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
-                print "Error occurred:\n%s" % mmeta['msg']
-                sys.exit(1)
+                raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
 
             # set up our command line options through optparse. will
             # change this to argparse if we upgrade past python 2.7
@@ -167,8 +169,7 @@ def call_command(cfg, module_map):
                 callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
             responsedata = myjson.loads(callresponse.content)
             if responsedata['status'] != 0:
-                print "Error occurred:\n%s" % responsedata['msg']
-                sys.exit(1)
+                raise ShipCLIError("Error occurred:\n%s" % responsedata['msg'])
 
             # if we get just a unicode string back, it's a status
             # message...print it. otherwise, we got back a dict or list
@@ -210,6 +211,7 @@ def print_responsedata(responsedata, mmeta):
 if __name__ == "__main__":
     # the global CLI config. useful everywhere
     cfg = ConfigureCli('mothership_cli.yaml')
+    log = MothershipLogger(cfg)
 
     # prevent root from running ship
     if sys.stdin.isatty():
@@ -219,7 +221,7 @@ if __name__ == "__main__":
 
     # write out the command line we were called with to an audit log
     try:
-        alog = open(cfg.audit_log_file, 'a')
+        alog = open(cfg.logdir+'/'+cfg.audit_log_file, 'a')
         ltz = time.tzname[time.daylight]
         tformat = "%Y-%m-%d %H:%M:%S"
         timestamp = datetime.datetime.now()
@@ -248,8 +250,8 @@ if __name__ == "__main__":
         # check the status on our JSON response. 0 == good, anything
         # else == bad. expect error information in the 'msg' payload
         if response_dict['status'] != 0:
-            print "Error occurred:\n%s" % response_dict['msg']
-            sys.exit(1)
+            log.debug("Error occurred:\n%s" % response_dict['msg'])
+            raise ShipCLIError("Error occurred:\n%s" % response_dict['msg'])
         # if it didn't blow up, populate the module list
         module_list = response_dict['data']
         module_map = {}
@@ -265,18 +267,15 @@ if __name__ == "__main__":
         #
         # user ran: ship
         if len(sys.argv) < 2:
-            if cfg.debug:
-                print "print_submodules called()"
+            log.debug("print_submodules called()")
             print_submodules(cfg, module_map)
         # user ran: ship <valid module>
         elif len(sys.argv) == 2 and sys.argv[1] in module_map.values():
-            if cfg.debug:
-                print "print_commands called()"
+            log.debug("print_commands called()")
             print_commands(cfg, module_map)
         # user ran: ship <valid module>/<valid command>
         elif len(sys.argv) == 2 and sys.argv[1].split('/')[0] in module_map.values():
-            if cfg.debug:
-                print "print_command_args called()"
+            log.debug("print_command_args called()")
             print_command_args(cfg, module_map)
         # user ran: ship <invalid module>/<invalid command>
         elif len(sys.argv) == 2 and sys.argv[1].split('/')[0] not in module_map.values():
@@ -286,8 +285,7 @@ if __name__ == "__main__":
             raise ShipCLIError("Requested module does not exist: %s" % "API_"+sys.argv[1])
         # user ran: ship <valid module>/<valid command> --valid=args -a
         elif len(sys.argv) >= 3:
-            if cfg.debug:
-                print "call_command called()"
+            log.debug("call_command called()")
             call_command(cfg, module_map)
         # user ran some real ugly crap.
         else:
@@ -296,6 +294,10 @@ if __name__ == "__main__":
     except IOError, e:
         print "Missing config file: mothership_cli.yaml"
         print "ERROR: %s" % e
+        log.debug("Missing config file: mothership_cli.yaml")
+        log.debug("ERROR: %s" % e)
         sys.exit(1)
     except Exception, e:
         print "Error in __main__: %s" % e
+        log.debug("Error in __main__: %s" % e)
+        sys.exit(1)
