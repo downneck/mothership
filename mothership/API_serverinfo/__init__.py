@@ -262,7 +262,8 @@ class API_serverinfo:
 
           ret['kv'] = []
           kvobj = mothership.API_kv.API_kv(cfg)
-          for kv in kvobj.collect(cfg, fqdn, key='tag'):
+          kvquery = {'unqdn': fqdn, 'key': 'tag',}
+          for kv in kvobj.collect(kquery):
               ret['kv'].append(kv.to_dict())
               log.debug("_get_serviceinfo(): %s " % kv.to_dict())
 

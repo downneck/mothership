@@ -489,9 +489,9 @@ class API_kv:
                 if cfg.debug:
                     buf += "unqdn=%s hostname=%s realm=%s site_id=%s " % (unqdn, hostname, realm, site_id)
                 results = results.\
-                    filter(KV.site_id==site_id).\
-                    filter(KV.realm==realm).\
-                    filter(KV.hostname==hostname)
+                    filter(or_(KV.site_id==site_id, KV.site_id==None)).\
+                    filter(or_(KV.realm==realm, KV.realm==None)).\
+                    filter(or_(KV.hostname==hostname, KV.hostname==None))
             # filter by key
             if key:
                 if cfg.debug:

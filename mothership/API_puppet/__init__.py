@@ -174,24 +174,23 @@ class API_puppet:
                 parameters['security_level'] = server.security_level
 
             # Key/values
-            query = {'unqdn': unqdn}
-            kvs = kvobj.collect(query)
+            kvquery = {'unqdn': unqdn}
+            kvs = kvobj.collect(kvquery)
             for kv in kvs:
-                if kv.key == 'environment':
-                    environment = kv.value
-                elif kv.key == 'tag':
-                    mtags.append(kv.value)
-                    classes.append("tags::%s" % kv.value)
-                elif kv.key == 'class':
-                    classes.append(kv.value)
-                elif kv.key == 'group':
-                    groups.append(kv.value)
+                if kv['key'] == 'environment':
+                    environment = kv['value']
+                elif kv['key'] == 'tag':
+                    mtags.append(kv['value'])
+                    classes.append("tags::%s" % kv['value'])
+                elif kv['key'] == 'class':
+                    classes.append(kv['value'])
+                elif kv['key'] == 'group':
+                    groups.append(kv['value'])
                 else:
-                    parameters[kv.key] = kv.value
+                    parameters[kv['key']] = kv['value']
 
             # sudoers
             sudoers = mothership.users.gen_sudoers_groups(cfg, unqdn)
-
             parameters['mtags'] = mtags
             parameters['groups'] = groups
             if sudoers:

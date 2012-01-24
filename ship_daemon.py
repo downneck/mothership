@@ -5,6 +5,7 @@ import os
 import sys
 import datetime
 import bottle
+import traceback
 from bottle import static_file
 from bottle import response
 from socket import gethostname
@@ -95,6 +96,7 @@ def load_modules():
         jbuf['status'] = 1
         jbuf['data'] = ""
         jbuf['msg'] = "Exception in load_modules(). Error: %s" % e
+        traceback.print_exc()
         return myjson.JSONEncoder().encode(jbuf)
 
 
@@ -125,6 +127,7 @@ def index():
     except Exception, e:
         jbuf['status'] = 1
         jbuf['data'] = "Exception in index(). Error: %s" % e
+        traceback.print_exc()
         return myjson.JSONEncoder().encode(jbuf)
 
 
@@ -151,6 +154,7 @@ def loaded_modules():
         jbuf['status'] = 1
         jbuf['data'] = ""
         jbuf['msg'] = "Exception in loaded_modules(). Error: %s" % e
+        traceback.print_exc()
         return myjson.JSONEncoder().encode(jbuf)
 
 
@@ -176,6 +180,7 @@ def namespace_path(pname):
         jbuf['status'] = 1
         jbuf['data'] = ""
         jbuf['msg'] = "Exception in namespace_path(). Error: %s" % e
+        traceback.print_exc()
         return myjson.JSONEncoder().encode(jbuf)
 
 @httpship.route("/:pname/:callpath", method=('GET', 'POST', 'PUT', 'DELETE'))
@@ -232,6 +237,7 @@ def callable_path(pname, callpath):
         jbuf['status'] = 1
         jbuf['data'] = ""
         jbuf['msg'] = "Exception in callable_path(). Error: %s" % e
+        traceback.print_exc()
         return myjson.JSONEncoder().encode(jbuf)
 
 @httpship.route('/favicon.ico')

@@ -1403,13 +1403,14 @@ def gen_sudoers_groups(cfg, unqdn):
     else:
         raise UsersError("Host does not exist: %s" % unqdn)
 
-    query = {'unqdn': fqdn, 'key': 'tag'}
-    kvs = kvobj.collect(query)
+    kquery = {'unqdn': fqdn}
+    kquery['key'] = 'tag'
+    kvs = kvobj.collect(kquery)
     groups = []
 
     # get sudo groups for all tags in kv
     for kv in kvs:
-        unqgn = kv.value+'_sudo.'+s.realm+'.'+s.site_id
+        unqgn = kv['value']+'_sudo.'+s.realm+'.'+s.site_id
         g = mothership.validate.v_get_group_obj(cfg, unqgn)
         if g:
             groups.append(g)
