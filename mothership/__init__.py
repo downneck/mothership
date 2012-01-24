@@ -24,7 +24,7 @@ import subprocess
 import sys
 import types
 
-import mothership.kv
+#import mothership.kv
 #import mothership.list_values
 import mothership.users
 import mothership.validate

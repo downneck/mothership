@@ -22,7 +22,7 @@ import os
 import ldap
 import mothership.validate
 import mothership.users
-import mothership.kv
+#import mothership.kv
 
 # db imports
 from mothership.mothership_models import *

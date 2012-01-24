@@ -3,7 +3,6 @@ import unittest
 from mothership.API_serverinfo import API_serverinfo
 from mothership.configure import Configure
 
-import mothership.kv
 import mothership.validate
 from mothership.mothership_models import *
 

@@ -20,8 +20,7 @@
 # import some modules
 import sys
 
-import mothership
-import mothership.kv
+import mothership.API_kv
 import mothership.validate
 from mothership.common import *
 from mothership.mothership_models import *
@@ -45,7 +44,7 @@ class API_serverinfo:
                 'shortname': 'si', # shortened class name (for CLI)
                 'description': 'retrieves critical information about a server',
                 'module_dependencies': { # what other modules do we depend on?
-                    'kv': 1, # a module, and its minimum accepted version
+                    'API_kv': 1, # a module, and its minimum accepted version
                     'mothership_models': 1, # another module, and its minimum accepted version
                 },
             },
@@ -251,9 +250,10 @@ class API_serverinfo:
           filter(Server.site_id==site_id).\
           filter(Hardware.hw_tag==Server.hw_tag):
             fqdn = '.'.join([host,realm,site_id])
-            
+
           ret['kv'] = []
-          for kv in mothership.kv.collect(cfg, fqdn, key='tag'):
+          kvobj = mothership.API_kv.API_kv(cfg)
+          for kv in kvobj.collect(cfg, fqdn, key='tag'):
               ret['kv'].append(kv.to_dict())
               self.logger.debug("_get_serviceinfo(): %s " % kv.to_dict())
 

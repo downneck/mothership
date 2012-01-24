@@ -23,22 +23,25 @@ import datetime
 import os
 from jinja2 import Environment, FileSystemLoader
 # urllib2 sucks when you need to use POST and you don't know beforehand
-# that you need to use POST, so we use 'requests' instead.
+# that you need to use POST, so we use 'requests' instead. so that we
+# can let the modules define themselves
 import requests
 from optparse import OptionParser
 import json as myjson
 
-
 # mothership imports
 from mothership.configure import Configure, ConfigureCli
+
 
 # our exception class
 class ShipCLIError(Exception):
     pass
 
+
 # swap a dict around
 def swap_dict(odict):
     return dict([(v, k) for (k, v) in odict.iteritems()])
+
 
 # if someone runs: ship
 def print_submodules(cfg, module_map):
@@ -55,6 +58,7 @@ def print_submodules(cfg, module_map):
     except Exception, e:
         raise ShipCLIError("Error: %s" % e)
 
+
 # if someone runs: ship <module>
 def print_commands(cfg, module_map):
     try:
@@ -70,6 +74,7 @@ def print_commands(cfg, module_map):
         print "\nRun \"ship <submodule>/<command>\" for more information"
     except Exception, e:
         raise ShipCLIError("Error: %s" % e)
+
 
 # if someone runs: ship <module>/<command>
 def print_command_args(cfg, module_map):
@@ -93,6 +98,7 @@ def print_command_args(cfg, module_map):
         print ""
     except Exception, e:
         raise ShipCLIError(e)
+
 
 # if someone runs: ship <module>/<command> --option1=bleh -o2 foo
 def call_command(cfg, module_map):
@@ -163,9 +169,12 @@ def call_command(cfg, module_map):
             if responsedata['status'] != 0:
                 print "Error occurred:\n%s" % responsedata['msg']
                 sys.exit(1)
+
             # if we get just a unicode string back, it's a status
-            # message. print it. otherwise, we got back a dict or list
+            # message...print it. otherwise, we got back a dict or list
             # or something similar, fire it off at the template engine
+            # if it blows up, dump the error and the response we got
+            # from ship_daemon.py
             if isinstance(responsedata['data'], unicode):
                 print responsedata['data']
             else:
@@ -236,18 +245,19 @@ if __name__ == "__main__":
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/modules')
         # decode the response into a dict
         response_dict = myjson.loads(response.content)
-        # check the status on our JSON response. 0 = good, anything
-        # else = bad. expect error information in the 'data' payload
+        # check the status on our JSON response. 0 == good, anything
+        # else == bad. expect error information in the 'msg' payload
         if response_dict['status'] != 0:
             print "Error occurred:\n%s" % response_dict['msg']
             sys.exit(1)
-        # populate the module list
+        # if it didn't blow up, populate the module list
         module_list = response_dict['data']
         module_map = {}
         for i in module_list:
             response = requests.get('http://'+cfg.api_server+":"+cfg.api_port+'/'+i+'/metadata')
             response_dict = myjson.loads(response.content)
             module_map[i] = response_dict['data']['config']['shortname']
+        # a reverse module map, useful in constructing our cmdln
         revmodule_map = swap_dict(module_map)
 
         # command line-y stuff. the order of the if statements is very
