@@ -26,6 +26,8 @@ such as LDAP or /etc/passwd
 
 # imports
 import mothership
+import mothership.common
+import mothership.API_kv
 import mothership.ssh
 import mothership.ldap
 
@@ -59,8 +61,6 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
     [return value]
     nothing explicitly returned
     """
-
-
     # validate/construct/get the realm.site_id.domain data
     fqun = mothership.validate.v_get_fqn(cfg, name=username)
     username, realm, site_id, domain = mothership.validate.v_split_fqn(fqun)
@@ -846,9 +846,9 @@ def urmg(cfg, username, groupname):
                 mothership.ldap.gupdate(cfg, groupname=g.groupname+'.'+fqn)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
-                print "Error: %s" % e            
+                print "Error: %s" % e
         else:
-            print "LDAP update aborted by user input, skipping." 
+            print "LDAP update aborted by user input, skipping."
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
@@ -1394,7 +1394,7 @@ def gen_sudoers_groups(cfg, unqdn):
     [return value]
     no configured return (standard success/fail)
     """
-
+    kvobj = mothership.API_kv.API_kv(cfg)
     # get the server entry
     s = mothership.validate.v_get_host_obj(cfg, unqdn)
     if s:
@@ -1403,7 +1403,8 @@ def gen_sudoers_groups(cfg, unqdn):
     else:
         raise UsersError("Host does not exist: %s" % unqdn)
 
-    kvs = mothership.kv.collect(cfg, fqdn, key='tag')
+    query = {'unqdn': fqdn, 'key': 'tag'}
+    kvs = kvobj.collect(query)
     groups = []
 
     # get sudo groups for all tags in kv
