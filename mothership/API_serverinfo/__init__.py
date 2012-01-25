@@ -264,8 +264,8 @@ class API_serverinfo:
           kvobj = mothership.API_kv.API_kv(cfg)
           kquery = {'unqdn': fqdn, 'key': 'tag',}
           for kv in kvobj.collect(kquery):
-              ret['kv'].append(kv.to_dict())
-              log.debug("_get_serviceinfo(): %s " % kv.to_dict())
+              ret['kv'].append(kv)
+              log.debug("_get_serviceinfo(): %s " % kv)
 
           # network entries
           for n in cfg.dbsess.query(Network).\
