@@ -45,7 +45,7 @@ class MothershipConfigure(object):
             self.all_configs = yaml.load(yaml_config)
         except Exception, e:
             raise ConfigureError("Error loading config file: %s\nConfig search paths: %s\nError: %s" % (config_file, load_paths, e))
-        
+
         # Logging settings TODO FIX LOGNAME
         all_configs = self.all_configs
         logconfig = all_configs['logconfig']
@@ -54,19 +54,19 @@ class MothershipConfigure(object):
             self.logdir = logconfig['logdir']
         else:
             self.logdir = '/var/log/mothership/'
-            
+
         if 'log_to_file' in logconfig and logconfig['log_to_file']:
             self.log_to_file = logconfig['log_to_file']
         else:
             self.log_to_file = False
-            
+
         if 'logfile' in logconfig and logconfig['logfile']:
             self.logfile = logconfig['logfile']
-            
-        if 'debug_level' in logconfig and logconfig['debug_level']:
-            self.debug_level = logconfig['debug_level']
+
+        if 'log_level' in logconfig and logconfig['log_level']:
+            self.log_level = logconfig['log_level']
         else:
-            self.debug_level = 'DEBUG'
+            self.log_level = 'DEBUG'
 
         if 'audit_log_file' in logconfig and logconfig['audit_log_file']:
             self.audit_log_file = logconfig['audit_log_file']
@@ -93,9 +93,9 @@ class MothershipConfigure(object):
 
 class MothershipConfigureCli(MothershipConfigure):
     def load_config(self):
-        
+
         all_configs = self.all_configs
-        
+
         genconfig = all_configs['general']
         ##### TODO ##### THIS IS LEGACY HAS TO BE REMOVED
         if 'debug' in genconfig and genconfig['debug']:
@@ -122,7 +122,7 @@ class MothershipConfigureDaemon(MothershipConfigure):
         # module metadata for API module loader
         self.module_metadata = {}
         all_configs = self.all_configs
-        
+
         # Database related settings
         dbconfig = all_configs['db']
         try:
