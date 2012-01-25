@@ -11,6 +11,7 @@ from sqlalchemy import or_, desc, MetaData
 class TestServerInfo(unittest.TestCase):
     def test_get_host_from_hwtag(self):
         cfg = MothershipConfigureDaemon('mothership.yaml')
+        cfg.load_config()
         si = API_serverinfo(cfg)
         result = si._get_host_from_hwtag('3Y29JQ1')
 
