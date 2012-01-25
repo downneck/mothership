@@ -27,7 +27,7 @@ class MothershipLogger(object):
             logging.basicConfig(level=logging.DEBUG)
         # set the default log level 
         logger = logging.getLogger()
-        logger.setLevel(cfg.debug_level)
+        logger.setLevel(cfg.log_level)
 
     def change_log_level(self, level, logger='root'):
         """
