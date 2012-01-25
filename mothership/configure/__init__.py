@@ -30,7 +30,7 @@ class ConfigureError(Exception):
     pass
 
 # This is the set of paths Configure will look for
-# a config_file (mothership.yaml)
+# a config_file
 load_paths = ['.', '~', '/etc', '/usr/local/etc']
 
 
@@ -359,7 +359,7 @@ class MothershipConfigureDaemon(MothershipConfigure):
             else:
                 self.mgmt_vlan_community = 'public'
         else:
-            sys.stderr.write("mgmt_vlan->facility has been set incorrectly in the config.\nplease edit /etc/mothership.yaml and set it to either 'snmp' or 'curl'")
+            sys.stderr.write("mgmt_vlan->facility has been set incorrectly in the config.\nplease edit /etc/mothership_daemon.yaml and set it to either 'snmp' or 'curl'")
 
         # Users and Groups settings
         ugconfig = all_configs['users_and_groups']
