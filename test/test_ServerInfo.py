@@ -1,7 +1,7 @@
 import unittest
 
 from mothership.API_serverinfo import API_serverinfo
-from mothership.configure import Configure
+from mothership.configure import *
 
 import mothership.validate
 from mothership.mothership_models import *
@@ -10,7 +10,7 @@ from sqlalchemy import or_, desc, MetaData
 
 class TestServerInfo(unittest.TestCase):
     def test_get_host_from_hwtag(self):
-        cfg = Configure('mothership.yaml')
+        cfg = MothershipConfigureDaemon('mothership.yaml')
         si = API_serverinfo(cfg)
         result = si._get_host_from_hwtag('3Y29JQ1')
 
@@ -23,7 +23,8 @@ class TestServerInfo(unittest.TestCase):
         self.assertDictEqual(result, ret)
 
     def test_get_host_from_ip(self):
-        cfg = Configure('mothership.yaml')
+        cfg = MothershipConfigureDaemon('mothership.yaml')
+        cfg.load_config()
         si = API_serverinfo(cfg)
         result = si._get_host_from_ip('10.60.0.20')
 
@@ -48,7 +49,8 @@ class TestServerInfo(unittest.TestCase):
         self.assertDictEqual(ret, result)
         
     def test_got_host_from_mac(self):
-        cfg = Configure('mothership.yaml')
+        cfg = MothershipConfigureDaemon('mothership.yaml')
+        cfg.load_config()
         si = API_serverinfo(cfg)
         result = si._get_host_from_mac('14:fe:b5:db:0a:58')
 
@@ -62,7 +64,8 @@ class TestServerInfo(unittest.TestCase):
         self.assertDictEqual(result, ret)
 
     def test_got_host_from_hostname(self):
-        cfg = Configure('mothership.yaml')
+        cfg = MothershipConfigureDaemon('mothership.yaml')
+        cfg.load_config()
         si = API_serverinfo(cfg)
         result = si._get_host_from_hostname('cm1')
 

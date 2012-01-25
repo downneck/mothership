@@ -110,7 +110,7 @@ class API_serverinfo:
             return ret
         except TypeError:
             log.debug("Something wrong happened in _get_host_from_hwtag. please re-run test")
-            raise ServerInfoError("API_serverinfo/get_host: no host found with hw_tag: %s" % key)
+            raise ServerInfoError("API_serverinfo/_get_host_from_hwtag: no host found with hw_tag: %s" % key)
 
     def _get_host_from_ip(self, key):
         log = self.log
@@ -136,7 +136,7 @@ class API_serverinfo:
             log.debug("_get_host_from_ip was not able to find the host via the public ip")
 
         if not ret:
-            raise ServerInfoError("API_serverinfo/get_host: no host found with public or private ip: %s" % key)
+            raise ServerInfoError("API_serverinfo/_get_host_from_ip: no host found with public or private ip: %s" % key)
 
     def _get_host_from_mac(self, key):
         log = self.log
@@ -150,7 +150,7 @@ class API_serverinfo:
             return ret
         except TypeError:
             log.debug("_get_host_from_mac was not able to find an hostname")
-            raise ServerInfoError("API_serverinfo/get_host: no host found with MAC address: %s" % key)
+            raise ServerInfoError("API_serverinfo/_get_host_from_mac: no host found with MAC address: %s" % key)
 
     def _get_host_from_hostname(self, key):
         log = self.log
@@ -161,7 +161,7 @@ class API_serverinfo:
             return ret
         except Exception, e:
             log.debug("_get_host_from_hostname was not able to find a hostname")
-            raise ServerInfoError("API_serverinfo/get_host: no host found with name: %s. Error: %s" % (key, e))
+            raise ServerInfoError("API_serverinfo/_get_host_from_hostname: no host found with name: %s. Error: %s" % (key, e))
 
     def si(self, query):
         """
