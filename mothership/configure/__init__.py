@@ -69,10 +69,10 @@ class ConfigureCli:
             self.audit_log_file = genconfig['audit_log_file']
         else:
             self.audit_log_file = 'mothership_audit.log'
-        if 'to_file' in genconfig and genconfig['to_file']:
-            self.to_file = genconfig['to_file']
+        if 'log_to_file' in genconfig and genconfig['log_to_file']:
+            self.log_to_file = genconfig['lot_to_file']
         else:
-            self.to_file = True
+            self.log_to_file = False
         if 'logfile' in genconfig and genconfig['logfile']:
             self.logfile = genconfig['logfile']
         else:
