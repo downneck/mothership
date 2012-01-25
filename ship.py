@@ -30,7 +30,7 @@ from optparse import OptionParser
 import json as myjson
 
 # mothership imports
-from mothership.configure import Configure, ConfigureCli
+from mothership.configure import *
 from mothership.common import *
 
 
@@ -210,7 +210,8 @@ def print_responsedata(responsedata, mmeta):
 # main execution block
 if __name__ == "__main__":
     # the global CLI config. useful everywhere
-    cfg = ConfigureCli('mothership_cli.yaml')
+    cfg = MothershipConfigureCli('mothership_cli.yaml')
+    cfg.load_config()
     log = MothershipLogger(cfg)
 
     # prevent root from running ship

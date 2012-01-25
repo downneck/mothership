@@ -33,8 +33,7 @@ class ConfigureError(Exception):
 # a config_file (mothership.yaml)
 load_paths = ['.', '~', '/etc', '/usr/local/etc']
 
-
-class ConfigureCli:
+class MothershipConfigure(object):
     def __init__(self, config_file):
         """
             Takes a config_file name as a parameter and searches through the following
@@ -43,44 +42,36 @@ class ConfigureCli:
         # Read settings from configuration yaml
         try:
             yaml_config = open(self.load_path(config_file)).read()
-            all_configs = yaml.load(yaml_config)
+            self.all_configs = yaml.load(yaml_config)
         except Exception, e:
             raise ConfigureError("Error loading config file: %s\nConfig search paths: %s\nError: %s" % (config_file, load_paths, e))
+        
+        # Logging settings TODO FIX LOGNAME
+        all_configs = self.all_configs
+        logconfig = all_configs['logconfig']
 
-        # General settings
-        genconfig = all_configs['general']
-        if 'debug' in genconfig and genconfig['debug']:
-            self.debug = genconfig['debug']
+        if 'logdir' in logconfig and logconfig['logdir']:
+            self.logdir = logconfig['logdir']
         else:
-            self.debug = False
-        if 'api_server' in genconfig and genconfig['api_server']:
-            self.api_server = genconfig['api_server']
-        else:
-            self.api_server = 'localhost'
-        if 'api_port' in genconfig and genconfig['api_port']:
-            self.api_port = genconfig['api_port']
-        else:
-            self.api_port = '8081'
-        if 'logdir' in genconfig and genconfig['logdir']:
-            self.logdir = genconfig['logdir']
-        else:
-            self.logdir = '/var/log/mothership'
-        if 'audit_log_file' in genconfig and genconfig['audit_log_file']:
-            self.audit_log_file = genconfig['audit_log_file']
-        else:
-            self.audit_log_file = 'mothership_audit.log'
-        if 'log_to_file' in genconfig and genconfig['log_to_file']:
-            self.log_to_file = genconfig['lot_to_file']
+            self.logdir = '/var/log/mothership/'
+            
+        if 'log_to_file' in logconfig and logconfig['log_to_file']:
+            self.log_to_file = logconfig['log_to_file']
         else:
             self.log_to_file = False
-        if 'logfile' in genconfig and genconfig['logfile']:
-            self.logfile = genconfig['logfile']
-        else:
-            self.logfile = 'mothership_cli.log'
-        if 'debug_level' in genconfig and genconfig['debug_level']:
-            self.debug_level = genconfig['debug_level']
+            
+        if 'logfile' in logconfig and logconfig['logfile']:
+            self.logfile = logconfig['logfile']
+            
+        if 'debug_level' in logconfig and logconfig['debug_level']:
+            self.debug_level = logconfig['debug_level']
         else:
             self.debug_level = 'DEBUG'
+
+        if 'audit_log_file' in logconfig and logconfig['audit_log_file']:
+            self.audit_log_file = logconfig['audit_log_file']
+        else:
+            self.audit_log_file = 'mothership_audit.log'
 
     def close_connections(self):
         """
@@ -100,31 +91,38 @@ class ConfigureCli:
                 return file_path
         return ''
 
+class MothershipConfigureCli(MothershipConfigure):
+    def load_config(self):
+        
+        all_configs = self.all_configs
+        
+        genconfig = all_configs['general']
+        ##### TODO ##### THIS IS LEGACY HAS TO BE REMOVED
+        if 'debug' in genconfig and genconfig['debug']:
+            self.debug = genconfig['debug']
+        else:
+            self.debug = False
+        if 'api_server' in genconfig and genconfig['api_server']:
+            self.api_server = genconfig['api_server']
+        else:
+            self.api_server = 'localhost'
+        if 'api_port' in genconfig and genconfig['api_port']:
+            self.api_port = genconfig['api_port']
+        else:
+            self.api_port = '8081'
 
-class Configure:
-    def __init__(self, config_file):
+
+
+class MothershipConfigureDaemon(MothershipConfigure):
+    def load_config(self):
         """
             Takes a config_file name as a parameter and searches through the following
             dirs to load the configuration file:  /etc, CWD
         """
         # module metadata for API module loader
         self.module_metadata = {}
-
-        # Read settings from configuration yaml
-        try:
-            yaml_config = open(self.load_path(config_file)).read()
-            all_configs = yaml.load(yaml_config)
-        except Exception, e:
-            # we discovered this was more annoying than helpful, so we stopped
-            # this is being retained as historical evidence of our folly
-            #sys.stderr.write('No config file found, copying defaults into your home directory')
-            #@srccfgyaml = sys.path[0] + '/mothership.yaml.sample'
-            #dstcfgyaml = os.path.expanduser('~') + '/mothership.yaml'
-            #shutil.copyfile(srccfgyaml, dstcfgyaml)
-            #yaml_config = open(self.load_path(config_file)).read()
-            #all_configs = yaml.load(yaml_config)
-            raise ConfigureError("Config file mothership.yaml not found in path: %s. Error: %s" % (load_paths, e))
-
+        all_configs = self.all_configs
+        
         # Database related settings
         dbconfig = all_configs['db']
         try:
@@ -259,10 +257,6 @@ class Configure:
             self.sudo_nopass = genconfig['sudo_nopass']
         else:
             self.sudo_nopass = True
-        if 'audit_log_file' in genconfig and genconfig['audit_log_file']:
-            self.audit_log_file = genconfig['audit_log_file']
-        else:
-            self.audit_log_file = '/var/log/mothership_audit.log'
 
         # Virtual Machine settings
         vmconfig = all_configs['vm']
@@ -378,39 +372,4 @@ class Configure:
         else:
             self.ldap_default_gid = '401'
 
-        # Logging settings
-        logconfig = all_configs['logconfig']
-        if 'logdir' in logconfig and logconfig['logdir']:
-            self.logdir = logconfig['logdir']
-        else:
-            self.logdir = '/var/log/mothership/'
-        if 'log_to_file' in logconfig and logconfig['log_to_file']:
-            self.log_to_file = logconfig['log_to_file']
-        else:
-            self.log_to_file = 'suca'
-        if 'logfile' in logconfig and logconfig['logfile']:
-            self.logfile = logconfig['logfile']
-        else:
-            self.logfile = 'mothership.log'
-        if 'debug_level' in logconfig and logconfig['debug_level']:
-            self.debug_level = logconfig['debug_level']
-        else:
-            self.debug_level = 'DEBUG'
 
-    def close_connections(self):
-        """
-            Close out connections
-        """
-        self.dbconn.close()
-        self.dbsess.close()
-        self.dbengine.dispose()
-
-    def load_path(self, config_file):
-        """
-            Try to guess where the path is or return empty string
-        """
-        for load_path in load_paths:
-            file_path = os.path.join(load_path, config_file)
-            if os.path.isfile(file_path):
-                return file_path
-        return ''

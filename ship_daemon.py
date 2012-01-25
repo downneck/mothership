@@ -27,7 +27,8 @@ bottle.debug(True)
 httpship = bottle.Bottle()
 
 # suck in our configure object
-cfg = configure.Configure('mothership.yaml')
+cfg = configure.MothershipConfigureDaemon('mothership.yaml')
+cfg.load_config()
 cm = MothershipCommon()
 log = MothershipLogger(cfg)
 
