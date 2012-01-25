@@ -22,6 +22,7 @@ from mothership.mothership_models import *
 class ListValuesError(Exception):
     pass
 
+
 class API_list_values:
 
     def __init__(self, cfg):
@@ -211,10 +212,8 @@ class API_list_values:
                 buf = [item for item in all_hw if not item in alloc_hw]
                 if cfg.debug:
                     print buf
-            except:
-                if cfg.debug:
-                    print "API_list_values/lsv: query failed for available_hardware"
-                raise ListValuesError("API_list_values/lsv: query failed for available_hardware")
+            except Exception, e:
+                raise ListValuesError("API_list_values/lsv: query failed for available_hardware" % e)
 
 
         # return our listing

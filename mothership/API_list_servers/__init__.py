@@ -28,6 +28,7 @@ from sqlalchemy import or_, desc, MetaData
 class ListServersError(Exception):
     pass
 
+
 class API_list_servers:
 
     def __init__(self, cfg):
@@ -163,10 +164,8 @@ class API_list_servers:
             try:
                 for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
                     buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-            except:
-                if cfg.debug:
-                    print "API_list_servers/lss: query failed for ALL servers"
-                raise ListServersError("API_list_servers/lss: query failed for ALL servers")
+            except Exception, e:
+                raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
 
         # list servers by name
         if 'hostname' in query.keys():
@@ -183,10 +182,8 @@ class API_list_servers:
                     filter(Server.hostname.like(search_string)).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: failed query for hostname: %s" % query['hostname']
-                    raise ListServersError("API_list_servers/lss: failed query for hostname: %s" % query['hostname'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: failed query for hostname: %s. Error: %s" % (query['hostname'], e))
 
         # list physical (bare metal, non-virtual) servers
         if 'physical' in query.keys():
@@ -197,10 +194,8 @@ class API_list_servers:
                 filter(Server.virtual==False).\
                 order_by(Server.hostname):
                     buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-            except:
-                if cfg.debug:
-                    print "API_list_servers/lss: failed query for physical servers"
-                raise ListServersError("API_list_servers/lss: failed query for physical servers")
+            except Exception, e:
+                raise ListServersError("API_list_servers/lss: failed query for physical servers. Error: %s" % e)
 
         # list virtual servers
         if 'virtual' in query.keys():
@@ -211,10 +206,8 @@ class API_list_servers:
                     filter(Server.virtual==True).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-            except:
-                if cfg.debug:
-                    print "API_list_servers/lss: failed query for virtual servers"
-                raise ListServersError("API_list_servers/lss: failed query for virtual servers")
+            except Exception, e:
+                raise ListServersError("API_list_servers/lss: failed query for virtual servers. Error: %s" % e)
 
         # list servers by hw_tag
         if 'hw_tag' in query.keys():
@@ -229,10 +222,8 @@ class API_list_servers:
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.hw_tag==query['hw_tag']):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: failed query for hw_tag: %s" % query['hw_tag']
-                    raise ListServersError("API_list_servers/lss: failed query for hw_tag: %s" % query['hw_tag'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: failed query for hw_tag: %s. Exception: %s" % (query['hw_tag'], e))
 
         # list servers by vlan
         if 'vlan' in query.keys():
@@ -250,10 +241,8 @@ class API_list_servers:
                     filter(Server.id==Network.server_id).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: failed query for vlan: %s" % query['vlan']
-                    raise ListServersError("API_list_servers/lss: failed query for vlan: %s" % query['vlan'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: failed query for vlan: %s. Error: %s" % (query['vlan'], e))
 
         # list servers by site_id
         if 'site_id' in query.keys():
@@ -269,10 +258,8 @@ class API_list_servers:
                     filter(Server.site_id==query['site_id']).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: failed query for site_id: %s" % query['vlan']
-                    raise ListServersError("API_list_servers/lss: failed query for site_id: %s" % query['vlan'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: failed query for site_id: %s. Error: %s" % (query['vlan'], e))
 
         # list servers by tag
         if 'tag' in query.keys():
@@ -305,10 +292,8 @@ class API_list_servers:
                             buf.append(serv)
                     else:
                         pass
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: failed query for tag: %s" % query['tag']
-                    raise ListServersError("API_list_servers/lss: failed query for tag: %s" % query['tag'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: failed query for tag: %s. Error: %s" % (query['tag'], e))
 
         # list servers by realm
         if 'realm' in query.keys():
@@ -324,10 +309,8 @@ class API_list_servers:
                     filter(Server.realm==query['realm']).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: failed query for realm: %s" % query['realm']
-                    raise ListServersError("API_list_servers/lss: failed query for realm: %s" % query['realm'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: failed query for realm: %s. Error: %s" % (query['realm'], e))
 
         # list servers by manufacturer
         if 'manufacturer' in query.keys():
@@ -345,10 +328,8 @@ class API_list_servers:
                     filter(Server.hw_tag==Hardware.hw_tag).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: failed query for manufacturer: %s" % query['manufacturer']
-                    raise ListServersError("API_list_servers/lss: failed query for manufacturer: %s" % query['manufacturer'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: failed query for manufacturer: %s. Error: %s" % (query['manufacturer'], e))
 
         # list servers by model name
         if 'model' in query.keys():
@@ -366,10 +347,8 @@ class API_list_servers:
                     filter(Server.hw_tag==Hardware.hw_tag).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: failed query for model: %s" % query['model']
-                    raise ListServersError("API_list_servers/lss: failed query for model: %s" % query['model'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: failed query for model: %s. Error: %s" % (query['model'], e))
 
         # list servers by cores
         if 'cores' in query.keys():
@@ -385,10 +364,8 @@ class API_list_servers:
                     filter(Server.cores==query['cores']).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: query failed for number of cores: %s" % query['cores']
-                    raise ListServersError("API_list_servers/lss: query failed for number of cores: %s" % query['cores'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: query failed for number of cores: %s. Error: %s" % (query['cores'], e))
 
         # list servers by ram
         if 'ram' in query.keys():
@@ -404,10 +381,8 @@ class API_list_servers:
                     filter(Server.ram==query['ram']).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: query failed for ram size in GB: %s" % query['ram']
-                    raise ListServersError("API_list_servers/lss: query failed for ram size in GB: %s" % query['ram'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: query failed for ram size in GB: %s. Error: %s" % (query['ram'], e))
 
         # list servers by disk
         if 'disk' in query.keys():
@@ -423,10 +398,8 @@ class API_list_servers:
                     filter(Server.disk==query['disk']).\
                     order_by(Server.hostname):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except:
-                    if cfg.debug:
-                        print "API_list_servers/lss: query failed for disk size in GB: %s" % query['disk']
-                    raise ListServersError("API_list_servers/lss: query failed for disk size in GB: %s" % query['disk'])
+                except Exception, e:
+                    raise ListServersError("API_list_servers/lss: query failed for disk size in GB: %s. Error: %s" % (query['disk'], e))
 
 
         # return the list of servers we've found
