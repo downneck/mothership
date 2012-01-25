@@ -25,14 +25,22 @@ general:
   # Set this to True to enable debugging output
   debug: False
 
-  # Set this to the location of your api server, default: localhost
+  # Set this to the location of your api server (usually it's localhost)
   api_server: 'localhost'
 
-  # Set this to the port of your api server, default: 8081
-  api_port: '8081'
-
+# log config options
+logconfig:
   # log directory, default is /var/log/mothership
   logdir: '/var/log/mothership'
+
+  # logfile to write our main log to. defaults to mothership.log
+  logfile: 'mothership_cli.log'
+
+  # wtf is this? i have no idea...because riccardo
+  to_file: True
+
+  # debug_level? wtf is that?
+  log_level: "DEBUG"
 
   # audit log filename, default is mothership_audit.log
   audit_log_file: 'mothership_audit.log'
