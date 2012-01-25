@@ -114,7 +114,7 @@ class Configure:
         try:
             yaml_config = open(self.load_path(config_file)).read()
             all_configs = yaml.load(yaml_config)
-        except:
+        except Exception, e:
             # we discovered this was more annoying than helpful, so we stopped
             # this is being retained as historical evidence of our folly
             #sys.stderr.write('No config file found, copying defaults into your home directory')
@@ -123,7 +123,7 @@ class Configure:
             #shutil.copyfile(srccfgyaml, dstcfgyaml)
             #yaml_config = open(self.load_path(config_file)).read()
             #all_configs = yaml.load(yaml_config)
-            raise ConfigureError("Config file mothership.yaml not found in path: %s" % load_paths)
+            raise ConfigureError("Config file mothership.yaml not found in path: %s. Error: %s" % (load_paths, e))
 
         # Database related settings
         dbconfig = all_configs['db']
@@ -147,9 +147,8 @@ class Configure:
             self.dbengine = engine
             self.dbsess = dbsession
             self.dbnull = sqlalchemy.sql.expression.null()
-        except:
-            print "dbtuple: %s\nengine: %s" % (dbtuple, engine)
-            raise ConfigureError('Database configuration error')
+        except Exception, e:
+            raise ConfigureError("Database configuration error. dbtuple: %s, engine: %s. Error: %s" % (dbtuple, engine, e))
 
         # Cobbler related settings
         cobconfig = all_configs['cobbler']
@@ -161,8 +160,8 @@ class Configure:
             try:
                 self.remote = xmlrpclib.Server('http://%s/cobbler_api' % cobconfig['host'])
                 self.token = self.remote.login(cobconfig['user'], cobconfig['pass'])
-            except:
-                sys.stderr.write('Cobbler configuration error.  Check cobbler API server')
+            except Exception, e:
+                sys.stderr.write("Cobbler configuration error.  Check cobbler API server. Error: %s" % e)
         else:
             self.cobremote = 'API: set remote = xmlrpclib.Server(\'http://server/cobbler_api\')'
             self.cobtoken = 'API: set token = remote.login(user, pass)'

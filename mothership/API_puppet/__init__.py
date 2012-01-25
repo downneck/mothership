@@ -25,6 +25,7 @@ from mothership.mothership_models import *
 class PuppetError(Exception):
     pass
 
+
 class API_puppet:
 
     def __init__(self, cfg):
