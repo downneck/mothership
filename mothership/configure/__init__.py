@@ -385,10 +385,10 @@ class Configure:
             self.logdir = logconfig['logdir']
         else:
             self.logdir = '/var/log/mothership/'
-        if 'to_file' in logconfig and logconfig['to_file']:
-            self.to_file = logconfig['to_file']
+        if 'log_to_file' in logconfig and logconfig['log_to_file']:
+            self.log_to_file = logconfig['log_to_file']
         else:
-            self.to_file = False
+            self.log_to_file = 'suca'
         if 'logfile' in logconfig and logconfig['logfile']:
             self.logfile = logconfig['logfile']
         else:

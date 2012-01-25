@@ -29,7 +29,7 @@ class MothershipLogger(object):
         logger = logging.getLogger()
         logger.setLevel(cfg.debug_level)
 
-    def change_log_level(self, logger='root', level):
+    def change_log_level(self, level, logger='root'):
         """
         Change the logger level on the fly. Usually you want do that for replace
         the log level defined in the config file.
