@@ -12,7 +12,7 @@ from socket import gethostname
 
 # mothership imports
 from mothership import configure
-from mothership.common import * 
+from mothership.common import *
 
 # for >=2.6 use json, >2.6 use simplejson
 try:
@@ -20,7 +20,6 @@ try:
 except ImportError:
     import simplejson as myjson
 
-#### cfg.debugGING ####
 bottle.debug(True)
 
 # instantiate a bottle
@@ -78,17 +77,11 @@ def load_modules():
                 mod = __import__("mothership."+i)
                 log.debug("import complete")
                 foo = getattr(mod, i)
-                log.debug(foo)
                 bar = getattr(foo, i)
-                if cfg.debug:
-                    log.debug(bar)
                 inst = bar(cfg)
-                if cfg.debug:
-                    log.debug(inst)
                 cfg.module_metadata[i] = inst
             except Exception, e:
-                if cfg.debug:
-                    log.debug("import error: %s" % e)
+                log.debug("import error: %s" % e)
         jbuf['data'] = "reloaded modules:"
         for k in cfg.module_metadata.keys():
             jbuf['data'] += " %s" % cfg.module_metadata[k].namespace
