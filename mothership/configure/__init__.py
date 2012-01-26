@@ -49,7 +49,7 @@ class MothershipConfigure(object):
         except Exception, e:
             raise ConfigureError("Error loading config file: %s\nConfig search paths: %s\nError: %s" % (config_file, load_paths, e))
 
-        # Logging settings TODO FIX LOGNAME
+        # Logging settings
         all_configs = self.all_configs
         logconfig = all_configs['logconfig']
         # log directory, default is /var/log/mothership
@@ -57,7 +57,7 @@ class MothershipConfigure(object):
             self.logdir = logconfig['logdir']
         else:
             self.logdir = '/var/log/mothership/'
-        # do we log to a file or stdout? true = file, false = stdout
+        # do we log to a file or stdout? true = file+stdout, false = stdout
         # default is False
         if 'log_to_file' in logconfig and logconfig['log_to_file']:
             self.log_to_file = logconfig['log_to_file']
@@ -109,12 +109,6 @@ class MothershipConfigureCli(MothershipConfigure):
         all_configs = self.all_configs
 
         genconfig = all_configs['general']
-        ##### TODO ##### THIS IS LEGACY HAS TO BE REMOVED
-        if 'debug' in genconfig and genconfig['debug']:
-            self.debug = genconfig['debug']
-        else:
-            self.debug = False
-        ##### /TODO #####
         # api server hostname, used to tell the command line where to
         # send REST requests. default is "localhost"
         if 'api_server' in genconfig and genconfig['api_server']:
@@ -262,12 +256,6 @@ class MothershipConfigureDaemon(MothershipConfigure):
 
         # General settings
         genconfig = all_configs['general']
-        ##### TODO ##### THIS IS LEGACY HAS TO BE REMOVED
-        if 'debug' in genconfig and genconfig['debug']:
-            self.debug = genconfig['debug']
-        else:
-            self.debug = False
-        ##### /TODO #####
         # our domain, default is "localhost.localdomain"
         if 'domain' in genconfig and genconfig['domain']:
             self.domain = genconfig['domain']

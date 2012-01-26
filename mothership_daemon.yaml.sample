@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 # General config options
 general:
  
@@ -21,9 +22,6 @@ general:
   # ex: ns1.qa.sfo.localhost.localdomain
   # a fqun in mothership is: username.realm.site_id.domain.tld
   # ex: dkovach.prod.area51.mywebsite.com
-
-  # Set this to True to enable debugging output
-  debug: False
 
   # the domain portion of the fqn
   domain: 'localhost.localdomain'
