@@ -144,6 +144,9 @@ class MothershipConfigureDaemon(MothershipConfigure):
             # PostgreSQL
             if dbconfig['engine'] == 'postgresql':
                 dbtuple = (dbconfig['user'], dbconfig['hostname'], dbconfig['dbname'])
+                engine = sqlalchemy.create_engine("postgresql://%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
+            elif dbconfig['engine'] == 'postgres':
+                dbtuple = (dbconfig['user'], dbconfig['hostname'], dbconfig['dbname'])
                 engine = sqlalchemy.create_engine("postgres://%s@%s/%s" % dbtuple, echo=dbconfig['echo'])
             # MySql
             elif dbconfig['engine'] == 'mysql':

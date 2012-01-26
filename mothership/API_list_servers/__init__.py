@@ -21,6 +21,7 @@
 import sys
 
 import mothership
+import mothership.common
 import mothership.API_kv
 from mothership.mothership_models import *
 
@@ -35,7 +36,7 @@ class API_list_servers:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.log = MothershipLogger(self.cfg)
+        self.log = mothership.common.MothershipLogger(self.cfg)
         kvobj = mothership.API_kv.API_kv(cfg)
         self.version = 1
         self.namespace = 'API_list_servers'

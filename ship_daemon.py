@@ -29,11 +29,16 @@ httpship = bottle.Bottle()
 cfg = configure.MothershipConfigureDaemon('mothership_daemon.yaml')
 cfg.load_config()
 cm = MothershipCommon()
-log = MothershipLogger(cfg)
 
 # generic mothership exception type
 class ShipDaemonError(Exception):
     pass
+
+# set up our logging
+try:
+    log = MothershipLogger(cfg)
+except Exception, e:
+    raise ShipDaemonError(e)
 
 # create a json-able dict of important info
 def __generate_json_header():

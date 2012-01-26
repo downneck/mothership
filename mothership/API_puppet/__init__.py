@@ -20,6 +20,7 @@ module controlling various puppet interactions
 import mothership
 import mothership.API_kv
 import mothership.users
+import mothership.common
 from mothership.mothership_models import *
 
 class PuppetError(Exception):
@@ -30,7 +31,7 @@ class API_puppet:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.log = MothershipLogger(self.cfg)
+        self.log = mothership.common.MothershipLogger(self.cfg)
         self.kvobj = mothership.API_kv.API_kv(cfg)
         self.version = 1
         self.namespace = 'API_puppet'

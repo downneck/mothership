@@ -25,7 +25,7 @@ class MothershipLogger(object):
             logging.basicConfig(filename=cfg.logdir+'/'+cfg.logfile,level=logging.DEBUG)
         else:
             logging.basicConfig(level=logging.DEBUG)
-        # set the default log level 
+        # set the default log level
         logger = logging.getLogger()
         logger.setLevel(cfg.log_level)
 
@@ -37,7 +37,7 @@ class MothershipLogger(object):
         logger = logging.getLogger(logger)
         logger.setLevel(level)
 
-    
+
     # Wrapper helper functions around the logger class
     def debug(self,message):
         logging.debug(message)

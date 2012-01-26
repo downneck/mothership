@@ -18,6 +18,7 @@
 # imports
 from sqlalchemy import or_, desc, MetaData
 from mothership.mothership_models import *
+import mothership.common
 
 class ListValuesError(Exception):
     pass
@@ -27,7 +28,7 @@ class API_list_values:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.log = MothershipLogger(self.cfg)
+        self.log = mothership.common.MothershipLogger(self.cfg)
         self.version = 1
         self.namespace = 'API_list_values'
         self.metadata = {

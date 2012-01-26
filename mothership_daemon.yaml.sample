@@ -62,6 +62,8 @@ general:
 db:
 
   # db engine, currently mysql and postgresql are supported
+  # for older versions of sqlalchemy, you may need to set this
+  # to "postgres" instead of "postgresql"
   engine: 'postgresql'
 
   # username to access the db
