@@ -24,33 +24,26 @@ import sys
 import time
 import socket
 import XenAPI
-import mothership
 from pprint import pprint
 
 class XenServerAPI:
-    def __init__(self, cfg, host, user, passwd):
-        unqdn = '.'.join(mothership.get_unqdn(cfg, host))
-        #print 'Original: %s' % unqdn
-        self.session = XenAPI.Session('https://%s:443' % unqdn)
+    def __init__(self, host, user, passwd):
+        self.session = XenAPI.Session('https://%s:443' % host)
         try:
             self.session.xenapi.login_with_password(user, passwd)
         except XenAPI.Failure, e:
             # If slave host from pool chosed, contact master
             exec 'err=%s' % str(e)
-            #print 'Error: %s' % err[1]
             self.session = XenAPI.Session('https://%s:443' % err[1])
             self.session.xenapi.login_with_password(user, passwd)
         except socket.error, e:
             try:
-                # Try specified host if unqdn fails
-                #print 'Host: %s' % host
-                self.session = XenAPI.Session('https://%s:443' % host)
+                # Try unqdn if connection refused
+                self.session = XenAPI.Session('https://%s:443' % host.split('.')[0])
                 self.session.xenapi.login_with_password(user, passwd)
             except socket.error, e:
                 # Try mgmt if connection refused
-                #print 'Mgmt: %s' % unqdn.replace('prod','mgmt')
-                self.session = XenAPI.Session('https://%s:443' % \
-                    unqdn.replace('prod','mgmt'))
+                self.session = XenAPI.Session('https://%s.mgmt:443' % host.split('.')[0])
                 self.session.xenapi.login_with_password(user, passwd)
         except Exception, e:
             print str(e)
@@ -179,7 +172,7 @@ class XenServerAPI:
             self.get_license_expiration()
         for h in self.specs.keys():
             if h == 'off': continue
-            if self.specs[h]['name'] == host.split('.')[0]:
+            if self.specs[h]['name'] == host:
                 print 'License for %s expires in %s day(s)' % (
                     host, self.specs[h]['expires'])
                 return
@@ -195,9 +188,6 @@ class XenServerAPI:
         ref, host = self.choose_storage(info['disk'])
         if not host:
             host = info['power_switch']
-        if '.' not in host:
-            # make sure unqdn is returned
-            host = '%s.%s.%s' % (host, info['realm'], info['site_id'])
         return host, ref
 
     def choose_storage(self, need=None):
@@ -350,7 +340,6 @@ class XenServerAPI:
     def delete_vm(self, info, opts):
         if 'server' in info.keys():
             info = info['server'][0]
-        print info
         if not opts.force:
             ans = raw_input('Are you sure you wish to delete %s (y/N)? ' \
                 % info['hostname'])
@@ -409,19 +398,11 @@ class XenServerAPI:
         return self.session.xenapi.VDI.create(data)
 
     def create_vm(self, info):
-        #for i in info['network']:
-        #    if i['interface'] == 'eth0':
-        #        net = i
         mem = str(self.byte_unit(info['server'][0]['ram'], 2))
         data = { 'HVM_boot_params': {}, 'HVM_boot_policy': '',
             'HVM_shadow_multiplier': 1.0, 'PCI_bus': '',
-            # For DHCP omit the ip/netmask/gateway and use default:
             'PV_args': 'ks=%s/%s ksdevice=eth0 noipv6 utf8' % (
                 info['kick']['ks'], info['server'][0]['hostname']),
-            # Use static ip/netmask instead of DHCP
-            #'PV_args': 'ks=%s/%s ksdevice=eth0 noipv6 utf8 ip=%s netmask=%s' \
-            #    % (info['kick']['ks'], info['server'][0]['hostname'],
-            #    net['ip'], net['netmask']),
             'PV_bootloader': 'eliloader', 'PV_bootloader_args': '',
             'PV_kernel': '', 'PV_legacy_args': '', 'PV_ramdisk': '',
             'VCPUs_params': {}, 'VCPUs_at_startup': '1',
