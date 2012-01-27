@@ -42,6 +42,9 @@ ROUTERS = { 'MessagingRouter': 'messaging',
             'MibRouter': 'mib',
             'ZenPackRouter': 'zenpack' }
 
+class ZenossError(Exception):
+    pass
+
 class ZenossAPI:
     def __init__(self, auth, debug=False):
         """
@@ -70,7 +73,7 @@ class ZenossAPI:
 
     def _router_request(self, router, method, data=[]):
         if router not in ROUTERS:
-            raise Exception('Router "' + router + '" not available.')
+            raise ZenossError('Router "' + router + '" not available.')
 
         # Contruct a standard URL request for API calls
         req = urllib2.Request('http://' + self.auth['host'] + ':8080/zport/dmd/' +
@@ -117,7 +120,7 @@ class ZenossAPI:
 
     def create_event_on_device(self, device, severity, summary):
         if severity not in ('Critical', 'Error', 'Warning', 'Info', 'Debug', 'Clear'):
-            raise Exception('Severity "' + severity +'" is not valid.')
+            raise ZenossError('Severity "' + severity +'" is not valid.')
 
         data = dict(device=device, summary=summary, severity=severity,
                     component='', evclasskey='', evclass='')

@@ -75,7 +75,7 @@ def write_key_to_file(cfg, pubkey_string, keyfile):
         keyfile: the filesystem path to the ssh2 public key file
 
     [return value]
-    returns True if success, raises an error otherwise 
+    no explicit return
     """
     pubkey_array = pubkey_string.split('\n')
 
@@ -106,4 +106,3 @@ def write_key_to_file(cfg, pubkey_string, keyfile):
         raise SSHError("Unable to open keyfile")
     f.write(pubkey_string)
     f.close()
-    return true

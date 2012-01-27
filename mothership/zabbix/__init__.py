@@ -52,7 +52,7 @@ def add(cfg, unqdn, zs_unqdn, zabbix_template):
       return
     else:
       # Import Zabbix API
-      from third_party.zabbix_api2 import ZabbixAPI, ZabbixAPIException
+      from zabbix_api2 import ZabbixAPI, ZabbixAPIException
 
     # stitch together some info about our host
     host,realm,site_id = mothership.split_fqdn(unqdn)

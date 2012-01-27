@@ -19,15 +19,12 @@ it does nothing interesting on its own and should
 be paired with a system-level user management system
 such as LDAP or /etc/passwd
 """
-# i take full responsibility for this mess -dk
-# 12/30/2010 - final pre-merge commit - dk
-# did i say final? LOL -dk
 
+# system imports
+import ldap
 
-# imports
+# mothership imports
 import mothership
-import mothership.common
-import mothership.API_kv
 import mothership.ssh
 import mothership.ldap
 
@@ -61,10 +58,13 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
     [return value]
     nothing explicitly returned
     """
+
+
     # validate/construct/get the realm.site_id.domain data
     fqun = mothership.validate.v_get_fqn(cfg, name=username)
     username, realm, site_id, domain = mothership.validate.v_split_fqn(fqun)
     fqn = realm+'.'+site_id+'.'+domain
+    fqun = username+'.'+fqn
 
     if get_uid(cfg, username=fqun):
         raise UsersError("User exists, exiting!")
@@ -209,7 +209,7 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
                 print "adding \"%s\" to LDAP" % fqun
                 mothership.ldap.uadd(cfg, username=fqun)
                 for i in cfg.default_groups:
-                    print "updating \"%s\" in LDAP" % i+'.'+realm+'.'+site_id
+                    print "updating \"%s\" in LDAP" % (i+'.'+realm+'.'+site_id)
                     mothership.ldap.gupdate(cfg, groupname=i+'.'+realm+'.'+site_id)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
@@ -274,7 +274,8 @@ def uclone(cfg, username, newfqn):
     filter(UserGroupMapping.users_id==u.id):
         group = cfg.dbsess.query(Groups).\
         filter(Groups.id==g.groups_id).first()
-        grouplist.append(group.groupname)
+        if g not in cfg.default_groups:
+            grouplist.append(group.groupname)
 
         ng = None
         ng = cfg.dbsess.query(Groups).\
@@ -303,24 +304,31 @@ def uclone(cfg, username, newfqn):
 
     # update ldap data
     ldap_master = mothership.ldap.get_master(cfg, newu.realm+'.'+newu.site_id)
-    if cfg.ldap_active and ldap_master:
+    dn = "uid=%s,ou=%s,dc=%s,dc=%s,dc=" % (newu.username, cfg.ldap_users_ou, newu.realm, newu.site_id)
+    d = cfg.domain.split('.')
+    dn += ',dc='.join(d)
+    ldcon = mothership.ldap.ld_connect(cfg, ldap_master, newu.realm, newu.site_id)
+    ldap_user_entry = ldcon.search_s(dn, ldap.SCOPE_BASE)
+    if cfg.ldap_active and ldap_master and not ldap_user_entry:
         ans = raw_input('Do you want to add this user to LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
-                print "adding \"%s\" to LDAP" % fqun
-                mothership.ldap.uadd(cfg, username=newu.username+'.'+newfqun)
+                print "adding user \"%s\" in LDAP" % (newu.username+'.'+newfqn)
+                mothership.ldap.uadd(cfg, username=newu.username+'.'+newfqn)
                 for i in newgrouplist:
-                    print "updating \"%s\" in LDAP" % i+'.'+newu.realm+'.'+newu.site_id
+                    print "updating group \"%s\" in LDAP" % (i+'.'+newu.realm+'.'+newu.site_id)
                     mothership.ldap.gupdate(cfg, groupname=i+'.'+realm+'.'+site_id)
             except mothership.ldap.LDAPError, e:
-                print 'mothership encountered an error, skipping LDAP update'
-                print "Error: %s" % e            
+                print 'mothership encountered an error, skipping LDAP user update'
+                print "Error: %s" % e
         else:
-            print "LDAP update aborted by user input, skipping." 
+            print "LDAP update aborted by user input, skipping LDAP user update"
     elif not cfg.ldap_active:
-        print "LDAP not active, skipping"
+        print "LDAP not active, skipping LDAP user update"
+    elif ldap_user_entry:
+        mothership.ldap.uupdate(cfg, newu.username+'.'+newfqn) 
     else:
-        print "No LDAP master found for %s.%s, skipping" % (newu.realm, newu.site_id)
+        print "No LDAP master found for %s.%s, skipping LDAP user update" % (newu.realm, newu.site_id)
 
     # return the new user object
     return newu
@@ -498,9 +506,9 @@ def uremove(cfg, username):
                     mothership.ldap.uremove(cfg, username=u.username+'.'+u.realm+'.'+u.site_id)
                 except mothership.ldap.LDAPError, e:
                     print 'mothership encountered an error, skipping LDAP update'
-                    print "Error: %s" % e            
+                    print "Error: %s" % e
             else:
-                print "LDAP update aborted by user input, skipping." 
+                print "LDAP update aborted by user input, skipping."
         elif not cfg.ldap_active:
             print "LDAP not active, skipping"
         else:
@@ -561,7 +569,7 @@ def udeactivate(cfg, username):
         cfg.dbsess.add(u)
         cfg.dbsess.commit()
         # if we're running ldap, remove the user from ldap
-        ldap_master = mothership.ldap.get_master(cfg, fqn)
+        ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
         if cfg.ldap_active and ldap_master:
             ans = raw_input('Do you want to remove this user from LDAP as well? (y/n): ')
             if ans == 'y' or ans == 'Y':
@@ -573,9 +581,9 @@ def udeactivate(cfg, username):
                     mothership.ldap.uremove(cfg, username=fqun)
                 except mothership.ldap.LDAPError, e:
                     print 'mothership encountered an error, skipping LDAP update'
-                    print "Error: %s" % e            
+                    print "Error: %s" % e
             else:
-                print "LDAP update aborted by user input, skipping." 
+                print "LDAP update aborted by user input, skipping."
         elif not cfg.ldap_active:
             print "LDAP not active, skipping"
         else:
@@ -621,7 +629,7 @@ def uactivate(cfg, username):
         cfg.dbsess.add(u)
         cfg.dbsess.commit()
         # if we're running ldap, remove the user from ldap
-        ldap_master = mothership.ldap.get_master(cfg, fqn)
+        ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
         if cfg.ldap_active and ldap_master:
             print "Activating user to LDAP..."
             print "Adding \"%s\" user entry from LDAP" % username
@@ -632,7 +640,7 @@ def uactivate(cfg, username):
                     mothership.ldap.gupdate(cfg, groupname+"."+fqn)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
-                print "Error: %s" % e            
+                print "Error: %s" % e
         elif not cfg.ldap_active:
             print "LDAP not active, skipping"
         else:
@@ -733,13 +741,13 @@ def umodify(cfg, username, first_name=None, last_name=None, keyfile=None, uid=No
         ans = raw_input('Do you want to update this user in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
-                print "updating \"%s\" in LDAP" % u.username+'.'+u.realm+'.'+u.site_id
+                print "updating \"%s\" in LDAP" % (u.username+'.'+u.realm+'.'+u.site_id)
                 mothership.ldap.uupdate(cfg, username=u.username+'.'+u.realm+'.'+u.site_id)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
-                print "Error: %s" % e            
+                print "Error: %s" % e
         else:
-            print "LDAP update aborted by user input, skipping." 
+            print "LDAP update aborted by user input, skipping."
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
@@ -759,6 +767,7 @@ def utog(cfg, username, groupname):
     [return value]
     no explicit return
     """
+    skip_ldap = False
     u = mothership.validate.v_get_user_obj(cfg, username)
     if not u:
         raise UsersError("user \"%s\" not found" % username)
@@ -770,7 +779,7 @@ def utog(cfg, username, groupname):
         raise UsersError("group \"%s\" not found" % groupname)
 
     if get_utog_map(cfg, username=u.username+'.'+fqn, groupname=g.groupname):
-        raise UsersError("user \"%s\" is already in group \"%s\", aborting!" % (username, groupname))
+        skip_ldap = "user \"%s\" is already in group \"%s\", skipping!" % (username, groupname)
     else:
         # create a new map object
         newmap = UserGroupMapping(g.id, u.id)
@@ -779,12 +788,12 @@ def utog(cfg, username, groupname):
         cfg.dbsess.add(newmap)
         cfg.dbsess.commit()
     # update ldap data
-    ldap_master = mothership.ldap.get_master(cfg, fqn)
-    if cfg.ldap_active and ldap_master:
+    ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
+    if cfg.ldap_active and ldap_master and not skip_ldap:
         ans = raw_input('Do you want to update this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
-                print "updating \"%s\" in LDAP" % g.groupname+'.'+fqn
+                print "updating \"%s\" in LDAP" % (g.groupname+'.'+fqn)
                 mothership.ldap.gupdate(cfg, groupname=g.groupname+'.'+fqn)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
@@ -793,6 +802,8 @@ def utog(cfg, username, groupname):
             print "LDAP update aborted by user input, skipping."
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
+    elif skip_ldap:
+        print skip_ldap 
     else:
         print "No LDAP master found for %s.%s, skipping" % (g.realm, g.site_id)
 
@@ -837,12 +848,12 @@ def urmg(cfg, username, groupname):
     else:
         raise UsersError("user \"%s\" not found in group \"%s\" for %s.%s" % (u.username, g.groupname, u.realm, u.site_id))
     # update ldap data
-    ldap_master = mothership.ldap.get_master(cfg, fqn)
+    ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
     if cfg.ldap_active and ldap_master:
         ans = raw_input('Do you want to update this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
-                print "updating \"%s\" in LDAP" % g.groupname+'.'+fqn
+                print "updating \"%s\" in LDAP" % (g.groupname+'.'+fqn)
                 mothership.ldap.gupdate(cfg, groupname=g.groupname+'.'+fqn)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
@@ -939,6 +950,7 @@ def gadd(cfg, groupname, gid=None, description=None, sudo_cmds=None):
     fqgn = mothership.validate.v_get_fqn(cfg, name=groupname)
     groupname, realm, site_id, domain = mothership.validate.v_split_fqn(fqgn)
     fqn = realm+'.'+site_id
+    fqgn = groupname+'.'+fqn
 
     if not description:
         description = "No description given"
@@ -971,12 +983,12 @@ def gadd(cfg, groupname, gid=None, description=None, sudo_cmds=None):
     print 'group "%s" added successfully\n' % groupname
     gdisplay(cfg, groupname=fqgn)
     # update ldap data
-    ldap_master = mothership.ldap.get_master(cfg, fqn)
+    ldap_master = mothership.ldap.get_master(cfg, g.realm+'.'+g.site_id)
     if cfg.ldap_active and ldap_master:
         ans = raw_input('Do you want to add this group to LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
-                print "adding \"%s\" to LDAP" % g.groupname+'.'+fqn
+                print "adding \"%s\" to LDAP" % (g.groupname+'.'+fqn)
                 mothership.ldap.gadd(cfg, groupname=g.groupname+'.'+fqn)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
@@ -1035,12 +1047,12 @@ def gremove(cfg, groupname):
             raise UsersError("group \"%s\" delete aborted, restoring users: %s" % (groupname, ' '.join(userlist)))
         else:
             # update ldap data
-            ldap_master = mothership.ldap.get_master(cfg, fqn)
+            ldap_master = mothership.ldap.get_master(cfg, g.realm+'.'+g.site_id)
             if cfg.ldap_active and ldap_master:
                 ans = raw_input('Do you want to remove this group from LDAP as well? (y/n): ')
                 if ans == 'y' or ans == 'Y':
                     try:
-                        print "removing \"%s\" from LDAP" % g.groupname+'.'+fqn
+                        print "removing \"%s\" from LDAP" % (g.groupname+'.'+fqn)
                         mothership.ldap.gremove(cfg, groupname=g.groupname+'.'+fqn)
                     except mothership.ldap.LDAPError, e:
                         print 'mothership encountered an error, skipping LDAP update'
@@ -1062,12 +1074,12 @@ def gremove(cfg, groupname):
             raise UsersError('group delete aborted!')
         else:
             # update ldap data
-            ldap_master = mothership.ldap.get_master(cfg, fqn)
+            ldap_master = mothership.ldap.get_master(cfg, g.realm+'.'+g.site_id)
             if cfg.ldap_active and ldap_master:
                 ans = raw_input('Do you want to remove this group from LDAP as well? (y/n): ')
                 if ans == 'y' or ans == 'Y':
                     try:
-                        print "removing \"%s\" from LDAP" % g.groupname+'.'+fqn
+                        print "removing \"%s\" from LDAP" % (g.groupname+'.'+fqn)
                         mothership.ldap.gremove(cfg, groupname=g.groupname+'.'+fqn)
                     except mothership.ldap.LDAPError, e:
                         print 'mothership encountered an error, skipping LDAP update'
@@ -1164,10 +1176,11 @@ def gclone(cfg, groupname, newfqn):
     # if there are users in the source group, find out if we should
     # copy them to the target group.
     if userlist:
-        print "the source group has users in it, should we copy the list?"
+        print "the source group \"%s\" has users in it, should we copy the list?" % (g.groupname+'.'+g.realm+'.'+g.site_id)
         print "YES: all users that exist in the target fqn will be copied"
         print "NO: no users will be copied"
-        print "nonexistent users will be ignored in either case"
+        print "nonexistent users will be cloned"
+        print "user list to be copied is: %s" % userlist
         ans = raw_input("copy user list? (y/n): ")
         if ans == 'Y' or ans == 'y':
             newuserlist = []
@@ -1179,21 +1192,42 @@ def gclone(cfg, groupname, newfqn):
                 if newu:
                     newuserlist.append(newu.username)
                 else:
-                    print "\"%s\" not found in \"%s.%s\", skipping" % (user, newrealm, newsite_id)
+                    try:
+                         uclone(cfg, user, newrealm+'.'+newsite_id)
+                    except:
+                        print "Clone failed! Help!"
+                        raise UsersError("Error: %s" % e)
         else:
             print "no users will be copied"
     # update ldap data
-    if cfg.ldap_active:
+    ldap_master = mothership.ldap.get_master(cfg, newu.realm+'.'+newu.site_id)
+    dn = "uid=%s,ou=%s,dc=%s,dc=%s,dc=" % (newg.groupname, cfg.ldap_groups_ou, newg.realm, newg.site_id)
+    d = cfg.domain.split('.')
+    dn += ',dc='.join(d)
+    ldcon = mothership.ldap.ld_connect(cfg, ldap_master, newg.realm, newg.site_id)
+    try:
+        ldap_group_entry = ldcon.search_s(dn, ldap.SCOPE_BASE)
+    except:
+        ldap_group_entry = None
+    if cfg.ldap_active and ldap_master and not ldap_group_entry:
         ans = raw_input('Do you want to add this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
-                print "adding \"%s\" to LDAP" % newg.groupname+newfqn
-                mothership.ldap.gadd(cfg, groupname=newg.groupname+newfqn)
+                print "adding \"%s\" to LDAP" % (newg.groupname+'.'+newfqn)
+                mothership.ldap.gadd(cfg, groupname=newg.groupname+'.'+newfqn)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
                 print "Error: %s" % e
+                print ldap_group_entry
         else:
-            print "LDAP update aborted by user input, skipping."
+            print "LDAP update aborted by user input, skipping LDAP group update"
+    elif not cfg.ldap_active:
+        print "LDAP not active, skipping LDAP group update"
+    elif ldap_group_entry:
+        mothership.ldap.gupdate(cfg, newg.groupname+'.'+newfqn)
+    else:
+        print "No LDAP master found for %s.%s, skipping LDAP group update" % (newg.realm, newg.site_id)
+
 
     # return the new group object
     return newg
@@ -1259,7 +1293,7 @@ def gmodify(cfg, groupname, gid=None, description=None, sudo_cmds=None):
         ans = raw_input('Do you want to update this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
-                print "updating \"%s\" in LDAP" % g.groupname+'.'+g.realm+'.'+g.site_id
+                print "updating \"%s\" in LDAP" % (g.groupname+'.'+g.realm+'.'+g.site_id)
                 mothership.ldap.gupdate(cfg, groupname=g.groupname+'.'+g.realm+'.'+g.site_id)
             except mothership.ldap.LDAPError, e:
                 print 'mothership encountered an error, skipping LDAP update'
@@ -1394,7 +1428,7 @@ def gen_sudoers_groups(cfg, unqdn):
     [return value]
     no configured return (standard success/fail)
     """
-    kvobj = mothership.API_kv.API_kv(cfg)
+
     # get the server entry
     s = mothership.validate.v_get_host_obj(cfg, unqdn)
     if s:
@@ -1403,14 +1437,12 @@ def gen_sudoers_groups(cfg, unqdn):
     else:
         raise UsersError("Host does not exist: %s" % unqdn)
 
-    kquery = {'unqdn': fqdn}
-    kquery['key'] = 'tag'
-    kvs = kvobj.collect(kquery)
+    kvs = mothership.kv.collect(cfg, fqdn, key='tag')
     groups = []
 
     # get sudo groups for all tags in kv
     for kv in kvs:
-        unqgn = kv['value']+'_sudo.'+s.realm+'.'+s.site_id
+        unqgn = kv.value+'_sudo.'+s.realm+'.'+s.site_id
         g = mothership.validate.v_get_group_obj(cfg, unqgn)
         if g:
             groups.append(g)
