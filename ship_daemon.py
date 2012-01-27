@@ -34,11 +34,6 @@ cm = MothershipCommon()
 class ShipDaemonError(Exception):
     pass
 
-# set up our logging
-try:
-    cfg.log = MothershipLogger(cfg)
-except Exception, e:
-    raise ShipDaemonError(e)
 
 # create a json-able dict of important info
 def __generate_json_header():
@@ -255,7 +250,14 @@ def get_favicon():
         return myjson.JSONEncoder().encode(jbuf)
 
 
-# run our module loader once at startup
-load_modules()
-# the daemon
-bottle.run(httpship, host='0.0.0.0', port=8081, reloader=False)
+if __name__ == '__main__':
+    # set up our logging
+    try:
+        cfg.log = MothershipLogger(cfg)
+    except Exception, e:
+        raise ShipDaemonError(e)
+    cfg.log.debug("initializing logger in ship_daemon.py")
+    # run our module loader once at startup
+    load_modules()
+    # the daemon
+    bottle.run(httpship, host='0.0.0.0', port=8081, reloader=False)
