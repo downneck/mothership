@@ -31,7 +31,6 @@ class API_puppet:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.log = mothership.common.MothershipLogger(self.cfg)
         self.kvobj = mothership.API_kv.API_kv(cfg)
         self.version = 1
         self.namespace = 'API_puppet'
@@ -119,9 +118,9 @@ class API_puppet:
         try:
             name = query['hostname']
             if name:
-                self.log.debug("API_puppet/classify: querying for hostname: %s" % name)
+                cfg.log.debug("API_puppet/classify: querying for hostname: %s" % name)
             else:
-                self.log.debug("API_puppet/classify: you must specify a (string) value in order to query by hostname")
+                cfg.log.debug("API_puppet/classify: you must specify a (string) value in order to query by hostname")
                 raise PuppetError("API_puppet/classify: you must specify a (string) value in order to query by hostname")
 
             hostname, realm, site_id = mothership.get_unqdn(cfg, name)
@@ -202,7 +201,7 @@ class API_puppet:
             node['parameters'] = parameters
 
         except Exception, e:
-            self.log.debug("API_puppet/classify: query failed for hostname: %s. Error: %s" % (name, e))
+            cfg.log.debug("API_puppet/classify: query failed for hostname: %s. Error: %s" % (name, e))
             raise PuppetError("API_puppet/classify: query failed for hostname: %s. Error: %s" % (name, e))
 
         return node

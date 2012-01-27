@@ -36,7 +36,7 @@ class ShipDaemonError(Exception):
 
 # set up our logging
 try:
-    log = MothershipLogger(cfg)
+    cfg.log = MothershipLogger(cfg)
 except Exception, e:
     raise ShipDaemonError(e)
 
@@ -59,7 +59,7 @@ def load_modules():
     jbuf = __generate_json_header()
     jbuf['request'] = "/loadmodules"
     response.content_type='application/json'
-    log.debug("loadmodules() called directly")
+    cfg.log.debug("loadmodules() called directly")
     # clear module metadata
     old_metadata = cfg.module_metadata
     cfg.module_metadata = {}
@@ -71,22 +71,22 @@ def load_modules():
             try:
                 # import each module in the list above, grab the metadata
                 # from it's main class
-                log.debug("importing mothership.%s:" % i)
+                cfg.log.debug("importing mothership.%s:" % i)
                 if i in old_metadata.keys():
                     try:
-                        log.debug("unloading module: %s" % sys.modules['mothership.'+i])
+                        cfg.log.debug("unloading module: %s" % sys.modules['mothership.'+i])
                         del sys.modules['mothership.'+i]
                     except:
                         pass
-                    log.debug("module unloaded: mothership."+i)
+                    cfg.log.debug("module unloaded: mothership."+i)
                 mod = __import__("mothership."+i)
-                log.debug("import complete")
+                cfg.log.debug("import complete")
                 foo = getattr(mod, i)
                 bar = getattr(foo, i)
                 inst = bar(cfg)
                 cfg.module_metadata[i] = inst
             except Exception, e:
-                log.debug("import error: %s" % e)
+                cfg.log.debug("import error: %s" % e)
         jbuf['data'] = "reloaded modules:"
         for k in cfg.module_metadata.keys():
             jbuf['data'] += " %s" % cfg.module_metadata[k].namespace
@@ -113,8 +113,8 @@ def index():
     try:
         jbuf['data'] = "loaded modules: "
         for k in cfg.module_metadata.keys():
-            log.debug('route: /')
-            log.debug('metadata key: '+k)
+            cfg.log.debug('route: /')
+            cfg.log.debug('metadata key: '+k)
             try:
                 jbuf['data'] += " %s" % cfg.module_metadata[k].namespace
             except:
@@ -141,11 +141,11 @@ def loaded_modules():
     try:
         jbuf['data'] = []
         for k in cfg.module_metadata.keys():
-            log.debug('route: /')
-            log.debug('metadata key: '+k)
+            cfg.log.debug('route: /')
+            cfg.log.debug('metadata key: '+k)
             try:
                 jbuf['data'].append(cfg.module_metadata[k].namespace)
-                log.debug(jbuf)
+                cfg.log.debug(jbuf)
             except:
                 continue
         return myjson.JSONEncoder().encode(jbuf)
@@ -168,11 +168,11 @@ def namespace_path(pname):
     try:
         jbuf['data'] = {}
         jbuf['data']['callable_functions'] = []
-        log.debug("jbuf: %s" % jbuf)
-        log.debug("pname: %s" %pname)
-        log.debug("cfg.module_metadata[pname]: %s " %cfg.module_metadata[pname].metadata)
+        cfg.log.debug("jbuf: %s" % jbuf)
+        cfg.log.debug("pname: %s" %pname)
+        cfg.log.debug("cfg.module_metadata[pname]: %s " %cfg.module_metadata[pname].metadata)
         for meth in cfg.module_metadata[pname].metadata['methods']:
-            log.debug(meth)
+            cfg.log.debug(meth)
             jbuf['data']['callable_functions'].append("/%s" % meth)
         return myjson.JSONEncoder().encode(jbuf)
     except Exception, e:
@@ -194,22 +194,22 @@ def callable_path(pname, callpath):
     try:
         query = bottle.request.GET
         pnameMetadata = cfg.module_metadata[pname]
-        log.debug("query keys: %s" % query.keys())
+        cfg.log.debug("query keys: %s" % query.keys())
         # everyone has a 'metadata' construct
         # hard wire it into callpath options
         if callpath == 'metadata':
-            log.debug(myjson.JSONEncoder(indent=4).encode(pnameMetadata.metadata))
+            cfg.log.debug(myjson.JSONEncoder(indent=4).encode(pnameMetadata.metadata))
             jbuf['data'] = pnameMetadata.metadata
             return myjson.JSONEncoder().encode(jbuf)
         else:
             pnameCallpath = pnameMetadata.metadata['methods'][callpath]
         # we got an actual callpath! do stuff.
         if query:
-            log.debug("method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath]))
+            cfg.log.debug("method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath]))
             if bottle.request.method == pnameCallpath['rest_type']:
                 buf = getattr(pnameMetadata, callpath)
                 jbuf['data'] = buf(query)
-                log.debug(myjson.JSONEncoder(indent=4).encode(jbuf))
+                cfg.log.debug(myjson.JSONEncoder(indent=4).encode(jbuf))
                 return myjson.JSONEncoder().encode(jbuf)
             else:
                 raise ShipDaemonError("request method \"%s\" does not match allowed type \"%s\" for call \"/%s/%s\"" % (bottle.request.method, pnameCallpath['rest_type'], pname, callpath))
@@ -220,18 +220,18 @@ def callable_path(pname, callpath):
             jbuf['data']['available_query_strings'] = {}
             try:
                 for req in pnameMetadata.metadata['methods'][callpath]['required_args']['args'].keys():
-                    log.debug("required arg: %s" % req)
+                    cfg.log.debug("required arg: %s" % req)
                 jbuf['data']['available_query_strings']['required_args'] = pnameCallpath['required_args']
             except:
                 pass
             try:
                 jbuf['data']['available_query_strings']['optional_args'] = pnameCallpath['optional_args']
                 for opt in pnameCallpath['optional_args']['args'].keys():
-                    log.debug("optional arg: %s" % opt)
+                    cfg.log.debug("optional arg: %s" % opt)
             except:
                 pass
             return myjson.JSONEncoder(indent=4).encode(jbuf)
-            log.debug(jbuf)
+            cfg.log.debug(jbuf)
     except Exception, e:
         jbuf['status'] = 1
         jbuf['data'] = ""

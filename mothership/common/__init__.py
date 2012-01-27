@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 class MothershipCommon(object):
     """
@@ -21,13 +22,30 @@ class MothershipLogger(object):
         if not os.path.exists(cfg.logdir):
             os.mkdir(cfg.logdir)
 
-        if cfg.log_to_file:
-            logging.basicConfig(filename=cfg.logdir+'/'+cfg.logfile,level=logging.DEBUG)
-        else:
-            logging.basicConfig(level=logging.DEBUG)
-        # set the default log level
+        # hello, little logger!
         logger = logging.getLogger()
-        logger.setLevel(cfg.log_level)
+        # set our level to DEBUG by default
+        logger.setLevel(logging.DEBUG)
+        # if we're asked to log to a file, set up both the file and the
+        # stdout handlers and apply them to our logger
+        if cfg.log_to_file:
+            filehandler = logging.FileHandler(filename=cfg.logdir+'/'+cfg.logfile, mode='a')
+            stdouthandler = logging.StreamHandler(sys.stdout)
+            logger.addHandler(stdouthandler)
+            logger.addHandler(filehandler)
+        # if we're not asked to log to a file, just set up the stdout
+        # handler and apply it to our logger
+        else:
+            stdouthandler = logging.StreamHandler(sys.stdout)
+            logger.addHandler(stdouthandler)
+        # set the default log level
+        try:
+            logger.setLevel(cfg.log_level)
+        except:
+            pass
+        # let the world know we're alive
+        print "wtf"
+        logger.debug("logger initialized in %s" % (cfg.logdir+'/'+cfg.logfile))
 
     def change_log_level(self, level, logger='root'):
         """

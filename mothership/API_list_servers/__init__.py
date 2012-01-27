@@ -36,7 +36,6 @@ class API_list_servers:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.log = mothership.common.MothershipLogger(self.cfg)
         kvobj = mothership.API_kv.API_kv(cfg)
         self.version = 1
         self.namespace = 'API_list_servers'
@@ -153,15 +152,15 @@ class API_list_servers:
         if len(query.keys()) > self.metadata['methods']['lss']['optional_args']['max']:
             retval = "API_list_servers/lss: too many queries! max number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['max']
             retval += "API_list_servers/lss: you tried to pass %s queries\n" % len(query.keys())
-            self.log.debug(retval)
+            cfg.log.debug(retval)
             raise ListServersError(retval)
         else:
-            self.log.debug("API_list_servers/lss: num queries: %s" % len(query.keys()))
-            self.log.debug("API_list_servers/lss: max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max'])
+            cfg.log.debug("API_list_servers/lss: num queries: %s" % len(query.keys()))
+            cfg.log.debug("API_list_servers/lss: max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max'])
 
         # list all servers
         if 'all' in query.keys():
-            self.log.debug("API_list_servers/lss: querying for ALL servers")
+            cfg.log.debug("API_list_servers/lss: querying for ALL servers")
             try:
                 for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
                     buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
@@ -171,11 +170,11 @@ class API_list_servers:
         # list servers by name
         if 'hostname' in query.keys():
             if not query['hostname']:
-                self.log.debug("API_list_servers/lss: you must supply a value to filter by hostname")
+                cfg.log.debug("API_list_servers/lss: you must supply a value to filter by hostname")
                 raise ListServersError("API_list_servers/lss: you must supply a value to filter by hostname")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on name: %s" % query['hostname'])
+                    cfg.log.debug("API_list_servers/lss: querying on name: %s" % query['hostname'])
                     search_string = '%' + query['hostname'] + '%'
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.hostname.like(search_string)).\
@@ -187,7 +186,7 @@ class API_list_servers:
         # list physical (bare metal, non-virtual) servers
         if 'physical' in query.keys():
             try:
-                self.log.debug("API_list_servers/lss: querying for physical (baremetal) servers")
+                cfg.log.debug("API_list_servers/lss: querying for physical (baremetal) servers")
                 for serv in cfg.dbsess.query(Server).\
                 filter(Server.virtual==False).\
                 order_by(Server.hostname):
@@ -198,7 +197,7 @@ class API_list_servers:
         # list virtual servers
         if 'virtual' in query.keys():
             try:
-                self.log.debug("API_list_servers/lss: querying for virtual servers")
+                cfg.log.debug("API_list_servers/lss: querying for virtual servers")
                 for serv in cfg.dbsess.query(Server).\
                     filter(Server.virtual==True).\
                     order_by(Server.hostname):
@@ -209,11 +208,11 @@ class API_list_servers:
         # list servers by hw_tag
         if 'hw_tag' in query.keys():
             if not query['hw_tag']:
-                self.log.debug("API_list_servers/lss: you must supply a value to filter by hw_tag")
+                cfg.log.debug("API_list_servers/lss: you must supply a value to filter by hw_tag")
                 raise ListServersError("API_list_servers/lss: you must supply a value to filter by hw_tag")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on hw_tag: %s" % query['hw_tag'])
+                    cfg.log.debug("API_list_servers/lss: querying on hw_tag: %s" % query['hw_tag'])
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.hw_tag==query['hw_tag']):
                         buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
@@ -223,11 +222,11 @@ class API_list_servers:
         # list servers by vlan
         if 'vlan' in query.keys():
             if not query['vlan']:
-                self.log.debug("API_list_servers/lss: you must supply a value to filter by vlan")
+                cfg.log.debug("API_list_servers/lss: you must supply a value to filter by vlan")
                 raise ListServersError("API_list_servers/lss: you must supply a value to filter by vlan")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on vlan: %s" % query['vlan'])
+                    cfg.log.debug("API_list_servers/lss: querying on vlan: %s" % query['vlan'])
                     for serv, net in cfg.dbsess.query(Server, Network).\
                     filter(Network.ip!=None).\
                     filter(Network.vlan==query['vlan']).\
@@ -240,11 +239,11 @@ class API_list_servers:
         # list servers by site_id
         if 'site_id' in query.keys():
             if not query['site_id']:
-                self.log.debug("API_list_servers/lss: you must supply a value to filter by site_id")
+                cfg.log.debug("API_list_servers/lss: you must supply a value to filter by site_id")
                 raise ListServersError("API_list_servers/lss: you must supply a value to filter by site_id")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on site_id: %s" % query['site_id'])
+                    cfg.log.debug("API_list_servers/lss: querying on site_id: %s" % query['site_id'])
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.site_id==query['site_id']).\
                     order_by(Server.hostname):
@@ -255,11 +254,11 @@ class API_list_servers:
         # list servers by tag
         if 'tag' in query.keys():
             if not query['tag']:
-                self.log.debug("API_list_servers/lss: you must supply a value to filter by tag")
+                cfg.log.debug("API_list_servers/lss: you must supply a value to filter by tag")
                 raise ListServersError("API_list_servers/lss: you must supply a value to filter by tag")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on tag: %s" % query['tag'])
+                    cfg.log.debug("API_list_servers/lss: querying on tag: %s" % query['tag'])
                     servers_primary = []
                     for server in cfg.dbsess.query(Server).\
                     filter(Server.tag==query['tag']).\
@@ -287,11 +286,11 @@ class API_list_servers:
         # list servers by realm
         if 'realm' in query.keys():
             if not query['realm']:
-                self.log.debug("API_list_servers/lss: you must supply a value to filter on realm")
+                cfg.log.debug("API_list_servers/lss: you must supply a value to filter on realm")
                 raise ListServersError("API_list_servers/lss: you must supply a value to filter on realm")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on realm: %s" % query['realm'])
+                    cfg.log.debug("API_list_servers/lss: querying on realm: %s" % query['realm'])
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.realm==query['realm']).\
                     order_by(Server.hostname):
@@ -302,11 +301,11 @@ class API_list_servers:
         # list servers by manufacturer
         if 'manufacturer' in query.keys():
             if not query['manufacturer']:
-                self.log.debug("API_list_servers/lss: you must supply a value to filter on manufacturer")
+                cfg.log.debug("API_list_servers/lss: you must supply a value to filter on manufacturer")
                 raise ListServersError("API_list_servers/lss: you must supply a value to filter on manufacturer")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on manufacturer: %s" % query['manufacturer'])
+                    cfg.log.debug("API_list_servers/lss: querying on manufacturer: %s" % query['manufacturer'])
                     search_string = '%' + query['manufacturer'] + '%'
                     for serv, hw in cfg.dbsess.query(Server, Hardware).\
                     filter(Hardware.manufacturer.like(search_string)).\
@@ -319,11 +318,11 @@ class API_list_servers:
         # list servers by model name
         if 'model' in query.keys():
             if not query['model']:
-                self.log.debug("API_list_servers/lss: you must supply a value to filter on model")
+                cfg.log.debug("API_list_servers/lss: you must supply a value to filter on model")
                 raise ListServersError("API_list_servers/lss: you must supply a value to filter on model")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on model: %s" % query['model'])
+                    cfg.log.debug("API_list_servers/lss: querying on model: %s" % query['model'])
                     search_string = '%' + query['model']+ '%'
                     for serv, hw in cfg.dbsess.query(Server, Hardware).\
                     filter(Hardware.model.like(search_string)).\
@@ -336,11 +335,11 @@ class API_list_servers:
         # list servers by cores
         if 'cores' in query.keys():
             if not query['cores'].isdigit():
-                self.log.debug("API_list_servers/lss: you must supply an int to filter by number of cores")
+                cfg.log.debug("API_list_servers/lss: you must supply an int to filter by number of cores")
                 raise ListServersError("API_list_servers/lss: you must supply an int to filter by number of cores")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on number of cores: %s" % query['cores'])
+                    cfg.log.debug("API_list_servers/lss: querying on number of cores: %s" % query['cores'])
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.cores==query['cores']).\
                     order_by(Server.hostname):
@@ -351,11 +350,11 @@ class API_list_servers:
         # list servers by ram
         if 'ram' in query.keys():
             if not query['ram'].isdigit():
-                self.log.debug("API_list_servers/lss: you must supply an int to filter by ram size (in GB)")
+                cfg.log.debug("API_list_servers/lss: you must supply an int to filter by ram size (in GB)")
                 raise ListServersError("API_list_servers/lss: you must supply an int to filter by ram size (in GB)")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on ram size in GB: %s" % query['ram'])
+                    cfg.log.debug("API_list_servers/lss: querying on ram size in GB: %s" % query['ram'])
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.ram==query['ram']).\
                     order_by(Server.hostname):
@@ -366,11 +365,11 @@ class API_list_servers:
         # list servers by disk
         if 'disk' in query.keys():
             if not query['disk'].isdigit():
-                self.log.debug("API_list_servers/lss: you must supply an int to filter by disk size (in GB)")
+                cfg.log.debug("API_list_servers/lss: you must supply an int to filter by disk size (in GB)")
                 raise ListServersError("API_list_servers/lss: you must supply an int to filter by disk size (in GB)")
             else:
                 try:
-                    self.log.debug("API_list_servers/lss: querying on disk size in GB: %s" % query['disk'])
+                    cfg.log.debug("API_list_servers/lss: querying on disk size in GB: %s" % query['disk'])
                     for serv in cfg.dbsess.query(Server).\
                     filter(Server.disk==query['disk']).\
                     order_by(Server.hostname):

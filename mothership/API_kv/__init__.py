@@ -31,7 +31,6 @@ class API_kv:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.log = MothershipLogger(self.cfg)
         self.version = 1
         self.namespace = 'API_kv'
         self.metadata = {
@@ -256,12 +255,12 @@ class API_kv:
             # check for wierd query keys
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    self.log.debug("API_kv/collect: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    cfg.log.debug("API_kv/collect: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise KVError("API_kv/collect: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # if we don't get values for anything, explode.
             if not unqdn and not key and not value and not any:
-                self.log.debug("API_kv/select: no valid query keys!")
+                cfg.log.debug("API_kv/select: no valid query keys!")
                 raise KVError("API_kv/select: no valid query keys!")
 
             # translate our unqdn to hostname, realm, site_id
@@ -269,29 +268,29 @@ class API_kv:
                 if unqdn:
                     hostname, realm, site_id = mothership.split_fqdn(unqdn)
             except Exception, e:
-                self.log.debug("API_kv/select: mothership.split_fqdn(unqdn) failed!\nerror: %s" % e)
+                cfg.log.debug("API_kv/select: mothership.split_fqdn(unqdn) failed!\nerror: %s" % e)
 
             # grab the first thing we can find.
             if any:
-                self.log.debug("API_kv/select: querying for any record")
+                cfg.log.debug("API_kv/select: querying for any record")
                 kv_entry = cfg.dbsess.query(KV).first()
 
             # site_id, nothing else
             if site_id and not key and not hostname and not realm:
-                self.log.debug("API_kv/select: querying for: site_id" % site_id)
+                cfg.log.debug("API_kv/select: querying for: site_id" % site_id)
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.site_id==site_id).first()
 
             # site_id, realm, nothing else
             if site_id and realm and not key and not hostname:
-                self.log.debug("API_kv/select: querying for: realm=%s, site_id=%s" % (realm, site_id))
+                cfg.log.debug("API_kv/select: querying for: realm=%s, site_id=%s" % (realm, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.site_id==site_id).\
                                filter(KV.realm==realm).first()
 
             # site_id, realm, hostname, nothing else
             if site_id and realm and hostname and not key:
-                self.log.debug("API_kv/select: querying for: hostname=%s, realm=%s, site_id=%s" % (hostname, realm, site_id))
+                cfg.log.debug("API_kv/select: querying for: hostname=%s, realm=%s, site_id=%s" % (hostname, realm, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.site_id==site_id).\
                                filter(KV.realm==realm).\
@@ -299,20 +298,20 @@ class API_kv:
 
             # value, nothing else
             if value and not unqdn and not key:
-                self.log.debug("API_kv/select: querying for: value=%s" % value)
+                cfg.log.debug("API_kv/select: querying for: value=%s" % value)
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.value==value).first()
 
             # value, site_id
             if site_id and value and not hostname and not realm and not key:
-                self.log.debug("API_kv/select: querying for: value=%s, site_id=%s" % (value, site_id))
+                cfg.log.debug("API_kv/select: querying for: value=%s, site_id=%s" % (value, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==value).\
                                filter(KV.site_id==site_id).first()
 
             # value, site_id, realm
             if site_id and realm and value and not hostname and not key:
-                self.log.debug("API_kv/select: querying for: value=%s, realm=%s, site_id=%s" % (value, realm, site_id))
+                cfg.log.debug("API_kv/select: querying for: value=%s, realm=%s, site_id=%s" % (value, realm, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==value).\
                                filter(KV.site_id==site_id).\
@@ -320,7 +319,7 @@ class API_kv:
 
             # value, site_id, realm, hostname
             if site_id and realm and hostname and value and not key:
-                self.log.debug("API_kv/select: querying for: value=%s, realm=%s, site_id=%s" % (value, realm, site_id))
+                cfg.log.debug("API_kv/select: querying for: value=%s, realm=%s, site_id=%s" % (value, realm, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==value).\
                                filter(KV.site_id==site_id).\
@@ -329,20 +328,20 @@ class API_kv:
 
             # key, nothing else
             if key and not unqdn and not value:
-                self.log.debug("API_kv/select: querying for: key=%s" % key)
+                cfg.log.debug("API_kv/select: querying for: key=%s" % key)
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).first()
 
             # site_id, key
             if site_id and key and not hostname and not realm and not value:
-                self.log.debug("API_kv/select: querying for: key=%s, site_id=%s" % (key, site_id))
+                cfg.log.debug("API_kv/select: querying for: key=%s, site_id=%s" % (key, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
                                filter(KV.site_id==site_id).first()
 
             # realm, site_id, key
             if realm and site_id and key and not hostname and not value:
-                self.log.debug("API_kv/select: querying for: key=%s, site_id=%s, realm=%s" % (key, site_id, realm))
+                cfg.log.debug("API_kv/select: querying for: key=%s, site_id=%s, realm=%s" % (key, site_id, realm))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
                                filter(KV.site_id==site_id).\
@@ -350,7 +349,7 @@ class API_kv:
 
             # hostname, realm, site_id, key
             if hostname and realm and site_id and key and not value:
-                self.log.debug("API_kv/select: querying for: key=%s, site_id=%s, realm=%s, hostname=%s" % (key, site_id, realm, hostname))
+                cfg.log.debug("API_kv/select: querying for: key=%s, site_id=%s, realm=%s, hostname=%s" % (key, site_id, realm, hostname))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
                                filter(KV.site_id==site_id).\
@@ -359,14 +358,14 @@ class API_kv:
 
             # key, value, nothing else
             if value and key and not unqdn:
-                self.log.debug("API_kv/select: querying on: key=%s, value=%s" % (key, value))
+                cfg.log.debug("API_kv/select: querying on: key=%s, value=%s" % (key, value))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
                                filter(KV.value==value).first()
 
             # key, value, site_id
             if site_id and value and key and not hostname and not realm:
-                self.log.debug("API_kv/select: querying on: key=%s, value=%s, site_id=%s" % (key, value, site_id))
+                cfg.log.debug("API_kv/select: querying on: key=%s, value=%s, site_id=%s" % (key, value, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
                                filter(KV.value==value).\
@@ -374,7 +373,7 @@ class API_kv:
 
             # key, value, site_id, realm
             if site_id and realm and value and key and not hostname:
-                self.log.debug("API_kv/select: querying on: key=%s, value=%s, realm=%s, site_id=%s" % (key, value, realm, site_id))
+                cfg.log.debug("API_kv/select: querying on: key=%s, value=%s, realm=%s, site_id=%s" % (key, value, realm, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
                                filter(KV.value==value).\
@@ -383,7 +382,7 @@ class API_kv:
 
             # hostname, realm, site_id, key, value
             if hostname and realm and site_id and key and value:
-                self.log.debug("API_kv/select: querying for: key=%s, site_id=%s, realm=%s, hostname=%s, value=%s" % (key, site_id, realm, hostname, value))
+                cfg.log.debug("API_kv/select: querying for: key=%s, site_id=%s, realm=%s, hostname=%s, value=%s" % (key, site_id, realm, hostname, value))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
                                filter(KV.site_id==site_id).\
@@ -394,7 +393,7 @@ class API_kv:
             if kv_entry:
                 return kv_entry.to_dict()
             else:
-                self.log.debug("API_kv/select: no results found for query")
+                cfg.log.debug("API_kv/select: no results found for query")
                 return None
 
         except Exception, e:
@@ -449,7 +448,7 @@ class API_kv:
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    self.log.debug("API_kv/collect: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    cfg.log.debug("API_kv/collect: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise KVError("API_kv/collect: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # get the whole damn KV table
@@ -482,12 +481,12 @@ class API_kv:
             # turn the kv objects into dicts, append to list
             for i in results.all():
                 kv_entries.append(i.to_dict())
-            self.log.debug(buf)
+            cfg.log.debug(buf)
             # return list
             return kv_entries
         except Exception, e:
-            self.log.debug("Error: %s" % e)
-            self.log.debug("dumping buffer: %s" % buf)
+            cfg.log.debug("Error: %s" % e)
+            cfg.log.debug("dumping buffer: %s" % buf)
             raise KVError(e)
 
 
@@ -513,17 +512,17 @@ class API_kv:
         try:
             # to make our conditionals easier
             if 'unqdn' not in query.keys():
-                self.log.debug("API_kv/add: no unqdn provided!")
+                cfg.log.debug("API_kv/add: no unqdn provided!")
                 raise KVError("API_kv/add: no unqdn provided!")
             else:
                 unqdn = query['unqdn']
             if 'key' not in query.keys() or not query['key']:
-                self.log.debug("API_kv/add: no key provided!")
+                cfg.log.debug("API_kv/add: no key provided!")
                 raise KVError("API_kv/add: no key provided!")
             else:
                 key = query['key']
             if 'value' not in query.keys() or not query['value']:
-                self.log.debug("API_kv/add: no value provided!")
+                cfg.log.debug("API_kv/add: no value provided!")
                 raise KVError("API_kv/add: no value provided!")
             else:
                 value = query['value']
@@ -531,21 +530,21 @@ class API_kv:
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    self.log.debug("API_kv/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    cfg.log.debug("API_kv/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise KVError("API_kv/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # Check for duplicate key=value.
             dupkv = self.select(query)
             if dupkv:
-                self.log.debug("API_kv/add: entry exists for unqdn=%s key=%s value=%s" % (unqdn, key, value))
+                cfg.log.debug("API_kv/add: entry exists for unqdn=%s key=%s value=%s" % (unqdn, key, value))
                 raise KVError("API_kv/add: entry exists for unqdn=%s key=%s value=%s" % (unqdn, key, value))
             if not unqdn:
-                self.log.debug("API_kv/add: creating entry for unqdn=(global!) key=%s value=%s" % (key, value))
+                cfg.log.debug("API_kv/add: creating entry for unqdn=(global!) key=%s value=%s" % (key, value))
                 kv = self.__new(unqdn, key, value)
                 cfg.dbsess.add(kv)
                 cfg.dbsess.commit()
                 return 'success!'
-                self.log.debug("API_kv/add: creating entry for unqdn=%s key=%s value=%s" % (unqdn, key, value))
+                cfg.log.debug("API_kv/add: creating entry for unqdn=%s key=%s value=%s" % (unqdn, key, value))
             kv = self.__new(unqdn, key, value)
             cfg.dbsess.add(kv)
             cfg.dbsess.commit()
@@ -599,7 +598,7 @@ class API_kv:
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    self.log.debug("API_kv/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    cfg.log.debug("API_kv/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise KVError("API_kv/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # get the whole damn KV table
@@ -618,7 +617,7 @@ class API_kv:
                 filter(KV.key==key).\
                 filter(KV.value==value).first()
             if result:
-                self.log.debug(buf)
+                cfg.log.debug(buf)
                 result.value = new_value
                 cfg.dbsess.add(result)
                 cfg.dbsess.commit()
@@ -669,7 +668,7 @@ class API_kv:
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    self.log.debug("API_kv/delete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    cfg.log.debug("API_kv/delete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise KVError("API_kv/delete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # get the whole damn KV table
@@ -692,10 +691,10 @@ class API_kv:
             if result:
                 cfg.dbsess.delete(result)
                 cfg.dbsess.commit()
-                self.log.debug(buf)
+                cfg.log.debug(buf)
                 return 'success!'
             else:
-                self.log.debug("API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value))
+                cfg.log.debug("API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value))
                 raise KVError("API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value))
         except Exception, e:
             raise KVError(e)
