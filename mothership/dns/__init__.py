@@ -164,12 +164,12 @@ def generate_dns_output(cfg, domain, opts):
                 raise DNSError('Error reloading named!')
 
 def validate_zone_files(prefix, tmpzones):
-    reload = False
+    to_reload = False
     for tempzone in tmpzones:
         livezone = re.sub('^'+prefix, '', tempzone)
         compared = compare_files(livezone, tempzone)
-        reload = reload or compared
-    return reload
+        to_reload = to_reload or compared
+    return to_reload
 
 def validate_zone_config(cfg, prefix, tmpzones):
     tempconf = prefix + cfg.dns_conf
