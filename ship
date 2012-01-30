@@ -1056,7 +1056,7 @@ class ShipCli(cmdln.Cmdln):
                     mothership.zabbix.add(self.cfg, unqdn, zs_unqdn, zabbix_template=None)
         else:
             print 'Sorry dude you can\'t provision server now'
-            exit(1)
+            sys.exit(1)
 
     @cmdln.alias("rms")
     @cmdln.alias("rm_serv")
