@@ -22,30 +22,34 @@ class MothershipLogger(object):
         if not os.path.exists(cfg.logdir):
             os.mkdir(cfg.logdir)
 
-        # hello, little logger!
-        logger = logging.getLogger()
-        # set our level to DEBUG by default
-        logger.setLevel(logging.DEBUG)
+        # create a new logger to not conflict with any logging instance
+        logger = logging.getLogger('mothership')
+
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
         # if we're asked to log to a file, set up both the file and the
         # stdout handlers and apply them to our logger
+
         if cfg.log_to_file:
             filehandler = logging.FileHandler(filename=cfg.logdir+'/'+cfg.logfile, mode='a')
-            stdouthandler = logging.StreamHandler(sys.stdout)
-            logger.addHandler(stdouthandler)
+            filehandler.setFormatter(formatter)
             logger.addHandler(filehandler)
+
         # if we're not asked to log to a file, just set up the stdout
         # handler and apply it to our logger
-        else:
-            stdouthandler = logging.StreamHandler(sys.stdout)
-            logger.addHandler(stdouthandler)
+        stdouthandler = logging.StreamHandler(sys.stdout)
+        stdouthandler.setFormatter(formatter)
+        logger.addHandler(stdouthandler)
+
         # set the default log level
-        try:
+        if cfg.log_level:
             logger.setLevel(cfg.log_level)
-        except:
-            pass
-        # let the world know we're alive
-        print "wtf"
+        else:
+            logger.setLevel(logging.DEBUG)
+
         logger.debug("logger initialized in %s" % (cfg.logdir+'/'+cfg.logfile))
+
+        self.logger = logger
 
     def change_log_level(self, level, logger='root'):
         """
@@ -58,10 +62,10 @@ class MothershipLogger(object):
 
     # Wrapper helper functions around the logger class
     def debug(self,message):
-        logging.debug(message)
+        self.logger.debug(message)
 
     def warn(self,message):
-        logging.warn(message)
+        self.logger.warn(message)
 
     def info(self, message):
-        logging.info(message)
+        self.logger.info(message)

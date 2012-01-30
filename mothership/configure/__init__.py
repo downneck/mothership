@@ -66,6 +66,8 @@ class MothershipConfigure(object):
         # logfile to write our main log to. no default
         if 'logfile' in logconfig and logconfig['logfile']:
             self.logfile = logconfig['logfile']
+        else:
+            self.logfile = 'mothership.log'
         # log level, corresponds to unix syslog priority levels
         # DEBUG, ERROR, WARNING, INFO
         if 'log_level' in logconfig and logconfig['log_level']:
