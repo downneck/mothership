@@ -58,6 +58,12 @@ general:
   # run in mothership with a timestamp and the user who ran it
   audit_log_file: '/var/log/mothership_audit.log'
 
+# Log config options
+logconfig:
+
+  log_to_file: False
+
+
 # Database options
 db:
 
