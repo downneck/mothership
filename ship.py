@@ -130,7 +130,7 @@ def call_command(cfg, module_map):
                                           '--'+k, help=mmeta['data']['methods'][call]['required_args']['args'][k]['desc'],\
                                           action="store_true")
                         arglist[k] = mmeta['data']['methods'][call]['required_args']['args'][k]['vartype']
-            elif 'args' in mmeta['data']['methods'][call]['optional_args']:
+            if 'args' in mmeta['data']['methods'][call]['optional_args']:
                 for k in mmeta['data']['methods'][call]['optional_args']['args'].keys():
                     if mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype'] != "None":
                         parser.add_option('-'+mmeta['data']['methods'][call]['optional_args']['args'][k]['ol'],\
@@ -141,7 +141,8 @@ def call_command(cfg, module_map):
                                           '--'+k, help=mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'],\
                                           action="store_true")
                         arglist[k] = mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype']
-            else:
+                
+            if not arglist:
                 raise ShipCLIError("Error: no arguments defined")
 
             # parse our options and build a urlencode string to pass
