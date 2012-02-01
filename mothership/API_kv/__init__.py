@@ -391,7 +391,7 @@ class API_kv:
                                filter(KV.value==value).first()
 
             if kv_entry:
-                return kv_entry.to_dict()
+                return [kv_entry.to_dict(),]
             else:
                 cfg.log.debug("API_kv/select: no results found for query")
                 return None
