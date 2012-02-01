@@ -780,3 +780,37 @@ class TestAPI_kv(unittest.TestCase):
         self.assertRaises(KVError, kv.delete, query)
         print "****** test_kv_delete_unqdn_bad: PASSED (raised KVError)"
 
+
+    ######################################
+    # testing update()                   #
+    ######################################
+
+    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap',
+    # new_value=anotherrandomstringofcrap, good results  
+    def test_kv_update_unqdn_tag_value_and_newvalue_good(self):
+        # set up for the test
+        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+        kv.add(query)
+        # the test
+        query['new_value'] = 'anotherrandomstringofcrap'
+        result = kv.update(query)
+        # set up for cleanup
+        query.pop('new_value')
+        query['value'] = 'anotherrandomstringofcrap'
+        # clean up after ourselves
+        kv.delete(query)
+
+        self.assertEqual(result, 'success!')
+        print "****** test_kv_update_unqdn_tag_value_and_newvalue_good: PASSED"
+
+    # test unqdn=decorati1.satest.jfk, key=tag, value='stringofcrap',
+    # new_value=anotherrandomstringofcrap, good results  
+    def test_kv_update_nonexistent_value_bad(self):
+        # set up for the test
+        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+        # the test
+        query['new_value'] = 'anotherrandomstringofcrap'
+
+        self.assertRaises(KVError, kv.update, query)
+        print "****** test_kv_update_nonexistent_value_bad: PASSED (raised KVError)"
+
