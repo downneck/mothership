@@ -36,7 +36,10 @@ logconfig:
   logfile: 'mothership_cli.log'
 
   # whether to log to logfile or not 
-  log_to_file: True
+  log_to_file: False
+
+  # whether to log to logfile or not 
+  log_to_console: False
 
   # logging level. default is DEBUG. options are:
   # DEBUG, ERROR, WARNING, INFO 

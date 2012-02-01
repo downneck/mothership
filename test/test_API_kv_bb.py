@@ -7,20 +7,21 @@ from mothership.common import *
 
 from sqlalchemy import or_, desc, MetaData
 
+
+cfg = MothershipConfigureDaemon('mothership_daemon.yaml')
+cfg.load_config()
+cfg.log_to_file = False 
+cfg.log_to_console = False
+cfg.log = MothershipLogger(cfg)
+kv = API_kv(cfg)
+
+
 # UnitTesting for API_kv module
 class TestAPI_kv(unittest.TestCase):
 
     def setUp(self):
-        # the daemon config
-        self.cfg = MothershipConfigureDaemon('mothership_daemon.yaml')
-        self.cfg.load_config()
-        # override logging settings for testing
-        self.cfg.logfile = "mothership_bb_tests.log"
-        self.cfg.log_to_file = True
-        # fire up the logger. we only do this in the first test
-        self.cfg.log = MothershipLogger(self.cfg)
-        # fire up the kv module and instantiate the class
-        self.kv = API_kv(self.cfg)
+        self.cfg = cfg 
+        self.kv = kv 
 
 
     ######################################
@@ -44,7 +45,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_any_good: PASSED")
+        print "****** test_kv_select_any_good: PASSED"
 
     # any=True, bad output
     def test_kv_select_any_bad(self):
@@ -63,7 +64,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertNotEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_any_bad: PASSED")
+        print "****** test_kv_select_any_bad: PASSED"
 
     # test 'any' override ('any' option overrides all others)
     def test_kv_select_any_override(self):
@@ -82,7 +83,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_any_override: PASSED")
+        print "****** test_kv_select_any_override: PASSED"
 
     # test key=tag, good results
     def test_kv_select_key_tag_good(self):
@@ -101,7 +102,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_key_tag_good: PASSED")
+        print "****** test_kv_select_key_tag_good: PASSED"
 
     # test key=tag, failure results
     def test_kv_select_key_tag_bad(self):
@@ -120,7 +121,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertNotEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_key_tag_bad: PASSED")
+        print "****** test_kv_select_key_tag_bad: PASSED"
 
     # test key=tag unqdn=decorati1.satest.jfk, good results
     def test_kv_select_key_tag_and_unqdn_good(self):
@@ -139,7 +140,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_key_tag_and_unqdn_good: PASSED")
+        print "****** test_kv_select_key_tag_and_unqdn_good: PASSED"
 
     # test key=tag unqdn=decorati1.satest.jfk, failure results
     def test_kv_select_key_tag_and_unqdn_bad(self):
@@ -158,7 +159,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertNotEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_key_tag_and_unqdn_bad: PASSED")
+        print "****** test_kv_select_key_tag_and_unqdn_bad: PASSED"
 
     # test value=apache unqdn=decorati1.satest.jfk, good results
     def test_kv_select_unqdn_and_value_good(self):
@@ -177,7 +178,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_unqdn_and_value_good: PASSED")
+        print "****** test_kv_select_unqdn_and_value_good: PASSED"
 
     # test value=apache unqdn=decorati1.satest.jfk, failure results
     def test_kv_select_unqdn_and_value_bad(self):
@@ -196,7 +197,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertNotEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_unqdn_and_value_bad: PASSED")
+        print "****** test_kv_select_unqdn_and_value_bad: PASSED"
 
     # test unqdn=decorati1.satest.jfk, good results
     def test_kv_select_unqdn_good(self):
@@ -215,7 +216,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_unqdn_good: PASSED")
+        print "****** test_kv_select_unqdn_good: PASSED"
 
     # test unqdn=decorati1.satest.jfk, failure results
     def test_kv_select_unqdn_bad(self):
@@ -234,20 +235,20 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertNotEqual(result, ret)
-        self.cfg.log.debug("****** test_kv_select_unqdn_bad: PASSED")
+        print "****** test_kv_select_unqdn_bad: PASSED"
 
     # test empty query, failure results
     def test_kv_select_empty_query(self):
 
         self.assertRaises(KVError, self.kv.select, query={})
-        self.cfg.log.debug("****** test_kv_select_empty_query: PASSED (raised KVError)")
+        print "****** test_kv_select_empty_query: PASSED (raised KVError)"
 
     # test unqdn=garbage, failure results
     def test_kv_select_unqdn_garbage_input_bad(self):
         query = {'unqdn': 'garbage'}
 
         self.assertRaises(KVError, self.kv.select, query)
-        self.cfg.log.debug("****** test_kv_select_garbage_input_bad: PASSED (raised KVError)")
+        print "****** test_kv_select_garbage_input_bad: PASSED (raised KVError)"
 
     # test unqdn=blahblahblah.satest.jfk, null results
     def test_kv_select_unqdn_not_found(self):
@@ -255,7 +256,7 @@ class TestAPI_kv(unittest.TestCase):
         result = self.kv.select(query)
 
         self.assertEqual(result, None)
-        self.cfg.log.debug("****** test_kv_select_unqdn_not_found: PASSED")
+        print "****** test_kv_select_unqdn_not_found: PASSED"
 
     # test key=blahblahblah, null results
     def test_kv_select_key_not_found(self):
@@ -263,7 +264,7 @@ class TestAPI_kv(unittest.TestCase):
         result = self.kv.select(query)
 
         self.assertEqual(result, None)
-        self.cfg.log.debug("****** test_kv_select_key_not_found: PASSED")
+        print "****** test_kv_select_key_not_found: PASSED"
 
     # test value=blahblahblah, null results
     def test_kv_select_value_not_found(self):
@@ -271,5 +272,5 @@ class TestAPI_kv(unittest.TestCase):
         result = self.kv.select(query)
 
         self.assertEqual(result, None)
-        self.cfg.log.debug("****** test_kv_select_value_not_found: PASSED")
+        print "****** test_kv_select_value_not_found: PASSED"
 

@@ -70,6 +70,9 @@ logconfig:
   # True = log to logfile above + stdout, False = just stdout
   log_to_file: False
 
+  # True = log to logfile above + stdout, False = just stdout
+  log_to_console: False
+
 
 # Database options
 db:

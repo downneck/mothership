@@ -34,19 +34,17 @@ class MothershipLogger(object):
 
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-        # if we're asked to log to a file, set up both the file and the
-        # stdout handlers and apply them to our logger
-
+        # if we're asked to log to a file, set up both the file
         if cfg.log_to_file:
             filehandler = logging.FileHandler(filename=cfg.logdir+'/'+cfg.logfile, mode='a')
             filehandler.setFormatter(formatter)
             logger.addHandler(filehandler)
 
-        # if we're not asked to log to a file, just set up the stdout
-        # and stderr handlers and apply them to our logger
-        stdouthandler = logging.StreamHandler(sys.stdout)
-        stdouthandler.setFormatter(formatter)
-        logger.addHandler(stdouthandler)
+        # if we're asked to log to console, set up the stdout
+        if cfg.log_to_console:
+            stdouthandler = logging.StreamHandler(sys.stdout)
+            stdouthandler.setFormatter(formatter)
+            logger.addHandler(stdouthandler)
 
         # set the default log level
         if cfg.log_level:

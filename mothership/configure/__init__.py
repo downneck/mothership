@@ -57,12 +57,18 @@ class MothershipConfigure(object):
             self.logdir = logconfig['logdir']
         else:
             self.logdir = '/var/log/mothership/'
-        # do we log to a file or stdout? true = file+stdout, false = stdout
+        # do we log to a file?
         # default is False
         if 'log_to_file' in logconfig and logconfig['log_to_file']:
             self.log_to_file = logconfig['log_to_file']
         else:
             self.log_to_file = False
+        # do we log to console? 
+        # default is False
+        if 'log_to_console' in logconfig and logconfig['log_to_console']:
+            self.log_to_console = logconfig['log_to_console']
+        else:
+            self.log_to_console = False
         # logfile to write our main log to. no default
         if 'logfile' in logconfig and logconfig['logfile']:
             self.logfile = logconfig['logfile']
