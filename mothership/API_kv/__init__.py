@@ -276,20 +276,20 @@ class API_kv:
                 kv_entry = cfg.dbsess.query(KV).first()
 
             # site_id, nothing else
-            if site_id and not key and not hostname and not realm:
+            elif site_id and not key and not hostname and not realm:
                 cfg.log.debug("API_kv/select: querying for: site_id" % site_id)
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.site_id==site_id).first()
 
             # site_id, realm, nothing else
-            if site_id and realm and not key and not hostname:
+            elif site_id and realm and not key and not hostname:
                 cfg.log.debug("API_kv/select: querying for: realm=%s, site_id=%s" % (realm, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.site_id==site_id).\
                                filter(KV.realm==realm).first()
 
             # site_id, realm, hostname, nothing else
-            if site_id and realm and hostname and not key:
+            elif site_id and realm and hostname and not key:
                 cfg.log.debug("API_kv/select: querying for: hostname=%s, realm=%s, site_id=%s" % (hostname, realm, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.site_id==site_id).\
@@ -297,20 +297,20 @@ class API_kv:
                                filter(KV.hostname==hostname).first()
 
             # value, nothing else
-            if value and not unqdn and not key:
+            elif value and not unqdn and not key:
                 cfg.log.debug("API_kv/select: querying for: value=%s" % value)
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.value==value).first()
 
             # value, site_id
-            if site_id and value and not hostname and not realm and not key:
+            elif site_id and value and not hostname and not realm and not key:
                 cfg.log.debug("API_kv/select: querying for: value=%s, site_id=%s" % (value, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==value).\
                                filter(KV.site_id==site_id).first()
 
             # value, site_id, realm
-            if site_id and realm and value and not hostname and not key:
+            elif site_id and realm and value and not hostname and not key:
                 cfg.log.debug("API_kv/select: querying for: value=%s, realm=%s, site_id=%s" % (value, realm, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==value).\
@@ -318,7 +318,7 @@ class API_kv:
                                filter(KV.realm==realm).first()
 
             # value, site_id, realm, hostname
-            if site_id and realm and hostname and value and not key:
+            elif site_id and realm and hostname and value and not key:
                 cfg.log.debug("API_kv/select: querying for: value=%s, realm=%s, site_id=%s" % (value, realm, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==value).\
@@ -327,20 +327,20 @@ class API_kv:
                                filter(KV.hostname==hostname).first()
 
             # key, nothing else
-            if key and not unqdn and not value:
+            elif key and not unqdn and not value:
                 cfg.log.debug("API_kv/select: querying for: key=%s" % key)
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).first()
 
             # site_id, key
-            if site_id and key and not hostname and not realm and not value:
+            elif site_id and key and not hostname and not realm and not value:
                 cfg.log.debug("API_kv/select: querying for: key=%s, site_id=%s" % (key, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
                                filter(KV.site_id==site_id).first()
 
             # realm, site_id, key
-            if realm and site_id and key and not hostname and not value:
+            elif realm and site_id and key and not hostname and not value:
                 cfg.log.debug("API_kv/select: querying for: key=%s, site_id=%s, realm=%s" % (key, site_id, realm))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
@@ -348,7 +348,7 @@ class API_kv:
                                filter(KV.realm==realm).first()
 
             # hostname, realm, site_id, key
-            if hostname and realm and site_id and key and not value:
+            elif hostname and realm and site_id and key and not value:
                 cfg.log.debug("API_kv/select: querying for: key=%s, site_id=%s, realm=%s, hostname=%s" % (key, site_id, realm, hostname))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
@@ -357,14 +357,14 @@ class API_kv:
                                filter(KV.hostname==hostname).first()
 
             # key, value, nothing else
-            if value and key and not unqdn:
+            elif value and key and not unqdn:
                 cfg.log.debug("API_kv/select: querying on: key=%s, value=%s" % (key, value))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
                                filter(KV.value==value).first()
 
             # key, value, site_id
-            if site_id and value and key and not hostname and not realm:
+            elif site_id and value and key and not hostname and not realm:
                 cfg.log.debug("API_kv/select: querying on: key=%s, value=%s, site_id=%s" % (key, value, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
@@ -372,7 +372,7 @@ class API_kv:
                                filter(KV.site_id==site_id).first()
 
             # key, value, site_id, realm
-            if site_id and realm and value and key and not hostname:
+            elif site_id and realm and value and key and not hostname:
                 cfg.log.debug("API_kv/select: querying on: key=%s, value=%s, realm=%s, site_id=%s" % (key, value, realm, site_id))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\
@@ -381,7 +381,7 @@ class API_kv:
                                filter(KV.realm==realm).first()
 
             # hostname, realm, site_id, key, value
-            if hostname and realm and site_id and key and value:
+            elif hostname and realm and site_id and key and value:
                 cfg.log.debug("API_kv/select: querying for: key=%s, site_id=%s, realm=%s, hostname=%s, value=%s" % (key, site_id, realm, hostname, value))
                 kv_entry = cfg.dbsess.query(KV).\
                                filter(KV.key==key).\

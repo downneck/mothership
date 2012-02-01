@@ -8,7 +8,7 @@ from mothership.common import *
 
 from sqlalchemy import or_, desc, MetaData
 
-class TestServerInfo(unittest.TestCase):
+class TestAPI_serverinfo(unittest.TestCase):
     def test_get_host_from_hwtag(self):
         cfg = MothershipConfigureDaemon('mothership_daemon.yaml')
         cfg.load_config()
