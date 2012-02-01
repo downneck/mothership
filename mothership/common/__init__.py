@@ -2,6 +2,12 @@ import os
 import sys
 import logging
 
+
+# error class for the common module
+class ShipCommonError(Exception):
+    pass
+
+
 class MothershipCommon(object):
     """
     Common methods utilised by most mothership module
@@ -13,6 +19,7 @@ class MothershipCommon(object):
         return True
     def check_max_num_args(self, len, max):
         return True
+
 
 class MothershipLogger(object):
     """
@@ -42,10 +49,13 @@ class MothershipLogger(object):
         logger.addHandler(stdouthandler)
 
         # set the default log level
-        try:
-            level = getattr(logging, cfg.log_level.upper())
-            logger.setLevel(level)
-        except:
+        if cfg.log_level:
+            try:
+                level = getattr(logging, cfg.log_level.upper())
+                logger.setLevel(level)
+            except Exception, e:
+                raise ShipCommonError("bad log_level in yaml! Error: %s" % e)
+        else:
             logger.setLevel(logging.DEBUG)
 
         logger.debug("logger initialized in %s" % (cfg.logdir+'/'+cfg.logfile))
