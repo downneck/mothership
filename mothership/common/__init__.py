@@ -38,15 +38,18 @@ class MothershipLogger(object):
         # if we're not asked to log to a file, just set up the stdout
         # and stderr handlers and apply them to our logger
         stdouthandler = logging.StreamHandler(sys.stdout)
-        stderrhandler = logging.StreamHandler(sys.stderr)
         stdouthandler.setFormatter(formatter)
-        stderrhandler.setFormatter(formatter)
         logger.addHandler(stdouthandler)
-        logger.addHandler(stderrhandler)
 
         # set the default log level
-        if cfg.log_level:
-            logger.setLevel(cfg.log_level)
+        if cfg.log_level == 'DEBUG':
+            logger.setLevel(logging.DEBUG)
+        elif cfg.log_level == 'ERROR':
+            logger.setLevel(logging.ERROR)
+        elif cfg.log_level == 'INFO':
+            logger.setLevel(logging.INFO)
+        elif cfg.log_level == 'WARN':
+            logger.setLevel(logging.WARN)
         else:
             logger.setLevel(logging.DEBUG)
 
@@ -54,7 +57,9 @@ class MothershipLogger(object):
 
         self.logger = logger
 
-    def change_log_level(self, level, logger='root'):
+
+    # to change the logger log level
+    def change_log_level(self, level, logger='mothership'):
         """
         Change the logger level on the fly. Usually you want do that for replace
         the log level defined in the config file.
