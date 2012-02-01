@@ -774,11 +774,11 @@ class TestAPI_kv(unittest.TestCase):
         print "****** test_kv_delete_nonexistent_unqdn_tag_and_value_bad: PASSED (raised KVError)"
 
     # test unqdn=decorati1.satest.jfk, failure results 
-    def test_kv_delete_unqdn_bad(self):
+    def test_kv_delete_unqdn_only_bad(self):
         query = {'unqdn': 'decorati1.satest.jfk'}
 
         self.assertRaises(KVError, kv.delete, query)
-        print "****** test_kv_delete_unqdn_bad: PASSED (raised KVError)"
+        print "****** test_kv_delete_unqdn_only_bad: PASSED (raised KVError)"
 
 
     ######################################
