@@ -195,5 +195,40 @@ class TestAPI_kv(unittest.TestCase):
         self.assertNotEqual(result, ret)
         self.cfg.log.debug("****** test_kv_select_unqdn_and_value_bad: PASSED")
 
+    # test unqdn=decorati1.satest.jfk, good results
+    def test_kv_select_unqdn_good(self):
+        query = {'unqdn': 'decorati1.satest.jfk'}
+        result = self.kv.select(query)
 
+        # pre-define expected output
+        ret = [{
+               'realm': 'satest',
+               'hostname': 'decorati1',
+               'site_id': 'jfk',
+               'value': 'apache',
+               'table_name': 'kv',
+               'key': 'tag',
+               'id': 49
+        },]
 
+        self.assertEqual(result, ret)
+        self.cfg.log.debug("****** test_kv_select_unqdn_good: PASSED")
+
+    # test unqdn=decorati1.satest.jfk, failure results
+    def test_kv_select_unqdn_bad(self):
+        query = {'unqdn': 'decorati1.satest.jfk'}
+        result = self.kv.select(query)
+
+        # pre-define expected output
+        ret = [{
+               'realm': 'satest',
+               'hostname': 'decorati1',
+               'site_id': 'jfk',
+               'value': 'FAILURE',
+               'table_name': 'kv',
+               'key': 'tag',
+               'id': 49
+        },]
+
+        self.assertNotEqual(result, ret)
+        self.cfg.log.debug("****** test_kv_select_unqdn_bad: PASSED")
