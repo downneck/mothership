@@ -1,6 +1,6 @@
-import logging
 import os
 import sys
+import logging
 
 class MothershipCommon(object):
     """
@@ -36,10 +36,13 @@ class MothershipLogger(object):
             logger.addHandler(filehandler)
 
         # if we're not asked to log to a file, just set up the stdout
-        # handler and apply it to our logger
+        # and stderr handlers and apply them to our logger
         stdouthandler = logging.StreamHandler(sys.stdout)
+        stderrhandler = logging.StreamHandler(sys.stderr)
         stdouthandler.setFormatter(formatter)
+        stderrhandler.setFormatter(formatter)
         logger.addHandler(stdouthandler)
+        logger.addHandler(stderrhandler)
 
         # set the default log level
         if cfg.log_level:
@@ -61,10 +64,10 @@ class MothershipLogger(object):
 
 
     # Wrapper helper functions around the logger class
-    def debug(self,message):
+    def debug(self, message):
         self.logger.debug(message)
 
-    def warn(self,message):
+    def warn(self, message):
         self.logger.warn(message)
 
     def info(self, message):

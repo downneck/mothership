@@ -20,15 +20,18 @@ try:
 except ImportError:
     import simplejson as myjson
 
+# turn on bottle debugging
 bottle.debug(True)
 
 # instantiate a bottle
 httpship = bottle.Bottle()
 
+
 # suck in our configure object
 cfg = configure.MothershipConfigureDaemon('mothership_daemon.yaml')
 cfg.load_config()
 cm = MothershipCommon()
+
 
 # generic mothership exception type
 class ShipDaemonError(Exception):
@@ -92,7 +95,6 @@ def load_modules():
         jbuf['msg'] = "Exception in load_modules(). Error: %s" % e
         traceback.print_exc()
         return myjson.JSONEncoder().encode(jbuf)
-
 
 
 @httpship.route('/')
@@ -177,6 +179,7 @@ def namespace_path(pname):
         traceback.print_exc()
         return myjson.JSONEncoder().encode(jbuf)
 
+
 @httpship.route("/:pname/:callpath", method=('GET', 'POST', 'PUT', 'DELETE'))
 def callable_path(pname, callpath):
     """
@@ -233,6 +236,7 @@ def callable_path(pname, callpath):
         jbuf['msg'] = "Exception in callable_path(). Error: %s" % e
         traceback.print_exc()
         return myjson.JSONEncoder().encode(jbuf)
+
 
 @httpship.route('/favicon.ico')
 def get_favicon():
