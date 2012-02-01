@@ -42,15 +42,10 @@ class MothershipLogger(object):
         logger.addHandler(stdouthandler)
 
         # set the default log level
-        if cfg.log_level == 'DEBUG':
-            logger.setLevel(logging.DEBUG)
-        elif cfg.log_level == 'ERROR':
-            logger.setLevel(logging.ERROR)
-        elif cfg.log_level == 'INFO':
-            logger.setLevel(logging.INFO)
-        elif cfg.log_level == 'WARN':
-            logger.setLevel(logging.WARN)
-        else:
+        try:
+            level = getattr(logging, cfg.log_level.upper())
+            logger.setLevel(level)
+        except:
             logger.setLevel(logging.DEBUG)
 
         logger.debug("logger initialized in %s" % (cfg.logdir+'/'+cfg.logfile))
