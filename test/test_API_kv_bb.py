@@ -666,3 +666,110 @@ class TestAPI_kv(unittest.TestCase):
 
         self.assertEqual(result, longassret)
         print "****** test_kv_collect_all_override_good: PASSED"
+ 
+    # test key=tag, value=apache, good results
+    def test_kv_collect_key_and_value_good(self):
+        query = {'key': 'tag', 'value': 'apache'}
+        result = kv.collect(query)
+        ret = [{
+               'realm': 'satest',
+               'hostname': 'decorati1',
+	       'site_id': 'jfk',
+	       'value': 'apache',
+	       'table_name': 'kv',
+	       'key': 'tag',
+	       'id': 49
+	}]
+
+        self.assertEqual(result, ret)
+        print "****** test_kv_key_and_value_good: PASSED" 
+
+    # test key=tag, value=failure, failure results 
+    def test_kv_collect_key_and_value_bad(self):
+        query = {'key': 'tag', 'value': 'FAILURE'}
+        result = kv.collect(query)
+
+        self.assertEqual(result, [])
+        print "****** test_kv_collect_key_and_value_bad: PASSED"
+ 
+    # test key=tag, value=apache, unqdn=decorati1.satest.jfk, good results
+    def test_kv_collect_key_and_value_and_unqdn_good(self):
+        query = {'key': 'tag', 'value': 'apache', 'unqdn': 'decorati1.satest.jfk'}
+        result = kv.collect(query)
+        ret = [{
+               'realm': 'satest',
+               'hostname': 'decorati1',
+	       'site_id': 'jfk',
+	       'value': 'apache',
+	       'table_name': 'kv',
+	       'key': 'tag',
+	       'id': 49
+	}]
+
+        self.assertEqual(result, ret)
+        print "****** test_kv_key_and_value_and_unqdn_good: PASSED" 
+
+    # test key=tag, value=failure, unqdn=decorati1.satest.jfk, failure results 
+    def test_kv_collect_key_and_value_bad(self):
+        query = {'key': 'tag', 'value': 'FAILURE', 'unqdn': 'decorati1.satest.jfk'}
+        result = kv.collect(query)
+
+        self.assertEqual(result, [])
+        print "****** test_kv_collect_key_and_value_and_unqdn_bad: PASSED"
+
+
+    ######################################
+    # testing add()                      #
+    ######################################
+ 
+    # test unqdn=decorati1.satest.jfk, failure results  
+    def test_kv_add_unqdn_bad(self):
+        query = {'unqdn': 'decorati1.satest.jfk'}
+
+        self.assertRaises(KVError, kv.add, query)
+        print "****** test_kv_add_unqdn_bad: PASSED (raised KVError)"
+ 
+    # test unqdn=decorati1.satest.jfk, key=tag, failure results  
+    def test_kv_add_unqdn_and_tag_bad(self):
+        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag'}
+
+        self.assertRaises(KVError, kv.add, query)
+        print "****** test_kv_add_unqdn_and_tag_bad: PASSED (raised KVError)"
+ 
+    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', good results  
+    def test_kv_add_unqdn_tag_and_value_good(self):
+        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+        result = kv.add(query)
+        kv.delete(query) # clean up after ourselves
+
+        self.assertEqual(result, 'success!')
+        print "****** test_kv_add_unqdn_tag_and_value_good: PASSED"
+
+    # test unqdn=decorati1.satest.jfk, key=tag, value='apache', failure results  
+    def test_kv_add_duplicate_unqdn_tag_and_value_bad(self):
+        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'apache'}
+
+        self.assertRaises(KVError, kv.add, query)
+        print "****** test_kv_add_duplicate_unqdn_tag_and_value_bad: PASSED (raised KVError)"
+
+
+    ######################################
+    # testing delete()                   #
+    ######################################
+
+    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', good results  
+    def test_kv_delete_unqdn_tag_and_value_good(self):
+        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+        kv.add(query) # setup for the test
+        result = kv.delete(query)
+
+        self.assertEqual(result, 'success!')
+        print "****** test_kv_delete_unqdn_tag_and_value_good: PASSED"
+
+    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', failure results  
+    def test_kv_delete_duplicate_unqdn_tag_and_value_bad(self):
+        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+
+        self.assertRaises(KVError, kv.delete, query)
+        print "****** test_kv_delete_nonexistent_unqdn_tag_and_value_bad: PASSED (raised KVError)"
+
