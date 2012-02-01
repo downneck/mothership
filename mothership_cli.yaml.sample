@@ -23,6 +23,8 @@ general:
   # a fqun in mothership is: username.realm.site_id.domain.tld
   # ex: dkovach.prod.area51.mywebsite.com
 
+   # Set this to the location of your api server (usually it's localhost)
+   api_server: 'localhost'
 
 # log config options
 logconfig:

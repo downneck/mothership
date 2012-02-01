@@ -1,4 +1,4 @@
-#!/usr/bin/env python26
+#!/usr/bin/python
 
 # Copyright 2011 Gilt Groupe, INC
 #
