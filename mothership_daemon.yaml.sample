@@ -56,11 +56,18 @@ general:
 
   # audit log location. this will get a dump of every command
   # run in mothership with a timestamp and the user who ran it
-  audit_log_file: '/var/log/mothership_audit.log'
+  audit_log_file: '/var/log/mothership/mothership_audit.log'
 
 # Log config options
 logconfig:
 
+  # log directory
+  logdir: "/var/log/mothership"
+
+  # log file
+  logfile: "mothership_daemon.log"
+
+  # True = log to logfile above + stdout, False = just stdout
   log_to_file: False
 
 
