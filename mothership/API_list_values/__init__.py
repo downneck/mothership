@@ -17,15 +17,15 @@
 
 # imports
 from sqlalchemy import or_, desc, MetaData
-
 from mothership.mothership_models import *
-from mothership.common import *
+import mothership.common
 
-class MothershipListValuesError(Exception):
+class ListValuesError(Exception):
     pass
 
 
 class API_list_values:
+
     def __init__(self, cfg):
         self.cfg = cfg
         self.version = 1
@@ -102,138 +102,100 @@ class API_list_values:
         """
 
         cfg = self.cfg
-        ret = []
+        buf = []
 
         # verify the number of query arguments
         if len(query.keys()) > self.metadata['methods']['lsv']['optional_args']['max']:
             retval = "API_list_values/lsv: too many queries! max number of queries is: %s\n" % self.metadata['methods']['lsv']['optional_args']['max']
             retval += "API_list_values/lsv: you tried to pass %s queries\n" % len(query.keys())
             cfg.log.debug(retval)
-            raise MothershipListServersError(retval)
+            raise ListServersError(retval)
         else:
             cfg.log.debug("API_list_values/lsv: num queries: %s" % len(query.keys()))
             cfg.log.debug("API_list_values/lsv: max num queries: %s" % self.metadata['methods']['lsv']['optional_args']['max'])
 
-        key = query.keys()[0]
-        valid_keys = self.metadata['methods']['lsv']['optional_args']['args'].keys()
         # make sure we are being passed a valid query
+        if query.keys()[0] not in self.metadata['methods']['lsv']['optional_args']['args'].keys():
+            cfg.log.debug("API_list_values/lsv: unsupported listing for: %s. please specify one of the following: %s" % (query.keys()[0], " ".join(self.metadata['methods']['lsv']['optional_args']['args'].keys())))
+            raise ListValuesError("API_list_values/lsv: unsupported listing for: %s. please specify one of the following: %s" % (query.keys()[0], " ".join(self.metadata['methods']['lsv']['optional_args']['args'].keys())))
 
-        if key not in valid_keys:
-            valid_keys = " ".join(valid_keys)
-            msg = "API_list_values/lsv: unsupported listing for: %s. please specify one of the following: %s" % (key, valid_keys)
-            cfg.log.debug(msg)
-            raise MothershipListValuesError("API_list_values/lsv: unsupported listing for: %s. please specify one of the following: %s" % (key, valid_keys))
-
-        if key == 'vlan':
-            ret = self._get_vlans()
-            break
-        if key == 'ips':
-            ret = self._get_ips()
-            break
-        if key == 'tags':
-            ret = self._get_tag()
-            break
-        if key == 'groups':
-            ret = self._get_groups()
-            break
-        if key == 'users':
-            ret = self._get_users()
-            break
-        if key == 'available_hardware':
-            ret = self._get_available_hardware()
-            break
-        return ret
-
-    def _get_vlans(self):
-        result = []
-        cfg.log.debug("API_list_values/lsv: querying for all vlans")
-        try:
-            for result in cfg.dbsess.query(Network.vlan).\
+        # look up all vlans
+        if 'vlans' in query.keys():
+            cfg.log.debug("API_list_values/lsv: querying for all vlans")
+            try:
+                for result in cfg.dbsess.query(Network.vlan).\
                     filter(Network.vlan!=0).\
                     order_by(Network.vlan).\
                     distinct().all():
-                result.append(result.vlan)
-                cfg.log.debug(result)
-        except Exception, e:
-            cfg.log.debug("API_list_values/lsv: query failed for: vlans. Error: %s" % e)
-            raise MothershipListValuesError("API_list_values/lsv: query failed for: vlans. Error: %s" % e)
+                        buf.append(result.vlan)
+                cfg.log.debug(buf)
+            except Exception, e:
+                cfg.log.debug("API_list_values/lsv: query failed for: vlans. Error: %s" % e)
+                raise ListValuesError("API_list_values/lsv: query failed for: vlans. Error: %s" % e)
 
-        return result
+        elif 'ips' in query.keys():
+            cfg.log.debug("API_list_values/lsv: querying for all ips")
+            try:
+                for net in cfg.dbsess.query(Network).order_by(Network.ip):
+                    if net.ip != '0.0.0.0' and net.ip != None:
+                        buf.append(net.ip)
+                cfg.log.debug(buf)
+            except Exception, e:
+                cfg.log.debug("API_list_values/lsv: query failed for: ips. Error: %s" % e)
+                raise ListValuesError("API_list_values/lsv: query failed for: ips. Error: %s" % e)
 
-    def _get_ips(self):
-        result = []
-        cfg.log.debug("API_list_values/lsv: querying for all ips")
-        try:
-            for net in cfg.dbsess.query(Network).order_by(Network.ip):
-                if net.ip != '0.0.0.0' and net.ip != None:
-                    result.append(net.ip)
-                cfg.log.debug(result)
-        except Exception, e:
-            cfg.log.debug("API_list_values/lsv: query failed for: ips. Error: %s" % e)
-            raise MothershipListValuesError("API_list_values/lsv: query failed for: ips. Error: %s" % e)
+        elif 'tags' in query.keys():
+            cfg.log.debug("API_list_values/lsv: querying for all tags")
+            try:
+                for tag in cfg.dbsess.query(Tag):
+                    buf.append(tag.name)
+                cfg.log.debug(buf)
+            except Exception, e:
+                cfg.log.debug("API_list_values/lsv: query failed for tags. Error: %s" % e)
+                raise ListValuesError("API_list_values/lsv: query failed for tags. Error: %s" % e)
 
-        return result
+        elif 'groups' in query.keys():
+            cfg.log.debug("API_list_values/lsv: querying for all groups")
+            try:
+                for g in cfg.dbsess.query(Groups):
+                    buf.append("%s.%s.%s gid:%s" % (g.groupname, g.realm, g.site_id, g.gid))
+                cfg.log.debug(buf)
+            except Exception, e:
+                cfg.log.debug("API_list_values/lsv: query failed for groups. Error: %s" % e)
+                raise ListValuesError("API_list_values/lsv: query failed for groups. Error: %s" % e)
 
-    def _get_tags(self):
-        result = []
-        cfg.log.debug("API_list_values/lsv: querying for all tags")
-        try:
-            for tag in cfg.dbsess.query(Tag):
-                result.append(tag.name)
-                cfg.log.debug(result)
-        except Exception, e:
-            cfg.log.debug("API_list_values/lsv: query failed for tags. Error: %s" % e)
-            raise MothershipListValuesError("API_list_values/lsv: query failed for tags. Error: %s" % e)
+        elif 'users' in query.keys():
+            cfg.log.debug("API_list_values/lsv: querying for all users")
+            try:
+                for u in cfg.dbsess.query(Users):
+                    if u.active:
+                        act = "active"
+                    else:
+                        act = "inactive"
+                    buf.append("%s.%s.%s uid:%s %s" % (u.username, u.realm, u.site_id, u.uid, act))
+                cfg.log.debug(buf)
+            except Exception, e:
+                cfg.log.debug("API_list_values/lsv: query failed for users. Error: %s" % e)
+                raise ListValuesError("API_list_values/lsv: query failed for groups. Error: %s" % e)
 
-        return result
+        elif 'available_hardware' in query.keys():
+            cfg.log.debug("API_list_values/lsv: querying for all available hardware")
+            try:
+                # setting up some vars
+                all_hw = []
+                alloc_hw = []
+                # fetch list of all hardware tags
+                for h in cfg.dbsess.query(Hardware):
+                    all_hw.append(h.hw_tag)
+                # fetch list of all hardware tags assigned to servers
+                for s in cfg.dbsess.query(Server):
+                    alloc_hw.append(s.hw_tag)
+                # diff 'em
+                buf = [item for item in all_hw if not item in alloc_hw]
+                cfg.log.debug(buf)
+            except Exception, e:
+                raise ListValuesError("API_list_values/lsv: query failed for available_hardware" % e)
 
-    def _get_groups(self):
-        result = []
-        cfg.log.debug("API_list_values/lsv: querying for all groups")
-        try:
-            for g in cfg.dbsess.query(Groups):
-                result.append("%s.%s.%s gid:%s" % (g.groupname, g.realm, g.site_id, g.gid))
-                cfg.log.debug(result)
-        except Exception, e:
-            cfg.log.debug("API_list_values/lsv: query failed for groups. Error: %s" % e)
-            raise MothershipListValuesError("API_list_values/lsv: query failed for groups. Error: %s" % e)
 
-        return result
-
-    def _get_users(self):
-        result = []
-        cfg.log.debug("API_list_values/lsv: querying for all users")
-        try:
-            for u in cfg.dbsess.query(Users):
-                if u.active:
-                    act = "active"
-                else:
-                    act = "inactive"
-                buf.append("%s.%s.%s uid:%s %s" % (u.username, u.realm, u.site_id, u.uid, act))
-            cfg.log.debug(result)
-        except Exception, e:
-            cfg.log.debug("API_list_values/lsv: query failed for users. Error: %s" % e)
-            raise MothershipListValuesError("API_list_values/lsv: query failed for groups. Error: %s" % e)
-
-        return result
-
-    def _get_available_hardware(self):
-        result = []
-        cfg.log.debug("API_list_values/lsv: querying for all available hardware")
-        try:
-            # setting up some vars
-            all_hw = []
-            alloc_hw = []
-            # fetch list of all hardware tags
-            for h in cfg.dbsess.query(Hardware):
-                all_hw.append(h.hw_tag)
-            # fetch list of all hardware tags assigned to servers
-            for s in cfg.dbsess.query(Server):
-                alloc_hw.append(s.hw_tag)
-            # diff 'em
-            buf = [item for item in all_hw if not item in alloc_hw]
-            cfg.log.debug(result)
-        except Exception, e:
-            raise MothershipListValuesError("API_list_values/lsv: query failed for available_hardware" % e)
-
-        return result
+        # return our listing
+        return buf
