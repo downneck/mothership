@@ -159,14 +159,14 @@ class API_list_servers:
             cfg.log.debug("API_list_servers/lss: max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max'])
 
         for key in query.keys():
-            if key == 'all':[]
-                result = self._get_all_severs()
+            if key == 'all':
+                result = self._get_all_servers()
             elif key == 'hostname':
                 result = self._get_severs_by_hostname(self, key)
             elif key == 'physical':
-                result = self._get_physical_servers():
+                result = self._get_physical_servers()
             elif key == 'virtual':
-                result = self._get_virtual_servers():
+                result = self._get_virtual_servers()
             elif key == 'hw_tag':
                 result = self._get_servers_from_hw_tag(self, key)
             elif key == 'vlan':
@@ -194,7 +194,7 @@ class API_list_servers:
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying for ALL servers")
         try:
-            for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
+            for serv in self.cfg.dbsess.query(Server).order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             raise MothershipListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
@@ -205,7 +205,7 @@ class API_list_servers:
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on name: %s" % query['hostname'])
         search_string = '%' + query['hostname'] + '%'
-        for serv in cfg.dbsess.query(Server).\
+        for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.hostname.like(search_string)).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
@@ -215,7 +215,7 @@ class API_list_servers:
     def _get_physical_severs(self):
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying for physical (baremetal) servers")
-        for serv in cfg.dbsess.query(Server).\
+        for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.virtual==False).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
@@ -225,7 +225,7 @@ class API_list_servers:
     def _get_virtual_servers(self):
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying for virtual servers")
-        for serv in cfg.dbsess.query(Server).\
+        for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.virtual==True).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
@@ -236,7 +236,7 @@ class API_list_servers:
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on hw_tag: %s" % query['hw_tag'])
         result = []
-        for serv in cfg.dbsess.query(Server).\
+        for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.hw_tag==query['hw_tag']):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 
@@ -246,7 +246,7 @@ class API_list_servers:
     def _get_servers_from_vlan(self, query):
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on vlan: %s" % query['vlan'])
-        for serv, net in cfg.dbsess.query(Server, Network).\
+        for serv, net in self.cfg.dbsess.query(Server, Network).\
                 filter(Network.ip!=None).\
                 filter(Network.vlan==query['vlan']).\
                 filter(Server.id==Network.server_id).\
@@ -258,7 +258,7 @@ class API_list_servers:
     def _get_servers_from_site_id(self, key):
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on site_id: %s" % query['site_id'])
-        for serv in cfg.dbsess.query(Server).\
+        for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.site_id==query['site_id']).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
@@ -272,7 +272,7 @@ class API_list_servers:
         servers_kv = []
         result = []
         
-        for server in cfg.dbsess.query(Server).\
+        for server in self.cfg.dbsess.query(Server).\
                 filter(Server.tag==query['tag']).\
                 order_by(Server.hostname):
             servers_primary.append(server)
@@ -296,7 +296,7 @@ class API_list_servers:
     def _get_servers_from_realm(self, query):
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on realm: %s" % query['realm'])
-        for serv in cfg.dbsess.query(Server).\
+        for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.realm==query['realm']).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
@@ -307,7 +307,7 @@ class API_list_servers:
         self.cfg.log.debug("API_list_servers/lss: querying on manufacturer: %s" % query['manufacturer'])
         result = []
         search_string = '%' + query['manufacturer'] + '%'
-        for serv, hw in cfg.dbsess.query(Server, Hardware).\
+        for serv, hw in self.cfg.dbsess.query(Server, Hardware).\
                 filter(Hardware.manufacturer.like(search_string)).\
                 filter(Server.hw_tag==Hardware.hw_tag).\
                 order_by(Server.hostname):
@@ -319,7 +319,7 @@ class API_list_servers:
         cfg.log.debug("API_list_servers/lss: querying on model: %s" % query['model'])
         result = []
         search_string = '%' + query['model']+ '%'
-        for serv, hw in cfg.dbsess.query(Server, Hardware).\
+        for serv, hw in self.cfg.dbsess.query(Server, Hardware).\
                 filter(Hardware.model.like(search_string)).\
                 filter(Server.hw_tag==Hardware.hw_tag).\
                 order_by(Server.hostname):
@@ -340,7 +340,7 @@ class API_list_servers:
     def _get_servers_from_ram(self, query):
         self.cfg.log.debug("API_list_servers/lss: querying on ram size in GB: %s" % query['ram'])
         result = []
-        for serv in cfg.dbsess.query(Server).\
+        for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.ram==query['ram']).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
@@ -350,7 +350,7 @@ class API_list_servers:
     def _get_servers_from_disk(self, query):
         self.cfg.log.debug("API_list_servers/lss: querying on disk size in GB: %s" % query['disk'])
         result = []
-        for serv in cfg.dbsess.query(Server).\
+        for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.disk==query['disk']).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
