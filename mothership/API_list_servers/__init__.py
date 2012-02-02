@@ -28,7 +28,7 @@ from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
 
-class ListServersError(Exception):
+class MothershipListServersError(Exception):
     pass
 
 
@@ -147,7 +147,7 @@ class API_list_servers:
         """
 
         cfg = self.cfg
-        buf = []
+        result = []
 
         if len(query.keys()) > self.metadata['methods']['lss']['optional_args']['max']:
             retval = "API_list_servers/lss: too many queries! max number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['max']
@@ -158,225 +158,201 @@ class API_list_servers:
             cfg.log.debug("API_list_servers/lss: num queries: %s" % len(query.keys()))
             cfg.log.debug("API_list_servers/lss: max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max'])
 
-        # list all servers
-        if 'all' in query.keys():
-            cfg.log.debug("API_list_servers/lss: querying for ALL servers")
-            try:
-                for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
-                    buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-            except Exception, e:
-                raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
+        for key in query.keys():
+            if key == 'all':[]
+                result = self._get_all_severs()
+            elif key == 'hostname':
+                result = self._get_severs_by_hostname(self, key)
+            elif key == 'physical':
+                result = self._get_physical_servers():
+            elif key == 'virtual':
+                result = self._get_virtual_servers():
+            elif key == 'hw_tag':
+                result = self._get_servers_from_hw_tag(self, key)
+            elif key == 'vlan':
+                result == self._get_servers_from_vlan(self, key)
+            elif key == 'site_id':
+                result =  self._get_servers_from_site_id(self, key)
+            elif key == 'tag':
+                result =  self._get_servers_from_tag(self, key)
+            elif key == 'realm':
+                result = self._get_servers_from_realm(self, key)
+            elif key == 'manufacturer':
+                result = self._get_servers_from_manufacturer(self, key)
+            elif key == 'model':
+                result =  self._get_servers_from_model(self, key)
+            elif key == 'cores':
+                result = self._get_servers_from_cores(self, key)
+            elif key == 'ram':
+                result = self._get_servers_from_ram(self, key)
+            elif key == 'disk':
+                result = self._get_servers_from_disk(self, key)
 
-        # list servers by name
-        if 'hostname' in query.keys():
-            if not query['hostname']:
-                cfg.log.debug("API_list_servers/lss: you must supply a value to filter by hostname")
-                raise ListServersError("API_list_servers/lss: you must supply a value to filter by hostname")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on name: %s" % query['hostname'])
-                    search_string = '%' + query['hostname'] + '%'
-                    for serv in cfg.dbsess.query(Server).\
-                    filter(Server.hostname.like(search_string)).\
-                    order_by(Server.hostname):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: failed query for hostname: %s. Error: %s" % (query['hostname'], e))
+        return result
 
-        # list physical (bare metal, non-virtual) servers
-        if 'physical' in query.keys():
-            try:
-                cfg.log.debug("API_list_servers/lss: querying for physical (baremetal) servers")
-                for serv in cfg.dbsess.query(Server).\
+    def _get_all_servers(self):
+        result = []
+        self.cfg.log.debug("API_list_servers/lss: querying for ALL servers")
+        try:
+            for serv in cfg.dbsess.query(Server).order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise MothershipListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
+
+        return result
+
+    def _get_server_from_hostname(self, query):
+        result = []
+        self.cfg.log.debug("API_list_servers/lss: querying on name: %s" % query['hostname'])
+        search_string = '%' + query['hostname'] + '%'
+        for serv in cfg.dbsess.query(Server).\
+                filter(Server.hostname.like(search_string)).\
+                order_by(Server.hostname):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+
+        return result
+
+    def _get_physical_severs(self):
+        result = []
+        self.cfg.log.debug("API_list_servers/lss: querying for physical (baremetal) servers")
+        for serv in cfg.dbsess.query(Server).\
                 filter(Server.virtual==False).\
                 order_by(Server.hostname):
-                    buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-            except Exception, e:
-                raise ListServersError("API_list_servers/lss: failed query for physical servers. Error: %s" % e)
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 
-        # list virtual servers
-        if 'virtual' in query.keys():
-            try:
-                cfg.log.debug("API_list_servers/lss: querying for virtual servers")
-                for serv in cfg.dbsess.query(Server).\
-                    filter(Server.virtual==True).\
-                    order_by(Server.hostname):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-            except Exception, e:
-                raise ListServersError("API_list_servers/lss: failed query for virtual servers. Error: %s" % e)
+        return result
 
-        # list servers by hw_tag
-        if 'hw_tag' in query.keys():
-            if not query['hw_tag']:
-                cfg.log.debug("API_list_servers/lss: you must supply a value to filter by hw_tag")
-                raise ListServersError("API_list_servers/lss: you must supply a value to filter by hw_tag")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on hw_tag: %s" % query['hw_tag'])
-                    for serv in cfg.dbsess.query(Server).\
-                    filter(Server.hw_tag==query['hw_tag']):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: failed query for hw_tag: %s. Exception: %s" % (query['hw_tag'], e))
+    def _get_virtual_servers(self):
+        result = []
+        self.cfg.log.debug("API_list_servers/lss: querying for virtual servers")
+        for serv in cfg.dbsess.query(Server).\
+                filter(Server.virtual==True).\
+                order_by(Server.hostname):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 
-        # list servers by vlan
-        if 'vlan' in query.keys():
-            if not query['vlan']:
-                cfg.log.debug("API_list_servers/lss: you must supply a value to filter by vlan")
-                raise ListServersError("API_list_servers/lss: you must supply a value to filter by vlan")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on vlan: %s" % query['vlan'])
-                    for serv, net in cfg.dbsess.query(Server, Network).\
-                    filter(Network.ip!=None).\
-                    filter(Network.vlan==query['vlan']).\
-                    filter(Server.id==Network.server_id).\
-                    order_by(Server.hostname):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: failed query for vlan: %s. Error: %s" % (query['vlan'], e))
+        return result
 
-        # list servers by site_id
-        if 'site_id' in query.keys():
-            if not query['site_id']:
-                cfg.log.debug("API_list_servers/lss: you must supply a value to filter by site_id")
-                raise ListServersError("API_list_servers/lss: you must supply a value to filter by site_id")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on site_id: %s" % query['site_id'])
-                    for serv in cfg.dbsess.query(Server).\
-                    filter(Server.site_id==query['site_id']).\
-                    order_by(Server.hostname):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: failed query for site_id: %s. Error: %s" % (query['vlan'], e))
+    def _get_severs_from_hw_tag(self, query):
+        result = []
+        self.cfg.log.debug("API_list_servers/lss: querying on hw_tag: %s" % query['hw_tag'])
+        result = []
+        for serv in cfg.dbsess.query(Server).\
+                filter(Server.hw_tag==query['hw_tag']):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 
-        # list servers by tag
-        if 'tag' in query.keys():
-            if not query['tag']:
-                cfg.log.debug("API_list_servers/lss: you must supply a value to filter by tag")
-                raise ListServersError("API_list_servers/lss: you must supply a value to filter by tag")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on tag: %s" % query['tag'])
-                    servers_primary = []
-                    for server in cfg.dbsess.query(Server).\
-                    filter(Server.tag==query['tag']).\
-                    order_by(Server.hostname):
-                        servers_primary.append(server)
-                    servers_kv = []
-                    kvs = kvobj.collect(cfg, None, key='tag')
-                    for i in kvs:
-                        namespace,key = str(i).split(' ')
-                        if key == "tag="+query['tag']:
-                            servers_kv.append(i.hostname+"."+i.realm+"."+i.site_id)
-                        else:
-                            pass
-                    if servers_primary:
-                        for serv in servers_primary:
-                            buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                    elif servers_kv:
-                        for serv in servers_kv:
-                            buf.append(serv)
-                    else:
-                        pass
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: failed query for tag: %s. Error: %s" % (query['tag'], e))
+        return result
+    
 
-        # list servers by realm
-        if 'realm' in query.keys():
-            if not query['realm']:
-                cfg.log.debug("API_list_servers/lss: you must supply a value to filter on realm")
-                raise ListServersError("API_list_servers/lss: you must supply a value to filter on realm")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on realm: %s" % query['realm'])
-                    for serv in cfg.dbsess.query(Server).\
-                    filter(Server.realm==query['realm']).\
-                    order_by(Server.hostname):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: failed query for realm: %s. Error: %s" % (query['realm'], e))
+    def _get_servers_from_vlan(self, query):
+        result = []
+        self.cfg.log.debug("API_list_servers/lss: querying on vlan: %s" % query['vlan'])
+        for serv, net in cfg.dbsess.query(Server, Network).\
+                filter(Network.ip!=None).\
+                filter(Network.vlan==query['vlan']).\
+                filter(Server.id==Network.server_id).\
+                order_by(Server.hostname):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 
-        # list servers by manufacturer
-        if 'manufacturer' in query.keys():
-            if not query['manufacturer']:
-                cfg.log.debug("API_list_servers/lss: you must supply a value to filter on manufacturer")
-                raise ListServersError("API_list_servers/lss: you must supply a value to filter on manufacturer")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on manufacturer: %s" % query['manufacturer'])
-                    search_string = '%' + query['manufacturer'] + '%'
-                    for serv, hw in cfg.dbsess.query(Server, Hardware).\
-                    filter(Hardware.manufacturer.like(search_string)).\
-                    filter(Server.hw_tag==Hardware.hw_tag).\
-                    order_by(Server.hostname):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: failed query for manufacturer: %s. Error: %s" % (query['manufacturer'], e))
+        return result
 
-        # list servers by model name
-        if 'model' in query.keys():
-            if not query['model']:
-                cfg.log.debug("API_list_servers/lss: you must supply a value to filter on model")
-                raise ListServersError("API_list_servers/lss: you must supply a value to filter on model")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on model: %s" % query['model'])
-                    search_string = '%' + query['model']+ '%'
-                    for serv, hw in cfg.dbsess.query(Server, Hardware).\
-                    filter(Hardware.model.like(search_string)).\
-                    filter(Server.hw_tag==Hardware.hw_tag).\
-                    order_by(Server.hostname):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: failed query for model: %s. Error: %s" % (query['model'], e))
+    def _get_servers_from_site_id(self, key):
+        result = []
+        self.cfg.log.debug("API_list_servers/lss: querying on site_id: %s" % query['site_id'])
+        for serv in cfg.dbsess.query(Server).\
+                filter(Server.site_id==query['site_id']).\
+                order_by(Server.hostname):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 
-        # list servers by cores
-        if 'cores' in query.keys():
-            if not query['cores'].isdigit():
-                cfg.log.debug("API_list_servers/lss: you must supply an int to filter by number of cores")
-                raise ListServersError("API_list_servers/lss: you must supply an int to filter by number of cores")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on number of cores: %s" % query['cores'])
-                    for serv in cfg.dbsess.query(Server).\
-                    filter(Server.cores==query['cores']).\
-                    order_by(Server.hostname):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: query failed for number of cores: %s. Error: %s" % (query['cores'], e))
+        return result
+    
+    def _get_servers_from_tag(self, key):
+        self.cfg.log.debug("API_list_servers/lss: querying on tag: %s" % query['tag'])
 
-        # list servers by ram
-        if 'ram' in query.keys():
-            if not query['ram'].isdigit():
-                cfg.log.debug("API_list_servers/lss: you must supply an int to filter by ram size (in GB)")
-                raise ListServersError("API_list_servers/lss: you must supply an int to filter by ram size (in GB)")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on ram size in GB: %s" % query['ram'])
-                    for serv in cfg.dbsess.query(Server).\
-                    filter(Server.ram==query['ram']).\
-                    order_by(Server.hostname):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: query failed for ram size in GB: %s. Error: %s" % (query['ram'], e))
+        servers_primary = []
+        servers_kv = []
+        result = []
+        
+        for server in cfg.dbsess.query(Server).\
+                filter(Server.tag==query['tag']).\
+                order_by(Server.hostname):
+            servers_primary.append(server)
+        
+        kvs = kvobj.collect(cfg, None, key='tag')
+        for i in kvs:
+            namespace, key = str(i).split(' ')
+            if key == "tag=" + query['tag']:
+                servers_kv.append(i.hostname+"."+i.realm+"."+i.site_id)
+        
+        if servers_primary:
+            for serv in servers_primary:
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 
-        # list servers by disk
-        if 'disk' in query.keys():
-            if not query['disk'].isdigit():
-                cfg.log.debug("API_list_servers/lss: you must supply an int to filter by disk size (in GB)")
-                raise ListServersError("API_list_servers/lss: you must supply an int to filter by disk size (in GB)")
-            else:
-                try:
-                    cfg.log.debug("API_list_servers/lss: querying on disk size in GB: %s" % query['disk'])
-                    for serv in cfg.dbsess.query(Server).\
-                    filter(Server.disk==query['disk']).\
-                    order_by(Server.hostname):
-                        buf.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-                except Exception, e:
-                    raise ListServersError("API_list_servers/lss: query failed for disk size in GB: %s. Error: %s" % (query['disk'], e))
+        if servers_kv:
+            for serv in servers_kv:
+                result.append(serv)
 
+        return result
+    
+    def _get_servers_from_realm(self, query):
+        result = []
+        self.cfg.log.debug("API_list_servers/lss: querying on realm: %s" % query['realm'])
+        for serv in cfg.dbsess.query(Server).\
+                filter(Server.realm==query['realm']).\
+                order_by(Server.hostname):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 
-        # return the list of servers we've found
-        return buf
+            return result
+    
+    def _get_servers_from_manufacturer(self, query):
+        self.cfg.log.debug("API_list_servers/lss: querying on manufacturer: %s" % query['manufacturer'])
+        result = []
+        search_string = '%' + query['manufacturer'] + '%'
+        for serv, hw in cfg.dbsess.query(Server, Hardware).\
+                filter(Hardware.manufacturer.like(search_string)).\
+                filter(Server.hw_tag==Hardware.hw_tag).\
+                order_by(Server.hostname):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+
+        return result
+
+    def _get_servers_from_model(self, query):
+        cfg.log.debug("API_list_servers/lss: querying on model: %s" % query['model'])
+        result = []
+        search_string = '%' + query['model']+ '%'
+        for serv, hw in cfg.dbsess.query(Server, Hardware).\
+                filter(Hardware.model.like(search_string)).\
+                filter(Server.hw_tag==Hardware.hw_tag).\
+                order_by(Server.hostname):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+
+        return result
+
+    def _get_severs_from_cores(self, query):
+        self.cfg.log.debug("API_list_servers/lss: querying on number of cores: %s" % query['cores'])
+        result = []
+        for serv in cfg.dbsess.query(Server).\
+                filter(Server.cores==query['cores']).\
+                order_by(Server.hostname):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+
+        return result
+    
+    def _get_servers_from_ram(self, query):
+        self.cfg.log.debug("API_list_servers/lss: querying on ram size in GB: %s" % query['ram'])
+        result = []
+        for serv in cfg.dbsess.query(Server).\
+                filter(Server.ram==query['ram']).\
+                order_by(Server.hostname):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+
+        return result
+
+    def _get_servers_from_disk(self, query):
+        self.cfg.log.debug("API_list_servers/lss: querying on disk size in GB: %s" % query['disk'])
+        result = []
+        for serv in cfg.dbsess.query(Server).\
+                filter(Server.disk==query['disk']).\
+                order_by(Server.hostname):
+            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+
+        return result
