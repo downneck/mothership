@@ -1,6 +1,6 @@
 import unittest
 
-from mothership.API_serverinfo import API_serverinfo
+from mothership.API_kv import API_kv
 from mothership.configure import *
 import mothership.validate
 from mothership.mothership_models import *
@@ -13,8 +13,9 @@ class TestServerInfo(unittest.TestCase):
         cfg = MothershipConfigureDaemon('mothership_daemon.yaml')
         cfg.load_config()
         cfg.log = MothershipLogger(cfg) 
-        si = API_serverinfo(cfg)
-        result = si._get_host_from_hwtag('3Y29JQ1')
+        kv = API_kv(cfg)
+        query = 'put a dict here'
+        result = kv.select(query)
 
         s = si.cfg.dbsess.query(Server).\
             filter(Server.hw_tag=='3Y29JQ1').\
