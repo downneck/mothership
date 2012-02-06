@@ -169,33 +169,34 @@ class API_list_servers:
             if key == 'all':
                 result = self._get_all_servers()
             elif key == 'hostname':
-                result = self._get_severs_by_hostname(self, key)
+                result = self._get_severs_by_hostname(query)
             elif key == 'physical':
                 result = self._get_physical_servers()
             elif key == 'virtual':
                 result = self._get_virtual_servers()
             elif key == 'hw_tag':
-                result = self._get_servers_from_hw_tag(self, key)
+                result = self._get_servers_from_hw_tag(query)
             elif key == 'vlan':
-                result == self._get_servers_from_vlan(self, key)
+                result = self._get_servers_from_vlan(query)
             elif key == 'site_id':
-                result =  self._get_servers_from_site_id(self, key)
+                result =  self._get_servers_from_site_id(query)
             elif key == 'tag':
-                result =  self._get_servers_from_tag(self, key)
+                result =  self._get_servers_from_tag(query)
             elif key == 'realm':
-                result = self._get_servers_from_realm(self, key)
+                result = self._get_servers_from_realm(query)
             elif key == 'manufacturer':
-                result = self._get_servers_from_manufacturer(self, key)
+                result = self._get_servers_from_manufacturer(query)
             elif key == 'model':
-                result =  self._get_servers_from_model(self, key)
+                result =  self._get_servers_from_model(query)
             elif key == 'cores':
-                result = self._get_servers_from_cores(self, key)
+                result = self._get_servers_from_cores(query)
             elif key == 'ram':
-                result = self._get_servers_from_ram(self, key)
+                result = self._get_servers_from_ram(query)
             elif key == 'disk':
-                result = self._get_servers_from_disk(self, key)
-
+                result = self._get_servers_from_disk(query)
+        # send the result back up to the API layer 
         return result
+
 
     def _get_all_servers(self):
         result = []
@@ -205,7 +206,6 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
-
         return result
 
     def _get_server_from_hostname(self, query):
@@ -216,7 +216,6 @@ class API_list_servers:
                 filter(Server.hostname.like(search_string)).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
 
     def _get_physical_severs(self):
@@ -226,7 +225,6 @@ class API_list_servers:
                 filter(Server.virtual==False).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
 
     def _get_virtual_servers(self):
@@ -236,17 +234,14 @@ class API_list_servers:
                 filter(Server.virtual==True).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
 
     def _get_severs_from_hw_tag(self, query):
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on hw_tag: %s" % query['hw_tag'])
-        result = []
         for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.hw_tag==query['hw_tag']):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
     
 
@@ -259,7 +254,6 @@ class API_list_servers:
                 filter(Server.id==Network.server_id).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
 
     def _get_servers_from_site_id(self, key):
@@ -269,7 +263,6 @@ class API_list_servers:
                 filter(Server.site_id==query['site_id']).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
     
     def _get_servers_from_tag(self, key):
@@ -297,7 +290,6 @@ class API_list_servers:
         if servers_kv:
             for serv in servers_kv:
                 result.append(serv)
-
         return result
     
     def _get_servers_from_realm(self, query):
@@ -307,8 +299,7 @@ class API_list_servers:
                 filter(Server.realm==query['realm']).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
-            return result
+        return result
     
     def _get_servers_from_manufacturer(self, query):
         self.cfg.log.debug("API_list_servers/lss: querying on manufacturer: %s" % query['manufacturer'])
@@ -319,7 +310,6 @@ class API_list_servers:
                 filter(Server.hw_tag==Hardware.hw_tag).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
 
     def _get_servers_from_model(self, query):
@@ -331,7 +321,6 @@ class API_list_servers:
                 filter(Server.hw_tag==Hardware.hw_tag).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
 
     def _get_severs_from_cores(self, query):
@@ -341,7 +330,6 @@ class API_list_servers:
                 filter(Server.cores==query['cores']).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
     
     def _get_servers_from_ram(self, query):
@@ -351,7 +339,6 @@ class API_list_servers:
                 filter(Server.ram==query['ram']).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
 
     def _get_servers_from_disk(self, query):
@@ -361,5 +348,4 @@ class API_list_servers:
                 filter(Server.disk==query['disk']).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
-
         return result
