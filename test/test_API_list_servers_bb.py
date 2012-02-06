@@ -80,8 +80,8 @@ class TestAPI_list_servers(unittest.TestCase):
         print "****** test_kv_select_garbage_input_bad: PASSED (raised ListServersError)"
 
     # all=True, good output
-    def test_lss_all_good(self):
-        query = {'all': True}
+    def test_lss_vlan_good(self):
+        query = {'vlan': '200'}
         result = lss.lss(query)
 
         # pre-define expected output
@@ -120,4 +120,4 @@ class TestAPI_list_servers(unittest.TestCase):
               "zenoss1.satest.jfk"
         ]
         self.assertEqual(result, ret)
-        print "****** test_lss_all_good: PASSED"
+        print "****** test_lss_vlan_good: PASSED"
