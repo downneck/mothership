@@ -26,32 +26,56 @@ lss = API_list_servers(cfg)
 class TestAPI_list_servers(unittest.TestCase):
 
     ######################################
-    # testing select()                   #
+    # testing lss()                      #
     ######################################
 
-    # any=True, good output
-    def test_kv_select_any_good(self):
-        query = {'any': True}
-        result = kv.select(query)
+    # all=True, good output
+    def test_lss_all_good(self):
+        query = {'all': True}
+        result = lss.lss(query)
 
         # pre-define expected output
-        ret = [{
-               'realm': None,
-               'hostname': None,
-               'site_id': None,
-               'value': '359924B5-B1E4-468F-BD94-784FCD366BFA',
-               'table_name': 'kv',
-               'key': 'mc_secret',
-               'id': 1
-        },]
-
+        ret = [
+              "ci1.satest.jfk",
+              "cm1.satest.jfk",
+              "cm2.satest.jfk",
+              "cobbler1.satest.jfk",
+              "dcmon1.satest.jfk",
+              "hudson1.satest.jfk",
+              "hudson2.satest.jfk",
+              "jira1.satest.jfk",
+              "ldap1.satest.jfk",
+              "ldap2.satest.jfk",
+              "mtest3.satest.jfk",
+              "ns1.satest.jfk",
+              "ns2.satest.jfk",
+              "puppet.satest.jfk",
+              "rpmbuilder1.satest.jfk",
+              "solr12.satest.jfk",
+              "splunk1.satest.jfk",
+              "stage2.satest.jfk",
+              "stage7.satest.jfk",
+              "swaptest1.satest.jfk",
+              "swaptest2.satest.jfk",
+              "test2.satest.jfk",
+              "test5.satest.jfk",
+              "test6.satest.jfk",
+              "testeasyinstall.satest.jfk",
+              "teststore.satest.jfk",
+              "xenserver1.satest.jfk",
+              "xenserver2.satest.jfk",
+              "xenserver3.satest.jfk",
+              "zbx1.satest.jfk",
+              "zendc1.satest.jfk",
+              "zenoss1.satest.jfk"
+        ]
         self.assertEqual(result, ret)
-        print "****** test_kv_select_any_good: PASSED"
+        print "****** test_lss_all_good: PASSED"
 
-    # test unqdn=garbage, failure results
-    def test_kv_select_unqdn_garbage_input_bad(self):
-        query = {'unqdn': 'garbage'}
-
-        self.assertRaises(KVError, kv.select, query)
+    # test empty query, failure results
+    def test_lss_empty_query_bad(self):
+        query = {}
+      
+        self.assertRaises(ListServersError, lss.lss, query)
         print "****** test_kv_select_garbage_input_bad: PASSED (raised KVError)"
 

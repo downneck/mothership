@@ -28,7 +28,7 @@ from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 
 
-class MothershipListServersError(Exception):
+class ListServersError(Exception):
     pass
 
 
@@ -157,6 +157,13 @@ class API_list_servers:
         else:
             cfg.log.debug("API_list_servers/lss: num queries: %s" % len(query.keys()))
             cfg.log.debug("API_list_servers/lss: max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max'])
+        if len(query.keys()) < self.metadata['methods']['lss']['optional_args']['min']:
+            retval = "API_list_servers/lss: too few queries! min number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['min']
+            retval += "API_list_servers/lss: you tried to pass %s queries\n" % len(query.keys())
+            cfg.log.debug(retval)
+            raise ListServersError(retval)
+        else:
+            cfg.log.debug("API_list_servers/lss: min num queries: %s" % self.metadata['methods']['lss']['optional_args']['min'])
 
         for key in query.keys():
             if key == 'all':
@@ -197,7 +204,7 @@ class API_list_servers:
             for serv in self.cfg.dbsess.query(Server).order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            raise MothershipListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
 
         return result
 
