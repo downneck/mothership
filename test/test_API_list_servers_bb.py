@@ -77,5 +77,5 @@ class TestAPI_list_servers(unittest.TestCase):
         query = {}
       
         self.assertRaises(ListServersError, lss.lss, query)
-        print "****** test_kv_select_garbage_input_bad: PASSED (raised KVError)"
+        print "****** test_kv_select_garbage_input_bad: PASSED (raised ListServersError)"
 
