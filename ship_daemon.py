@@ -106,6 +106,22 @@ def index():
     """
     response.content_type='application/json'
     jbuf = __generate_json_header()
+    try:
+        authname, authpass = bottle.request.auth
+        if authname == cfg.api_cli_user and authpass == cfg.api_cli_pass:
+            pass
+        else:
+            jbuf['status'] = 1
+            jbuf['data'] = ""
+            jbuf['msg'] = "authentication failed! user: %s, pass: %s" % (authname, authpass)
+            return myjson.JSONEncoder().encode(jbuf)
+    except Exception, e:
+        jbuf['status'] = 1
+        jbuf['data'] = ""
+        jbuf['msg'] = "auth request failed in / route. error: %s" % e 
+        traceback.print_exc()
+        return myjson.JSONEncoder().encode(jbuf)
+
     jbuf['request'] = '/'
     try:
         jbuf['data'] = "loaded modules: "
@@ -134,6 +150,22 @@ def loaded_modules():
     """
     response.content_type='application/json'
     jbuf = __generate_json_header()
+    try:
+        authname, authpass = bottle.request.auth
+        if authname == cfg.api_cli_user and authpass == cfg.api_cli_pass:
+            pass
+        else:
+            jbuf['status'] = 1
+            jbuf['data'] = ""
+            jbuf['msg'] = "authentication failed! user: %s, pass: %s" % (authname, authpass)
+            return myjson.JSONEncoder().encode(jbuf)
+    except Exception, e:
+        jbuf['status'] = 1
+        jbuf['data'] = ""
+        jbuf['msg'] = "auth request failed in /modules route. error: %s" % e 
+        traceback.print_exc()
+        return myjson.JSONEncoder().encode(jbuf)
+
     jbuf['request'] = '/modules'
     try:
         jbuf['data'] = []

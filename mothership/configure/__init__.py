@@ -49,8 +49,19 @@ class MothershipConfigure(object):
         except Exception, e:
             raise ConfigureError("Error loading config file: %s\nConfig search paths: %s\nError: %s" % (config_file, load_paths, e))
 
-        # Logging settings
         all_configs = self.all_configs
+        # general settings
+        genconfig = all_configs['general']
+        # user the CLI uses to authenticate with the API
+        if 'api_cli_user' in genconfig and genconfig['api_cli_user']:
+            self.api_cli_user = genconfig['api_cli_user']
+        else:
+            self.api_cli_user = 'apicli'
+        # password the CLI uses to authenticate with the API
+        if 'api_cli_pass' in genconfig and genconfig['api_cli_pass']:
+            self.api_cli_pass = genconfig['api_cli_pass']
+
+        # Logging settings
         logconfig = all_configs['logconfig']
         # log directory, default is /var/log/mothership
         if 'logdir' in logconfig and logconfig['logdir']:
@@ -80,12 +91,6 @@ class MothershipConfigure(object):
             self.log_level = logconfig['log_level']
         else:
             self.log_level = 'DEBUG'
-        # audit log filename, default is mothership_audit.log
-        # logs all command line calls
-        if 'audit_log_file' in logconfig and logconfig['audit_log_file']:
-            self.audit_log_file = logconfig['audit_log_file']
-        else:
-            self.audit_log_file = 'mothership_audit.log'
 
 
     def close_connections(self):
@@ -129,6 +134,14 @@ class MothershipConfigureCli(MothershipConfigure):
             self.api_port = genconfig['api_port']
         else:
             self.api_port = '8081'
+
+        logconfig = all_configs['logconfig']
+        # audit log filename, default is mothership_audit.log
+        # logs all command line calls
+        if 'audit_log_file' in logconfig and logconfig['audit_log_file']:
+            self.audit_log_file = logconfig['audit_log_file']
+        else:
+            self.audit_log_file = 'mothership_audit.log'
 
 
 

@@ -54,9 +54,11 @@ general:
   # mothership. mostly useful for auditing purposes
   root_lockout: True
 
-  # audit log location. this will get a dump of every command
-  # run in mothership with a timestamp and the user who ran it
-  audit_log_file: '/var/log/mothership/mothership_audit.log'
+  # the HTTPBasicAuth user (CLI only has one user)
+  api_cli_user: 'apicli'
+
+  # the HTTPBasicAuth pass for api_user above
+  api_cli_pass: 'VHiwjWO9'
 
 # Log config options
 logconfig:
