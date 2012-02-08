@@ -49,6 +49,28 @@ def __generate_json_header():
     return jbuf
 
 
+# authenticate incoming connections
+def __auth_conn(jbuf):
+    try:
+        authname, authpass = bottle.request.auth
+        if authname == cfg.api_cli_user and authpass == cfg.api_cli_pass:
+            return (True, jbuf)
+        else:
+	    cfg.log.debug("authentication failed! user: %s, pass: %s" % (authname, authpass))
+            jbuf['status'] = 1
+            jbuf['data'] = ""
+            jbuf['msg'] = "authentication failed! user: %s, pass: %s" % (authname, authpass)
+            return (False, jbuf)
+    except Exception, e:
+        cfg.log.debug("auth request failed in / route. error: %s" % e)
+        jbuf['status'] = 1
+        jbuf['data'] = ""
+        jbuf['msg'] = "auth request failed in / route. error: %s" % e 
+        traceback.print_exc()
+        return (False, jbuf)
+
+
+
 @httpship.route('/loadmodules')
 def load_modules():
     """
@@ -106,23 +128,12 @@ def index():
     """
     response.content_type='application/json'
     jbuf = __generate_json_header()
-    try:
-        authname, authpass = bottle.request.auth
-        if authname == cfg.api_cli_user and authpass == cfg.api_cli_pass:
-            pass
-        else:
-            jbuf['status'] = 1
-            jbuf['data'] = ""
-            jbuf['msg'] = "authentication failed! user: %s, pass: %s" % (authname, authpass)
-            return myjson.JSONEncoder().encode(jbuf)
-    except Exception, e:
-        jbuf['status'] = 1
-        jbuf['data'] = ""
-        jbuf['msg'] = "auth request failed in / route. error: %s" % e 
-        traceback.print_exc()
-        return myjson.JSONEncoder().encode(jbuf)
-
     jbuf['request'] = '/'
+    # authenticate the incoming request
+    authed, jbuf = __auth_conn(jbuf)
+    if not authed:
+        return myjson.JSONEncoder().encode(jbuf)
+    # assuming we're authed, do stuff
     try:
         jbuf['data'] = "loaded modules: "
         for k in cfg.module_metadata.keys():
@@ -150,23 +161,12 @@ def loaded_modules():
     """
     response.content_type='application/json'
     jbuf = __generate_json_header()
-    try:
-        authname, authpass = bottle.request.auth
-        if authname == cfg.api_cli_user and authpass == cfg.api_cli_pass:
-            pass
-        else:
-            jbuf['status'] = 1
-            jbuf['data'] = ""
-            jbuf['msg'] = "authentication failed! user: %s, pass: %s" % (authname, authpass)
-            return myjson.JSONEncoder().encode(jbuf)
-    except Exception, e:
-        jbuf['status'] = 1
-        jbuf['data'] = ""
-        jbuf['msg'] = "auth request failed in /modules route. error: %s" % e 
-        traceback.print_exc()
-        return myjson.JSONEncoder().encode(jbuf)
-
     jbuf['request'] = '/modules'
+    # authenticate the incoming request
+    authed, jbuf = __auth_conn(jbuf)
+    if not authed:
+        return myjson.JSONEncoder().encode(jbuf)
+    # assuming we're authed, do stuff
     try:
         jbuf['data'] = []
         for k in cfg.module_metadata.keys():
@@ -194,6 +194,11 @@ def namespace_path(pname):
     response.content_type='application/json'
     jbuf = __generate_json_header()
     jbuf['request'] = "/%s" % pname
+    # authenticate the incoming request
+    authed, jbuf = __auth_conn(jbuf)
+    if not authed:
+        return myjson.JSONEncoder().encode(jbuf)
+    # assuming we're authed, do stuff
     try:
         jbuf['data'] = {}
         jbuf['data']['callable_functions'] = []
@@ -221,6 +226,11 @@ def callable_path(pname, callpath):
     response.content_type='application/json'
     jbuf = __generate_json_header()
     jbuf['request'] = "/%s/%s" % (pname, callpath)
+    # authenticate the incoming request
+    authed, jbuf = __auth_conn(jbuf)
+    if not authed:
+        return myjson.JSONEncoder().encode(jbuf)
+    # assuming we're authed, do stuff
     try:
         query = bottle.request.GET
         pnameMetadata = cfg.module_metadata[pname]

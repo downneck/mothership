@@ -111,7 +111,7 @@ def call_command(cfg, module_map):
         module, call = sys.argv[1].split('/')
         if revmodule_map[module]:
             buf = "" # our argument buffer for urlencoding
-            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata')
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_cli_user, cfg.api_cli_pass))
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
                 raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
@@ -162,13 +162,13 @@ def call_command(cfg, module_map):
             # make the call out to our API service, expect JSON back,
             # load the JSON into the equivalent python variable type
             if mmeta['data']['methods'][call]['rest_type'] == 'GET':
-                callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
+                callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_cli_user, cfg.api_cli_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'POST':
-                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
+                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_cli_user, cfg.api_cli_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'DELETE':
-                callresponse = requests.delete('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
+                callresponse = requests.delete('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_cli_user, cfg.api_cli_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'PUT':
-                callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf)
+                callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_cli_user, cfg.api_cli_pass))
             responsedata = myjson.loads(callresponse.content)
             if responsedata['status'] != 0:
                 raise ShipCLIError("Error occurred:\n%s" % responsedata['msg'])
