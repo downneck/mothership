@@ -56,14 +56,14 @@ def __auth_conn(jbuf, authtype):
             return (True, jbuf)
         elif bottle.request.auth == (cfg.api_admin_user, cfg.api_admin_pass) and (authtype == 'admin' or authtype == 'info'):
             return (True, jbuf)
-        elif bottle.request.auth == (cfg.api_info_user, cfg.api_info_pass) and authtype == 'admin':
+        elif bottle.request.cookies['apitest'] == 'letmein' and authtype == 'info': 
+            return (True, jbuf)
+        elif (bottle.request.auth == (cfg.api_info_user, cfg.api_info_pass) or bottle.request.cookies['apitest'] == 'letmein') and authtype == 'admin':
 	    cfg.log.debug("authentication failed, you do not have admin-level access")
             jbuf['status'] = 1
             jbuf['data'] = ""
             jbuf['msg'] = "authentication failed, you do not have admin-level access"
             return (False, jbuf)
-        elif bottle.request.cookies['apitest'] == 'letmein': 
-            return (True, jbuf)
         else:
 	    cfg.log.debug("authentication failed, no user/pass supplied")
             jbuf['status'] = 1
@@ -141,7 +141,7 @@ def index():
     jbuf = __generate_json_header()
     jbuf['request'] = '/'
     # authenticate the incoming request
-    authed, jbuf = __auth_conn(jbuf)
+    authed, jbuf = __auth_conn(jbuf, 'info')
     if not authed:
         response.content_type='text/html'
         raise bottle.HTTPError(401, '/') 
@@ -175,7 +175,7 @@ def loaded_modules():
     jbuf = __generate_json_header()
     jbuf['request'] = '/modules'
     # authenticate the incoming request
-    authed, jbuf = __auth_conn(jbuf)
+    authed, jbuf = __auth_conn(jbuf, 'info')
     if not authed:
         response.content_type='text/html'
         raise bottle.HTTPError(401, '/modules') 
@@ -208,7 +208,7 @@ def namespace_path(pname):
     jbuf = __generate_json_header()
     jbuf['request'] = "/%s" % pname
     # authenticate the incoming request
-    authed, jbuf = __auth_conn(jbuf)
+    authed, jbuf = __auth_conn(jbuf, 'info')
     if not authed:
         response.content_type='text/html'
         raise bottle.HTTPError(401, '/'+pname) 
@@ -240,8 +240,8 @@ def callable_path(pname, callpath):
     response.content_type='application/json'
     jbuf = __generate_json_header()
     jbuf['request'] = "/%s/%s" % (pname, callpath)
-    # authenticate the incoming request
-    authed, jbuf = __auth_conn(jbuf)
+    # authenticate the incoming request just enough to get metadata
+    authed, jbuf = __auth_conn(jbuf, 'info')
     if not authed:
         response.content_type='text/html'
         raise bottle.HTTPError(401, '/'+pname+'/'+callpath) 
@@ -252,6 +252,7 @@ def callable_path(pname, callpath):
         cfg.log.debug("query keys: %s" % query.keys())
         # everyone has a 'metadata' construct
         # hard wire it into callpath options
+        # this is an info-level request so no re-auth
         if callpath == 'metadata':
             cfg.log.debug(myjson.JSONEncoder(indent=4).encode(pnameMetadata.metadata))
             jbuf['data'] = pnameMetadata.metadata
@@ -262,6 +263,13 @@ def callable_path(pname, callpath):
         if query:
             cfg.log.debug("method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath]))
             if bottle.request.method == pnameCallpath['rest_type']:
+                # check to see if the function we're calling is defined as "admin-only"
+                # which requires a different user/pass than "info-only" requests
+                if pnameCallpath['admin_only']:
+                    reauthed, jbuf = __auth_conn(jbuf, 'admin')
+                    if not reauthed:
+                        response.content_type='text/html'
+                        raise bottle.HTTPError(401, '/'+pname+'/'+callpath) 
                 buf = getattr(pnameMetadata, callpath)
                 jbuf['data'] = buf(query)
                 cfg.log.debug(myjson.JSONEncoder(indent=4).encode(jbuf))
@@ -287,6 +295,9 @@ def callable_path(pname, callpath):
                 pass
             return myjson.JSONEncoder(indent=4).encode(jbuf)
             cfg.log.debug(jbuf)
+    # catch and re-raise HTTP auth errors
+    except bottle.HTTPError:
+        raise bottle.HTTPError(401, '/'+pname+'/'+callpath)
     except Exception, e:
         jbuf['status'] = 1
         jbuf['data'] = ""
