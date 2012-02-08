@@ -88,25 +88,28 @@ def load_modules():
     try:
         # get a list of all subdirectories under mothership
         for i in os.walk(basepath+'/mothership/').next()[1]:
-            try:
-                # import each module in the list above, grab the metadata
-                # from it's main class
-                cfg.log.debug("importing mothership.%s:" % i)
-                if i in old_metadata.keys():
-                    try:
-                        cfg.log.debug("unloading module: %s" % sys.modules['mothership.'+i])
-                        del sys.modules['mothership.'+i]
-                    except:
-                        pass
-                    cfg.log.debug("module unloaded: mothership."+i)
-                mod = __import__("mothership."+i)
-                cfg.log.debug("import complete")
-                foo = getattr(mod, i)
-                bar = getattr(foo, i)
-                inst = bar(cfg)
-                cfg.module_metadata[i] = inst
-            except Exception, e:
-                cfg.log.debug("import error: %s" % e)
+            if 'API_' in i:
+                try:
+                    # import each module in the list above, grab the metadata
+                    # from it's main class
+                    cfg.log.debug("importing mothership.%s:" % i)
+                    if i in old_metadata.keys():
+                        try:
+                            cfg.log.debug("unloading module: %s" % sys.modules['mothership.'+i])
+                            del sys.modules['mothership.'+i]
+                        except:
+                            pass
+                        cfg.log.debug("module unloaded: mothership."+i)
+                    mod = __import__("mothership."+i)
+                    cfg.log.debug("import complete")
+                    foo = getattr(mod, i)
+                    bar = getattr(foo, i)
+                    inst = bar(cfg)
+                    cfg.module_metadata[i] = inst
+                except Exception, e:
+                    cfg.log.debug("import error: %s" % e)
+            else:
+                cfg.log.debug("skipping non-api module: %s" % i)
         jbuf['data'] = "reloaded modules:"
         for k in cfg.module_metadata.keys():
             jbuf['data'] += " %s" % cfg.module_metadata[k].namespace
@@ -132,7 +135,8 @@ def index():
     # authenticate the incoming request
     authed, jbuf = __auth_conn(jbuf)
     if not authed:
-        return myjson.JSONEncoder().encode(jbuf)
+        response.content_type='text/html'
+        raise bottle.HTTPError(401, '/') 
     # assuming we're authed, do stuff
     try:
         jbuf['data'] = "loaded modules: "
@@ -165,7 +169,8 @@ def loaded_modules():
     # authenticate the incoming request
     authed, jbuf = __auth_conn(jbuf)
     if not authed:
-        return myjson.JSONEncoder().encode(jbuf)
+        response.content_type='text/html'
+        raise bottle.HTTPError(401, '/modules') 
     # assuming we're authed, do stuff
     try:
         jbuf['data'] = []
@@ -197,7 +202,8 @@ def namespace_path(pname):
     # authenticate the incoming request
     authed, jbuf = __auth_conn(jbuf)
     if not authed:
-        return myjson.JSONEncoder().encode(jbuf)
+        response.content_type='text/html'
+        raise bottle.HTTPError(401, '/'+pname) 
     # assuming we're authed, do stuff
     try:
         jbuf['data'] = {}
@@ -229,7 +235,8 @@ def callable_path(pname, callpath):
     # authenticate the incoming request
     authed, jbuf = __auth_conn(jbuf)
     if not authed:
-        return myjson.JSONEncoder().encode(jbuf)
+        response.content_type='text/html'
+        raise bottle.HTTPError(401, '/'+pname+'/'+callpath) 
     # assuming we're authed, do stuff
     try:
         query = bottle.request.GET
