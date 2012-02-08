@@ -50,23 +50,31 @@ def __generate_json_header():
 
 
 # authenticate incoming connections
-def __auth_conn(jbuf):
+def __auth_conn(jbuf, authtype):
     try:
-        if bottle.request.auth == (cfg.api_cli_user, cfg.api_cli_pass):
+        if bottle.request.auth == (cfg.api_info_user, cfg.api_info_pass) and authtype == 'info':
             return (True, jbuf)
+        elif bottle.request.auth == (cfg.api_admin_user, cfg.api_admin_pass) and (authtype == 'admin' or authtype == 'info'):
+            return (True, jbuf)
+        elif bottle.request.auth == (cfg.api_info_user, cfg.api_info_pass) and authtype == 'admin':
+	    cfg.log.debug("authentication failed, you do not have admin-level access")
+            jbuf['status'] = 1
+            jbuf['data'] = ""
+            jbuf['msg'] = "authentication failed, you do not have admin-level access"
+            return (False, jbuf)
         elif bottle.request.cookies['apitest'] == 'letmein': 
             return (True, jbuf)
         else:
 	    cfg.log.debug("authentication failed, no user/pass supplied")
             jbuf['status'] = 1
             jbuf['data'] = ""
-            jbuf['msg'] = "authentication failed!, no user/pass supplied"
+            jbuf['msg'] = "authentication failed, no user/pass supplied"
             return (False, jbuf)
     except Exception, e:
-        cfg.log.debug("auth request failed in / route. error: %s" % e)
+        cfg.log.debug("auth request failed. error: %s" % e)
         jbuf['status'] = 1
         jbuf['data'] = ""
-        jbuf['msg'] = "auth request failed in / route. error: %s" % e 
+        jbuf['msg'] = "auth request failed. error: %s" % e 
         traceback.print_exc()
         return (False, jbuf)
 

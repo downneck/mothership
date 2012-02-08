@@ -48,6 +48,7 @@ class API_puppet:
                 'classify': {
                     'description': 'classify a puppet node',
                     'rest_type': 'GET',
+                    'admin_only': False, 
                     'required_args': {
                         'args': {
                             'hostname': {

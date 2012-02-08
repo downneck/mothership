@@ -54,6 +54,7 @@ class API_serverinfo:
                 'si': { # a method identifier
                     'description': 'retrieve server info for a server identified by hostname.realm.site_id', # duh
                     'rest_type': 'GET', # the REST method we want to use for this call: GET, POST, PUT, DELETE
+                    'admin_only': False, # if True, you must authenticate with the admin user/pass defined in the yaml
                     'required_args': { # dict of info about arguments we just can't live without
                     },
                     'optional_args': { # dict holding optional argument info

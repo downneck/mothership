@@ -52,14 +52,23 @@ class MothershipConfigure(object):
         all_configs = self.all_configs
         # general settings
         genconfig = all_configs['general']
-        # user the CLI uses to authenticate with the API
-        if 'api_cli_user' in genconfig and genconfig['api_cli_user']:
-            self.api_cli_user = genconfig['api_cli_user']
+        # user to authenticate for 'info' type requests (non-admin/read-only)
+        if 'api_info_user' in genconfig and genconfig['api_info_user']:
+            self.api_info_user = genconfig['api_info_user']
         else:
-            self.api_cli_user = 'apicli'
-        # password the CLI uses to authenticate with the API
-        if 'api_cli_pass' in genconfig and genconfig['api_cli_pass']:
-            self.api_cli_pass = genconfig['api_cli_pass']
+            self.api_info_user = 'apicli'
+        # pass to authenticate for 'info' type requests (non-admin/read-only)
+        if 'api_info_pass' in genconfig and genconfig['api_info_pass']:
+            self.api_info_pass = genconfig['api_info_pass']
+        # user to authenticate for 'admin' type requests (read-write)
+        if 'api_admin_user' in genconfig and genconfig['api_admin_user']:
+            self.api_admin_user = genconfig['api_admin_user']
+        else:
+            self.api_admin_user = 'apicli'
+        # pass to authenticate for 'admin' type requests (read-write)
+        if 'api_admin_pass' in genconfig and genconfig['api_admin_pass']:
+            self.api_admin_pass = genconfig['api_admin_pass']
+
 
         # Logging settings
         logconfig = all_configs['logconfig']

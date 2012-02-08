@@ -54,7 +54,7 @@ def print_submodules(cfg, module_map):
     try:
         print "Available submodules:\n"
         for i in module_map.keys():
-            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata', auth=(cfg.api_cli_user, cfg.api_cli_pass))
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
                 raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
@@ -68,7 +68,7 @@ def print_submodules(cfg, module_map):
 def print_commands(cfg, module_map):
     try:
         revmodule_map = swap_dict(module_map)
-        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[sys.argv[1]]+'/metadata', auth=(cfg.api_cli_user, cfg.api_cli_pass))
+        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[sys.argv[1]]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
         mmeta = myjson.loads(response.content)
         if mmeta['status'] != 0:
             raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
@@ -85,7 +85,7 @@ def print_command_args(cfg, module_map):
     try:
         revmodule_map = swap_dict(module_map)
         module, call = sys.argv[1].split('/')
-        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_cli_user, cfg.api_cli_pass))
+        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
         mmeta = myjson.loads(response.content)
         if mmeta['status'] != 0:
             raise ShipCLIError("Error:\n%s" % mmeta['msg'])
@@ -111,7 +111,7 @@ def call_command(cfg, module_map):
         module, call = sys.argv[1].split('/')
         if revmodule_map[module]:
             buf = "" # our argument buffer for urlencoding
-            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_cli_user, cfg.api_cli_pass))
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
                 raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
@@ -162,13 +162,13 @@ def call_command(cfg, module_map):
             # make the call out to our API service, expect JSON back,
             # load the JSON into the equivalent python variable type
             if mmeta['data']['methods'][call]['rest_type'] == 'GET':
-                callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_cli_user, cfg.api_cli_pass))
+                callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'POST':
-                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_cli_user, cfg.api_cli_pass))
+                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'DELETE':
-                callresponse = requests.delete('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_cli_user, cfg.api_cli_pass))
+                callresponse = requests.delete('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'PUT':
-                callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_cli_user, cfg.api_cli_pass))
+                callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             responsedata = myjson.loads(callresponse.content)
             if responsedata['status'] != 0:
                 raise ShipCLIError("Error occurred:\n%s" % responsedata['msg'])
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     # doin stuff
     try:
         # grab a list of loaded modules from the API server
-        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/modules', auth=(cfg.api_cli_user, cfg.api_cli_pass))
+        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/modules', auth=(cfg.api_admin_user, cfg.api_admin_pass))
         # decode the response into a dict
         response_dict = myjson.loads(response.content)
         # check the status on our JSON response. 0 == good, anything
@@ -259,7 +259,7 @@ if __name__ == "__main__":
         module_list = response_dict['data']
         module_map = {}
         for i in module_list:
-            response = requests.get('http://'+cfg.api_server+":"+cfg.api_port+'/'+i+'/metadata', auth=(cfg.api_cli_user, cfg.api_cli_pass))
+            response = requests.get('http://'+cfg.api_server+":"+cfg.api_port+'/'+i+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
             response_dict = myjson.loads(response.content)
             module_map[i] = response_dict['data']['config']['shortname']
         # a reverse module map, useful in constructing our cmdln

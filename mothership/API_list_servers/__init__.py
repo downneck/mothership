@@ -52,6 +52,7 @@ class API_list_servers:
                 'lss': {
                     'description': 'list all servers matching a particular criteria',
                     'rest_type': 'GET',
+                    'admin_only': False,
                     'required_args': {
                     },
                     'optional_args': {
