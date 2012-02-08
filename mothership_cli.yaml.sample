@@ -26,16 +26,14 @@ general:
   # Set this to the location of your api server (usually it's localhost)
   api_server: 'localhost'
 
-  # the HTTPBasicAuth user for informational requests (read-only)
-  api_info_user: 'apicli'
-
-  # the HTTPBasicAuth pass for informational requests (read-only)
-  api_info_pass: 'VHiwjWO9'
-
   # the HTTPBasicAuth user for admin requests (read-write)
+  # this should match whatever is in the equivalent line
+  # in your mothership_daemon.yaml
   api_admin_user: 'vlad'
 
   # the HTTPBasicAuth user for admin requests (read-write)
+  # this should match whatever is in the equivalent line
+  # in your mothership_daemon.yaml
   api_admin_pass: '8IVxXI3C'
 
 # log config options
