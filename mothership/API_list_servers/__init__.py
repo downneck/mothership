@@ -257,7 +257,7 @@ class API_list_servers:
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         return result
 
-    def _get_servers_from_site_id(self, key):
+    def _get_servers_from_site_id(self, query):
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on site_id: %s" % query['site_id'])
         for serv in self.cfg.dbsess.query(Server).\

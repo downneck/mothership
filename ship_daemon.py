@@ -80,12 +80,19 @@ def __auth_conn(jbuf, authtype):
 
 
 @httpship.route('/loadmodules')
-def load_modules():
+def load_modules(auth=True):
     """
     scans our main path for modules, loads valid modules
     """
     jbuf = __generate_json_header()
     jbuf['request'] = "/loadmodules"
+    # authenticate the incoming request, only if we're being called externally
+    if auth:
+        authed, jbuf = __auth_conn(jbuf, 'admin')
+        if not authed:
+            response.content_type='text/html'
+            raise bottle.HTTPError(401, '/') 
+    # assuming we're authed, do stuff
     response.content_type='application/json'
     cfg.log.debug("loadmodules() called directly")
     # clear module metadata
@@ -330,6 +337,6 @@ if __name__ == '__main__':
         raise ShipDaemonError(e)
     cfg.log.debug("initializing logger in ship_daemon.py")
     # run our module loader once at startup
-    load_modules()
+    load_modules(auth=False)
     # the daemon
     bottle.run(httpship, host='0.0.0.0', port=8081, reloader=False)

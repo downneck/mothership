@@ -201,7 +201,7 @@ class API_serverinfo:
                 ret = self._get_host_from_ip(query[key])
                 break
             if key == 'hostname':
-                ret = self._get_host_from_hostname(query['hostname'])
+                ret = self._get_host_from_hostname(query[key])
                 break
             if key == 'mac':
                 ret = self._get_host_from_mac(query[key])

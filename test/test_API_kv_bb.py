@@ -417,7 +417,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        print "****** test_kv_select_any_good: PASSED"
+        print "****** BB_test_kv_select_any_good: PASSED"
 
     # any=True, bad output
     def test_kv_select_any_bad(self):
@@ -436,7 +436,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertNotEqual(result, ret)
-        print "****** test_kv_select_any_bad: PASSED"
+        print "****** BB_test_kv_select_any_bad: PASSED"
 
     # test 'any' override ('any' option overrides all others)
     def test_kv_select_any_override(self):
@@ -455,7 +455,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        print "****** test_kv_select_any_override: PASSED"
+        print "****** BB_test_kv_select_any_override: PASSED"
 
     # test key=tag, good results
     def test_kv_select_key_tag_good(self):
@@ -474,7 +474,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        print "****** test_kv_select_key_tag_good: PASSED"
+        print "****** BB_test_kv_select_key_tag_good: PASSED"
 
     # test key=tag, failure results
     def test_kv_select_key_tag_bad(self):
@@ -493,7 +493,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertNotEqual(result, ret)
-        print "****** test_kv_select_key_tag_bad: PASSED"
+        print "****** BB_test_kv_select_key_tag_bad: PASSED"
 
     # test key=tag unqdn=decorati1.satest.jfk, good results
     def test_kv_select_key_tag_and_unqdn_good(self):
@@ -512,7 +512,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        print "****** test_kv_select_key_tag_and_unqdn_good: PASSED"
+        print "****** BB_test_kv_select_key_tag_and_unqdn_good: PASSED"
 
     # test key=tag unqdn=decorati1.satest.jfk, failure results
     def test_kv_select_key_tag_and_unqdn_bad(self):
@@ -531,7 +531,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertNotEqual(result, ret)
-        print "****** test_kv_select_key_tag_and_unqdn_bad: PASSED"
+        print "****** BB_test_kv_select_key_tag_and_unqdn_bad: PASSED"
 
     # test value=apache unqdn=decorati1.satest.jfk, good results
     def test_kv_select_unqdn_and_value_good(self):
@@ -550,7 +550,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        print "****** test_kv_select_unqdn_and_value_good: PASSED"
+        print "****** BB_test_kv_select_unqdn_and_value_good: PASSED"
 
     # test value=apache unqdn=decorati1.satest.jfk, failure results
     def test_kv_select_unqdn_and_value_bad(self):
@@ -569,7 +569,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertNotEqual(result, ret)
-        print "****** test_kv_select_unqdn_and_value_bad: PASSED"
+        print "****** BB_test_kv_select_unqdn_and_value_bad: PASSED"
 
     # test unqdn=decorati1.satest.jfk, good results
     def test_kv_select_unqdn_good(self):
@@ -588,7 +588,7 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertEqual(result, ret)
-        print "****** test_kv_select_unqdn_good: PASSED"
+        print "****** BB_test_kv_select_unqdn_good: PASSED"
 
     # test unqdn=decorati1.satest.jfk, failure results
     def test_kv_select_unqdn_bad(self):
@@ -607,20 +607,20 @@ class TestAPI_kv(unittest.TestCase):
         },]
 
         self.assertNotEqual(result, ret)
-        print "****** test_kv_select_unqdn_bad: PASSED"
+        print "****** BB_test_kv_select_unqdn_bad: PASSED"
 
     # test empty query, failure results
     def test_kv_select_empty_query(self):
 
         self.assertRaises(KVError, kv.select, query={})
-        print "****** test_kv_select_empty_query: PASSED (raised KVError)"
+        print "****** BB_test_kv_select_empty_query: PASSED (raised KVError)"
 
     # test unqdn=garbage, failure results
     def test_kv_select_unqdn_garbage_input_bad(self):
         query = {'unqdn': 'garbage'}
 
         self.assertRaises(KVError, kv.select, query)
-        print "****** test_kv_select_garbage_input_bad: PASSED (raised KVError)"
+        print "****** BB_test_kv_select_garbage_input_bad: PASSED (raised KVError)"
 
     # test unqdn=blahblahblah.satest.jfk, null results
     def test_kv_select_unqdn_not_found(self):
@@ -628,7 +628,7 @@ class TestAPI_kv(unittest.TestCase):
         result = kv.select(query)
 
         self.assertEqual(result, None)
-        print "****** test_kv_select_unqdn_not_found: PASSED"
+        print "****** BB_test_kv_select_unqdn_not_found: PASSED"
 
     # test key=blahblahblah, null results
     def test_kv_select_key_not_found(self):
@@ -636,7 +636,7 @@ class TestAPI_kv(unittest.TestCase):
         result = kv.select(query)
 
         self.assertEqual(result, None)
-        print "****** test_kv_select_key_not_found: PASSED"
+        print "****** BB_test_kv_select_key_not_found: PASSED"
 
     # test value=blahblahblah, null results
     def test_kv_select_value_not_found(self):
@@ -644,7 +644,7 @@ class TestAPI_kv(unittest.TestCase):
         result = kv.select(query)
 
         self.assertEqual(result, None)
-        print "****** test_kv_select_value_not_found: PASSED"
+        print "****** BB_test_kv_select_value_not_found: PASSED"
 
     
     ######################################
@@ -657,7 +657,7 @@ class TestAPI_kv(unittest.TestCase):
         result = kv.collect(query)
 
         self.assertEqual(result, longassret)
-        print "****** test_kv_collect_all_good: PASSED"
+        print "****** BB_test_kv_collect_all_good: PASSED"
 
     # test all=true override, good results
     def test_kv_collect_all_override_good(self):
@@ -665,7 +665,7 @@ class TestAPI_kv(unittest.TestCase):
         result = kv.collect(query)
 
         self.assertEqual(result, longassret)
-        print "****** test_kv_collect_all_override_good: PASSED"
+        print "****** BB_test_kv_collect_all_override_good: PASSED"
  
     # test key=tag, value=apache, good results
     def test_kv_collect_key_and_value_good(self):
@@ -682,7 +682,7 @@ class TestAPI_kv(unittest.TestCase):
 	}]
 
         self.assertEqual(result, ret)
-        print "****** test_kv_collect_key_and_value_good: PASSED" 
+        print "****** BB_test_kv_collect_key_and_value_good: PASSED" 
 
     # test key=tag, value=failure, failure results 
     def test_kv_collect_key_and_value_bad(self):
@@ -690,7 +690,7 @@ class TestAPI_kv(unittest.TestCase):
         result = kv.collect(query)
 
         self.assertEqual(result, [])
-        print "****** test_kv_collect_key_and_value_bad: PASSED"
+        print "****** BB_test_kv_collect_key_and_value_bad: PASSED"
  
     # test key=tag, value=apache, unqdn=decorati1.satest.jfk, good results
     def test_kv_collect_key_and_value_and_unqdn_good(self):
@@ -707,7 +707,7 @@ class TestAPI_kv(unittest.TestCase):
 	}]
 
         self.assertEqual(result, ret)
-        print "****** test_kv_collect_key_and_value_and_unqdn_good: PASSED" 
+        print "****** BB_test_kv_collect_key_and_value_and_unqdn_good: PASSED" 
 
     # test key=tag, value=failure, unqdn=decorati1.satest.jfk, failure results 
     def test_kv_collect_key_and_value_bad(self):
@@ -715,7 +715,7 @@ class TestAPI_kv(unittest.TestCase):
         result = kv.collect(query)
 
         self.assertEqual(result, [])
-        print "****** test_kv_collect_key_and_value_and_unqdn_bad: PASSED"
+        print "****** BB_test_kv_collect_key_and_value_and_unqdn_bad: PASSED"
 
 
     ######################################
@@ -727,14 +727,14 @@ class TestAPI_kv(unittest.TestCase):
         query = {'unqdn': 'decorati1.satest.jfk'}
 
         self.assertRaises(KVError, kv.add, query)
-        print "****** test_kv_add_unqdn_bad: PASSED (raised KVError)"
+        print "****** BB_test_kv_add_unqdn_bad: PASSED (raised KVError)"
  
     # test unqdn=decorati1.satest.jfk, key=tag, failure results  
     def test_kv_add_unqdn_and_tag_bad(self):
         query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag'}
 
         self.assertRaises(KVError, kv.add, query)
-        print "****** test_kv_add_unqdn_and_tag_bad: PASSED (raised KVError)"
+        print "****** BB_test_kv_add_unqdn_and_tag_bad: PASSED (raised KVError)"
  
     # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', good results  
     def test_kv_add_unqdn_tag_and_value_good(self):
@@ -743,14 +743,14 @@ class TestAPI_kv(unittest.TestCase):
         kv.delete(query) # clean up after ourselves
 
         self.assertEqual(result, 'success!')
-        print "****** test_kv_add_unqdn_tag_and_value_good: PASSED"
+        print "****** BB_test_kv_add_unqdn_tag_and_value_good: PASSED"
 
     # test unqdn=decorati1.satest.jfk, key=tag, value='apache', failure results  
     def test_kv_add_duplicate_unqdn_tag_and_value_bad(self):
         query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'apache'}
 
         self.assertRaises(KVError, kv.add, query)
-        print "****** test_kv_add_duplicate_unqdn_tag_and_value_bad: PASSED (raised KVError)"
+        print "****** BB_test_kv_add_duplicate_unqdn_tag_and_value_bad: PASSED (raised KVError)"
 
 
     ######################################
@@ -764,21 +764,21 @@ class TestAPI_kv(unittest.TestCase):
         result = kv.delete(query)
 
         self.assertEqual(result, 'success!')
-        print "****** test_kv_delete_unqdn_tag_and_value_good: PASSED"
+        print "****** BB_test_kv_delete_unqdn_tag_and_value_good: PASSED"
 
     # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', failure results  
     def test_kv_delete_nonexistent_unqdn_tag_and_value_bad(self):
         query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
 
         self.assertRaises(KVError, kv.delete, query)
-        print "****** test_kv_delete_nonexistent_unqdn_tag_and_value_bad: PASSED (raised KVError)"
+        print "****** BB_test_kv_delete_nonexistent_unqdn_tag_and_value_bad: PASSED (raised KVError)"
 
     # test unqdn=decorati1.satest.jfk, failure results 
     def test_kv_delete_unqdn_only_bad(self):
         query = {'unqdn': 'decorati1.satest.jfk'}
 
         self.assertRaises(KVError, kv.delete, query)
-        print "****** test_kv_delete_unqdn_only_bad: PASSED (raised KVError)"
+        print "****** BB_test_kv_delete_unqdn_only_bad: PASSED (raised KVError)"
 
 
     ######################################
@@ -801,7 +801,7 @@ class TestAPI_kv(unittest.TestCase):
         kv.delete(query)
 
         self.assertEqual(result, 'success!')
-        print "****** test_kv_update_unqdn_tag_value_and_newvalue_good: PASSED"
+        print "****** BB_test_kv_update_unqdn_tag_value_and_newvalue_good: PASSED"
 
     # test unqdn=decorati1.satest.jfk, key=tag, value='stringofcrap',
     # new_value=anotherrandomstringofcrap, good results  
@@ -812,5 +812,5 @@ class TestAPI_kv(unittest.TestCase):
         query['new_value'] = 'anotherrandomstringofcrap'
 
         self.assertRaises(KVError, kv.update, query)
-        print "****** test_kv_update_nonexistent_value_bad: PASSED (raised KVError)"
+        print "****** BB_test_kv_update_nonexistent_value_bad: PASSED (raised KVError)"
 

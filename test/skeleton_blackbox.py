@@ -14,10 +14,7 @@ import unittest
 
 from mothership.API_list_servers import * 
 from mothership.configure import *
-import mothership.validate
 from mothership.common import *
-
-from sqlalchemy import or_, desc, MetaData
 
 
 # globals
