@@ -148,7 +148,7 @@ class TestAPI_serverinfo(unittest.TestCase):
         result = si.si(query)
 
         self.assertEqual(result, bigassret)
-        print "****** BB_test_si_hostname_good: PASSED"
+        print "[API_serverinfo] BB_test_si_hostname_good: PASSED"
 
     # hw_tag=4VK27L1, good output
     def test_si_hwtag_good(self):
@@ -156,7 +156,7 @@ class TestAPI_serverinfo(unittest.TestCase):
         result = si.si(query)
 
         self.assertEqual(result, bigassret)
-        print "****** BB_test_si__hw_tag__good: PASSED"
+        print "[API_serverinfo] BB_test_si__hw_tag__good: PASSED"
 
     # mac=00:21:9b:98:49:24, good output
     def test_si_mac_good(self):
@@ -164,7 +164,7 @@ class TestAPI_serverinfo(unittest.TestCase):
         result = si.si(query)
 
         self.assertEqual(result, bigassret)
-        print "****** BB_test_si_mac_good: PASSED"
+        print "[API_serverinfo] BB_test_si_mac_good: PASSED"
 
     # ip=10.190.44.9, good output
     def test_si_ip_good(self):
@@ -172,11 +172,11 @@ class TestAPI_serverinfo(unittest.TestCase):
         result = si.si(query)
 
         self.assertEqual(result, bigassret)
-        print "****** BB_test_si_ip_good: PASSED"
+        print "[API_serverinfo] BB_test_si_ip_good: PASSED"
 
     # test unqdn=garbage, failure results
     def test_si_unknown_query_key_bad(self):
         query = {'blargle': 'garbage'}
 
         self.assertRaises(ServerInfoError, si.si, query)
-        print "****** BB_test_si_unqknown_query_key_bad: PASSED (raised ServerInfoError)"
+        print "[API_serverinfo] BB_test_si_unqknown_query_key_bad: PASSED (raised ServerInfoError)"

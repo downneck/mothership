@@ -68,14 +68,14 @@ class TestAPI_list_servers(unittest.TestCase):
 
         # pre-define expected output
         self.assertEqual(result, bigassret)
-        print "****** BB_test_lss_all_good: PASSED"
+        print "[API_list_servers] BB_test_lss_all_good: PASSED"
 
     # test empty query, failure results
     def test_lss_empty_query_bad(self):
         query = {}
       
         self.assertRaises(ListServersError, lss.lss, query)
-        print "****** BB_test_kv_select_garbage_input_bad: PASSED (raised ListServersError)"
+        print "[API_list_servers] BB_test_kv_select_garbage_input_bad: PASSED (raised ListServersError)"
 
     # vlan=200, good output
     def test_lss_vlan_good(self):
@@ -83,7 +83,7 @@ class TestAPI_list_servers(unittest.TestCase):
         result = lss.lss(query)
 
         self.assertEqual(result, bigassret)
-        print "****** BB_test_lss_vlan_good: PASSED"
+        print "[API_list_servers] BB_test_lss_vlan_good: PASSED"
 
     # site_id=jfk, good output
     def test_lss_site_id_good(self):
@@ -91,4 +91,32 @@ class TestAPI_list_servers(unittest.TestCase):
         result = lss.lss(query)
 
         self.assertEqual(result, bigassret)
-        print "****** BB_test_lss__site_id__good: PASSED"
+        print "[API_list_servers] BB_test_lss__site_id__good: PASSED"
+
+    # realm=satest, good output
+    def test_lss_realm_good(self):
+        query = {'realm': 'satest'}
+        result = lss.lss(query)
+
+        self.assertEqual(result, bigassret)
+        print "[API_list_servers] BB_test_lss_realm_good: PASSED"
+
+    # ram=4, good output
+    def test_lss_ram_good(self):
+        query = {'ram': 4}
+        result = lss.lss(query)
+
+        ret = ['hudson1.satest.jfk', 'hudson2.satest.jfk']
+
+        self.assertEqual(result, ret)
+        print "[API_list_servers] BB_test_lss_ram_good: PASSED"
+
+    # ram=3, empty output
+    def test_lss_ram_empty(self):
+        query = {'ram': 3}
+        result = lss.lss(query)
+
+        ret = []
+
+        self.assertEqual(result, ret)
+        print "[API_list_servers] BB_test_lss_ram_empty: PASSED"

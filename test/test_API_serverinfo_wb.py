@@ -32,7 +32,7 @@ class TestAPI_serverinfo(unittest.TestCase):
             ret = si._get_serverinfo(s.hostname, s.realm, s.site_id)
 
         self.assertEqual(result, ret)
-        print "****** WB_test_serverinfo_get_host_from_hwtag: PASSED"
+        print "[API_serverinfo] WB_test_serverinfo_get_host_from_hwtag: PASSED"
 
     def test_get_host_from_ip(self):
         result = si._get_host_from_ip('10.190.44.52')
@@ -56,7 +56,7 @@ class TestAPI_serverinfo(unittest.TestCase):
             pass
         
         self.assertEqual(ret, result)
-        print "****** WB_test_serverinfo_get_host_from_ip: PASSED"
+        print "[API_serverinfo] WB_test_serverinfo_get_host_from_ip: PASSED"
         
     def test_got_host_from_mac(self):
         result = si._get_host_from_mac('00:21:9b:98:49:24')
@@ -69,7 +69,7 @@ class TestAPI_serverinfo(unittest.TestCase):
             ret = si._get_serverinfo(s.hostname, s.realm, s.site_id)
 
         self.assertEqual(result, ret)
-        print "****** WB_test_serverinfo_get_host_from_mac: PASSED"
+        print "[API_serverinfo] WB_test_serverinfo_get_host_from_mac: PASSED"
 
     def test_got_host_from_hostname(self):
         result = si._get_host_from_hostname('cm1')
@@ -78,7 +78,7 @@ class TestAPI_serverinfo(unittest.TestCase):
         ret = si._get_serverinfo(s.hostname, s.realm, s.site_id)
 
         self.assertEqual(result, ret)
-        print "****** WB_test_serverinfo_get_host_from_hostname: PASSED"
+        print "[API_serverinfo] WB_test_serverinfo_get_host_from_hostname: PASSED"
         
     def test_get_serverinfo(self):
         pass
