@@ -6,7 +6,7 @@ primary tag, index:	{{r['data']['server']['tag']}}, {{r['data']['server']['tag_i
 ancillary tags:	        {% for kv in r['data']['kv'] %}{{kv['value']}} {% endfor %}
 security level:		{{r['data']['server']['security_level']}}
 cobbler_profile:        {{r['data']['server']['cobbler_profile']}}
-manufacturer, model:	{{r['data']['hardware']['manufacturer']}}, {{r['data']['server']['model']}}
+manufacturer, model:	{{r['data']['hardware']['manufacturer']}}, {{r['data']['hardware']['model']}}
 hardware tag:		{{r['data']['server']['hw_tag']}}
 cores:			{{r['data']['server']['cores']}}
 ram (GB):		{{r['data']['server']['ram']}}
