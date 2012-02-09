@@ -207,6 +207,16 @@ class API_list_servers:
 
 
     def _get_all_servers(self):
+        """
+        [description]
+        retrieves and returns a list of all servers 
+
+        [parameter info]
+        none, just the self object
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying for ALL servers")
         try:
@@ -217,143 +227,325 @@ class API_list_servers:
         return result
 
     def _get_servers_by_hostname(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers matching "hostname"
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on name: %s" % query['hostname'])
-        search_string = '%' + query['hostname'].split('.')[0] + '%'
-        for serv in self.cfg.dbsess.query(Server).\
-                filter(Server.hostname.like(search_string)).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            search_string = '%' + query['hostname'].split('.')[0] + '%'
+            for serv in self.cfg.dbsess.query(Server).\
+                    filter(Server.hostname.like(search_string)).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
 
     def _get_physical_servers(self):
+        """
+        [description]
+        retrieves and returns a list of all baremetal servers matching
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying for physical (baremetal) servers")
-        for serv in self.cfg.dbsess.query(Server).\
-                filter(Server.virtual==False).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            for serv in self.cfg.dbsess.query(Server).\
+                    filter(Server.virtual==False).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
 
     def _get_virtual_servers(self):
+        """
+        [description]
+        retrieves and returns a list of all virtual servers matching
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying for virtual servers")
-        for serv in self.cfg.dbsess.query(Server).\
-                filter(Server.virtual==True).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            for serv in self.cfg.dbsess.query(Server).\
+                    filter(Server.virtual==True).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
 
     def _get_servers_from_hw_tag(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers with a particular hardware tag
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on hw_tag: %s" % query['hw_tag'])
-        for serv in self.cfg.dbsess.query(Server).\
-                filter(Server.hw_tag==query['hw_tag']):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            for serv in self.cfg.dbsess.query(Server).\
+                    filter(Server.hw_tag==query['hw_tag']):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
     
 
     def _get_servers_from_vlan(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers in a particular vlan
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on vlan: %s" % query['vlan'])
-        for serv, net in self.cfg.dbsess.query(Server, Network).\
-                filter(Network.ip!=None).\
-                filter(Network.vlan==query['vlan']).\
-                filter(Server.id==Network.server_id).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            for serv, net in self.cfg.dbsess.query(Server, Network).\
+                    filter(Network.ip!=None).\
+                    filter(Network.vlan==query['vlan']).\
+                    filter(Server.id==Network.server_id).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
 
     def _get_servers_from_site_id(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers in a particular site_id 
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on site_id: %s" % query['site_id'])
-        for serv in self.cfg.dbsess.query(Server).\
-                filter(Server.site_id==query['site_id']).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            for serv in self.cfg.dbsess.query(Server).\
+                    filter(Server.site_id==query['site_id']).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
     
     def _get_servers_from_tag(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers with a particular tag
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         self.cfg.log.debug("API_list_servers/lss: querying on tag: %s" % query['tag'])
 
         servers_primary = []
         servers_kv = []
         result = []
+       
+        try: 
+            for server in self.cfg.dbsess.query(Server).\
+                    filter(Server.tag==query['tag']).\
+                    order_by(Server.hostname):
+                servers_primary.append(server)
         
-        for server in self.cfg.dbsess.query(Server).\
-                filter(Server.tag==query['tag']).\
-                order_by(Server.hostname):
-            servers_primary.append(server)
+            qq = {'key': 'tag', 'value': query['tag']} 
+            kvs = self.kvobj.collect(qq)
+            for i in kvs:
+                if i['key'] == "tag" and i['value'] == query['tag']:
+                    servers_kv.append(i['hostname']+"."+i['realm']+"."+i['site_id'])
         
-        qq = {'key': 'tag', 'value': query['tag']} 
-        kvs = self.kvobj.collect(qq)
-        for i in kvs:
-            if i['key'] == "tag" and i['value'] == query['tag']:
-                servers_kv.append(i['hostname']+"."+i['realm']+"."+i['site_id'])
-        
-        if servers_primary:
-            for serv in servers_primary:
-                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+            if servers_primary:
+                for serv in servers_primary:
+                    result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
 
-        if servers_kv:
-            for serv in servers_kv:
-                result.append(serv)
+            if servers_kv:
+                for serv in servers_kv:
+                    result.append(serv)
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
     
     def _get_servers_from_realm(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers in a particular realm 
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on realm: %s" % query['realm'])
-        for serv in self.cfg.dbsess.query(Server).\
-                filter(Server.realm==query['realm']).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            for serv in self.cfg.dbsess.query(Server).\
+                    filter(Server.realm==query['realm']).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
     
     def _get_servers_from_manufacturer(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers with a particular manufacturer 
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         self.cfg.log.debug("API_list_servers/lss: querying on manufacturer: %s" % query['manufacturer'])
         result = []
-        search_string = '%' + query['manufacturer'] + '%'
-        for serv, hw in self.cfg.dbsess.query(Server, Hardware).\
-                filter(Hardware.manufacturer.like(search_string)).\
-                filter(Server.hw_tag==Hardware.hw_tag).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            search_string = '%' + query['manufacturer'] + '%'
+            for serv, hw in self.cfg.dbsess.query(Server, Hardware).\
+                    filter(Hardware.manufacturer.like(search_string)).\
+                    filter(Server.hw_tag==Hardware.hw_tag).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
 
     def _get_servers_from_model(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers of a particular model type
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         self.cfg.log.debug("API_list_servers/lss: querying on model: %s" % query['model'])
         result = []
-        search_string = '%' + query['model']+ '%'
-        for serv, hw in self.cfg.dbsess.query(Server, Hardware).\
-                filter(Hardware.model.like(search_string)).\
-                filter(Server.hw_tag==Hardware.hw_tag).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            search_string = '%' + query['model']+ '%'
+            for serv, hw in self.cfg.dbsess.query(Server, Hardware).\
+                    filter(Hardware.model.like(search_string)).\
+                    filter(Server.hw_tag==Hardware.hw_tag).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
 
     def _get_servers_from_cores(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers with a particular number of cores 
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         self.cfg.log.debug("API_list_servers/lss: querying on number of cores: %s" % query['cores'])
         result = []
-        for serv in self.cfg.dbsess.query(Server).\
-                filter(Server.cores==query['cores']).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            for serv in self.cfg.dbsess.query(Server).\
+                    filter(Server.cores==query['cores']).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
     
     def _get_servers_from_ram(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers with a particular amount of ram 
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         self.cfg.log.debug("API_list_servers/lss: querying on ram size in GB: %s" % query['ram'])
         result = []
-        for serv in self.cfg.dbsess.query(Server).\
-                filter(Server.ram==query['ram']).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            for serv in self.cfg.dbsess.query(Server).\
+                    filter(Server.ram==query['ram']).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
 
     def _get_servers_from_disk(self, query):
+        """
+        [description]
+        retrieves and returns a list of all servers with a particular amount of disk
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        a list containing the names of servers matching the filters
+        """
         self.cfg.log.debug("API_list_servers/lss: querying on disk size in GB: %s" % query['disk'])
         result = []
-        for serv in self.cfg.dbsess.query(Server).\
-                filter(Server.disk==query['disk']).\
-                order_by(Server.hostname):
-            result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        try:
+            for serv in self.cfg.dbsess.query(Server).\
+                    filter(Server.disk==query['disk']).\
+                    order_by(Server.hostname):
+                result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
+        except Exception, e:
+            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
