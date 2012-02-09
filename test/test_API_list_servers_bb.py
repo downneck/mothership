@@ -116,9 +116,7 @@ class TestAPI_list_servers(unittest.TestCase):
         query = {'ram': 3}
         result = lss.lss(query)
 
-        ret = []
-
-        self.assertEqual(result, ret)
+        self.assertEqual(result, [])
         print "[API_list_servers] BB_test_lss_ram_empty: PASSED"
 
     # tag=splunklightforwarder, good output
@@ -141,9 +139,7 @@ class TestAPI_list_servers(unittest.TestCase):
         query = {'tag': 'garbage'}
         result = lss.lss(query)
 
-        ret = []
-
-        self.assertEqual(result, ret)
+        self.assertEqual(result, [])
         print "[API_list_servers] BB_test_lss_tag_empty: PASSED"
 
     # disk=200, good output
@@ -161,7 +157,60 @@ class TestAPI_list_servers(unittest.TestCase):
         query = {'disk': 1}
         result = lss.lss(query)
 
-        ret = []
+        self.assertEqual(result, [])
+        print "[API_list_servers] BB_test_lss_tag_empty: PASSED"
+
+    # manufacturer=IBM, good output
+    def test_lss_manufacturer_good(self):
+        query = {'manufacturer': 'IBM'}
+        result = lss.lss(query)
+
+        ret = ['zendc1.satest.jfk',]
+
+        # pre-define expected output
+        self.assertEqual(result, ret)
+        print "[API_list_servers] BB_test_lss_manufacturer_good: PASSED"
+
+    # manufacturer=garbage, empty output
+    def test_lss_manufacturer_empty(self):
+        query = {'manufacturer': 'garbage'}
+        result = lss.lss(query)
+
+        self.assertEqual(result, [])
+        print "[API_list_servers] BB_test_lss_manufacturer_empty: PASSED"
+
+    # virtual=true, good output
+    def test_lss_virutal_good(self):
+        query = {'virtual': True}
+        result = lss.lss(query)
+
+        # pre-define expected output
+        ret = [
+            "cm1.satest.jfk",
+            "cm2.satest.jfk",
+            "cobbler1.satest.jfk",
+            "dcmon1.satest.jfk",
+            "hudson1.satest.jfk",
+            "hudson2.satest.jfk",
+            "ldap1.satest.jfk",
+            "ldap2.satest.jfk",
+            "mtest3.satest.jfk",
+            "ns1.satest.jfk",
+            "ns2.satest.jfk",
+            "puppet.satest.jfk",
+            "rpmbuilder1.satest.jfk",
+            "solr12.satest.jfk",
+            "splunk1.satest.jfk",
+            "stage2.satest.jfk",
+            "stage7.satest.jfk",
+            "test2.satest.jfk",
+            "test5.satest.jfk",
+            "test6.satest.jfk",
+            "testeasyinstall.satest.jfk",
+            "teststore.satest.jfk",
+            "zbx1.satest.jfk",
+            "zenoss1.satest.jfk"
+        ]
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_tag_empty: PASSED"
+        print "[API_list_servers] BB_test_lss_virtual_good: PASSED"
