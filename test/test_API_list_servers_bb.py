@@ -353,3 +353,15 @@ class TestAPI_list_servers(unittest.TestCase):
       
         self.assertRaises(ListServersError, lss.lss, query)
         print "[API_list_servers] BB_test_lss_cores_bad: PASSED (raised ListServersError)"
+
+    # test model='System x3650'
+    def test_lss_model_good(self):
+        query = {'model': 'System x3650'}
+        result = lss.lss(query)
+
+        # pre-define expected output
+        ret = ['zendc1.satest.jfk']
+
+        self.assertEqual(result, ret)
+        print "[API_list_servers] BB_test_lss_model_good: PASSED"
+

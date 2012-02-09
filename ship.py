@@ -148,6 +148,7 @@ def call_command(cfg, module_map):
 
             # parse our options and build a urlencode string to pass
             # over to the API service
+            # spaces in URLs make mothership sad, so replace with %20
             (options, args) = parser.parse_args(sys.argv[2:])
             for k in arglist.keys():
                 a = vars(options)[k]
@@ -155,9 +156,10 @@ def call_command(cfg, module_map):
                     if buf:
                         buf += '&'
                     if a != True:
-                        buf += k+'='+str(a)
+                        buf += k+'='+str(a.replace(' ', '%20'))
                     else:
                         buf += k
+
 
             # make the call out to our API service, expect JSON back,
             # load the JSON into the equivalent python variable type

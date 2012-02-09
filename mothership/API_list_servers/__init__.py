@@ -474,7 +474,7 @@ class API_list_servers:
         self.cfg.log.debug("API_list_servers/lss: querying on model: %s" % query['model'])
         result = []
         try:
-            search_string = '%' + query['model']+ '%'
+            search_string = '%' + query['model']+ '%' 
             for serv, hw in self.cfg.dbsess.query(Server, Hardware).\
                     filter(Hardware.model.like(search_string)).\
                     filter(Server.hw_tag==Hardware.hw_tag).\
