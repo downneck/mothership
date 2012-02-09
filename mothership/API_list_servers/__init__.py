@@ -36,7 +36,7 @@ class API_list_servers:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        kvobj = mothership.API_kv.API_kv(cfg)
+        self.kvobj = mothership.API_kv.API_kv(cfg)
         self.version = 1
         self.namespace = 'API_list_servers'
         self.metadata = {
@@ -147,24 +147,23 @@ class API_list_servers:
         a list containing the names of servers matching the filters
         """
 
-        cfg = self.cfg
         result = []
 
         if len(query.keys()) > self.metadata['methods']['lss']['optional_args']['max']:
             retval = "API_list_servers/lss: too many queries! max number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['max']
             retval += "API_list_servers/lss: you tried to pass %s queries\n" % len(query.keys())
-            cfg.log.debug(retval)
+            self.cfg.log.debug(retval)
             raise ListServersError(retval)
         else:
-            cfg.log.debug("API_list_servers/lss: num queries: %s" % len(query.keys()))
-            cfg.log.debug("API_list_servers/lss: max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max'])
+            self.cfg.log.debug("API_list_servers/lss: num queries: %s" % len(query.keys()))
+            self.cfg.log.debug("API_list_servers/lss: max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max'])
         if len(query.keys()) < self.metadata['methods']['lss']['optional_args']['min']:
             retval = "API_list_servers/lss: too few queries! min number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['min']
             retval += "API_list_servers/lss: you tried to pass %s queries\n" % len(query.keys())
-            cfg.log.debug(retval)
+            self.cfg.log.debug(retval)
             raise ListServersError(retval)
         else:
-            cfg.log.debug("API_list_servers/lss: min num queries: %s" % self.metadata['methods']['lss']['optional_args']['min'])
+            self.cfg.log.debug("API_list_servers/lss: min num queries: %s" % self.metadata['methods']['lss']['optional_args']['min'])
 
         for key in query.keys():
             if key == 'all':
@@ -278,11 +277,11 @@ class API_list_servers:
                 order_by(Server.hostname):
             servers_primary.append(server)
         
-        kvs = kvobj.collect(cfg, None, key='tag')
+        qq = {'key': 'tag', 'value': query['tag']} 
+        kvs = self.kvobj.collect(qq)
         for i in kvs:
-            namespace, key = str(i).split(' ')
-            if key == "tag=" + query['tag']:
-                servers_kv.append(i.hostname+"."+i.realm+"."+i.site_id)
+            if i['key'] == "tag" and i['value'] == query['tag']:
+                servers_kv.append(i['hostname']+"."+i['realm']+"."+i['site_id'])
         
         if servers_primary:
             for serv in servers_primary:
@@ -314,7 +313,7 @@ class API_list_servers:
         return result
 
     def _get_servers_from_model(self, query):
-        cfg.log.debug("API_list_servers/lss: querying on model: %s" % query['model'])
+        self.cfg.log.debug("API_list_servers/lss: querying on model: %s" % query['model'])
         result = []
         search_string = '%' + query['model']+ '%'
         for serv, hw in self.cfg.dbsess.query(Server, Hardware).\
@@ -327,7 +326,7 @@ class API_list_servers:
     def _get_severs_from_cores(self, query):
         self.cfg.log.debug("API_list_servers/lss: querying on number of cores: %s" % query['cores'])
         result = []
-        for serv in cfg.dbsess.query(Server).\
+        for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.cores==query['cores']).\
                 order_by(Server.hostname):
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
