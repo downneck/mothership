@@ -85,6 +85,21 @@ class TestAPI_list_servers(unittest.TestCase):
         self.assertEqual(result, bigassret)
         print "[API_list_servers] BB_test_lss_vlan_good: PASSED"
 
+    # vlan=3400, empty output
+    def test_lss_vlan_empty(self):
+        query = {'vlan': 3400}
+        result = lss.lss(query)
+
+        self.assertEqual(result, [])
+        print "[API_list_servers] BB_test_lss_vlan_empty: PASSED"
+
+    # test vlan=garbage, failure output 
+    def test_lss_vlan_bad(self):
+        query = {'vlan': 'garbage'}
+      
+        self.assertRaises(ListServersError, lss.lss, query)
+        print "[API_list_servers] BB_test_lss_vlan_bad: PASSED (raised ListServersError)"
+
     # site_id=jfk, good output
     def test_lss_site_id_good(self):
         query = {'site_id': 'jfk'}
@@ -118,6 +133,13 @@ class TestAPI_list_servers(unittest.TestCase):
 
         self.assertEqual(result, [])
         print "[API_list_servers] BB_test_lss_ram_empty: PASSED"
+
+    # test ram=garbage, failure output 
+    def test_lss_ram_bad(self):
+        query = {'ram': 'garbage'}
+      
+        self.assertRaises(ListServersError, lss.lss, query)
+        print "[API_list_servers] BB_test_lss_ram_bad: PASSED (raised ListServersError)"
 
     # tag=splunklightforwarder, good output
     def test_lss_tag_good(self):
@@ -159,6 +181,13 @@ class TestAPI_list_servers(unittest.TestCase):
 
         self.assertEqual(result, [])
         print "[API_list_servers] BB_test_lss_tag_empty: PASSED"
+
+    # test disk=garbage, failure output 
+    def test_lss_disk_bad(self):
+        query = {'disk': 'garbage'}
+      
+        self.assertRaises(ListServersError, lss.lss, query)
+        print "[API_list_servers] BB_test_lss_disk_bad: PASSED (raised ListServersError)"
 
     # manufacturer=IBM, good output
     def test_lss_manufacturer_good(self):
