@@ -218,7 +218,7 @@ class API_list_servers:
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         return result
 
-    def _get_physical_severs(self):
+    def _get_physical_servers(self):
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying for physical (baremetal) servers")
         for serv in self.cfg.dbsess.query(Server).\
