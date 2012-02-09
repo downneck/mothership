@@ -177,7 +177,7 @@ class API_list_servers:
             if key == 'all':
                 result = self._get_all_servers()
             elif key == 'hostname':
-                result = self._get_severs_by_hostname(query)
+                result = self._get_servers_by_hostname(query)
             elif key == 'physical':
                 result = self._get_physical_servers()
             elif key == 'virtual':
@@ -216,10 +216,10 @@ class API_list_servers:
             raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
         return result
 
-    def _get_server_from_hostname(self, query):
+    def _get_servers_by_hostname(self, query):
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on name: %s" % query['hostname'])
-        search_string = '%' + query['hostname'] + '%'
+        search_string = '%' + query['hostname'].split('.')[0] + '%'
         for serv in self.cfg.dbsess.query(Server).\
                 filter(Server.hostname.like(search_string)).\
                 order_by(Server.hostname):
@@ -244,7 +244,7 @@ class API_list_servers:
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         return result
 
-    def _get_severs_from_hw_tag(self, query):
+    def _get_servers_from_hw_tag(self, query):
         result = []
         self.cfg.log.debug("API_list_servers/lss: querying on hw_tag: %s" % query['hw_tag'])
         for serv in self.cfg.dbsess.query(Server).\
@@ -331,7 +331,7 @@ class API_list_servers:
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         return result
 
-    def _get_severs_from_cores(self, query):
+    def _get_servers_from_cores(self, query):
         self.cfg.log.debug("API_list_servers/lss: querying on number of cores: %s" % query['cores'])
         result = []
         for serv in self.cfg.dbsess.query(Server).\
