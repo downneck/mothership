@@ -266,7 +266,7 @@ class API_list_servers:
             result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         return result
     
-    def _get_servers_from_tag(self, key):
+    def _get_servers_from_tag(self, query):
         self.cfg.log.debug("API_list_servers/lss: querying on tag: %s" % query['tag'])
 
         servers_primary = []
