@@ -259,7 +259,7 @@ class TestAPI_list_servers(unittest.TestCase):
             "xenserver2.satest.jfk",
             "xenserver3.satest.jfk",
             "zendc1.satest.jfk"
-         ] 
+        ] 
 
         self.assertEqual(result, ret)
         print "[API_list_servers] BB_test_lss_physical_good: PASSED"
@@ -285,7 +285,7 @@ class TestAPI_list_servers(unittest.TestCase):
             "ldap2.satest.jfk",
             "puppet.satest.jfk",
             "ns2.satest.jfk"
-         ] 
+        ] 
 
         self.assertEqual(result, ret)
         print "[API_list_servers] BB_test_lss__hw_tag__good: PASSED"
@@ -354,7 +354,7 @@ class TestAPI_list_servers(unittest.TestCase):
         self.assertRaises(ListServersError, lss.lss, query)
         print "[API_list_servers] BB_test_lss_cores_bad: PASSED (raised ListServersError)"
 
-    # test model='System x3650'
+    # test model='System x3650', good results
     def test_lss_model_good(self):
         query = {'model': 'System x3650'}
         result = lss.lss(query)
@@ -364,4 +364,12 @@ class TestAPI_list_servers(unittest.TestCase):
 
         self.assertEqual(result, ret)
         print "[API_list_servers] BB_test_lss_model_good: PASSED"
+
+    # test model=garbage, empty results
+    def test_lss_model_empty(self):
+        query = {'model': 'garbage'}
+        result = lss.lss(query)
+
+        self.assertEqual(result, [])
+        print "[API_list_servers] BB_test_lss_model_empty: PASSED"
 
