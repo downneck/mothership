@@ -234,3 +234,30 @@ class TestAPI_list_servers(unittest.TestCase):
 
         self.assertEqual(result, ret)
         print "[API_list_servers] BB_test_lss_physical_good: PASSED"
+
+    # test incompatible query parameters, failure results
+    def test_lss_physical_virtual_bad(self):
+        query = {'physical': True, 'virtual': True}
+      
+        self.assertRaises(ListServersError, lss.lss, query)
+        print "[API_list_servers] BB_test_lss_physical_virtual_bad: PASSED (raised ListServersError)"
+
+    # hw_tag=4VK27L1, good output
+    def test_lss_physical_good(self):
+        query = {'hw_tag': '4VK27L1'}
+        result = lss.lss(query)
+
+        # pre-define expected output
+        ret = [
+            "ci1.satest.jfk",
+            "jira1.satest.jfk",
+            "swaptest1.satest.jfk",
+            "swaptest2.satest.jfk",
+            "xenserver1.satest.jfk",
+            "xenserver2.satest.jfk",
+            "xenserver3.satest.jfk",
+            "zendc1.satest.jfk"
+         ] 
+
+        self.assertEqual(result, ret)
+        print "[API_list_servers] BB_test_lss__hw_tag__good: PASSED"

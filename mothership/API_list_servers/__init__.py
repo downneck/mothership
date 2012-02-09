@@ -57,7 +57,7 @@ class API_list_servers:
                     },
                     'optional_args': {
                         'min': 1,
-                        'max': 1,
+                        'max': 2,
                         'args': {
                             'all': {
                                 'vartype': 'None',
@@ -83,6 +83,11 @@ class API_list_servers:
                                 'vartype': 'bool',
                                 'desc': 'filter by physical/virtual',
                                 'ol': 'V',
+                            },
+                            'physical': {
+                                'vartype': 'bool',
+                                'desc': 'filter by physical/virtual',
+                                'ol': 'p',
                             },
                             'disk': {
                                 'vartype': 'int',
@@ -164,6 +169,9 @@ class API_list_servers:
             raise ListServersError(retval)
         else:
             self.cfg.log.debug("API_list_servers/lss: min num queries: %s" % self.metadata['methods']['lss']['optional_args']['min'])
+        if 'physical' in query.keys() and 'virtual' in query.keys():
+            self.cfg.log.debug("API_list_servers/lss: cannot specify both physical and virtual")
+            raise ListServersError("cannot specify both physical and virtual")
 
         for key in query.keys():
             if key == 'all':
