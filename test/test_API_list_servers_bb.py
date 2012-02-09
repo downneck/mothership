@@ -79,7 +79,7 @@ class TestAPI_list_servers(unittest.TestCase):
 
     # vlan=200, good output
     def test_lss_vlan_good(self):
-        query = {'vlan': '200'}
+        query = {'vlan': 200}
         result = lss.lss(query)
 
         self.assertEqual(result, bigassret)
