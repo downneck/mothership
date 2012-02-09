@@ -122,7 +122,7 @@ def call_command(cfg, module_map):
             arglist = {}
             if 'args' in mmeta['data']['methods'][call]['required_args']:
                 for k in mmeta['data']['methods'][call]['required_args']['args'].keys():
-                    if mmeta['data']['methods'][call]['required_args']['args'][k]['vartype'] != "None":
+                    if mmeta['data']['methods'][call]['required_args']['args'][k]['vartype'] != "bool":
                         parser.add_option('-'+mmeta['data']['methods'][call]['required_args']['args'][k]['ol'],\
                                           '--'+k, help=mmeta['data']['methods'][call]['required_args']['args'][k]['desc'])
                         arglist[k] = mmeta['data']['methods'][call]['required_args']['args'][k]['vartype']
@@ -133,7 +133,7 @@ def call_command(cfg, module_map):
                         arglist[k] = mmeta['data']['methods'][call]['required_args']['args'][k]['vartype']
             if 'args' in mmeta['data']['methods'][call]['optional_args']:
                 for k in mmeta['data']['methods'][call]['optional_args']['args'].keys():
-                    if mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype'] != "None":
+                    if mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype'] != "bool":
                         parser.add_option('-'+mmeta['data']['methods'][call]['optional_args']['args'][k]['ol'],\
                                           '--'+k, help=mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'])
                         arglist[k] = mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype']
