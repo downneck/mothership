@@ -120,3 +120,18 @@ class TestAPI_list_servers(unittest.TestCase):
 
         self.assertEqual(result, ret)
         print "[API_list_servers] BB_test_lss_ram_empty: PASSED"
+
+    # tag=splunklightforwarder, empty output
+    def test_lss_tag_good(self):
+        query = {'tag': 'splunklightforwarder'}
+        result = lss.lss(query)
+
+        ret = [
+            "stage2.satest.jfk",
+            "cobbler1.satest.jfk",
+            "ns1.satest.jfk",
+            "ns2.satest.jfk"
+        ]
+
+        self.assertEqual(result, ret)
+        print "[API_list_servers] BB_test_lss_tag_good: PASSED"
