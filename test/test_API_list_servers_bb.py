@@ -214,3 +214,23 @@ class TestAPI_list_servers(unittest.TestCase):
 
         self.assertEqual(result, ret)
         print "[API_list_servers] BB_test_lss_virtual_good: PASSED"
+
+    # physical=true, good output
+    def test_lss_physical_good(self):
+        query = {'physical': True}
+        result = lss.lss(query)
+
+        # pre-define expected output
+        ret = [
+            "ci1.satest.jfk",
+            "jira1.satest.jfk",
+            "swaptest1.satest.jfk",
+            "swaptest2.satest.jfk",
+            "xenserver1.satest.jfk",
+            "xenserver2.satest.jfk",
+            "xenserver3.satest.jfk",
+            "zendc1.satest.jfk"
+         ] 
+
+        self.assertEqual(result, ret)
+        print "[API_list_servers] BB_test_lss_physical_good: PASSED"
