@@ -75,7 +75,7 @@ class TestAPI_list_servers(unittest.TestCase):
         query = {}
       
         self.assertRaises(ListServersError, lss.lss, query)
-        print "[API_list_servers] BB_test_kv_select_garbage_input_bad: PASSED (raised ListServersError)"
+        print "[API_list_servers] BB_test_lss_empty_query_bad: PASSED (raised ListServersError)"
 
     # vlan=200, good output
     def test_lss_vlan_good(self):
@@ -121,7 +121,7 @@ class TestAPI_list_servers(unittest.TestCase):
         self.assertEqual(result, ret)
         print "[API_list_servers] BB_test_lss_ram_empty: PASSED"
 
-    # tag=splunklightforwarder, empty output
+    # tag=splunklightforwarder, good output
     def test_lss_tag_good(self):
         query = {'tag': 'splunklightforwarder'}
         result = lss.lss(query)
@@ -135,3 +135,33 @@ class TestAPI_list_servers(unittest.TestCase):
 
         self.assertEqual(result, ret)
         print "[API_list_servers] BB_test_lss_tag_good: PASSED"
+
+    # tag=garbage, empty output
+    def test_lss_tag_empty(self):
+        query = {'tag': 'garbage'}
+        result = lss.lss(query)
+
+        ret = []
+
+        self.assertEqual(result, ret)
+        print "[API_list_servers] BB_test_lss_tag_empty: PASSED"
+
+    # disk=200, good output
+    def test_lss_disk_good(self):
+        query = {'disk': 200}
+        result = lss.lss(query)
+
+	ret = ['hudson1.satest.jfk', 'hudson2.satest.jfk']
+
+        self.assertEqual(result, ret)
+        print "[API_list_servers] BB_test_lss_disk_good: PASSED"
+
+    # disk=1, empty output
+    def test_lss_disk_empty(self):
+        query = {'disk': 1}
+        result = lss.lss(query)
+
+        ret = []
+
+        self.assertEqual(result, ret)
+        print "[API_list_servers] BB_test_lss_tag_empty: PASSED"
