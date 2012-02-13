@@ -82,6 +82,8 @@ def generate_dns_arecords(cfg, realm, site_id, domain):
     """
     alist = ''
     for s,n in cfg.dbsess.query(Server, Network).\
+        filter(Server.site_id==site_id).\
+        filter(Server.realm==realm).\
         filter(Network.server_id==Server.id).\
         filter(Network.site_id==site_id).\
         filter(Network.realm==realm).\
@@ -101,6 +103,8 @@ def generate_dns_arpa(cfg, cidr, fqdn, realm, site_id, domain):
         num += 1
     alist = ''
     for s,n in cfg.dbsess.query(Server, Network).\
+        filter(Server.site_id==site_id).\
+        filter(Server.realm==realm).\
         filter(Network.server_id==Server.id).\
         filter(Network.site_id==site_id).\
         filter(Network.realm==realm).\
