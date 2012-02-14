@@ -21,6 +21,7 @@ import mothership
 import mothership.API_kv
 import mothership.users
 import mothership.common
+import mothership.validate
 from mothership.mothership_models import *
 
 class PuppetError(Exception):
@@ -101,15 +102,12 @@ class API_puppet:
         returns a dict of information if successful
         """
         name = "" 
-        cfg = self.cfg
-        kvobj = self.kvobj
         classes = []
         mtags = []
         environment = ""
         parameters = {}
         groups = []
         security_level = 0
-        server = None
         server_id = None
         mtag = None
         networks = []
@@ -119,32 +117,30 @@ class API_puppet:
         # make sure we got a hostname
         try:
             if not 'hostname' in query or not query['hostname']:
-                cfg.log.debug("API_puppet/classify: you must specify a hostname to query for")
+                self.cfg.log.debug("API_puppet/classify: you must specify a hostname to query for")
                 raise PuppetError("API_puppet/classify: you must specify a hostname to query for")
-            cfg.log.debug("API_puppet/classify: querying for hostname: %s" % query['hostname'])
+            self.cfg.log.debug("API_puppet/classify: querying for hostname: %s" % query['hostname'])
 
-            hostname, realm, site_id = mothership.get_unqdn(cfg, query['hostname'])
+            s = mothership.validate.v_get_host_obj(self.cfg, query['hostname'])
 
-            # Unique or unqualified domain name
-            unqdn = "%s.%s.%s" % (hostname, realm, site_id)
-            parameters['unqdn'] = unqdn
-            parameters['site_id'] = site_id
-            parameters['realm'] = realm
+            if type(s) == list:
+                self.cfg.log.debug("API_puppet/classify: hostname is not unique enough")
+                raise PuppetError("API_puppet/classify: hostname is not unique enough")
+                
 
-            # LDAP groups
-            for g in mothership.add_ldap_groups(hostname, realm, site_id):
-                groups.append(g)
+            if s:
+                unqdn = "%s.%s.%s" % (s.hostname, s.realm, s.site_id)
+                parameters['unqdn'] = unqdn
+                parameters['site_id'] = s.site_id
+                parameters['realm'] = s.realm
+                # LDAP groups - FIX: wtf is this?
+                for g in mothership.add_ldap_groups(s.hostname, s.realm, s.site_id):
+                    groups.append(g)
 
-            # Server
-            server = cfg.dbsess.query(Server).filter(Server.hostname==hostname).first()
-            if server:
-                mtag = cfg.dbsess.query(Tag).filter(Tag.name==server.tag).first()
-
-            if server and server.id:
-                server_id = server.id
-                parameters['server_id'] = server_id
-                networks = cfg.dbsess.query(Network).\
-                        filter(Network.server_id==server_id).all()
+                mtag = self.cfg.dbsess.query(Tag).filter(Tag.name==s.tag).first()
+                parameters['server_id'] = s.id
+                networks = self.cfg.dbsess.query(Network).\
+                        filter(Network.server_id==s.id).all()
                 for network in networks:
                     if network.interface=='eth1':
                         if network.static_route:
@@ -155,27 +151,30 @@ class API_puppet:
                             parameters['bond_netmask'] = network.netmask
                         if network.bond_options:
                             parameters['bond_options'] = network.bond_options
-
+            else:
+                self.cfg.log.debug("API_puppet/classify: hostname not found: %s" % query['hostname'])
+                raise PuppetError("API_puppet/classify: hostname not found: %s" % query['hostname'])
+            
             # Tag
             if mtag and mtag.name:
                 mtags.append(mtag.name)
                 classes.append("tags::%s" % mtag.name)
                 parameters['mtag'] = mtag.name
 
-            if server and server.tag_index:
-                parameters['mtag_index'] = server.tag_index
+            if s.tag_index:
+                parameters['mtag_index'] = s.tag_index
 
             # Security
             if mtag and mtag.security_level != None:
                 security_level = mtag.security_level
 
-            if server and server.security_level != None:
+            if s.security_level:
                 classes.append("security%s" % server.security_level)
                 parameters['security_level'] = server.security_level
 
             # Key/values
             kvquery = {'unqdn': unqdn}
-            kvs = kvobj.collect(kvquery)
+            kvs = self.kvobj.collect(kvquery)
             for kv in kvs:
                 if kv['key'] == 'environment':
                     environment = kv['value']
@@ -190,7 +189,7 @@ class API_puppet:
                     parameters[kv['key']] = kv['value']
 
             # sudoers
-            sudoers = mothership.users.gen_sudoers_groups(cfg, unqdn)
+            sudoers = mothership.users.gen_sudoers_groups(self.cfg, unqdn)
             parameters['mtags'] = mtags
             parameters['groups'] = groups
             if sudoers:
@@ -201,7 +200,7 @@ class API_puppet:
             node['parameters'] = parameters
 
         except Exception, e:
-            cfg.log.debug("API_puppet/classify: query failed. Error: %s" % e)
+            self.cfg.log.debug("API_puppet/classify: query failed. Error: %s" % e)
             raise PuppetError("API_puppet/classify: query failed. Error: %s" % e)
 
         return node

@@ -148,10 +148,13 @@ class API_serverinfo:
         try:
             s = mothership.validate.v_get_host_obj(self.cfg, key)
             if s:
-                self.cfg.log.debug("_get_host_from hostname (validate): %s.%s.%s" % (s.hostname, s.realm, s.site_id))
+                if type(s) == list:
+                    self.cfg.log.debug("API_serverinfo/_get_host_from_hostname: hostname not unique enough")
+                    raise ServerInfoError("API_serverinfo/_get_host_from_hostname: hostname not unique enough")
+                self.cfg.log.debug("API_serverinfo/_get_host_from hostname (validate): %s.%s.%s" % (s.hostname, s.realm, s.site_id))
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except Exception, e:
-            self.cfg.log.debug("_get_host_from_hostname was not able to find a hostname")
+            self.cfg.log.debug("API_serverinfo/_get_host_from_hostname was not able to find a hostname")
             raise ServerInfoError("API_serverinfo/_get_host_from_hostname: no host found with name: %s. Error: %s" % (key, e))
 
     def si(self, query):
