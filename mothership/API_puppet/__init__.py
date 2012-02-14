@@ -100,6 +100,7 @@ class API_puppet:
         [return value]
         returns a dict of information if successful
         """
+        name = "" 
         cfg = self.cfg
         kvobj = self.kvobj
         classes = []
@@ -117,14 +118,12 @@ class API_puppet:
 
         # make sure we got a hostname
         try:
-            name = query['hostname']
-            if name:
-                cfg.log.debug("API_puppet/classify: querying for hostname: %s" % name)
-            else:
-                cfg.log.debug("API_puppet/classify: you must specify a (string) value in order to query by hostname")
-                raise PuppetError("API_puppet/classify: you must specify a (string) value in order to query by hostname")
+            if not 'hostname' in query or not query['hostname']:
+                cfg.log.debug("API_puppet/classify: you must specify a hostname to query for")
+                raise PuppetError("API_puppet/classify: you must specify a hostname to query for")
+            cfg.log.debug("API_puppet/classify: querying for hostname: %s" % query['hostname'])
 
-            hostname, realm, site_id = mothership.get_unqdn(cfg, name)
+            hostname, realm, site_id = mothership.get_unqdn(cfg, query['hostname'])
 
             # Unique or unqualified domain name
             unqdn = "%s.%s.%s" % (hostname, realm, site_id)
@@ -202,7 +201,7 @@ class API_puppet:
             node['parameters'] = parameters
 
         except Exception, e:
-            cfg.log.debug("API_puppet/classify: query failed for hostname: %s. Error: %s" % (name, e))
-            raise PuppetError("API_puppet/classify: query failed for hostname: %s. Error: %s" % (name, e))
+            cfg.log.debug("API_puppet/classify: query failed. Error: %s" % e)
+            raise PuppetError("API_puppet/classify: query failed. Error: %s" % e)
 
         return node
