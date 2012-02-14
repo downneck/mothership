@@ -1,15 +1,3 @@
-################################################
-# ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! #
-#                                              #
-# this is an example file for how to set up a  #
-# black box unit test. example module is the   #
-# API_serverinfo module                      #
-################################################
-# do not actually run this thing               #
-# rename it to "test_something_or_other.py"    #
-# before converting it to use for your module  #
-################################################
-
 import unittest
 
 from mothership.API_serverinfo import * 
@@ -150,6 +138,13 @@ class TestAPI_serverinfo(unittest.TestCase):
         self.assertEqual(result, bigassret)
         print "[API_serverinfo] BB_test_si_hostname_good: PASSED"
 
+    # hostname=garbage, bad output
+    def test_si_hostname_bad(self):
+        query = {'hostname': 'garbage'}
+
+        self.assertRaises(ServerInfoError, si.si, query)
+        print "[API_serverinfo] BB_test_si_hostname_bad: PASSED (raised ServerInfoError)"
+
     # hw_tag=4VK27L1, good output
     def test_si_hwtag_good(self):
         query = {'hw_tag': '4VK27L1'}
@@ -157,6 +152,13 @@ class TestAPI_serverinfo(unittest.TestCase):
 
         self.assertEqual(result, bigassret)
         print "[API_serverinfo] BB_test_si__hw_tag__good: PASSED"
+
+    # hw_tag=garbage, bad output
+    def test_si_hw_tag_bad(self):
+        query = {'hw_tag': 'garbage'}
+
+        self.assertRaises(ServerInfoError, si.si, query)
+        print "[API_serverinfo] BB_test_si__hw_tag__bad: PASSED (raised ServerInfoError)"
 
     # mac=00:21:9b:98:49:24, good output
     def test_si_mac_good(self):
@@ -166,13 +168,27 @@ class TestAPI_serverinfo(unittest.TestCase):
         self.assertEqual(result, bigassret)
         print "[API_serverinfo] BB_test_si_mac_good: PASSED"
 
-    # ip=10.190.44.9, good output
+    # mac=00:00:00:00:00:00, bad output
+    def test_si_mac_bad(self):
+        query = {'mac': '00:00:00:00:00:00'}
+
+        self.assertRaises(ServerInfoError, si.si, query)
+        print "[API_serverinfo] BB_test_si_mac_bad: PASSED (raised ServerInfoError)"
+
+    # ip=123.123.123.123, good output
     def test_si_ip_good(self):
         query = {'ip': '10.190.44.9'}
         result = si.si(query)
 
         self.assertEqual(result, bigassret)
         print "[API_serverinfo] BB_test_si_ip_good: PASSED"
+
+    # ip=garbage, bad output
+    def test_si_ip_bad(self):
+        query = {'ip': '1.1.1.1'}
+
+        self.assertRaises(ServerInfoError, si.si, query)
+        print "[API_serverinfo] BB_test_si_ip_bad: PASSED (raised ServerInfoError)"
 
     # test unqdn=garbage, failure results
     def test_si_unknown_query_key_bad(self):

@@ -372,4 +372,3 @@ class TestAPI_list_servers(unittest.TestCase):
 
         self.assertEqual(result, [])
         print "[API_list_servers] BB_test_lss_model_empty: PASSED"
-

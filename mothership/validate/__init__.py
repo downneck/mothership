@@ -613,7 +613,7 @@ def v_get_user_obj(cfg, username):
         else:
             raise ValidationError("something has gone terribly wrong in the v_get_user_obj() function")
     else:
-        return False
+        return None 
 
 
 def v_get_group_obj(cfg, groupname):
@@ -657,7 +657,7 @@ def v_get_group_obj(cfg, groupname):
         else:
             raise ValidationError('something has gone terribly wrong in the v_get_group_obj() function')
     else:
-        return False
+        return None 
 
 
 def v_get_host_obj(cfg, hostname):
@@ -699,7 +699,7 @@ def v_get_host_obj(cfg, hostname):
         else:
             raise ValidationError('something has gone terribly wrong in the v_get_host_obj() function')
     else:
-        return False
+        return None 
 
 
 def v_parse_name(cfg, username=None, groupname=None, hostname=None):

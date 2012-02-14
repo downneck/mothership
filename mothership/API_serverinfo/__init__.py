@@ -104,9 +104,8 @@ class API_serverinfo:
             s = self.cfg.dbsess.query(Server).\
                 filter(Server.hw_tag==key).\
                 filter(Server.virtual==False).first()
-            if s.hostname:
-                ret = self._get_serverinfo(s.hostname, s.realm, s.site_id)
-            return ret
+            if s:
+                return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
             self.cfg.log.debug("Something wrong happened in _get_host_from_hwtag. please re-run test")
             raise ServerInfoError("API_serverinfo/_get_host_from_hwtag: no host found with hw_tag: %s" % key)
@@ -118,23 +117,20 @@ class API_serverinfo:
                    filter(Server.id==Network.server_id).\
                    filter(Network.ip==key).first()
             if s.hostname:
-                ret = self._get_serverinfo(s.hostname, s.realm, s.site_id)
-            return ret
+                return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
             self.cfg.log.debug("_get_host_from_ip couldn't find host via private ip")
         # try the public ip
         try:
-            s, n = cfg.dbsess.query(Server, Network).\
+            s, n = self.cfg.dbsess.query(Server, Network).\
                    filter(Server.id==Network.server_id).\
                    filter(Network.public_ip==key).first()
             if s.hostname:
-                ret = self._get_serverinfo(s.hostname, s.realm, s.site_id)
-                return ret
+                return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
             self.cfg.log.debug("_get_host_from_ip was not able to find the host via the public ip")
-
-        if not ret:
-            raise ServerInfoError("API_serverinfo/_get_host_from_ip: no host found with public or private ip: %s" % key)
+        # if we've made it this far without finding anyone...
+        raise ServerInfoError("API_serverinfo/_get_host_from_ip: no host found with public or private ip: %s" % key)
 
     def _get_host_from_mac(self, key):
         try:
@@ -143,8 +139,7 @@ class API_serverinfo:
                    filter(Network.mac==key).\
                    filter(Server.virtual==False).first()
             if s.hostname:
-                ret = self._get_serverinfo(s.hostname, s.realm, s.site_id)
-            return ret
+                return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
             self.cfg.log.debug("_get_host_from_mac was not able to find an hostname")
             raise ServerInfoError("API_serverinfo/_get_host_from_mac: no host found with MAC address: %s" % key)
@@ -152,9 +147,9 @@ class API_serverinfo:
     def _get_host_from_hostname(self, key):
         try:
             s = mothership.validate.v_get_host_obj(self.cfg, key)
-            self.cfg.log.debug("_get_host_from hostname (validate): %s" % s)
-            ret = self._get_serverinfo(s.hostname, s.realm, s.site_id)
-            return ret
+            if s:
+                self.cfg.log.debug("_get_host_from hostname (validate): %s.%s.%s" % (s.hostname, s.realm, s.site_id))
+                return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except Exception, e:
             self.cfg.log.debug("_get_host_from_hostname was not able to find a hostname")
             raise ServerInfoError("API_serverinfo/_get_host_from_hostname: no host found with name: %s. Error: %s" % (key, e))
@@ -210,8 +205,8 @@ class API_serverinfo:
         if ret:
             return ret
         else:
-            cfg.log.debug("API_serverinfo/si: return value \"ret\" is empty!")
-            raise ServerInfoError("API_serverinfo/si: return value\"ret\" is empty!")
+            cfg.log.debug("API_serverinfo/si: no host found!") 
+            raise ServerInfoError("API_serverinfo/si: no host found!")
 
     def _get_serverinfo(self, host, realm, site_id):
         """
