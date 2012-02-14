@@ -56,7 +56,7 @@ def __auth_conn(jbuf, authtype):
             return (True, jbuf)
         elif bottle.request.auth == (cfg.api_admin_user, cfg.api_admin_pass) and (authtype == 'admin' or authtype == 'info'):
             return (True, jbuf)
-        elif bottle.request.cookies['apitest'] == 'letmein' and authtype == 'info': 
+        elif bottle.request.cookies['apitest'] == 'ThisIsTheWorstAuthenticationMechanismInTheHistoryOfEver' and authtype == 'info': 
             return (True, jbuf)
         elif (bottle.request.auth == (cfg.api_info_user, cfg.api_info_pass) or bottle.request.cookies['apitest'] == 'letmein') and authtype == 'admin':
 	    cfg.log.debug("authentication failed, you do not have admin-level access")
