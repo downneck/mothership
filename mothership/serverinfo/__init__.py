@@ -150,8 +150,7 @@ def all(cfg, host, realm, site_id):
     print "cpu speed:\t\t%s" % (h.cpu_speed)
     print ""
     for n in cfg.dbsess.query(Network).\
-        filter(Server.id==Network.server_id).\
-        filter(Server.id==s.id).\
+        filter(Network.server_id==s.id).\
         order_by(Network.interface).all():
         print "%s| mac: %-17s | ip: %-15s | public_ip: %-15s" % (n.interface, n.mac, n.ip, n.public_ip)
         print "%s| vlan: %-3s | switch: %-15s | switch_port: %-10s" % (n.interface, n.vlan, n.switch, n.switch_port)
@@ -183,8 +182,7 @@ def ip_only(cfg, host, realm, site_id):
 
     # display the interface and associated ips
     for n in cfg.dbsess.query(Network).\
-    filter(Server.id==Network.server_id).\
-    filter(Server.hostname==s.hostname).\
+    filter(Network.server_id==s.id).\
     order_by(Network.interface).all():
       if n.ip == None:
         print "%s|\tprivate ip: %s\t | public ip: %s" % (n.interface, n.ip, n.public_ip)
@@ -217,8 +215,7 @@ def mac_only(cfg, host, realm, site_id):
 
     # display the interface and associated mac address
     for n in cfg.dbsess.query(Network).\
-    filter(Server.id==Network.server_id).\
-    filter(Server.hostname==s.hostname).\
+    filter(Network.server_id==s.id).\
     order_by(Network.interface).all():
       print "%s|\tip: %s" % (n.interface, n.mac)
 

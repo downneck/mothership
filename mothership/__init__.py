@@ -963,8 +963,7 @@ def update_table_hardware(cfg, info, when):
         print 'Updating hardware table'
     for k in info.keys():
         setattr(data, k, info[k])
-    if not data.id:
-        cfg.dbsess.add(data)
+    cfg.dbsess.add(data)
     cfg.dbsess.commit()
 
 def update_table_network(cfg, info, noinsert=False):
@@ -986,8 +985,7 @@ def update_table_network(cfg, info, noinsert=False):
         print 'Updating network table'
     for k in info.keys():
         setattr(data, k, info[k])
-    if not data.id:
-        cfg.dbsess.add(data)
+    cfg.dbsess.add(data)
     cfg.dbsess.commit()
 
 def update_table_server(cfg, info, when=None, rename=None):
@@ -1004,8 +1002,7 @@ def update_table_server(cfg, info, when=None, rename=None):
         setattr(data, 'purchase_date', when)
     for k in info.keys():
         setattr(data, k, info[k])
-    if not data.id:
-        cfg.dbsess.add(data)
+    cfg.dbsess.add(data)
     cfg.dbsess.commit()
     ans = retrieve_server_row_by_unqdn(cfg, unqdn)
     return ans.id, ans.hw_tag
