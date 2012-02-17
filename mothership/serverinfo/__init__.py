@@ -54,8 +54,8 @@ def get_host(cfg, hw_tag=None, ip=None, mac=None):
             s = cfg.dbsess.query(Server).\
                 filter(Server.hw_tag==hw_tag).\
                 filter(Server.virtual==False).first()
-            if s.hostname:
-                return s.hostname
+            if s:
+                return "%s.%s.%s" % (s.hostname, s.realm, s.site_id)
         except TypeError:
             raise ServerInfoError("no host found with hw_tag: %s" % hw_tag)
     elif ip != None:
@@ -64,8 +64,8 @@ def get_host(cfg, hw_tag=None, ip=None, mac=None):
             s, n = cfg.dbsess.query(Server, Network).\
                 filter(Server.id==Network.server_id).\
                 filter(Network.ip==ip).first()
-            if s.hostname:
-                return s.hostname
+            if s:
+                return "%s.%s.%s" % (s.hostname, s.realm, s.site_id)
         except TypeError:
             pass
         # try the public ip
@@ -73,8 +73,8 @@ def get_host(cfg, hw_tag=None, ip=None, mac=None):
             s, n = cfg.dbsess.query(Server, Network).\
                 filter(Server.id==Network.server_id).\
                 filter(Network.public_ip==ip).first()
-            if s.hostname:
-                return s.hostname
+            if s:
+                return "%s.%s.%s" % (s.hostname, s.realm, s.site_id)
         except TypeError:
             pass
         raise ServerInfoError(
@@ -85,8 +85,8 @@ def get_host(cfg, hw_tag=None, ip=None, mac=None):
                 filter(Network.hw_tag==Server.hw_tag).\
                 filter(Network.mac==mac).\
                 filter(Server.virtual==False).first()
-            if s.hostname:
-                return s.hostname
+            if s:
+                return "%s.%s.%s" % (s.hostname, s.realm, s.site_id)
         except TypeError:
             pass
         raise ServerInfoError("no host found with MAC address: %s" % mac)
