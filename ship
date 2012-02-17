@@ -74,10 +74,6 @@ class ShipCli(cmdln.Cmdln):
         self.cfg = cfg
         self.name = "ship"
 
-        # if not is_server_provisioning_allowed(self.cfg):
-        #     print 'Sorry we are in the no changes zone..exiting'
-        #     sys.exit(1)
-
     # Zabbix API interaction
     @cmdln.alias("zabbix_api")
     @cmdln.alias("zab")
@@ -1009,7 +1005,7 @@ class ShipCli(cmdln.Cmdln):
                 return
             mothership.dns.generate_dns_output(self.cfg, domain, opts)
         else:
-            print 'Sorry dude but i can\'t generete dns zone now, try again later. :)'
+            print 'dns generation in mothership has been time locked. please wait until the blackout window has ended.'
 
     @cmdln.alias("add")
     @cmdln.alias("add_serv")
@@ -1055,7 +1051,7 @@ class ShipCli(cmdln.Cmdln):
                                                              filter(Server.tag=="zabbix_server").first().hostname))
                     mothership.zabbix.add(self.cfg, unqdn, zs_unqdn, zabbix_template=None)
         else:
-            print 'Sorry dude you can\'t provision server now'
+            print 'server provisioning in mothership has been time locked. please wait until the blackout window has ended.'
             sys.exit(1)
 
     @cmdln.alias("rms")
