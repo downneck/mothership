@@ -135,7 +135,7 @@ def generate_dns_output(cfg, domain, opts):
     """
     Creates DNS zonefiles
     """
-    tmpdir = '/tmp'
+    tmpdir = '/tmp' #dk: should be in config not hard-coded
     reload = False
     zones = []
     if opts.system:
