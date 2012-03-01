@@ -40,7 +40,7 @@ def generate_dns_header(cfg, origin, fqdn, realm, site_id, domain):
     serial = int(time.time())
     if '@' in contact: contact = contact.replace('@','.')
     if origin:
-        header = '$ORIGIN %s.' % fqdn
+        header = '$ORIGIN %s.' % fqdn #dk: unnecessary if the zone name is defined in named.conf. why do we have this?
     else:
         header = ''
     header += """
@@ -76,20 +76,19 @@ to configure one or more %s
         records += '%-20s\tIN\t%-8s%-16s\n' % ('', key.upper(), server)
     return records
 
-def generate_dns_arecords(cfg, realm, site_id, domain):
+def generate_dns_arecords(cfg, realm, site_id, domain): #dk: this is generating empty mgmt.iad.gilt.local. (and other stuff). why?
     """
     Retrieves server list from mothership to create A records
     """
     alist = ''
-    for s,n in cfg.dbsess.query(Server, Network).\
-        filter(Server.site_id==site_id).\
-        filter(Server.realm==realm).\
-        filter(Network.server_id==Server.id).\
+    for n in cfg.dbsess.query(Network).\
         filter(Network.site_id==site_id).\
-        filter(Network.realm==realm).\
-        order_by(Server.hostname).all():
-        if n.ip:
-            alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
+        filter(Network.realm==realm).all():
+            if n.server_id:
+                s = cfg.dbsess.query(Server).\
+                    filter(Server.id==n.server_id).first()
+                if n.ip and s.hostname:
+                    alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
     return alist
 
 def generate_dns_arpa(cfg, cidr, fqdn, realm, site_id, domain):
@@ -102,17 +101,17 @@ def generate_dns_arpa(cfg, cidr, fqdn, realm, site_id, domain):
         net = re.sub('\.0+$', '', net)
         num += 1
     alist = ''
-    for s,n in cfg.dbsess.query(Server, Network).\
-        filter(Server.site_id==site_id).\
-        filter(Server.realm==realm).\
-        filter(Network.server_id==Server.id).\
+    for n in cfg.dbsess.query(Network).\
         filter(Network.site_id==site_id).\
         filter(Network.realm==realm).\
         order_by(Network.ip).all():
-        if mothership.network_mapper.within(n.ip, cidr):
-            alist += '%-20s\tIN\t%-8s%s.%s.\n' % (
-                '.'.join(reversed(n.ip.split('.')[-num:])),
-                'PTR', s.hostname, fqdn)
+        if n.server_id:
+            s = cfg.dbsess.query(Server).\
+                    filter(Server.id==n.server_id).first()
+            if mothership.network_mapper.within(n.ip, cidr) and n.ip and s.hostname:
+                alist += '%-20s\tIN\t%-8s%s.%s.\n' % (
+                    '.'.join(reversed(n.ip.split('.')[-num:])),
+                    'PTR', s.hostname, fqdn)
     return net, alist
 
 def generate_dns_addendum(cfg, realm, site_id, domain):
@@ -124,7 +123,10 @@ def generate_dns_addendum(cfg, realm, site_id, domain):
         filter(DnsAddendum.site_id==site_id).\
         filter(DnsAddendum.realm==realm).\
         order_by(DnsAddendum.record_type, DnsAddendum.host).all():
-        target = dns.target
+        if dns and dns.target:
+            target = dns.target
+        else:
+            raise DNSError("Addendum record does not exist: %s" % realm+"."+site_id+"."+domain)
         if not re.search('\d+',dns.target.split('.')[-1]):
             if not target.endswith('.'):
                 target += '.'
@@ -139,7 +141,7 @@ def generate_dns_output(cfg, domain, opts):
     reload = False
     zones = []
     if opts.system:
-        opts.outdir = tmpdir + cfg.dns_zone
+        opts.outdir = tmpdir + cfg.dns_zone #dk: this sucks. cfg.dns_zone = mothership.yaml::dns:zonedir
     if opts.outdir:
         if not os.path.exists(opts.outdir):
             os.makedirs(opts.outdir)
@@ -263,10 +265,10 @@ def generate_dns_forward(cfg, domain, opts):
     Creates the forward zonefile for the specified domain
     """
     fqn = mothership.validate.v_get_fqn(cfg, domain)
-    sfqn = mothership.validate.v_split_fqn(fqn)
-    forward = generate_dns_header(cfg, True, fqn, *sfqn)
-    forward += generate_dns_arecords(cfg, *sfqn)
-    forward += generate_dns_addendum(cfg, *sfqn)
+    sfqn = mothership.validate.v_split_fqn(fqn) #dk: break these into separate variables
+    forward = generate_dns_header(cfg, True, fqn, *sfqn) #dk: call the vars from ^^^^ individually instead of *sfqn
+    forward += generate_dns_arecords(cfg, *sfqn) #dk: call the vars from ^^^^ individually instead of *sfqn
+    forward += generate_dns_addendum(cfg, *sfqn) #dk: call the vars from ^^^^ individually instead of *sfqn
     f = sys.stdout
     if opts.outdir:
         zone = '%s/%s' % (opts.outdir, fqn)
