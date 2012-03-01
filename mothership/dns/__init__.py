@@ -76,7 +76,7 @@ to configure one or more %s
         records += '%-20s\tIN\t%-8s%-16s\n' % ('', key.upper(), server)
     return records
 
-def generate_dns_arecords(cfg, realm, site_id, domain): #dk: this is generating empty mgmt.iad.gilt.local. (and other stuff). why?
+def generate_dns_arecords(cfg, realm, site_id, domain):
     """
     Retrieves server list from mothership to create A records
     """
@@ -141,7 +141,7 @@ def generate_dns_output(cfg, domain, opts):
     reload = False
     zones = []
     if opts.system:
-        opts.outdir = tmpdir + cfg.dns_zone #dk: this sucks. cfg.dns_zone = mothership.yaml::dns:zonedir
+        opts.outdir = tmpdir + cfg.dns_zone #dk: this var is badly named. cfg.dns_zone = mothership.yaml::dns:zonedir
     if opts.outdir:
         if not os.path.exists(opts.outdir):
             os.makedirs(opts.outdir)
@@ -265,7 +265,7 @@ def generate_dns_forward(cfg, domain, opts):
     Creates the forward zonefile for the specified domain
     """
     fqn = mothership.validate.v_get_fqn(cfg, domain)
-    sfqn = mothership.validate.v_split_fqn(fqn) #dk: break these into separate variables
+    sfqn = mothership.validate.v_split_fqn(fqn) #dk: break these into separate variables for visibility
     forward = generate_dns_header(cfg, True, fqn, *sfqn) #dk: call the vars from ^^^^ individually instead of *sfqn
     forward += generate_dns_arecords(cfg, *sfqn) #dk: call the vars from ^^^^ individually instead of *sfqn
     forward += generate_dns_addendum(cfg, *sfqn) #dk: call the vars from ^^^^ individually instead of *sfqn
