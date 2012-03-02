@@ -73,7 +73,7 @@ def classify(cfg, name):
                     parameters['mgmt_netmask'] = network.netmask
                 if network.ip and network.netmask:
                     mgmt_cidr = mothership.network_mapper.remap(cfg,
-                        'cidr', nic=network.interface, siteid=site_id)
+                        'cidr', nic=network.interface, siteid=site_id)[0]
                     parameters['mgmt_subnet'] = mothership.\
                         network_mapper.get_network(mgmt_cidr)
             if network.interface=='eth1':
