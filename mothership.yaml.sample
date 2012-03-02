@@ -288,10 +288,16 @@ ldap:
 # DNS module options
 dns:
   # Location of the dns zone configuration file
-  zonecfg: /etc/named/zones.conf
+  # Default is /etc/named/zones.conf
+  zonecfg: "/etc/named/zones.conf"
 
   # Location of the dns zone files
-  zonedir: /var/named
+  # Default is: /var/named
+  zonedir: "/var/named"
+
+  # location of the temporary working directory for dns file comparison
+  # Default is: /tmp
+  dns_tmpdir: "/tmp"
 
   # Forward zones will be determined by the realms and site_ids
   # Reverse zones will be determined by the network map

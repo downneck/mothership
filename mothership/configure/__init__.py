@@ -330,6 +330,10 @@ class Configure:
             self.zonettl = dnsconfig['zonettl']
         else:
             self.zonettl = '86400'
+        if 'dns_tmpdir' in dnsconfig and dnsconfig['dns_tmpdir']:
+            self.dns_tmpdir = dnsconfig['dns_tmpdir']
+        else:
+            self.dns_tmpdir = '/tmp'
         if 'refresh' in dnsconfig and dnsconfig['refresh']:
             self.dns_refresh = dnsconfig['refresh']
         else:
