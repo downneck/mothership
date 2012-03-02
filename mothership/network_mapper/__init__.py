@@ -57,11 +57,13 @@ def within(ip, cidr):
         return False
 
 
+# wtf does this pile of crap do? maybe someone should have put some comments in this thing...
 def remap(cfg, request, **kv):
     """
        Removed dictlist and migrated it to mothership.yaml
     """
     netmap = cfg.network_map
+    netblocks = []
     if request=='gw' or 'gw' in request:
         if 'vlan' not in kv.keys() and 'ip' not in kv.keys():
             print 'Either vlan or ip MUST be specified when requesting gw'
@@ -107,8 +109,12 @@ def remap(cfg, request, **kv):
                     return get_netmask(line['cidr'])
                 elif request == 'ip':   # legacy ip prefix
                     return re.sub('(\.0)+$', '', line['cidr'].split('/')[0]) + '.'
+                elif request == 'cidr':
+                    netblocks.append(line['cidr'])
                 elif request in line:
                     return line[request]
+    if netblocks:
+        return netblocks
     return False
 
 def generate_ipaddress_list(first, count=None, last=None):

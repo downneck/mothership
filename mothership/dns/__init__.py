@@ -38,6 +38,14 @@ def generate_dns_header(cfg, origin, fqdn, realm, site_id, domain):
     """
     contact = cfg.contact
     serial = int(time.time())
+    # try to get a realm-specific master
+    nsmaster = mothership.kv.select(cfg, realm+'.'+site_id, key='nsmaster')
+    if not nsmaster:
+        # if we can't get a realm-specific master, look for a global one
+        nsmaster = mothership.kv.select(cfg, None, key='nsmaster')
+        if not nsmaster:
+            raise DNSError("No nsmaster KV entry for \"%s.%s\", exiting" % (realm, site_id))
+    nsmaster = nsmaster.value
     if '@' in contact: contact = contact.replace('@','.')
     if origin:
         header = '$ORIGIN %s.' % fqdn
@@ -53,7 +61,7 @@ $TTL %s
                                         %-10d   ; TTL
                                         )
 
-""" % (cfg.zonettl, fqdn, contact, serial, cfg.dns_refresh,
+""" % (cfg.zonettl, nsmaster, contact, serial, cfg.dns_refresh,
         cfg.dns_retry, cfg.dns_expire, cfg.zonettl)
     for rec in ['ns', 'mx']:
         header += generate_root_records(cfg, realm+'.'+site_id, domain, rec)
@@ -112,11 +120,6 @@ def generate_dns_arpa(cfg, cidr, fqdn, realm, site_id, domain):
                 alist += '%-20s\tIN\t%-8s%s.%s.\n' % (
                     '.'.join(reversed(n.ip.split('.')[-num:])),
                     'PTR', s.hostname, fqdn)
-    print '='*60
-    print "CIDR: %s" % cidr
-    print '='*60
-    print alist
-    print '='*60
     return net, alist
 
 def generate_dns_addendum(cfg, realm, site_id, domain):
@@ -156,14 +159,25 @@ def generate_dns_output(cfg, domain, opts):
             for realm in cfg.realms:
                 fqn = mothership.validate.v_get_fqn(cfg, realm+'.'+site_id)
                 zones.append(generate_dns_forward(cfg, fqn, opts))
-                zones.append(generate_dns_reverse(cfg, fqn, opts))
-        # Remove empty zones
-        zones = [ z for z in zones if z ]
-        validated = validate_zone_config(cfg, tmpdir, zones)
-        reload = reload or validated
+                revzones = generate_dns_reverse(cfg, fqn, opts)
+                if revzones:
+                    for revzone in revzones:
+                        zones.append(revzone)
+                else: 
+                    print "No reverse zones created for %s" % (realm+'.'+site_id)
     else:
         zones.append(generate_dns_forward(cfg, domain, opts))
-        zones.append(generate_dns_reverse(cfg, domain, opts))
+        revzones = generate_dns_reverse(cfg, fqn, opts)
+        if revzones:
+            for revzone in revzones:
+                zones.append(revzone)
+        else: 
+            print "No reverse zones created for %s" % (realm+'.'+site_id)
+    # Remove empty zones
+    zones = [ z for z in zones if z ]
+    print zones
+    validated = validate_zone_config(cfg, tmpdir, zones)
+    reload = reload or validated
     if opts.system:
         validated = validate_zone_files(tmpdir, zones)
         if reload or validated:
@@ -275,38 +289,43 @@ def generate_dns_forward(cfg, domain, opts):
     else:
         print '\n' + '-'*60 + '\nDNS forward zone for %s:\n' % fqn  + '-'*60
     f.write(forward)
-    if opts.outdir:
-       f.close()
-       return zone
-    return None
+    if opts.outdir: 
+        f.close()
+    if zone:
+        return zone
+    else:
+        return None
 
 def generate_dns_reverse(cfg, domain, opts):
     """
     Creates the reverse zonefiles for the specified domain
     """
+    zones = []
     fqn = mothership.validate.v_get_fqn(cfg, domain)
     realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
-    # this all sucks and is broken.
-    #cidr = mothership.network_mapper.remap(cfg, 'cidr', dom='.'+fqn)
-    #if not cidr:
-    #    print 'Skipping reverse zone for %s, undefined in mothership.yaml' % domain
-    #    return False
-    net, rev = generate_dns_arpa(cfg, cidr, fqn, realm, site_id, domain)
-    net = '%s.in-addr.arpa' % '.'.join(reversed(net.split('.')))
-    reverse = generate_dns_header(cfg, False, fqn, realm, site_id, domain)
-    reverse += rev
-    f = sys.stdout
-    if opts.outdir:
-        zone = '%s/%s' % (opts.outdir, net)
-        print 'Writing DNS reverse zone for %s to %s' % (net, zone)
-        f = open(zone, 'w')
+    netblocks = mothership.network_mapper.remap(cfg, 'cidr', dom='.'+fqn)
+    if not netblocks:
+        print "Skipping reverse zone for %s, undefined in mothership.yaml" % (realm+'.'+site_id)
+        return False
+    for cidr in netblocks:
+        net, rev = generate_dns_arpa(cfg, cidr, fqn, realm, site_id, domain)
+        net = '%s.in-addr.arpa' % '.'.join(reversed(net.split('.')))
+        reverse = generate_dns_header(cfg, False, fqn, realm, site_id, domain)
+        reverse += rev
+        if opts.outdir:
+            zone = '%s/%s' % (opts.outdir, net)
+            print 'Writing DNS reverse zone for %s to %s' % (net, zone)
+            f = open(zone, 'w')
+            f.write(reverse)
+            f.close()
+            zones.append(zone)
+        else:
+            print '\n' + '-'*60 + '\nDNS reverse zone for %s:\n' % net  + '-'*60
+            print reverse
+    if zones:
+        return zones
     else:
-        print '\n' + '-'*60 + '\nDNS reverse zone for %s:\n' % net  + '-'*60
-    f.write(reverse)
-    if opts.outdir:
-       f.close()
-       return zone
-    return None
+        return None
 
 def update_table_dnsaddendum(cfg, info, delete=False):
     """
