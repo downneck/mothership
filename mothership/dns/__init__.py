@@ -175,7 +175,6 @@ def generate_dns_output(cfg, domain, opts):
             print "No reverse zones created for %s" % (realm+'.'+site_id)
     # Remove empty zones
     zones = [ z for z in zones if z ]
-    print zones
     validated = validate_zone_config(cfg, tmpdir, zones)
     reload = reload or validated
     if opts.system:
@@ -281,16 +280,15 @@ def generate_dns_forward(cfg, domain, opts):
     forward = generate_dns_header(cfg, True, fqn, realm, site_id, domain)
     forward += generate_dns_arecords(cfg, realm, site_id, domain)
     forward += generate_dns_addendum(cfg, realm, site_id, domain)
-    f = sys.stdout
     if opts.outdir:
         zone = '%s/%s' % (opts.outdir, fqn)
         print 'Writing DNS forward zone for %s to %s' % (fqn, zone)
         f = open(zone, 'w')
+        f.write(forward)
+        f.close()
     else:
         print '\n' + '-'*60 + '\nDNS forward zone for %s:\n' % fqn  + '-'*60
-    f.write(forward)
-    if opts.outdir: 
-        f.close()
+        print zone
     if zone:
         return zone
     else:
