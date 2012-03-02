@@ -319,17 +319,17 @@ class Configure:
         else:
             self.dns_active = False
         if 'zonecfg' in dnsconfig and dnsconfig['zonecfg']:
-            self.dns_conf = dnsconfig['zonecfg']
+            self.zonecfg = dnsconfig['zonecfg']
         else:
-            self.dns_conf = '/etc/named/zones.conf'
+            self.zonecfg = '/etc/named/zones.conf'
         if 'zonedir' in dnsconfig and dnsconfig['zonedir']:
-            self.dns_zone = dnsconfig['zonedir']
+            self.zonedir = dnsconfig['zonedir']
         else:
-            self.dns_zone = '/var/named/'
+            self.zonedir = '/var/named/'
         if 'zonettl' in dnsconfig and dnsconfig['zonettl']:
-            self.dns_ttl = dnsconfig['zonettl']
+            self.zonettl = dnsconfig['zonettl']
         else:
-            self.dns_ttl = '86400'
+            self.zonettl = '86400'
         if 'refresh' in dnsconfig and dnsconfig['refresh']:
             self.dns_refresh = dnsconfig['refresh']
         else:

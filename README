@@ -35,11 +35,16 @@ Bootstrap for OSX
 * sudo -u postgres /opt/local/lib/postgresql84/bin/pg_ctl -D /opt/local/var/db/postgresql84/defaultdb start (If you need to start postgres)
 * Ensure you have some sort of postgresql based database lying around
 
-Contributors - Main Team
+Current Contributors
+==========================
+Andres Pereira
+David Kovach
+Matt Osterhaus
+
+Original Team
 ==========================
 Alain Hoang
 Andres Pereira
 David Kovach
 Jared Brothers
 Kent Lee
-Matt Osterhaus

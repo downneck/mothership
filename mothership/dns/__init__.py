@@ -40,7 +40,7 @@ def generate_dns_header(cfg, origin, fqdn, realm, site_id, domain):
     serial = int(time.time())
     if '@' in contact: contact = contact.replace('@','.')
     if origin:
-        header = '$ORIGIN %s.' % fqdn #dk: unnecessary if the zone name is defined in named.conf. why do we have this?
+        header = '$ORIGIN %s.' % fqdn
     else:
         header = ''
     header += """
@@ -53,8 +53,8 @@ $TTL %s
                                         %-10d   ; TTL
                                         )
 
-""" % (cfg.dns_ttl, fqdn, contact, serial, cfg.dns_refresh,
-        cfg.dns_retry, cfg.dns_expire, cfg.dns_ttl)
+""" % (cfg.zonettl, fqdn, contact, serial, cfg.dns_refresh,
+        cfg.dns_retry, cfg.dns_expire, cfg.zonettl)
     for rec in ['ns', 'mx']:
         header += generate_root_records(cfg, realm+'.'+site_id, domain, rec)
     return header
@@ -141,7 +141,7 @@ def generate_dns_output(cfg, domain, opts):
     reload = False
     zones = []
     if opts.system:
-        opts.outdir = tmpdir + cfg.dns_zone #dk: this var is badly named. cfg.dns_zone = mothership.yaml::dns:zonedir
+        opts.outdir = tmpdir + cfg.zonedir
     if opts.outdir:
         if not os.path.exists(opts.outdir):
             os.makedirs(opts.outdir)
@@ -178,29 +178,22 @@ def validate_zone_files(prefix, tmpzones):
     return to_reload
 
 def validate_zone_config(cfg, prefix, tmpzones):
-    tempconf = prefix + cfg.dns_conf
+    tempconf = prefix + cfg.zonecfg
     zoneconf = ''
     for zone in tmpzones:
         name = os.path.basename(zone)
-        isreverse = False
-        if re.match('[\d\.]', name):
-            isreverse = True
-        zoneconf += create_zone_block(name, reverse=isreverse)
+        zoneconf += create_zone_block(name)
     print 'Creating temporary zone config: %s' % tempconf
     if not os.path.exists(os.path.dirname(tempconf)):
         os.makedirs(os.path.dirname(tempconf))
     f = open(tempconf, 'w')
     f.write(zoneconf)
     f.close()
-    return compare_files(cfg.dns_conf, tempconf)
+    return compare_files(cfg.zonecfg, tempconf)
 
-def create_zone_block(name, reverse=False):
-    if reverse:
-        header = '%s.in-addr.arpa' % '.'.join(reversed(name.split('.')))
-    else:
-        header = name
+def create_zone_block(name):
     return 'zone "%s" in {\n\ttype master;\n\tfile "%s";\n};\n\n' \
-        % (header, name)
+        % (name, name)
 
 def confirm_change(prefix, zone):
     ans = raw_input('\nTo approve this change, type "%s_%s": ' % (prefix, zone))
@@ -265,10 +258,10 @@ def generate_dns_forward(cfg, domain, opts):
     Creates the forward zonefile for the specified domain
     """
     fqn = mothership.validate.v_get_fqn(cfg, domain)
-    sfqn = mothership.validate.v_split_fqn(fqn) #dk: break these into separate variables for visibility
-    forward = generate_dns_header(cfg, True, fqn, *sfqn) #dk: call the vars from ^^^^ individually instead of *sfqn
-    forward += generate_dns_arecords(cfg, *sfqn) #dk: call the vars from ^^^^ individually instead of *sfqn
-    forward += generate_dns_addendum(cfg, *sfqn) #dk: call the vars from ^^^^ individually instead of *sfqn
+    sfqn = mothership.validate.v_split_fqn(fqn)
+    forward = generate_dns_header(cfg, True, fqn, *sfqn)
+    forward += generate_dns_arecords(cfg, *sfqn)
+    forward += generate_dns_addendum(cfg, *sfqn)
     f = sys.stdout
     if opts.outdir:
         zone = '%s/%s' % (opts.outdir, fqn)
@@ -293,6 +286,7 @@ def generate_dns_reverse(cfg, domain, opts):
         print 'Skipping reverse zone for %s, undefined in mothership.yaml' % domain
         return False
     net, rev = generate_dns_arpa(cfg, cidr, fqn, *sfqn)
+    net = '%s.in-addr.arpa' % '.'.join(reversed(net.split('.')))
     reverse = generate_dns_header(cfg, False, fqn, *sfqn)
     reverse += rev
     f = sys.stdout
