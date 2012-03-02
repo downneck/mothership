@@ -112,6 +112,11 @@ def generate_dns_arpa(cfg, cidr, fqdn, realm, site_id, domain):
                 alist += '%-20s\tIN\t%-8s%s.%s.\n' % (
                     '.'.join(reversed(n.ip.split('.')[-num:])),
                     'PTR', s.hostname, fqdn)
+    print '='*60
+    print "CIDR: %s" % cidr
+    print '='*60
+    print alist
+    print '='*60
     return net, alist
 
 def generate_dns_addendum(cfg, realm, site_id, domain):
@@ -258,10 +263,10 @@ def generate_dns_forward(cfg, domain, opts):
     Creates the forward zonefile for the specified domain
     """
     fqn = mothership.validate.v_get_fqn(cfg, domain)
-    sfqn = mothership.validate.v_split_fqn(fqn)
-    forward = generate_dns_header(cfg, True, fqn, *sfqn)
-    forward += generate_dns_arecords(cfg, *sfqn)
-    forward += generate_dns_addendum(cfg, *sfqn)
+    realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
+    forward = generate_dns_header(cfg, True, fqn, realm, site_id, domain)
+    forward += generate_dns_arecords(cfg, realm, site_id, domain)
+    forward += generate_dns_addendum(cfg, realm, site_id, domain)
     f = sys.stdout
     if opts.outdir:
         zone = '%s/%s' % (opts.outdir, fqn)
@@ -277,17 +282,18 @@ def generate_dns_forward(cfg, domain, opts):
 
 def generate_dns_reverse(cfg, domain, opts):
     """
-    Creates the reverse zonefile for the specified domain
+    Creates the reverse zonefiles for the specified domain
     """
     fqn = mothership.validate.v_get_fqn(cfg, domain)
-    sfqn = mothership.validate.v_split_fqn(fqn)
-    cidr = mothership.network_mapper.remap(cfg, 'cidr', dom='.'+fqn)
-    if not cidr:
-        print 'Skipping reverse zone for %s, undefined in mothership.yaml' % domain
-        return False
-    net, rev = generate_dns_arpa(cfg, cidr, fqn, *sfqn)
+    realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
+    # this all sucks and is broken.
+    #cidr = mothership.network_mapper.remap(cfg, 'cidr', dom='.'+fqn)
+    #if not cidr:
+    #    print 'Skipping reverse zone for %s, undefined in mothership.yaml' % domain
+    #    return False
+    net, rev = generate_dns_arpa(cfg, cidr, fqn, realm, site_id, domain)
     net = '%s.in-addr.arpa' % '.'.join(reversed(net.split('.')))
-    reverse = generate_dns_header(cfg, False, fqn, *sfqn)
+    reverse = generate_dns_header(cfg, False, fqn, realm, site_id, domain)
     reverse += rev
     f = sys.stdout
     if opts.outdir:
