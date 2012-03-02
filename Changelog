@@ -2,6 +2,7 @@ release 0.0.12
 * altered dns file naming to match in-addr.arpa notation
 * variable tweaks and cleanup
 * yaml cleanup
+* more dns reverse generation bugs 
 release 0.0.11
 * changed to dewey numbering
 * fixed a bunch of dns bugs

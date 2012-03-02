@@ -22,5 +22,5 @@ setup(name='Mothership',
                'ship_readonly'
                ],
       url='http://mothership.sf.net',
-      version='0.0.11',
+      version='0.0.12',
      )
