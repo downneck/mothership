@@ -1,3 +1,6 @@
+release 0.0.13
+* more dns bugfixes
+* removing VERY dangerous code from dns
 release 0.0.12
 * altered dns file naming to match in-addr.arpa notation
 * variable tweaks and cleanup
