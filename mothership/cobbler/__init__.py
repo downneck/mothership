@@ -396,6 +396,8 @@ class CobblerAPI:
             system = True
         fqdn = mothership.validate.v_get_fqn(self.cfg, hostname)
         domain = re.sub('^\w+\.', '', fqdn)
+        # for the rewrite: make this only happen if it's a new box
+        # if it's just a reinstall the DNS isn't changing.
         mothership.dns.generate_dns_output(self.cfg, domain, opts)
         self._sync_cobbler(self.cobremote, self.cobtoken)
         if self.subremote is not None:
