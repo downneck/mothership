@@ -146,7 +146,8 @@ def generate_dns_output(cfg, domain, opts):
     Creates DNS zonefiles
     """
     tmpdir = cfg.dns_tmpdir 
-    reload = False
+    # not necessary, see below
+    #reload = False
     zones = []
     if opts.system:
         opts.outdir = tmpdir + cfg.zonedir
@@ -167,33 +168,45 @@ def generate_dns_output(cfg, domain, opts):
                     print "No reverse zones created for %s" % (realm+'.'+site_id)
     else:
         zones.append(generate_dns_forward(cfg, domain, opts))
-        revzones = generate_dns_reverse(cfg, fqn, opts)
+        revzones = generate_dns_reverse(cfg, domain, opts)
         if revzones:
             for revzone in revzones:
                 zones.append(revzone)
         else: 
-            print "No reverse zones created for %s" % (realm+'.'+site_id)
-    # Remove empty zones
-    zones = [ z for z in zones if z ]
-    validated = validate_zone_config(cfg, tmpdir, zones)
-    reload = reload or validated
+            print "No ouput directory has been specified, so no reverse zone files were written for %s" % domain
     if opts.system:
-        validated = validate_zone_files(tmpdir, zones)
-        if reload or validated:
-            try:
-                print 'Reloading named...',
-                os.system('/sbin/service named reload')
-                print 'done'
-            except:
-                raise DNSError('Error reloading named!')
+        # this is horribad. it only generates a zones.conf for ONE ZONE
+        # unless you specify the -a option. i'm ripping this out and managing
+        # the zones.conf in puppet. let's fix this crap in the rewrite -dk
+        # --- BEGIN AWFULNESS ---
+        #validated = validate_zone_config(cfg, tmpdir, zones)
+        #reload = reload or validated
+        # --- END AWFULNESS ---
 
-def validate_zone_files(prefix, tmpzones):
+        # Remove empty zones
+        zones = [ z for z in zones if z ]
+        validate_zone_files(cfg, tmpdir, zones)
+        if opts.all:
+            validate_zone_config(cfg, tmpdir, zones)
+        # mothership shouldn't be restarting system services. again, horribad.
+        # removing this crap and replacing it with an informational message. -dk
+        # --- BEGIN AWFULNESS ---
+        #validated = validate_zone_files(tmpdir, zones)
+        #if reload or validated:
+        #    try:
+        #        print 'Reloading named...',
+        #        os.system('/sbin/service named reload')
+        #        print 'done'
+        #    except:
+        #        raise DNSError('Error reloading named!')
+        # --- END AWFULNESS ---
+        print "All zones validated. Please restart named so the changes can take effect."
+
+def validate_zone_files(cfg, prefix, tmpzones):
     to_reload = False
     for tempzone in tmpzones:
         livezone = re.sub('^'+prefix, '', tempzone)
-        compared = compare_files(livezone, tempzone)
-        to_reload = to_reload or compared
-    return to_reload
+        compare_files(cfg, livezone, tempzone)
 
 def validate_zone_config(cfg, prefix, tmpzones):
     tempconf = prefix + cfg.zonecfg
@@ -201,13 +214,16 @@ def validate_zone_config(cfg, prefix, tmpzones):
     for zone in tmpzones:
         name = os.path.basename(zone)
         zoneconf += create_zone_block(name)
-    print 'Creating temporary zone config: %s' % tempconf
+    print 'Creating zone config in temp dir: %s' % tempconf
     if not os.path.exists(os.path.dirname(tempconf)):
         os.makedirs(os.path.dirname(tempconf))
     f = open(tempconf, 'w')
     f.write(zoneconf)
     f.close()
-    return compare_files(cfg.zonecfg, tempconf)
+    if compare_files(cfg, cfg.zonecfg, tempconf):
+        print "\nNew zones.conf written to temp dir: %s\nPlease install it manually to allow changes to take effect" % tempconf
+    else:
+        print ""
 
 def create_zone_block(name):
     return 'zone "%s" in {\n\ttype master;\n\tfile "%s";\n};\n\n' \
@@ -238,7 +254,7 @@ def rollout_changes(oldfile, newfile):
         os.makedirs(os.path.dirname(oldfile))
     shutil.copy(newfile, oldfile)
 
-def compare_files(oldfile, newfile):
+def compare_files(cfg, oldfile, newfile):
     reload = False
     print 'Comparing %s %s' % (oldfile, newfile)
     # Ignore extra spaces for comparison
@@ -265,16 +281,16 @@ def compare_files(oldfile, newfile):
         return reload
     else:
         print '-'*60
-    if changes:
+    if changes and not (cfg.zonecfg == oldfile):
         if confirm_change('dns', os.path.basename(oldfile)):
             rollout_changes(oldfile, newfile)
-            reload = True
-    return reload
+    return changes
 
 def generate_dns_forward(cfg, domain, opts):
     """
     Creates the forward zonefile for the specified domain
     """
+    zone = None
     fqn = mothership.validate.v_get_fqn(cfg, domain)
     realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
     forward = generate_dns_header(cfg, True, fqn, realm, site_id, domain)
@@ -288,7 +304,7 @@ def generate_dns_forward(cfg, domain, opts):
         f.close()
     else:
         print '\n' + '-'*60 + '\nDNS forward zone for %s:\n' % fqn  + '-'*60
-        print zone
+        print forward 
     if zone:
         return zone
     else:
