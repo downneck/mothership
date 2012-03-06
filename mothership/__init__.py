@@ -187,6 +187,8 @@ def convert_drac_dict_to_network(cfg, drac_sysinfo, ip):
             if k!='eth1': # due to multiple vlans
                 if net[2] == mgmtip:
                     netdrac_sysinfo.update({'ip':ip.replace(dracip,mgmtip)})
+                elif net[2] == dracip:
+                    netdrac_sysinfo.update({'ip':ip})
             netdrac_sysinfo.update({'vlan':net[0],
                 'netmask':net[1], 'realm':realm})
         update_table_network(cfg, netdrac_sysinfo)

@@ -1,3 +1,6 @@
+release 0.0.14
+* fixing a bug in drac import that was preventing ips
+  from being assigned to dracs
 release 0.0.13
 * more dns bugfixes
 * removing VERY dangerous code from dns
