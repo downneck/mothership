@@ -197,7 +197,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.uadd(self.cfg, username, first_name, last_name, copy_from=opts.copy_from, keyfile=opts.keyfile, uid=opts.uid, hdir=opts.homedir, shell=opts.shell, email=opts.email, user_type=opts.type)
-        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+        except Exception, e:
             print "Error: %s" % e
 
         if opts.ldap:
@@ -207,7 +207,7 @@ class ShipCli(cmdln.Cmdln):
             else:
                 try:
                     mothership.ldap.add_user(self.cfg, username)
-                except (mothership.ldap.LDAPError), e:
+                except Exception, e:
                     print 'Error: %s' % e
 
 
@@ -227,7 +227,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.uremove(self.cfg, username)
-        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+        except Exception, e:
             print 'Error: %s' % e
             
 
@@ -249,7 +249,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.udeactivate(self.cfg, username)
-        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+        except Exception, e:
             print 'Error: %s' % e
 
     # enable/activate users
@@ -271,7 +271,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.uactivate(self.cfg, username)
-        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+        except Exception, e:
             print 'Error: %s' % e
 
     # Modify users
@@ -307,7 +307,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.umodify(self.cfg, username, first_name=opts.fname, last_name=opts.lname, keyfile=opts.keyfile, uid=opts.uid, hdir=opts.homedir, shell=opts.shell, email=opts.email, user_type=opts.type)
-        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+        except Exception, e:
             print 'Error: %s' % e
              
 
@@ -325,7 +325,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.uclone(self.cfg, username, newfqn)
-        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+        except Exception, e:
             print 'Error: %s' % e
 
 
@@ -347,7 +347,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.uwrite_pubkey(self.cfg, username, opts.keyfile)
-        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+        except Exception, e:
             print 'Error: %s' % e
     
 
@@ -374,7 +374,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.udisplay(self.cfg, username, pubkey=opts.pubkey, compact=opts.compact, list=opts.list_groups)
-        except (mothership.validate.ValidationError, mothership.users.UsersError, mothership.ssh.SSHError), e:
+        except Exception, e:
             print 'Error: %s' % e
 
 
@@ -399,7 +399,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.gadd(self.cfg, groupname, gid=opts.gid, description=opts.desc, sudo_cmds=opts.sudo_cmds)
-        except (mothership.validate.ValidationError, mothership.users.UsersError), e:
+        except Exception, e:
             print 'Error: %s' % e
         
 
@@ -419,7 +419,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.gremove(self.cfg, groupname)
-        except (mothership.validate.ValidationError, mothership.users.UsersError), e:
+        except Exception, e:
             print 'Error: %s' % e
 
 
@@ -446,7 +446,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.gmodify(self.cfg, groupname, gid=opts.gid, description=opts.desc, sudo_cmds=opts.sudo_cmds)
-        except (mothership.validate.ValidationError, mothership.users.UsersError), e:
+        except Exception, e:
             print 'Error: %s' % e
 
 
@@ -466,7 +466,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.users.gdisplay(self.cfg, groupname, opts.list_users)
-        except (mothership.validate.ValidationError, mothership.users.UsersError), e:
+        except Exception, e:
             print 'Error: %s' % e
 
 
@@ -494,8 +494,7 @@ class ShipCli(cmdln.Cmdln):
             else:
                 # write a display
                 print "display functionality is not yet working, check back later"
-        except (mothership.validate.ValidationError,
-                mothership.users.UsersError), e:
+        except Exception, e:
             print "Error: %s" % e
 
 
@@ -513,9 +512,7 @@ class ShipCli(cmdln.Cmdln):
         if self.cfg.ldap_active:
             try:
                 mothership.ldap.uadd(self.cfg, username)
-            except (mothership.validate.ValidationError,
-                    mothership.users.UsersError,
-                    mothership.ldap.LDAPError), e:
+            except Exception, e: 
                 print "Error: %s" % e
 
 
@@ -535,9 +532,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.ldap.uremove(self.cfg, username)
-        except (mothership.validate.ValidationError,
-                mothership.users.UsersError,
-                mothership.ldap.LDAPError), e:
+        except Exception, e:
             print "Error: %s" % e
 
 
@@ -556,9 +551,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.ldap.uupdate(self.cfg, username)
-        except (mothership.validate.ValidationError,
-                mothership.users.UsersError,
-                mothership.ldap.LDAPError), e:
+        except Exception, e:
             print "Error: %s" % e
 
     # update a user's ldap password
@@ -574,9 +567,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.ldap.update_ldap_passwd(self.cfg, username)
-        except (mothership.validate.ValidationError,
-                mothership.users.UsersError,
-                mothership.ldap.LDAPError), e:
+        except Exception, e:
             print "Error: %s" % e
 
 
@@ -602,9 +593,7 @@ class ShipCli(cmdln.Cmdln):
             if not opts.groups and not opts.users:
                 mothership.ldap.urefresh(self.cfg, realm_path)
                 mothership.ldap.grefresh(self.cfg, realm_path)
-        except (mothership.validate.ValidationError,
-                mothership.users.UsersError,
-                mothership.ldap.LDAPError), e:
+        except Exception, e:
             print "Error: %s" % e
 
 
@@ -622,9 +611,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.ldap.udisplay(self.cfg, username)
-        except (mothership.validate.ValidationError,
-                mothership.users.UsersError,
-                mothership.ldap.LDAPError), e:
+        except Exception, e:
             print "Error: %s" % e
 
 
@@ -640,9 +627,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.ldap.gadd(self.cfg, groupname)
-        except (mothership.validate.ValidationError,
-                mothership.users.UsersError,
-                mothership.ldap.LDAPError), e:
+        except Exception, e:
             print "Error: %s" % e
 
 
@@ -662,9 +647,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.ldap.gremove(self.cfg, groupname)
-        except (mothership.validate.ValidationError,
-                mothership.users.UsersError,
-                mothership.ldap.LDAPError), e:
+        except Exception, e:
             print "Error: %s" % e
 
 
@@ -683,9 +666,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.ldap.gupdate(self.cfg, groupname)
-        except (mothership.validate.ValidationError,
-                mothership.users.UsersError,
-                mothership.ldap.LDAPError), e:
+        except Exception, e:
             print "Error: %s" % e
 
 
@@ -703,9 +684,7 @@ class ShipCli(cmdln.Cmdln):
         """
         try:
             mothership.ldap.gdisplay(self.cfg, groupname)
-        except (mothership.validate.ValidationError,
-                mothership.users.UsersError,
-                mothership.ldap.LDAPError), e:
+        except Exception, e:
             print "Error: %s" % e
 
 
@@ -833,7 +812,7 @@ class ShipCli(cmdln.Cmdln):
             else:
                 mothership.serverinfo.all(self.cfg, host, realm, site_id)
 
-        except mothership.serverinfo.ServerInfoError, e:
+        except Exception, e:
             print 'Error: %s' % e
             sys.exit(1)
 
@@ -913,7 +892,7 @@ class ShipCli(cmdln.Cmdln):
             if kvs:
                 for kv in kvs:
                     print kv
-        except (mothership.KVError), e:
+        except Exception, e:
             print 'Error: %s' % e
 
 
@@ -1072,8 +1051,8 @@ class ShipCli(cmdln.Cmdln):
             # for virtual servers, xenserver instance must be purged
             try:
                 cc.set_system_power(unqdn, 'off', virtual=True)
-            except:
-                sys.stderr.write('Failed to destroy virtual host, aborting\n')
+            except Exception, e:
+                sys.stderr.write("Failed to destroy virtual host, aborting\nError: %s" % e)
                 sys.exit()
         if expired:
             # cobbler system MUST be removed upon expire to avoid future duplicate errors
@@ -1392,7 +1371,7 @@ class ShipCli(cmdln.Cmdln):
                 mothership.rm_tag(self.cfg, name)
             else:
                 mothership.display_tag(self.cfg, name)
-        except (mothership.MothershipError), e:
+        except Exception, e:
             print 'Error: %s' % e
 
     @cmdln.alias("xen")
