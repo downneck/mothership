@@ -183,7 +183,7 @@ def convert_drac_dict_to_network(cfg, drac_sysinfo, ip):
         net = mothership.network_mapper.remap(cfg,
             ['vlan','mask','ip', 'dom'], nic=k, siteid=siteid)
         if net:
-            realm = mothership.validate.v_split_fqn(net[3])[1]
+            realm = mothership.validate.v_split_fqn(cfg, net[3])[1]
             if k!='eth1': # due to multiple vlans
                 if net[2] == mgmtip:
                     netdrac_sysinfo.update({'ip':ip.replace(dracip,mgmtip)})
@@ -620,11 +620,8 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         update_table_network(cfg, net_info)
 
         # update network for eth0
-        realm = mothership.validate.v_split_fqn(
-            mothership.network_mapper.remap(cfg,
-               'dom', nic='eth0', siteid=site_id))[1]
-        mgmt_info = {'server_id': server_id, 'realm':realm,
-            'interface':'eth0', 'ip':iplist[0]}
+        realm = mothership.validate.v_split_fqn(cfg, mothership.network_mapper.remap(cfg, 'dom', nic='eth0', siteid=site_id))[1]
+        mgmt_info = {'server_id': server_id, 'realm':realm, 'interface':'eth0', 'ip':iplist[0]}
         update_table_network(cfg, mgmt_info)
         print 'Added virtual host %s to mothership' % fqdn
     else:
@@ -658,7 +655,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
                 domain,static_route,netmask = mothership.network_mapper.remap(
                     cfg, ['dom', 'gw', 'mask'],
                     nic=interface, ip=ip, siteid=site_id)
-                realm = mothership.validate.v_split_fqn(domain)[1]
+                realm = mothership.validate.v_split_fqn(cfg, domain)[1]
             else:
                 static_route = None
                 netmask = None
@@ -673,8 +670,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         print 'Added baremetal host %s to mothership' % hostname
 
     # reset realm and site_id before handling groups
-    host, realm, site_id, domain = mothership.validate.v_split_fqn(
-        mothership.validate.v_get_fqn(cfg, fqdn))
+    host, realm, site_id, domain = mothership.validate.v_split_fqn(cfg, mothership.validate.v_get_fqn(cfg, fqdn))
 
     # create a group for the new machine
     newgroupname = fqdn.replace('.', '_')

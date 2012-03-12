@@ -277,6 +277,37 @@ def v_get_fqn(cfg, name):
     count = 1
     select = {}
     sub = name.split('.')
+    # 6-item fqn
+    if len(sub) == 6:
+        n = sub[0]
+        dm = sub[1]
+        r = sub[2]
+        s = sub[3]
+        d = sub[4]+'.'+sub[5]
+        # check to see if the domain is valid
+        if not v_domain(cfg, d):
+            raise ValidationError("invalid domain \"%s\", aborting" % d)
+        # check to see if the site_id is valid
+        if not v_site_id(cfg, s):
+            raise ValidationError("invalid site_id \"%s\", aborting" % s)
+        # check to see if the realm is valid
+        if not v_realm(cfg, r):
+            raise ValidationError("invalid realm \"%s\", aborting" % r)
+        # check the drac/mgmt position for validity
+        if cfg.drac and dm == 'drac':
+            pass
+        elif dm == 'mgmt':
+            pass
+        elif cfg.drac and (dm != 'drac' or dm != 'mgmt'):
+            raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
+        elif not cfg.drac and dm == 'drac':
+            raise ValidationError("no DRAC functionality configured, aborting. dm: %s" % dm)
+        elif not cfg.drac and dm != 'mgmt':
+            raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
+        else:
+            raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
+        # if everything is valid, fire back name.drac/mgmt.realm.site_id.domain
+        return n+'.'+dm+'.'+r+'.'+s+'.'+d
     # if we got a fully-qualified name/hostname
     if len(sub) == 5:
         n = sub[0]
@@ -296,20 +327,48 @@ def v_get_fqn(cfg, name):
         return n+'.'+r+'.'+s+'.'+d
     # if we got everything but the name
     elif len(sub) == 4:
-        r = sub[0]
-        s = sub[1]
-        d = sub[2]+'.'+sub[3]
+        if sub[2]+'.'+sub[3] == cfg.domain:
+            r = sub[0]
+            s = sub[1]
+            d = sub[2]+'.'+sub[3]
+            dm = None
+        else:
+            n = sub[0]
+            dm = sub[1]
+            r = sub[2]
+            s = sub[3]
+            d = None
         # check to see if the domain is valid
-        if not v_domain(cfg, d):
-            raise ValidationError("invalid domain \"%s\", aborting" % d)
+        if d:
+            if not v_domain(cfg, d):
+                raise ValidationError("invalid domain \"%s\", aborting" % d)
         # check to see if the site_id is valid
         if not v_site_id(cfg, s):
             raise ValidationError("invalid site_id \"%s\", aborting" % s)
         # check to see if the realm is valid
         if not v_realm(cfg, r):
             raise ValidationError("invalid realm \"%s\", aborting" % r)
+        # check the drac/mgmt position for validity
+        if dm:
+            if cfg.drac and dm == 'drac':
+                pass
+            elif dm == 'mgmt':
+                pass
+            elif cfg.drac and (dm != 'drac' or dm != 'mgmt'):
+                raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
+            elif not cfg.drac and dm == 'drac':
+                raise ValidationError("no DRAC functionality configured, aborting. dm: %s" % dm)
+            elif not cfg.drac and dm != 'mgmt':
+                raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
+            else:
+                raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
         # if everything is valid, fire back realm.site_id.domain
-        return r+'.'+s+'.'+d
+        if d:
+            return r+'.'+s+'.'+d
+        elif dm:
+            return n+'.'+dm+'.'+r+'.'+s
+        else:
+            raise ValidationError("something has gone terribly wrong in v_get_fqn 4-position section")
     # 3 items could be either site_id.domain.tld or name.realm.site_id
     # let's figure out which it is...
     elif len(sub) == 3:
@@ -381,6 +440,8 @@ def v_get_fqn(cfg, name):
                 return select[int(ans)]
     # if we only got one item, it's gotta be a name/hostname.
     # present the user with a menu to pick everything
+    # leave out the drac/mgmt options since they're only useful
+    # for generating DNS
     elif len(sub) == 1:
         menu = "\nMultiple options found for \"%s\":\n-----------------------\n" % name
         for realm in cfg.realms:
@@ -397,17 +458,17 @@ def v_get_fqn(cfg, name):
             # a name to begin with
             return sub[0]+'.'+select[int(ans)]
     # if we got input that's too long, let the user know then bail
-    elif len(sub) > 5:
+    elif len(sub) > 6:
         print sub
-        raise ValidationError("name.realm.site_id.domain.tld is the maximum length of a name")
+        raise ValidationError("name.drac/mgmt.realm.site_id.domain.tld is the maximum length of a name")
     # if we got some sort of wierd (zero-length, probably) input, blow up.
     else:
-        raise ValidationError("get_fqn() called incorrectly!")
+        raise ValidationError("get_fqn() called incorrectly! name: %s" % name)
 
 
 # split a fqn into realm, site_id, domain
 # this assumes you've validated the fqn first
-def v_split_fqn(fqn):
+def v_split_fqn(cfg, fqn):
     """
     [description]
     split a fqn into realm, site_id, domain
@@ -426,15 +487,18 @@ def v_split_fqn(fqn):
         raise ValidationError("split_fqn() called with no fqn!")
     else:
         f = fqn.split('.')
-        # if we got a fully-qualified name (5 items), return all items
-        if len(f) == 5:
+        # 6-item fqn: host.drac/mgmt.realm.site_id.domain.tld
+        if len(f) == 6 and f[4]+'.'+f[5] == cfg.domain:
+            return f[0], f[1], f[2], f[3], f[4]+'.'+f[5]
+        # 5-item fqn: host.realm.site_id.domain.tld or drac/mgmt.realm.site_id.domain.tld
+        if len(f) == 5 and f[3]+'.'+f[4] == cfg.domain:
             return f[0], f[1], f[2], f[3]+'.'+f[4]
-        # if we got just realm.site_id.domain
-        elif len(f) == 4:
-            return f[0], f[1], f[2]+'.'+f[3]
+        # 4-item unqn: realm.site_id.domain.tld
+        elif len(f) == 4 and f[2]+'.'+f[3] == cfg.domain:
+           return f[0], f[1], f[2]+'.'+f[3]
         # if we get anything else, blow up
         else:
-            raise ValidationError("v_split_fqn() called incorrectly")
+            raise ValidationError("v_split_fqn() called incorrectly, probably with an unqdn. fqn: %s" % fqn)
 
 
 # find out if a realm.site_id is in the Server table 

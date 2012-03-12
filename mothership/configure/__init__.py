@@ -99,8 +99,12 @@ class Configure:
 
         # DRAC related settings
         draconfig = all_configs['drac']
+        if 'enable' in draconfig and draconfig['enable']:
+            self.drac = draconfig['enable']  # enable or disable DRAC
+        else:
+            self.drac = False
         if 'dell' in draconfig and draconfig['dell']:
-            self.ddell = draconfig['dell']  # default dell pass
+            self.drac = draconfig['dell']  # default dell pass
         else:
             self.ddell = 'calvin'
         if 'user' in draconfig and draconfig['user']:
@@ -224,6 +228,10 @@ class Configure:
         # Network settings
         netconf = all_configs['network']
         self.network_map = netconf['map']
+        if 'primary_interface' in netconf and netconf['primary_interface']:
+            self.primary_interface = netconf['primary_interface']
+        else:
+            self.primary_interface = 'eth1'
         # Management Vlan settings
         if 'mgmt_facility' in netconf and netconf['mgmt_facility']:
             self.mgmt_vlan_style = netconf['mgmt_facility']

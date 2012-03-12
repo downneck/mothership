@@ -84,19 +84,41 @@ to configure one or more %s
         records += '%-20s\tIN\t%-8s%-16s\n' % ('', key.upper(), server)
     return records
 
-def generate_dns_arecords(cfg, realm, site_id, domain):
+def generate_dns_arecords(cfg, realm, site_id, domain, drac=False, mgmt=False):
     """
     Retrieves server list from mothership to create A records
     """
     alist = ''
-    for n in cfg.dbsess.query(Network).\
-        filter(Network.site_id==site_id).\
-        filter(Network.realm==realm).all():
-            if n.server_id:
-                s = cfg.dbsess.query(Server).\
-                    filter(Server.id==n.server_id).first()
-                if n.ip and s.hostname:
-                    alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
+    if not drac and not mgmt:
+        for n in cfg.dbsess.query(Network).\
+            filter(Network.interface==cfg.primary_interface).\
+            filter(Network.site_id==site_id).\
+            filter(Network.realm==realm).all():
+                if n.server_id:
+                    s = cfg.dbsess.query(Server).\
+                        filter(Server.id==n.server_id).first()
+                    if n.ip and s.hostname:
+                        alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
+    elif drac:
+        for n in cfg.dbsess.query(Network).\
+            filter(Network.interface=='drac').\
+            filter(Network.site_id==site_id).\
+            filter(Network.realm==realm).all():
+                if n.server_id:
+                    s = cfg.dbsess.query(Server).\
+                        filter(Server.id==n.server_id).first()
+                    if n.ip and s.hostname:
+                        alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
+    elif mgmt and cfg.mgmt_vlan_interface:
+        for n in cfg.dbsess.query(Network).\
+            filter(Network.interface==cfg.mgmt_vlan_interface).\
+            filter(Network.site_id==site_id).\
+            filter(Network.realm==realm).all():
+                if n.server_id:
+                    s = cfg.dbsess.query(Server).\
+                        filter(Server.id==n.server_id).first()
+                    if n.ip and s.hostname:
+                        alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
     return alist
 
 def generate_dns_arpa(cfg, cidr, fqdn, realm, site_id, domain):
@@ -159,7 +181,7 @@ def generate_dns_output(cfg, domain, opts):
         for site_id in cfg.site_ids:
             for realm in cfg.realms:
                 fqn = mothership.validate.v_get_fqn(cfg, realm+'.'+site_id)
-                zones.append(generate_dns_forward(cfg, fqn, opts))
+                zones.extend(generate_dns_forward(cfg, fqn, opts))
                 revzones = generate_dns_reverse(cfg, fqn, opts)
                 if revzones:
                     for revzone in revzones:
@@ -167,7 +189,7 @@ def generate_dns_output(cfg, domain, opts):
                 else: 
                     print "No reverse zones created for %s" % (realm+'.'+site_id)
     else:
-        zones.append(generate_dns_forward(cfg, domain, opts))
+        zones.extend(generate_dns_forward(cfg, domain, opts))
         revzones = generate_dns_reverse(cfg, domain, opts)
         if revzones:
             for revzone in revzones:
@@ -289,24 +311,58 @@ def compare_files(cfg, oldfile, newfile):
 def generate_dns_forward(cfg, domain, opts):
     """
     Creates the forward zonefile for the specified domain
+    Creates the mgmt forward zonefile
+    Creates the drac forward zonefile (if applicable)
     """
+    zones = []
     zone = None
     fqn = mothership.validate.v_get_fqn(cfg, domain)
-    realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
+    realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqn)
     forward = generate_dns_header(cfg, True, fqn, realm, site_id, domain)
+    # generate the main fqn
     forward += generate_dns_arecords(cfg, realm, site_id, domain)
     forward += generate_dns_addendum(cfg, realm, site_id, domain)
+    # if we're using drac, generate drac.fqn
+    if cfg.drac:
+        dracforward = generate_dns_header(cfg, True, 'drac.'+fqn, realm, site_id, domain)
+        dracforward += generate_dns_arecords(cfg, realm, site_id, domain, drac=True)
+    # generate mgmt.fqn
+    mgmtforward = generate_dns_header(cfg, True, 'mgmt.'+fqn, realm, site_id, domain)
+    mgmtforward += generate_dns_arecords(cfg, realm, site_id, domain, mgmt=True)
     if opts.outdir:
+        # write out the main zone
         zone = '%s/%s' % (opts.outdir, fqn)
         print 'Writing DNS forward zone for %s to %s' % (fqn, zone)
+        zones.append(zone)
         f = open(zone, 'w')
         f.write(forward)
         f.close()
+        # write out the mgmt zone
+        zone = '%s/%s' % (opts.outdir, 'mgmt.'+fqn)
+        print 'Writing DNS forward zone for %s to %s' % ('mgmt.'+fqn, zone)
+        zones.append(zone)
+        f = open(zone, 'w')
+        f.write(mgmtforward)
+        f.close()
+        # write out the drac zone
+        if cfg.drac:
+            zone = '%s/%s' % (opts.outdir, 'drac.'+fqn)
+            print 'Writing DNS forward zone for %s to %s' % ('drac.'+fqn, zone)
+            zones.append(zone)
+            f = open(zone, 'w')
+            f.write(dracforward)
+            f.close()
+        
     else:
-        print '\n' + '-'*60 + '\nDNS forward zone for %s:\n' % fqn  + '-'*60
-        print forward 
-    if zone:
-        return zone
+        print '\n' + '-'*60 + '\nDNS forward zone for %s:\n' % fqn + '-'*60
+        print forward
+        print '\n' + '-'*60 + '\nDNS forward zone for %s:\n' % 'mgmt.'+fqn + '-'*60
+        print mgmtforward
+        if cfg.drac:
+            print '\n' + '-'*60 + '\nDNS forward zone for %s:\n' % 'drac.'+fqn + '-'*60
+            print dracforward
+    if zones:
+        return zones
     else:
         return None
 
@@ -316,7 +372,7 @@ def generate_dns_reverse(cfg, domain, opts):
     """
     zones = []
     fqn = mothership.validate.v_get_fqn(cfg, domain)
-    realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
+    realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqn)
     netblocks = mothership.network_mapper.remap(cfg, 'cidr', dom='.'+fqn)
     if not netblocks:
         print "Skipping reverse zone for %s, undefined in mothership.yaml" % (realm+'.'+site_id)
