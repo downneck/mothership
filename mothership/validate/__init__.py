@@ -279,104 +279,77 @@ def v_get_fqn(cfg, name):
     sub = name.split('.')
     # 6-item fqn
     if len(sub) == 6:
-        n = sub[0]
-        dm = sub[1]
-        r = sub[2]
-        s = sub[3]
-        d = sub[4]+'.'+sub[5]
+        n, dm, r, s, d, = [sub[0], sub[1], sub[2], sub[3], sub[4] + '.' + sub[5]]
+
         # check to see if the domain is valid
         if not v_domain(cfg, d):
             raise ValidationError("invalid domain \"%s\", aborting" % d)
+
         # check to see if the site_id is valid
         if not v_site_id(cfg, s):
             raise ValidationError("invalid site_id \"%s\", aborting" % s)
+
         # check to see if the realm is valid
         if not v_realm(cfg, r):
             raise ValidationError("invalid realm \"%s\", aborting" % r)
+
         # check the drac/mgmt position for validity
-        if cfg.drac and dm == 'drac':
-            pass
-        elif dm == 'mgmt':
-            pass
-        elif cfg.drac and (dm != 'drac' or dm != 'mgmt'):
+        if cfg.drac and (dm != 'drac' or dm != 'mgmt'):
             raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
         elif not cfg.drac and dm == 'drac':
             raise ValidationError("no DRAC functionality configured, aborting. dm: %s" % dm)
-        elif not cfg.drac and dm != 'mgmt':
-            raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
         else:
             raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
+
         # if everything is valid, fire back name.drac/mgmt.realm.site_id.domain
-        return n+'.'+dm+'.'+r+'.'+s+'.'+d
+        if cfg.drac and dm == 'drac' or dm == 'mgmt':
+            return n+'.'+dm+'.'+r+'.'+s+'.'+d
+
     # if we got a fully-qualified name/hostname
     if len(sub) == 5:
-        n = sub[0]
-        r = sub[1]
-        s = sub[2]
-        d = sub[3]+'.'+sub[4]
-        # check to see if the domain is valid
+        n, r, s, d = [sub[0], sub[1], sub[2], sub[3] + '.' + sub[4]]
+
         if not v_domain(cfg, d):
             raise ValidationError("invalid domain \"%s\", aborting" % d)
-        # check to see if the site_id is valid
         if not v_site_id(cfg, s):
             raise ValidationError("invalid site_id \"%s\", aborting" % s)
-        # check to see if the realm is valid
         if not v_realm(cfg, r):
             raise ValidationError("invalid realm \"%s\", aborting" % r)
+
         # if everything is valid, fire back name.realm.site_id.domain
         return n+'.'+r+'.'+s+'.'+d
+
     # if we got everything but the name
     elif len(sub) == 4:
         if sub[2]+'.'+sub[3] == cfg.domain:
-            r = sub[0]
-            s = sub[1]
-            d = sub[2]+'.'+sub[3]
-            dm = None
-        else:
-            n = sub[0]
-            dm = sub[1]
-            r = sub[2]
-            s = sub[3]
-            d = None
-        # check to see if the domain is valid
-        if d:
+            r, s, d = [sub[0], sub[1], sub[2] + '.'+ sub[3]]
+
             if not v_domain(cfg, d):
                 raise ValidationError("invalid domain \"%s\", aborting" % d)
-        # check to see if the site_id is valid
-        if not v_site_id(cfg, s):
-            raise ValidationError("invalid site_id \"%s\", aborting" % s)
-        # check to see if the realm is valid
-        if not v_realm(cfg, r):
-            raise ValidationError("invalid realm \"%s\", aborting" % r)
-        # check the drac/mgmt position for validity
-        if dm:
-            if cfg.drac and dm == 'drac':
-                pass
-            elif dm == 'mgmt':
-                pass
-            elif cfg.drac and (dm != 'drac' or dm != 'mgmt'):
+            if not v_site_id(cfg, s):
+                raise ValidationError("invalid site_id \"%s\", aborting" % s)
+            if not v_realm(cfg, r):
+                raise ValidationError("invalid realm \"%s\", aborting" % r)
+
+            return r+'.'+s+'.'+d
+        else:
+            n, dm, r, s = [sub[0], sub[1], sub[2], sub[3]]
+
+            if cfg.drac and (dm != 'drac' or dm != 'mgmt'):
                 raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
             elif not cfg.drac and dm == 'drac':
                 raise ValidationError("no DRAC functionality configured, aborting. dm: %s" % dm)
-            elif not cfg.drac and dm != 'mgmt':
-                raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
+
+            if cfg.drac and dm == 'drac' or dm == 'mgmt':
+                return n+'.'+dm+'.'+r+'.'+s
             else:
                 raise ValidationError("invalid drac/mgmt \"%s\", aborting" % dm)
-        # if everything is valid, fire back realm.site_id.domain
-        if d:
-            return r+'.'+s+'.'+d
-        elif dm:
-            return n+'.'+dm+'.'+r+'.'+s
-        else:
-            raise ValidationError("something has gone terribly wrong in v_get_fqn 4-position section")
+        raise ValidationError("something has gone terribly wrong in v_get_fqn 4-position section")
+
     # 3 items could be either site_id.domain.tld or name.realm.site_id
     # let's figure out which it is...
     elif len(sub) == 3:
-        s = sub[0]
-        d = sub[1]+'.'+sub[2]
-        n = sub[0]
-        r = sub[1]
-        sid = sub[2]
+        s, d, n, r, sid = [sub[0], sub[1] + '.' sub[2], sub[0], sub[2]]
         # validate the domain
         if not v_domain(cfg, d):
             # if the domain is invalid, maybe it's a realm.site_id
