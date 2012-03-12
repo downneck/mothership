@@ -126,6 +126,8 @@ power:
 
 # Dell Remote Access Controller options
 drac:
+  # turn DRAC functionality on or off
+  enable: True
   dell: 'calvin'
   user: 'root'
   pass: 'CHANGE_ME_PLEASE'
