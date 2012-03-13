@@ -62,7 +62,6 @@ def remap(cfg, request, **kv):
     """
        Removed dictlist and migrated it to mothership.yaml
     """
-    print "NANANANANANANA==================request: %s, kv: %s" % (request, kv)
     netmap = cfg.network_map
     netblocks = []
     doms = []

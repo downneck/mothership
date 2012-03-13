@@ -65,7 +65,7 @@ $TTL %s
 """ % (cfg.zonettl, nsmaster, contact, serial, cfg.dns_refresh,
         cfg.dns_retry, cfg.dns_expire, cfg.zonettl)
     for rec in ['ns', 'mx']:
-        header += generate_root_records(cfg, realm+'.'+site_id, cfg.domain, rec)
+        header += generate_root_records(cfg, rec, unqdn=realm+'.'+site_id)
     return header
 
 
@@ -92,28 +92,36 @@ $TTL %s
 
 """ % (cfg.zonettl, nsmaster, contact, serial, cfg.dns_refresh,
         cfg.dns_retry, cfg.dns_expire, cfg.zonettl)
-    
+    header += generate_root_records(cfg, 'ns', None)    
     return header
 
 
-def generate_root_records(cfg, unqdn, domain, key):
+# generates either NS or MX records depending on 'key'
+# unqdn can be any input KV accepts
+def generate_root_records(cfg, key, unqdn=None):
+    if not unqdn:
+        unqdn='.'
     rec = mothership.kv.collect(cfg, unqdn, key)
     if not rec:
         raise DNSError('''
-No %s defined for %s or %s, use:
+No %s defined for unqdn: %s or domain: %s, use:
     ship kv -a %s %s=<ns1>[,<nsN>]
 to configure one or more %s
-''' % (key, unqdn, domain, unqdn, key, key))
+''' % (key, unqdn, cfg.domain, unqdn, key, key))
     for r in rec:
         slist = r.value.split(',')
+        # why is this? 
         if r.hostname == unqdn:
             continue
+        # end WTF
     records = ''
     for server in slist:
         records += '%-20s\tIN\t%-8s%-16s\n' % ('', key.upper(), server)
     return records
 
-def generate_dns_arecords(cfg, realm, site_id, domain, drac=False, mgmt=False):
+
+# generates arecords. badly.
+def generate_dns_arecords(cfg, realm, site_id, drac=False, mgmt=False):
     """
     Retrieves server list from mothership to create A records
     """
@@ -128,7 +136,7 @@ def generate_dns_arecords(cfg, realm, site_id, domain, drac=False, mgmt=False):
                         filter(Server.id==n.server_id).first()
                     if n.ip and s.hostname:
                         alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
-    elif drac:
+    elif drac and not mgmt:
         for n in cfg.dbsess.query(Network).\
             filter(Network.interface=='drac').\
             filter(Network.site_id==site_id).\
@@ -138,7 +146,7 @@ def generate_dns_arecords(cfg, realm, site_id, domain, drac=False, mgmt=False):
                         filter(Server.id==n.server_id).first()
                     if n.ip and s.hostname:
                         alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
-    elif mgmt and cfg.mgmt_vlan_interface:
+    elif mgmt and cfg.mgmt_vlan_interface and not drac:
         for n in cfg.dbsess.query(Network).\
             filter(Network.interface==cfg.mgmt_vlan_interface).\
             filter(Network.site_id==site_id).\
@@ -148,6 +156,11 @@ def generate_dns_arecords(cfg, realm, site_id, domain, drac=False, mgmt=False):
                         filter(Server.id==n.server_id).first()
                     if n.ip and s.hostname:
                         alist += '%-20s\tIN\t%-8s%-16s\n' % (s.hostname, 'A', n.ip)
+    elif mgmt and drac:
+        raise DNSError("massive problem in mothership code. pick either mgmt or drac in your generate_dns_arecords() call")
+    else:
+        print "dumping vars. realm: %s, site_id: %s, drac: %s, mgmt: %s" % (realm, site_id, drac, mgmt)
+        raise DNSError("something has gone horribly wrong in generate_dns_arecords()")
     return alist
 
 
@@ -220,7 +233,7 @@ def generate_drac_arpa(cfg, cidr):
     return net, alist
 
 
-def generate_dns_addendum(cfg, realm, site_id, domain):
+def generate_dns_addendum(cfg, realm, site_id):
     """
     Turns the dns_addendum table into usable records
     """
@@ -232,7 +245,7 @@ def generate_dns_addendum(cfg, realm, site_id, domain):
         if dns and dns.target:
             target = dns.target
         else:
-            raise DNSError("Addendum record does not exist: %s" % realm+"."+site_id+"."+domain)
+            raise DNSError("Addendum record does not exist: %s" % realm+"."+site_id+"."+cfg.domain)
         if not re.search('\d+',dns.target.split('.')[-1]):
             if not target.endswith('.'):
                 target += '.'
@@ -276,26 +289,6 @@ def generate_dns_output(cfg, domain, opts):
         if opts.all:
             validate_zone_config(cfg, tmpdir, zones)
         print "All zones validated. Please restart named so the changes can take effect."
-
-
-# may not need this. leaving it for now
-#def clean_up_tempdir(cfg, opts):
-#    try:
-#        if opts.outdir:
-#            myfolder = opts.outdir
-#        else:
-#            myfolder = opts.dns_tmpdir+cfg.zonedir
-#        ans = raw_input("removing all files in: %s\nPlease confirm this (y/n): " % myfolder)
-#        if ans != "Y" or ans != "y":
-#            print "Aborted by user"
-#            return False
-#        for the_file in os.listdir(myfolder):
-#            file_path = os.path.join(myfolder, the_file)
-#            if os.path.isfile(file_path):
-#                os.unlink(file_path)
-#    except Exception, e:
-#        raise DNSException(e)
-#    return True
 
 
 def validate_zone_files(cfg, prefix, tmpzones):
@@ -401,15 +394,15 @@ def generate_dns_forward(cfg, domain, opts):
     realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqn)
     forward = generate_forward_header(cfg, True, fqn, realm, site_id)
     # generate the main fqn
-    forward += generate_dns_arecords(cfg, realm, site_id, domain)
-    forward += generate_dns_addendum(cfg, realm, site_id, domain)
+    forward += generate_dns_arecords(cfg, realm, site_id)
+    forward += generate_dns_addendum(cfg, realm, site_id)
     # if we're using drac, generate drac.fqn
     if cfg.drac:
         dracforward = generate_forward_header(cfg, True, 'drac.'+fqn, realm, site_id)
-        dracforward += generate_dns_arecords(cfg, realm, site_id, domain, drac=True)
+        dracforward += generate_dns_arecords(cfg, realm, site_id, drac=True)
     # generate mgmt.fqn
     mgmtforward = generate_forward_header(cfg, True, 'mgmt.'+fqn, realm, site_id)
-    mgmtforward += generate_dns_arecords(cfg, realm, site_id, domain, mgmt=True)
+    mgmtforward += generate_dns_arecords(cfg, realm, site_id, mgmt=True)
     if opts.outdir:
         # write out the main zone
         zone = '%s/%s' % (opts.outdir, fqn)
