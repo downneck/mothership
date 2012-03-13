@@ -64,6 +64,7 @@ def remap(cfg, request, **kv):
     """
     netmap = cfg.network_map
     netblocks = []
+    doms = []
     if request=='gw' or 'gw' in request:
         if 'vlan' not in kv.keys() and 'ip' not in kv.keys():
             print 'Either vlan or ip MUST be specified when requesting gw'
@@ -74,13 +75,18 @@ def remap(cfg, request, **kv):
             skip = False
             for k in kv:
                 if k=='siteid' and key=='dom':
-                    if kv[k] not in line[key].split('.'):
-                        skip = True
-                        break
+                    for hey in line[key]:
+                        if kv[k] not in hey.split('.'):
+                            skip = True
+                            break
                 elif k=='ip' and key=='cidr':
                     if not within(kv[k], line['cidr']):
                         skip = True
                         break
+                elif k==key and k=='dom':
+                    if kv[k] not in line['dom']:
+                      skip = True
+                      break
                 elif k==key and kv[k]!=line[key]:
                     skip = True
                     break
@@ -92,7 +98,10 @@ def remap(cfg, request, **kv):
                 answer = []
                 for r in request:
                     if r == 'siteid':
-                        answer.append(line['dom'].split('.')[-3])
+                        for dome in line['dom']:
+                            doms.append(dome.split('.')[-3])
+                        if len(sets.Set(doms)) == 1:
+                            answer.append(doms[0])
                     elif r == 'mask':
                         answer.append(get_netmask(line['cidr']))
                     elif r == 'ip':   # legacy ip prefix

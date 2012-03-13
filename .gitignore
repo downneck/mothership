@@ -1,1 +1,4 @@
 *.pyc
+Mothership.egg-info/
+build/
+dist/
