@@ -113,7 +113,6 @@ to configure one or more %s
         records += '%-20s\tIN\t%-8s%-16s\n' % ('', key.upper(), server)
     return records
 
-
 def generate_dns_arecords(cfg, realm, site_id, domain, drac=False, mgmt=False):
     """
     Retrieves server list from mothership to create A records
