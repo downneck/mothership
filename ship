@@ -476,6 +476,8 @@ class ShipCli(cmdln.Cmdln):
                   help="add a user to a group")
     @cmdln.option("-r", "--remove", action="store_true",
                   help="remove a user from a group")
+    @cmdln.option("-f", "--force", action="store_true",
+                  help="Force a user creation, it means no question will be asked.")
     def do_user_group_mapping(self, subcmd, opts, username, groupname):
         """${cmd_name}: manipulate user-to-group mappings within mothership
 
@@ -483,14 +485,18 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_option_list}
         """
 
+        if opts.force:
+            force = True
+        else:
+            force = False
         try:
             if opts.add and opts.remove:
                 print "-a and -r are mutually exclusive, pick one."
                 sys.exit(1)
             elif opts.add:
-                mothership.users.utog(self.cfg, username, groupname)
+                mothership.users.utog(self.cfg, username, groupname, force)
             elif opts.remove:
-                mothership.users.urmg(self.cfg, username, groupname)
+                mothership.users.urmg(self.cfg, username, groupname, force)
             else:
                 # write a display
                 print "display functionality is not yet working, check back later"

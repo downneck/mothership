@@ -753,7 +753,7 @@ def umodify(cfg, username, first_name=None, last_name=None, keyfile=None, uid=No
     else:
         print "No LDAP master found for %s.%s, skipping" % (u.realm, u.site_id)
 
-def utog(cfg, username, groupname):
+def utog(cfg, username, groupname, force = False):
     """
     [description]
     adds a user to a group
@@ -789,7 +789,7 @@ def utog(cfg, username, groupname):
         cfg.dbsess.commit()
     # update ldap data
     ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
-    if cfg.ldap_active and ldap_master and not skip_ldap:
+    if cfg.ldap_active and ldap_master and not skip_ldap and force == False:
         ans = raw_input('Do you want to update this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
@@ -800,6 +800,13 @@ def utog(cfg, username, groupname):
                 print "Error: %s" % e
         else:
             print "LDAP update aborted by user input, skipping."
+    elif cfg.ldap_active and ldap_master and not skip_ldap and force == True:
+        try:
+            print "updating \"%s\" in LDAP" % (g.groupname+'.'+fqn)
+            mothership.ldap.gupdate(cfg, groupname=g.groupname+'.'+fqn)
+        except mothership.ldap.LDAPError, e:
+            print 'mothership encountered an error, skipping LDAP update'
+            print "Error: %s" % e
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     elif skip_ldap:
