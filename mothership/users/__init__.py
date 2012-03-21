@@ -182,7 +182,7 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
         for groupname in newgrouplist:
             print 'adding user "%s" to group "%s"' % (u.username+'.'+u.realm+'.'+u.site_id, groupname)
             try:
-                utog(cfg, u.username+'.'+u.realm+'.'+u.site_id, groupname)
+                utog(cfg, u.username+'.'+u.realm+'.'+u.site_id, groupname, False)
             except (mothership.validate.ValidationError, UsersError), e:
                 print e
     else:
@@ -191,14 +191,14 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
         for i in cfg.default_groups:
             gid = get_gid(cfg, groupname=i+'.'+realm+'.'+site_id)
             if gid:
-                utog(cfg, username=fqun, groupname=i)
+                utog(cfg, username=fqun, groupname=i, False)
             else:
                 ans = raw_input('No group found for %s, would you like to create it? (y/n): ' % i)
                 if ans != 'y' and ans != 'Y':
                     raise UsersError("unable to add user %s to default group %s because it doesn't exist" % (username, i))
                 else:
                     gadd(cfg, groupname=i+'.'+realm+'.'+site_id)
-                    utog(cfg, username=fqun, groupname=i)
+                    utog(cfg, username=fqun, groupname=i, False)
 
     # update ldap data
     ldap_master = mothership.ldap.get_master(cfg, realm+'.'+site_id)
@@ -298,7 +298,7 @@ def uclone(cfg, username, newfqn):
     for groupname in newgrouplist:
         print 'adding user "%s" to group "%s"' % (newu.username+'.'+newu.realm+'.'+newu.site_id, groupname)
         try:
-            utog(cfg, newu.username+'.'+newfqn, groupname)
+            utog(cfg, newu.username+'.'+newfqn, groupname, False)
         except (mothership.validate.ValidationError, UsersError), e:
             print e
 
@@ -479,7 +479,7 @@ def uremove(cfg, username):
         for groupname in grouplist:
             print 'Removing user "%s" from group "%s"' % (username, groupname)
             # we don't ask for confirmation because urmg() does
-            urmg(cfg, username=fqun, groupname=groupname)
+            urmg(cfg, username=fqun, groupname=groupname, False)
         # ask for verification before deletion
         print "\nACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG! ACHTUNG!\n"
         print "This will remove the user from mothership, allowing their UID to be re-used!"
@@ -491,7 +491,7 @@ def uremove(cfg, username):
             # thankfully, we still know what groups it was in
             for groupname in grouplist:
                 print 'restoring user "%s" to group "%s"' % (username, groupname)
-                utog(cfg, username=fqun, groupname=groupname)
+                utog(cfg, username=fqun, groupname=groupname, False)
             raise UsersError('Delete aborted by user input')
         # if we're running ldap, remove the user from ldap
         ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
@@ -553,7 +553,7 @@ def udeactivate(cfg, username):
         for groupname in grouplist:
             print "Removing user \"%s\" from group \"%s\"" % (username, groupname)
             # we don't ask for confirmation because urmg() does
-            urmg(cfg, username=fqun, groupname=groupname)
+            urmg(cfg, username=fqun, groupname=groupname, False)
         # ask for verification before deletion
         ans = raw_input('to deactivate user \"%s\", please type "deactivate_%s": ' % (username, username))
         if ans != 'deactivate_%s' % username:
@@ -563,7 +563,7 @@ def udeactivate(cfg, username):
             # thankfully, we still know what groups it was in
             for groupname in grouplist:
                 print 'restoring user "%s" to group "%s"' % (username, groupname)
-                utog(cfg, username=fqun, groupname=groupname)
+                utog(cfg, username=fqun, groupname=groupname, False)
             raise UsersError('aborting user modification!')
         u.active = False
         cfg.dbsess.add(u)
@@ -1048,7 +1048,7 @@ def gremove(cfg, groupname):
         print 'the following users will be removed from group "%s": %s' % (groupname, ' '.join(userlist))
         for username in userlist:
             # we don't ask for confirmation because urmg() does
-            urmg(cfg, username=username+'.'+fqn, groupname=g.groupname)
+            urmg(cfg, username=username+'.'+fqn, groupname=g.groupnam, False)
         # we do ask for verification before deletion of the group itself
         ans = raw_input('to remove this group please type "delete_%s": ' % groupname)
         if ans != 'delete_%s' % groupname:
@@ -1056,7 +1056,7 @@ def gremove(cfg, groupname):
             # need to stuff 'em back in before bailing out
             # thankfully, we still know who they are
             for username in userlist:
-                urmg(cfg, username=username+'.'+fqn, groupname=g.groupname)
+                urmg(cfg, username=username+'.'+fqn, groupname=g.groupname, False)
             raise UsersError("group \"%s\" delete aborted, restoring users: %s" % (groupname, ' '.join(userlist)))
         else:
             # update ldap data
