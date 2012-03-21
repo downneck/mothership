@@ -815,7 +815,7 @@ def utog(cfg, username, groupname, force = False):
         print "No LDAP master found for %s.%s, skipping" % (g.realm, g.site_id)
 
 
-def urmg(cfg, username, groupname):
+def urmg(cfg, username, groupname, force):
     """
     [description]
     removes a user from a group
@@ -845,9 +845,13 @@ def urmg(cfg, username, groupname):
         filter(UserGroupMapping.id==umap).first()
 
         # ask for verification before deletion
-        ans = raw_input('to delete user "%s" from group "%s" please type "delete_%s_%s": ' % (u.username, g.groupname, u.username, g.groupname))
-        if ans != 'delete_%s_%s' % (u.username, g.groupname):
-            raise UsersError("Aborting removal of user \"%s\" from group \"%s\"" % (u.username, g.groupname))
+        if force == False:
+            ans = raw_input('to delete user "%s" from group "%s" please type "delete_%s_%s": ' % (u.username, g.groupname, u.username, g.groupname))
+            if ans != 'delete_%s_%s' % (u.username, g.groupname):
+                raise UsersError("Aborting removal of user \"%s\" from group \"%s\"" % (u.username, g.groupname))
+            else:
+                cfg.dbsess.delete(utogmap)
+                cfg.dbsess.commit()
         else:
             # ka-blooey!
             cfg.dbsess.delete(utogmap)
@@ -856,7 +860,7 @@ def urmg(cfg, username, groupname):
         raise UsersError("user \"%s\" not found in group \"%s\" for %s.%s" % (u.username, g.groupname, u.realm, u.site_id))
     # update ldap data
     ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
-    if cfg.ldap_active and ldap_master:
+    if cfg.ldap_active and ldap_master and force = False:
         ans = raw_input('Do you want to update this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
@@ -867,6 +871,8 @@ def urmg(cfg, username, groupname):
                 print "Error: %s" % e
         else:
             print "LDAP update aborted by user input, skipping."
+    elif cfg.ldap_active and ldap_master and force = True:
+        mothership.ldap.gupdate(cfg, groupname=g.groupname+'.'+fqn)
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
     else:
