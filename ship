@@ -489,6 +489,7 @@ class ShipCli(cmdln.Cmdln):
             force = True
         else:
             force = False
+            
         try:
             if opts.add and opts.remove:
                 print "-a and -r are mutually exclusive, pick one."
@@ -1519,7 +1520,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        print 'Mothership version 0.0.15'
+        print 'Mothership version 0.0.16'
         sys.exit(0)
 
 if __name__ == "__main__":
