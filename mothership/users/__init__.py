@@ -860,7 +860,7 @@ def urmg(cfg, username, groupname, force):
         raise UsersError("user \"%s\" not found in group \"%s\" for %s.%s" % (u.username, g.groupname, u.realm, u.site_id))
     # update ldap data
     ldap_master = mothership.ldap.get_master(cfg, u.realm+'.'+u.site_id)
-    if cfg.ldap_active and ldap_master and force = False:
+    if cfg.ldap_active and ldap_master and force == False:
         ans = raw_input('Do you want to update this group in LDAP as well? (y/n): ')
         if ans == 'y' or ans == 'Y':
             try:
@@ -871,7 +871,7 @@ def urmg(cfg, username, groupname, force):
                 print "Error: %s" % e
         else:
             print "LDAP update aborted by user input, skipping."
-    elif cfg.ldap_active and ldap_master and force = True:
+    elif cfg.ldap_active and ldap_master and force == True:
         mothership.ldap.gupdate(cfg, groupname=g.groupname+'.'+fqn)
     elif not cfg.ldap_active:
         print "LDAP not active, skipping"
