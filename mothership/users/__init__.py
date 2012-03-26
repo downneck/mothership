@@ -1048,7 +1048,7 @@ def gremove(cfg, groupname):
         print 'the following users will be removed from group "%s": %s' % (groupname, ' '.join(userlist))
         for username in userlist:
             # we don't ask for confirmation because urmg() does
-            urmg(cfg, username=username+'.'+fqn, groupname=g.groupnam, force=False)
+            urmg(cfg, username=username+'.'+fqn, groupname=g.groupname, force=False)
         # we do ask for verification before deletion of the group itself
         ans = raw_input('to remove this group please type "delete_%s": ' % groupname)
         if ans != 'delete_%s' % groupname:
