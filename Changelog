@@ -1,3 +1,8 @@
+release 0.0.22
+* fixing some of riccardo's undocumented changes
+release 0.0.15 through 0.0.21
+* a bunch of undocumented changes riccardo pushed out without
+  telling anyone about or updating the changelog
 release 0.0.14
 * fixing a bug in drac import that was preventing ips
   from being assigned to dracs
