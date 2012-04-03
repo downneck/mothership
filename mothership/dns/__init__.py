@@ -279,7 +279,7 @@ def generate_dns_output(cfg, domain, opts):
         zones.extend(generate_dns_forward(cfg, domain, opts))
         revzones = generate_dns_reverse(cfg, opts)
         if revzones:
-            zones.extend(revzone)
+            zones.extend(revzones)
         else: 
             print "No ouput directory has been specified, so no reverse zone files were written for %s" % domain
     if opts.system:
