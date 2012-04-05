@@ -661,7 +661,7 @@ def v_get_user_obj(cfg, username):
     elif len(f) > 1:
         # validate/construct/get the realm.site_id.domain data
         fqun = v_get_fqn(cfg, name=username)
-        username, realm, site_id, domain = v_split_fqn(fqun)
+        username, realm, site_id, domain = v_split_fqn(cfg, fqun)
         fqn = realm+'.'+site_id+'.'+domain
         u = list(cfg.dbsess.query(Users).\
         filter(Users.username==username).\
@@ -705,7 +705,7 @@ def v_get_group_obj(cfg, groupname):
     elif len(f) > 1:
         # validate/construct/get the realm.site_id.domain data
         fqgn = v_get_fqn(cfg, name=groupname)
-        groupname, realm, site_id, domain = v_split_fqn(fqgn)
+        groupname, realm, site_id, domain = v_split_fqn(cfg, fqgn)
         fqn = realm+'.'+site_id+'.'+domain
         g = list(cfg.dbsess.query(Groups).\
         filter(Groups.groupname==groupname).\
@@ -749,7 +749,7 @@ def v_get_host_obj(cfg, hostname):
     elif len(h) > 1:
         # validate/construct/get the realm.site_id.domain data
         fqdn = v_get_fqn(cfg, name=hostname)
-        hostname, realm, site_id, domain = v_split_fqn(fqdn)
+        hostname, realm, site_id, domain = v_split_fqn(cfg, fqdn)
         fqn = realm+'.'+site_id+'.'+domain
         h = list(cfg.dbsess.query(Server).\
         filter(Server.hostname==hostname).\
