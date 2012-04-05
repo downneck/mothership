@@ -104,7 +104,7 @@ class Configure:
         else:
             self.drac = False
         if 'dell' in draconfig and draconfig['dell']:
-            self.drac = draconfig['dell']  # default dell pass
+            self.ddell = draconfig['dell']  # default dell pass
         else:
             self.ddell = 'calvin'
         if 'user' in draconfig and draconfig['user']:
