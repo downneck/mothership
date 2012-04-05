@@ -1520,7 +1520,7 @@ class ShipCli(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        print 'Mothership version 0.0.25'
+        print 'Mothership version 0.0.26'
         sys.exit(0)
 
 if __name__ == "__main__":

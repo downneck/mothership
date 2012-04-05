@@ -16,6 +16,7 @@
 """
 
 import re
+import sets
 import types
 import socket
 import struct
