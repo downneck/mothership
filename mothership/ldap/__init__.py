@@ -46,7 +46,7 @@ def get_master(cfg, realm_path):
     """
 
     fqn = mothership.validate.v_get_fqn(cfg, realm_path)
-    realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
+    realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqn)
 
     serv = None
 
@@ -216,7 +216,7 @@ def urefresh(cfg, realm_path):
     """
 
     fqn = mothership.validate.v_get_fqn(cfg, realm_path)
-    realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
+    realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqn)
     # an array made of the domain parts.
     d = cfg.domain.split('.')
     dnlist = []
@@ -505,7 +505,7 @@ def grefresh(cfg, realm_path):
     """
 
     fqn = mothership.validate.v_get_fqn(cfg, realm_path)
-    realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
+    realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqn)
     # an array made of the domain parts.
     d = cfg.domain.split('.')
 
@@ -596,7 +596,7 @@ def ldapimport(cfg, realm_path):
     """
 
     fqn = mothership.validate.v_get_fqn(cfg, realm_path)
-    realm, site_id, domain = mothership.validate.v_split_fqn(fqn)
+    realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqn)
     # an array made of the domain parts.
     d = cfg.domain.split('.')
 

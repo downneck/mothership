@@ -62,7 +62,7 @@ def uadd(cfg, username, first_name, last_name, copy_from=None, keyfile=None, uid
 
     # validate/construct/get the realm.site_id.domain data
     fqun = mothership.validate.v_get_fqn(cfg, name=username)
-    username, realm, site_id, domain = mothership.validate.v_split_fqn(fqun)
+    username, realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqun)
     fqn = realm+'.'+site_id+'.'+domain
     fqun = username+'.'+fqn
 
@@ -240,7 +240,7 @@ def uclone(cfg, username, newfqn):
     returns the new user object
     """
     u = mothership.validate.v_get_user_obj(cfg, username)
-    newrealm, newsite_id, domain = mothership.validate.v_split_fqn(newfqn+'.'+cfg.domain)
+    newrealm, newsite_id, domain = mothership.validate.v_split_fqn(cfg, newfqn+'.'+cfg.domain)
 
     if not u:
         raise UsersError("User not found: %s" % username)
@@ -961,7 +961,7 @@ def gadd(cfg, groupname, gid=None, description=None, sudo_cmds=None):
 
     # validate/construct/get the realm.site_id.domain data
     fqgn = mothership.validate.v_get_fqn(cfg, name=groupname)
-    groupname, realm, site_id, domain = mothership.validate.v_split_fqn(fqgn)
+    groupname, realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqgn)
     fqn = realm+'.'+site_id
     fqgn = groupname+'.'+fqn
 
@@ -1161,7 +1161,7 @@ def gclone(cfg, groupname, newfqn):
     returns the new group object
     """
     g = mothership.validate.v_get_group_obj(cfg, groupname)
-    newrealm, newsite_id, domain = mothership.validate.v_split_fqn(newfqn+'.'+cfg.domain)
+    newrealm, newsite_id, domain = mothership.validate.v_split_fqn(cfg, newfqn+'.'+cfg.domain)
 
     if not g:
         raise UsersError("Group not found: %s" % groupname)
@@ -1336,7 +1336,7 @@ def get_gid(cfg, groupname):
 
     # validate/construct/get the realm.site_id.domain data
     fqgn = mothership.validate.v_get_fqn(cfg, name=groupname)
-    groupname, realm, site_id, domain = mothership.validate.v_split_fqn(fqgn)
+    groupname, realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqgn)
     # gather group data
     g = cfg.dbsess.query(Groups).\
     filter(Groups.groupname==groupname).\
@@ -1365,7 +1365,7 @@ def get_uid(cfg, username):
 
     # validate/construct/get the realm.site_id.domain data
     fqun = mothership.validate.v_get_fqn(cfg, name=username)
-    username, realm, site_id, domain = mothership.validate.v_split_fqn(fqun)
+    username, realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqun)
 
     # gather user data
     u = cfg.dbsess.query(Users).\
@@ -1396,7 +1396,7 @@ def get_utog_map(cfg, username, groupname):
 
     # validate/construct/get the realm.site_id.domain data
     fqun = mothership.validate.v_get_fqn(cfg, name=username)
-    username, realm, site_id, domain = mothership.validate.v_split_fqn(fqun)
+    username, realm, site_id, domain = mothership.validate.v_split_fqn(cfg, fqun)
     # get user
     u = cfg.dbsess.query(Users).\
     filter(Users.username==username).\
