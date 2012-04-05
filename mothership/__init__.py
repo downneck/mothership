@@ -183,7 +183,7 @@ def convert_drac_dict_to_network(cfg, drac_sysinfo, ip):
         net = mothership.network_mapper.remap(cfg,
             ['vlan','mask','ip', 'dom'], nic=k, siteid=siteid)
         if net:
-            realm = mothership.validate.v_split_fqn(cfg, net[3])[1]
+            realm = mothership.validate.v_split_fqn(cfg, net[3][0])[1]
             if k!='eth1': # due to multiple vlans
                 if net[2] == mgmtip:
                     netdrac_sysinfo.update({'ip':ip.replace(dracip,mgmtip)})
