@@ -1,3 +1,5 @@
+release 0.0.24
+* bug fix for bad v_split_fqn calls
 release 0.0.23
 * major changes to the way DNS is generated, taking into account drac/mgmt for multiple realms
 release 0.0.22
