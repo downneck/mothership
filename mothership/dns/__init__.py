@@ -445,6 +445,7 @@ def generate_dns_reverse(cfg, opts):
     """
     Creates the reverse zonefiles for the specified domain
     """
+    dracnetblocks = ''
     zones = []
     netblocks = mothership.network_mapper.remap(cfg, 'cidr', nic=cfg.primary_interface)
     mgmtnetblocks = mothership.network_mapper.remap(cfg, 'cidr', nic=cfg.mgmt_vlan_interface)

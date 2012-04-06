@@ -118,7 +118,7 @@ def calculate_next_baremetal_vlan_ipaddress(cfg, vlan):
         first = data.order_by(Network.ip).first().ip
         last = data.order_by(Network.ip.desc()).first().ip
         #print 'RANGE: %s - %s' % (first, last)
-    except:
+    except Exception, e:
         first = lowest
         last = first
     if first < lowest:
@@ -604,7 +604,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         # build dict for server insert
         svr_info = build_model_dict(Server(''), opts, locals(), nullvar=True)
         server_id, opts.hw_tag = update_table_server(cfg, svr_info, when)
-
+        
         # build dict for eth1 network insert
         ip = iplist[1]
         interface = 'eth1'
@@ -620,7 +620,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
         update_table_network(cfg, net_info)
 
         # update network for eth0
-        realm = mothership.validate.v_split_fqn(cfg, mothership.network_mapper.remap(cfg, 'dom', nic='eth0', siteid=site_id))[1]
+        realm = mothership.validate.v_split_fqn(cfg, mothership.network_mapper.remap(cfg, 'dom', nic='eth0', siteid=site_id)[0])[1]
         mgmt_info = {'server_id': server_id, 'realm':realm, 'interface':'eth0', 'ip':iplist[0]}
         update_table_network(cfg, mgmt_info)
         print 'Added virtual host %s to mothership' % fqdn
@@ -655,7 +655,7 @@ def provision_server(cfg, fqdn, vlan, when, osdict, opts):
                 domain,static_route,netmask = mothership.network_mapper.remap(
                     cfg, ['dom', 'gw', 'mask'],
                     nic=interface, ip=ip, siteid=site_id)
-                realm = mothership.validate.v_split_fqn(cfg, domain)[1]
+                realm = mothership.validate.v_split_fqn(cfg, domain[0])[1]
             else:
                 static_route = None
                 netmask = None
@@ -758,7 +758,7 @@ def retrieve_cobbler_system_row(cfg, hostname):
 def retrieve_fqdn(cfg, hostname, interface='eth1'):
     q = retrieve_server_dict(cfg, hostname)
     append = mothership.network_mapper.remap(cfg, 'dom', nic=interface, siteid=q['site_id'])
-    return q['hostname'] + append
+    return q['hostname'] + append[0]
 
 def retrieve_hardware_row(cfg, hwtag):
     try:

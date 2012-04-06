@@ -206,7 +206,7 @@ class CobblerAPI:
             # add appropriate dns_names for each interface
             domain = None
             if x['ip']:
-                domain = mothership.network_mapper.remap(cfg, 'dom', nic=x['interface'], siteid=x['site_id'], ip=x['ip'])
+                domain = mothership.network_mapper.remap(cfg, 'dom', nic=x['interface'], siteid=x['site_id'], ip=x['ip'])[0]
             if domain:
                 x['dns_name'] = '%s%s' % (host_dict['hostname'], domain)
 
