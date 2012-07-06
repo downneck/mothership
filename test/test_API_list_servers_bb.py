@@ -283,8 +283,8 @@ class TestAPI_list_servers(unittest.TestCase):
             "rpmbuilder1.satest.jfk",
             "xenserver2.satest.jfk",
             "ldap2.satest.jfk",
-            "puppet.satest.jfk",
-            "ns2.satest.jfk"
+            "ns2.satest.jfk",
+            "puppet.satest.jfk"
         ] 
 
         self.assertEqual(result, ret)

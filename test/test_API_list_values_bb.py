@@ -199,6 +199,14 @@ class TestAPI_list_values(unittest.TestCase):
         result = lsv.lsv(query)
 
         ret = [
+            "xen",
+            "mysql",
+            "apache",
+            "dcmon",
+            "jira",
+            "postgres",
+            "swappy",
+            "puppet",
             "adhoc",
             "app",
             "authsvc",
@@ -282,14 +290,7 @@ class TestAPI_list_values(unittest.TestCase):
             "mta",
             "relay",
             "zenossdb",
-            "hudson",
-            "xen",
-            "mysql",
-            "apache",
-            "dcmon",
-            "jira",
-            "postgres",
-            "swappy"
+            "hudson"
         ]
 
         self.assertEqual(result, ret)
