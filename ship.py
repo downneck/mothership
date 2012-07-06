@@ -40,10 +40,6 @@ class ShipCLIError(Exception):
     pass
 
 
-# our logger
-
-
-
 # swap a dict around
 def swap_dict(odict):
     return dict([(v, k) for (k, v) in odict.iteritems()])
@@ -148,6 +144,7 @@ def call_command(cfg, module_map):
 
             # parse our options and build a urlencode string to pass
             # over to the API service
+            #
             # spaces in URLs make mothership sad, so replace with %20
             (options, args) = parser.parse_args(sys.argv[2:])
             for k in arglist.keys():
