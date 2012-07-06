@@ -356,7 +356,7 @@ class TestAPI_list_servers(unittest.TestCase):
 
     # test model='System x3650', good results
     def test_lss_model_good(self):
-        query = {'model': 'System x3650'}
+        query = {'model': 'Server x3650'}
         result = lss.lss(query)
 
         # pre-define expected output
