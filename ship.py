@@ -23,7 +23,7 @@ import datetime
 import os
 from jinja2 import Environment, FileSystemLoader
 # urllib2 sucks when you need to use POST and you don't know beforehand
-# that you need to use POST, so we use 'requests' instead. so that we
+# that you need to use POST. we use 'requests' instead so that we
 # can let the modules define themselves
 import requests
 from requests.auth import HTTPBasicAuth
