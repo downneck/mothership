@@ -20,6 +20,7 @@ cfg.log_to_console = False
 cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 kv = API_kv(cfg)
+cfg.module_metadata['API_kv'] = kv
 # this thing is huge and i don't want this file to be 6 million lines so it's a global
 longassret = [
     {

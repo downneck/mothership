@@ -20,8 +20,8 @@
 from sqlalchemy import or_, desc, MetaData
 
 import mothership
-from mothership.mothership_models import *
 
+from mothership.mothership_models import *
 from mothership.common import *
 
 class KVError(Exception):
@@ -31,6 +31,7 @@ class API_kv:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        self.common = MothershipCommon()
         self.version = 1
         self.namespace = 'API_kv'
         self.metadata = {
@@ -186,18 +187,22 @@ class API_kv:
                             'unqdn': {
                                 'vartype': 'string',
                                 'desc': 'unqdn/realm_path of the entry. enter any portion or none',
+                                'ol': 'u',
                             },
                             'key': {
                                 'vartype': 'string',
                                 'desc': 'key to update',
+                                'ol': 'k',
                             },
                             'value': {
                                 'vartype': 'string',
                                 'desc': 'value to update',
+                                'ol': 'v',
                             },
                             'new_value': {
                                 'vartype': 'string',
                                 'desc': 'new value to update to',
+                                'ol': 'n',
                             },
                         },
                     },
@@ -236,7 +241,7 @@ class API_kv:
         # return value
         kv_entry = None
         # setting our valid query keys
-        valid_qkeys = self.__get_valid_qkeys('select')
+        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'select')
 
         try:
             # to make our conditionals easier
@@ -429,7 +434,7 @@ class API_kv:
         # our return value
         kv_entries = []
         # setting our valid query keys
-        valid_qkeys = self.__get_valid_qkeys('collect')
+        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'collect')
 
         try:
             # to make our conditionals easier
@@ -512,7 +517,7 @@ class API_kv:
         # config object. love this guy.
         cfg = self.cfg
         # setting our valid query keys
-        valid_qkeys = self.__get_valid_qkeys('add')
+        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'add')
 
         try:
             # to make our conditionals easier
@@ -579,7 +584,7 @@ class API_kv:
         realm = None
         site_id = None
         # setting our valid query keys
-        valid_qkeys = self.__get_valid_qkeys('update')
+        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'update')
 
         try:
             # to make our conditionals easier
@@ -653,7 +658,7 @@ class API_kv:
         realm = None
         site_id = None
         # setting our valid query keys
-        valid_qkeys = self.__get_valid_qkeys('delete')
+        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'delete')
 
         try:
             # to make our conditionals easier
@@ -722,26 +727,3 @@ class API_kv:
         hostname, realm, site_id = mothership.split_fqdn(unqdn)
         kv = KV(key, value, hostname, realm, site_id)
         return kv
-
-
-    # return a list of valid query keys
-    def __get_valid_qkeys(self, call):
-        """
-        [description]
-        collect our list of valid query keys
-
-        [parameter info]
-            required:
-                call: the function we're being called from
-
-        [return]
-        Returns a list of valid query keys for this
-        """
-        valid_qkeys = []
-        if 'args' in self.metadata['methods'][call]['required_args'].keys():
-            for i in self.metadata['methods'][call]['required_args']['args'].keys():
-                valid_qkeys.append(i)
-        if 'args' in self.metadata['methods'][call]['optional_args'].keys():
-            for i in self.metadata['methods'][call]['optional_args']['args'].keys():
-                valid_qkeys.append(i)
-        return valid_qkeys

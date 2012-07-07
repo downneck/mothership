@@ -1,6 +1,7 @@
 import unittest
 
 from mothership.API_list_servers import * 
+from mothership.API_kv import API_kv 
 from mothership.configure import *
 from mothership.common import *
 
@@ -17,6 +18,9 @@ cfg.log_to_console = False
 cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 lss = API_list_servers(cfg)
+# needed to keep the KV from freaking out
+cfg.module_metadata['API_kv'] = API_kv(cfg)
+
 
 bigassret = [
     "ci1.satest.jfk",

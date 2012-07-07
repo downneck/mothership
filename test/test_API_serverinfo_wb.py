@@ -1,6 +1,7 @@
 import unittest
 
 from mothership.API_serverinfo import API_serverinfo
+from mothership.API_kv import API_kv
 from mothership.configure import *
 import mothership.validate
 from mothership.mothership_models import *
@@ -19,7 +20,9 @@ cfg.log_to_console = False
 cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 si = API_serverinfo(cfg)
-
+cfg.module_metadata['API_serverinfo'] = si
+# needed to keep the KV from freaking out
+cfg.module_metadata['API_kv'] = API_kv(cfg)
 
 class TestAPI_serverinfo(unittest.TestCase):
     def test_get_host_from_hwtag(self):

@@ -1,6 +1,7 @@
 import unittest
 
 from mothership.API_puppet import * 
+from mothership.API_kv import API_kv
 from mothership.configure import *
 from mothership.common import *
 
@@ -17,6 +18,8 @@ cfg.log_to_console = False
 cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 p = API_puppet(cfg)
+# needed to keep the KV from freaking out
+cfg.module_metadata['API_kv'] = API_kv(cfg)
 
 
 # UnitTesting for API_puppet module

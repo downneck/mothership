@@ -10,7 +10,7 @@ class ShipCommonError(Exception):
 
 class MothershipCommon(object):
     """
-    Common methods utilised by most mothership module
+    Common methods utilised by multiple mothership modules 
     """
     def __init__(self):
         pass
@@ -19,6 +19,28 @@ class MothershipCommon(object):
         return True
     def check_max_num_args(self, len, max):
         return True
+    def get_valid_qkeys(self, cfg, module, call):
+        """
+        [description]
+        collect our list of valid query keys
+ 
+        [parameter info]
+            required:
+                cfg: the config object. useful everywhere
+                module: the module we're being called from
+                call: the function we're being called from
+ 
+        [return]
+        Returns a list of valid query keys for this module/call
+        """
+        valid_qkeys = []
+        if 'args' in cfg.module_metadata[module].metadata['methods'][call]['required_args'].keys():
+            for i in cfg.module_metadata[module].metadata['methods'][call]['required_args']['args'].keys():
+                valid_qkeys.append(i)
+        if 'args' in cfg.module_metadata[module].metadata['methods'][call]['optional_args'].keys():
+            for i in cfg.module_metadata[module].metadata['methods'][call]['optional_args']['args'].keys():
+                valid_qkeys.append(i)
+        return valid_qkeys
 
 
 class MothershipLogger(object):
