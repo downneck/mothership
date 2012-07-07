@@ -31,7 +31,7 @@ class API_kv:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.common = MothershipCommon()
+        self.common = MothershipCommon(cfg)
         self.version = 1
         self.namespace = 'API_kv'
         self.metadata = {
@@ -241,7 +241,7 @@ class API_kv:
         # return value
         kv_entry = None
         # setting our valid query keys
-        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'select')
+        valid_qkeys = self.common.get_valid_qkeys(self.namespace, 'select')
 
         try:
             # to make our conditionals easier
@@ -434,7 +434,7 @@ class API_kv:
         # our return value
         kv_entries = []
         # setting our valid query keys
-        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'collect')
+        valid_qkeys = self.common.get_valid_qkeys(self.namespace, 'collect')
 
         try:
             # to make our conditionals easier
@@ -517,7 +517,7 @@ class API_kv:
         # config object. love this guy.
         cfg = self.cfg
         # setting our valid query keys
-        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'add')
+        valid_qkeys = self.common.get_valid_qkeys(self.namespace, 'add')
 
         try:
             # to make our conditionals easier
@@ -584,7 +584,7 @@ class API_kv:
         realm = None
         site_id = None
         # setting our valid query keys
-        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'update')
+        valid_qkeys = self.common.get_valid_qkeys(self.namespace, 'update')
 
         try:
             # to make our conditionals easier
@@ -658,7 +658,7 @@ class API_kv:
         realm = None
         site_id = None
         # setting our valid query keys
-        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'delete')
+        valid_qkeys = self.common.get_valid_qkeys(self.namespace, 'delete')
 
         try:
             # to make our conditionals easier

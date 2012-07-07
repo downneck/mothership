@@ -197,7 +197,7 @@ def print_responsedata(responsedata, mmeta):
     """
     prints out response data according to a jinja2 template defined in the module
 
-    this frontend always uses "mothership/<modulename>template.cmdln" for its template file
+    this frontend always uses "mothership/<modulename>/template.cmdln" for its template file
     """
     module = mmeta['request'].split('/metadata')[0].split('/')[1]
     env = Environment(loader=FileSystemLoader('mothership/'+module))

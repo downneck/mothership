@@ -12,14 +12,14 @@ class MothershipCommon(object):
     """
     Common methods utilised by multiple mothership modules 
     """
-    def __init__(self):
-        pass
+    def __init__(self, cfg):
+        self.cfg = cfg
 
     def check_min_num_args(self, len, min):
         return True
     def check_max_num_args(self, len, max):
         return True
-    def get_valid_qkeys(self, cfg, module, call):
+    def get_valid_qkeys(self, module, call):
         """
         [description]
         collect our list of valid query keys
@@ -34,11 +34,11 @@ class MothershipCommon(object):
         Returns a list of valid query keys for this module/call
         """
         valid_qkeys = []
-        if 'args' in cfg.module_metadata[module].metadata['methods'][call]['required_args'].keys():
-            for i in cfg.module_metadata[module].metadata['methods'][call]['required_args']['args'].keys():
+        if 'args' in self.cfg.module_metadata[module].metadata['methods'][call]['required_args'].keys():
+            for i in self.cfg.module_metadata[module].metadata['methods'][call]['required_args']['args'].keys():
                 valid_qkeys.append(i)
-        if 'args' in cfg.module_metadata[module].metadata['methods'][call]['optional_args'].keys():
-            for i in cfg.module_metadata[module].metadata['methods'][call]['optional_args']['args'].keys():
+        if 'args' in self.cfg.module_metadata[module].metadata['methods'][call]['optional_args'].keys():
+            for i in self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']['args'].keys():
                 valid_qkeys.append(i)
         return valid_qkeys
 

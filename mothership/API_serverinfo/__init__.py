@@ -35,7 +35,7 @@ class ServerInfoError(Exception):
 class API_serverinfo:
 
     def __init__(self, cfg):
-        self.common = MothershipCommon()
+        self.common = MothershipCommon(cfg)
         self.cfg = cfg
         self.version = 1 # the version of this module
         self.namespace = 'API_serverinfo' # class' namespace

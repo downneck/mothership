@@ -743,7 +743,7 @@ class TestAPI_kv(unittest.TestCase):
         result = kv.add(query)
         kv.delete(query) # clean up after ourselves
 
-        self.assertEqual(result, 'success!')
+        self.assertEqual(result, 'success')
         print "[API_kv] BB_test_kv_add_unqdn_tag_and_value_good: PASSED"
 
     # test unqdn=decorati1.satest.jfk, key=tag, value='apache', failure results  
@@ -764,7 +764,7 @@ class TestAPI_kv(unittest.TestCase):
         kv.add(query) # setup for the test
         result = kv.delete(query)
 
-        self.assertEqual(result, 'success!')
+        self.assertEqual(result, 'success')
         print "[API_kv] BB_test_kv_delete_unqdn_tag_and_value_good: PASSED"
 
     # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', failure results  
@@ -801,7 +801,7 @@ class TestAPI_kv(unittest.TestCase):
         # clean up after ourselves
         kv.delete(query)
 
-        self.assertEqual(result, 'success!')
+        self.assertEqual(result, 'success')
         print "[API_kv] BB_test_kv_update_unqdn_tag_value_and_newvalue_good: PASSED"
 
     # test unqdn=decorati1.satest.jfk, key=tag, value='stringofcrap',

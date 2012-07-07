@@ -30,7 +30,8 @@ httpship = bottle.Bottle()
 # suck in our configure object
 cfg = configure.MothershipConfigureDaemon('mothership_daemon.yaml')
 cfg.load_config()
-cm = MothershipCommon()
+# why is this?? maybe a leftover? commented out on 20120710 -dk
+#cm = MothershipCommon(cfg)
 
 
 # generic mothership exception type

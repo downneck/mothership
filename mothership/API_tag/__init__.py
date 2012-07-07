@@ -21,8 +21,8 @@ from sqlalchemy import or_, desc, MetaData
 
 import mothership
 from mothership.mothership_models import *
-
 from mothership.common import *
+from mothership.API_list_servers import *
 
 class TagError(Exception):
     pass
@@ -40,6 +40,7 @@ class API_tag:
                 'module_dependencies': {
                     'mothership_models': 1,
                     'common': 1,
+                    'API_list_servers': 1,
                 },
             },
             'methods': {
@@ -257,7 +258,8 @@ class API_tag:
         # config object. love this guy.
         cfg = self.cfg
         # setting our valid query keys
-        valid_qkeys = self.common.get_valid_qkeys(cfg, self.namespace, 'add')
+        common = MothershipCommon(cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'add')
 
         try:
             # to make our conditionals easier
@@ -291,7 +293,7 @@ class API_tag:
             if duptag:
                 cfg.log.debug("API_tag/add: entry exists for name=%s" % name)
                 raise TagError("API_tag/add: entry exists for name=%s" % name )
-            tag = self.Tag(name, start_port, stop_port, security_level)
+            tag = Tag(name, start_port, stop_port, security_level)
             cfg.log.debug("API_tag/add: creating entry for name=%s start_port=%s stop_port=%s security_level=%s" % (tag.name, tag.start_port, tag.stop_port, tag.security_level))
             cfg.dbsess.add(tag)
             cfg.dbsess.commit()
@@ -303,7 +305,7 @@ class API_tag:
     def delete(self, query):
         """
         [description]
-        display the information for a tag
+        delete a tag from the tag table
 
         [parameter info]
         required:
@@ -323,9 +325,16 @@ class API_tag:
                 raise TagError("API_tag/delete: no name provided!")
             else:
                 name = query['name']
+            listservers = API_list_servers(cfg)
+            lssquery = {'tag': name}
+            if listservers.lss(lssquery):
+                raise TagError("API_tag/delete: tag is still mapped to servers! unmap before deleting")
             result = self.__get_tag(cfg, name)
             if result:
-                return result.to_dict()
+               cfg.dbsess.delete(result)
+               cfg.dbsess.commit 
+               cfg.log.debug("API_tag/delete: deleted tag: %s" % name)
+               return "success"
             else:
                 return None
         except Exception, e:
@@ -376,29 +385,29 @@ class API_tag:
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! don't use this shit!
 
     # Remove a tag
-    def rm_tag(cfg, name):
-        r = cfg.dbsess.query(Tag).\
-            filter(Tag.name==name).first()
-    
-        if not r:
-            raise MothershipError("tag \"%s\" not found, aborting" % name)
-    
-        ans = raw_input("to delete tag \"%s\" please type \"delete_%s\": " % (name, name))
-        if ans != "delete_%s" % name:
-            raise MothershipError("aborted by user")
-        else:
-            cfg.dbsess.delete(r)
-            cfg.dbsess.commit()
-    
-    
-    # display a tag
-    def display_tag(cfg, name):
-        r = cfg.dbsess.query(Tag).\
-            filter(Tag.name==name).first()
-    
-        if not r:
-            raise MothershipError("tag \"%s\" not found, aborting" % name)
-        else:
-            print "name: %s\nstart_port_port: %s\nstop_port_port: %s\nsecurity level: %s" % (r.name, r.start_port_port, r.stop_port_port, r.security_level)
-    
-    
+#    def rm_tag(cfg, name):
+#        r = cfg.dbsess.query(Tag).\
+#            filter(Tag.name==name).first()
+#    
+#        if not r:
+#            raise MothershipError("tag \"%s\" not found, aborting" % name)
+#    
+#        ans = raw_input("to delete tag \"%s\" please type \"delete_%s\": " % (name, name))
+#        if ans != "delete_%s" % name:
+#            raise MothershipError("aborted by user")
+#        else:
+#            cfg.dbsess.delete(r)
+#            cfg.dbsess.commit()
+#    
+#    
+#    # display a tag
+#    def display_tag(cfg, name):
+#        r = cfg.dbsess.query(Tag).\
+#            filter(Tag.name==name).first()
+#    
+#        if not r:
+#            raise MothershipError("tag \"%s\" not found, aborting" % name)
+#        else:
+#            print "name: %s\nstart_port_port: %s\nstop_port_port: %s\nsecurity level: %s" % (r.name, r.start_port_port, r.stop_port_port, r.security_level)
+#    
+#    
