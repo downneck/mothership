@@ -175,7 +175,7 @@ class API_kv:
                     'optional_args': {
                     },
                     'return': {
-                        'string': 'success!',
+                        'string': 'success',
                     },
                 },
                 'update': {
@@ -209,7 +209,7 @@ class API_kv:
                     'optional_args': {
                     },
                     'return': {
-                        'string': 'success!',
+                        'string': 'success',
                     },
                 },
             },
@@ -553,12 +553,12 @@ class API_kv:
                 kv = self.__new(unqdn, key, value)
                 cfg.dbsess.add(kv)
                 cfg.dbsess.commit()
-                return 'success!'
+                return 'success'
                 cfg.log.debug("API_kv/add: creating entry for unqdn=%s key=%s value=%s" % (unqdn, key, value))
             kv = self.__new(unqdn, key, value)
             cfg.dbsess.add(kv)
             cfg.dbsess.commit()
-            return 'success!'
+            return 'success'
         except Exception, e:
             raise KVError(e)
 
@@ -631,7 +631,7 @@ class API_kv:
                 result.value = new_value
                 cfg.dbsess.add(result)
                 cfg.dbsess.commit()
-                return 'success!'
+                return 'success'
             else:
                 raise KVError("API_kv/update: query failed for unqdn=%s key=%s value=%s, no record to update" % (unqdn, key, value))
         except Exception, e:
@@ -702,7 +702,7 @@ class API_kv:
                 cfg.dbsess.delete(result)
                 cfg.dbsess.commit()
                 cfg.log.debug(buf)
-                return 'success!'
+                return 'success'
             else:
                 cfg.log.debug("API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value))
                 raise KVError("API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value))

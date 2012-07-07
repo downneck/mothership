@@ -48,10 +48,12 @@ class API_tag:
                     'rest_type': 'GET',
                     'admin_only': False,
                     'required_args': {
-                        'name': {
-                            'vartype': 'string',
-                            'desc': 'name of the tag',
-                            'ol': 'n',
+                        'args': {
+                            'name': {
+                                'vartype': 'string',
+                                'desc': 'name of the tag',
+                                'ol': 'n',
+                            },
                         },
                     },
                     'optional_args': {
@@ -95,7 +97,7 @@ class API_tag:
                         },
                     },
                     'return': {
-                        'string': 'success!',
+                        'string': 'success',
                     },
                 },
                 'delete': {
@@ -114,7 +116,7 @@ class API_tag:
                     'optional_args': {
                     },
                     'return': {
-                        'string': 'success!',
+                        'string': 'success',
                     },
                 },
                 'update': {
@@ -152,7 +154,7 @@ class API_tag:
                         },
                     },
                     'return': {
-                        'string': 'success!',
+                        'string': 'success',
                     },
                 },
                 'tag': {
@@ -176,7 +178,7 @@ class API_tag:
                     'optional_args': {
                     },
                     'return': {
-                        'string': 'success!',
+                        'string': 'success',
                     },
                 },
                 'untag': {
@@ -200,7 +202,7 @@ class API_tag:
                     'optional_args': {
                     },
                     'return': {
-                        'string': 'success!',
+                        'string': 'success',
                     },
                 },
             },
@@ -293,10 +295,41 @@ class API_tag:
             cfg.log.debug("API_tag/add: creating entry for name=%s start_port=%s stop_port=%s security_level=%s" % (tag.name, tag.start_port, tag.stop_port, tag.security_level))
             cfg.dbsess.add(tag)
             cfg.dbsess.commit()
-            return 'success!'
+            return 'success'
         except Exception, e:
             raise TagError(e)
 
+
+    def delete(self, query):
+        """
+        [description]
+        display the information for a tag
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns "success" if successful, None if unsuccessful 
+        """
+        # setting variables
+        # config object. love this guy.
+        cfg = self.cfg
+
+        try:
+            # to make our conditionals easier
+            if 'name' not in query.keys():
+                cfg.log.debug("API_tag/delete: no name provided!")
+                raise TagError("API_tag/delete: no name provided!")
+            else:
+                name = query['name']
+            result = self.__get_tag(cfg, name)
+            if result:
+                return result.to_dict()
+            else:
+                return None
+        except Exception, e:
+            raise TagError(e)
 
 
 
