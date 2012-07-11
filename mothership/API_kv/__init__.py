@@ -128,7 +128,7 @@ class API_kv:
                         'args': {
                             'unqdn': {
                                 'vartype': 'string',
-                                'desc': 'unqdn/realm_path of the entry. enter any portion or none',
+                                'desc': 'unqdn/realm_path of the entry. enter any portion or "GLOBAL" to add a global value',
                                 'ol': 'u',
                             },
                             'key': {
@@ -157,7 +157,7 @@ class API_kv:
                         'args': {
                             'unqdn': {
                                 'vartype': 'string',
-                                'desc': 'unqdn/realm_path of the entry. enter any portion or none',
+                                'desc': 'unqdn/realm_path of the entry. enter any portion or "GLOBAL" to delete a global value',
                                 'ol': 'u',
                             },
                             'key': {
@@ -548,7 +548,7 @@ class API_kv:
             if dupkv:
                 cfg.log.debug("API_kv/add: entry exists for unqdn=%s key=%s value=%s" % (unqdn, key, value))
                 raise KVError("API_kv/add: entry exists for unqdn=%s key=%s value=%s" % (unqdn, key, value))
-            if not unqdn:
+            if unqdn == 'GLOBAL':
                 cfg.log.debug("API_kv/add: creating entry for unqdn=(global!) key=%s value=%s" % (key, value))
                 kv = self.__new(unqdn, key, value)
                 cfg.dbsess.add(kv)
@@ -681,14 +681,12 @@ class API_kv:
                     cfg.log.debug("API_kv/delete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise KVError("API_kv/delete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
-            # get the whole damn KV table
-
             # filtery by unqdn (or any portion thereof)
-            if unqdn != None:
+            if unqdn != 'GLOBAL':
                 hostname, realm, site_id = mothership.split_fqdn(unqdn)
                 buf += "unqdn=%s hostname=%s realm=%s site_id=%s " % (unqdn, hostname, realm, site_id)
             else:
-                buf += "unqdn=(global!) hostname=%s realm=%s site_id=%s " % (hostname, realm, site_id)
+                buf += "unqdn=(global!)"
             # try to find an existing entry
             result = cfg.dbsess.query(KV).\
                 filter(KV.site_id==site_id).\
