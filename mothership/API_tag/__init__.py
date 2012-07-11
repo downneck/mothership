@@ -23,6 +23,7 @@ import mothership
 from mothership.mothership_models import *
 from mothership.common import *
 from mothership.API_list_servers import *
+from mothership.API_kv import *
 
 class TagError(Exception):
     pass
@@ -41,6 +42,7 @@ class API_tag:
                     'mothership_models': 1,
                     'common': 1,
                     'API_list_servers': 1,
+                    'API_kv': 1,
                 },
             },
             'methods': {
@@ -358,7 +360,7 @@ class API_tag:
         cfg = self.cfg
         # setting our valid query keys
         common = MothershipCommon(cfg)
-        valid_qkeys = common.get_valid_qkeys(self.namespace, 'add')
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'update')
 
         try:
             # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
@@ -405,17 +407,58 @@ class API_tag:
             raise TagError(e)
 
 
+    def tag(self, query):
+        """
+        [description]
+        map a tag to a server/realm/site/global 
 
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
 
+        [return]
+        Returns success if successful, raises an error if not
+        """
+        # setting variables
+        # config object. love this guy.
+        cfg = self.cfg
+        # setting our valid query keys
+        valid_qkeys = self.common.get_valid_qkeys(self.namespace, 'tag')
 
+        try:
+            # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
+            if 'name' not in query.keys():
+                cfg.log.debug("API_tag/tag: no name provided!")
+                raise TagError("API_tag/tag: no name provided!")
+            else:
+                name = query['name']
+            if 'unqdn' not in query.keys():
+                cfg.log.debug("API_tag/tag: no unqdn provided!")
+                raise TagError("API_tag/tag: no unqdn provided!")
+            else:
+                unqdn = query['unqdn']
 
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    cfg.log.debug("API_tag/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise TagError("API_tag/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
-
-
-
-
-
-
+            # make sure the tag we've been asked to update actually exists
+            tag = self.__get_tag(cfg, name)
+            if tag:
+                cfg.log.debug("API_tag/tag: mapping tag \"%s\" to unqdn\"%s\"" % (name, unqdn))
+            else:
+                cfg.log.debug("API_tag/tag: no entry exists for name=%s. use API_tag/add to add a tag first" % name)
+                raise TagError("API_tag/tag: no entry exists for name=%s. use API_tag/add to add a tag first" % name )
+            kv = API_kv()
+            ret = kv.add(query)
+            if ret == "success"
+                return ret
+            else
+                raise TagError("API_tag/tag: something has gone horribly wrong!") 
+        except Exception, e:
+            raise TagError(e)
 
 
 # internal functions below here
@@ -442,36 +485,3 @@ class API_tag:
 
 
 
-
-
-
-
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! don't use this shit!
-
-    # Remove a tag
-#    def rm_tag(cfg, name):
-#        r = cfg.dbsess.query(Tag).\
-#            filter(Tag.name==name).first()
-#    
-#        if not r:
-#            raise MothershipError("tag \"%s\" not found, aborting" % name)
-#    
-#        ans = raw_input("to delete tag \"%s\" please type \"delete_%s\": " % (name, name))
-#        if ans != "delete_%s" % name:
-#            raise MothershipError("aborted by user")
-#        else:
-#            cfg.dbsess.delete(r)
-#            cfg.dbsess.commit()
-#    
-#    
-#    # display a tag
-#    def display_tag(cfg, name):
-#        r = cfg.dbsess.query(Tag).\
-#            filter(Tag.name==name).first()
-#    
-#        if not r:
-#            raise MothershipError("tag \"%s\" not found, aborting" % name)
-#        else:
-#            print "name: %s\nstart_port_port: %s\nstop_port_port: %s\nsecurity level: %s" % (r.name, r.start_port_port, r.stop_port_port, r.security_level)
-#    
-#    
