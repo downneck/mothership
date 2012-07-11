@@ -241,6 +241,7 @@ class API_tag:
             else:
                 return None
         except Exception, e:
+            # something odd happened, explode violently
             raise TagError(e)
 
 
@@ -301,6 +302,7 @@ class API_tag:
             cfg.dbsess.commit()
             return 'success'
         except Exception, e:
+            # something odd happened, explode violently
             raise TagError(e)
 
 
@@ -340,6 +342,7 @@ class API_tag:
             else:
                 return None
         except Exception, e:
+            # something odd happened, explode violently
             raise TagError(e)
 
 
@@ -404,6 +407,7 @@ class API_tag:
             cfg.dbsess.commit()
             return 'success'
         except Exception, e:
+            # something odd happened, explode violently
             raise TagError(e)
 
 
@@ -460,6 +464,60 @@ class API_tag:
             else:
                 raise TagError("API_tag/tag: something has gone horribly wrong!") 
         except Exception, e:
+            # something odd happened, explode violently
+            raise TagError(e)
+
+
+    def untag(self, query):
+        """
+        [description]
+        unmap a tag from a server/realm/site/global 
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns success if successful, raises an error if not
+        """
+        # setting variables
+        # config object. love this guy.
+        cfg = self.cfg
+        # setting our valid query keys
+        common = MothershipCommon(cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'untag')
+
+        try:
+            # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
+            if 'name' not in query.keys():
+                cfg.log.debug("API_tag/untag: no name provided!")
+                raise TagError("API_tag/untag: no name provided!")
+            else:
+                name = query['name']
+            if 'unqdn' not in query.keys():
+                cfg.log.debug("API_tag/untag: no unqdn provided!")
+                raise TagError("API_tag/untag: no unqdn provided!")
+            else:
+                unqdn = query['unqdn']
+
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    cfg.log.debug("API_tag/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise TagError("API_tag/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # make sure the tag mapping we've been asked to update actually exists
+            kv = API_kv(cfg)
+            kvquery = {'value': query['name'], 'key': 'tag', 'unqdn': query['unqdn']}
+            if kv.select(kvquery):
+                # mapping exists, remove it
+                kv.delete(kvquery)
+                return "success"
+            else:
+                # mapping does not exist, explode
+                raise TagError("API_tag/untag: mapping not found for tag \"%s\" and unqdn \"%s\"" % (query['name'], query['unqdn']) 
+        except Exception, e:
+            # something odd happened, explode violently
             raise TagError(e)
 
 
