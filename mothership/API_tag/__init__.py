@@ -423,7 +423,8 @@ class API_tag:
         # config object. love this guy.
         cfg = self.cfg
         # setting our valid query keys
-        valid_qkeys = self.common.get_valid_qkeys(self.namespace, 'tag')
+        common = MothershipCommon(cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'tag')
 
         try:
             # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
@@ -451,8 +452,9 @@ class API_tag:
             else:
                 cfg.log.debug("API_tag/tag: no entry exists for name=%s. use API_tag/add to add a tag first" % name)
                 raise TagError("API_tag/tag: no entry exists for name=%s. use API_tag/add to add a tag first" % name )
-            kv = API_kv()
-            ret = kv.add(query)
+            kv = API_kv(cfg)
+            kvquery = {'value': query['name'], 'key': 'tag', 'unqdn': query['unqdn']}
+            ret = kv.add(kvquery)
             if ret == "success":
                 return ret
             else:

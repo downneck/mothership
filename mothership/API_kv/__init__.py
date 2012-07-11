@@ -550,6 +550,7 @@ class API_kv:
                 raise KVError("API_kv/add: entry exists for unqdn=%s key=%s value=%s" % (unqdn, key, value))
             if unqdn == 'GLOBAL':
                 cfg.log.debug("API_kv/add: creating entry for unqdn=(global!) key=%s value=%s" % (key, value))
+                unqdn = None
                 kv = self.__new(unqdn, key, value)
                 cfg.dbsess.add(kv)
                 cfg.dbsess.commit()
