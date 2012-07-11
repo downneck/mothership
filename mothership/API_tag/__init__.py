@@ -121,7 +121,7 @@ class API_tag:
                     },
                 },
                 'update': {
-                    'description': 'update a tag entry in the tags table',
+                    'description': 'update a tag entry in the tags table. use "None" to clear a setting',
                     'rest_type': 'PUT',
                     'admin_only': True, 
                     'required_args': {
@@ -337,6 +337,70 @@ class API_tag:
                return "success"
             else:
                 return None
+        except Exception, e:
+            raise TagError(e)
+
+
+    def update(self, query):
+        """
+        [description]
+        update/alter an existing tag entry
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns success if successful, raises an error if not
+        """
+        # setting variables
+        # config object. love this guy.
+        cfg = self.cfg
+        # setting our valid query keys
+        common = MothershipCommon(cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'add')
+
+        try:
+            # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
+            if 'name' not in query.keys():
+                cfg.log.debug("API_tag/update: no name provided!")
+                raise TagError("API_tag/update: no name provided!")
+            else:
+                name = query['name']
+
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    cfg.log.debug("API_tag/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise TagError("API_tag/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # to make everything just a bit more readable 
+            if 'start_port' in query.keys() and query['start_port'] and query['start_port'] != "None":
+                start_port = query['start_port']
+            else:
+                start_port = None
+            if 'stop_port' in query.keys() and query['stop_port'] and query['stop_port'] != "None":
+                stop_port = query['stop_port']
+            else:
+                stop_port = None
+            if 'security_level' in query.keys() and query['security_level'] and query['security_level'] != "None":
+                security_level = query['security_level']
+            else:
+                security_level = None
+
+            # make sure the tag we've been asked to update actually exists
+            tag = self.__get_tag(cfg, name)
+            if tag:
+                tag.start_port = start_port
+                tag.stop_port = stop_port
+                tag.security_level = security_level 
+            else:
+                cfg.log.debug("API_tag/update: no entry exists for name=%s. use API_tag/add instead" % name)
+                raise TagError("API_tag/update: no entry exists for name=%s. use API_tag/add instead" % name )
+            cfg.log.debug("API_tag/update: updating entry for name=%s with: start_port=%s stop_port=%s security_level=%s" % (tag.name, tag.start_port, tag.stop_port, tag.security_level))
+            cfg.dbsess.add(tag)
+            cfg.dbsess.commit()
+            return 'success'
         except Exception, e:
             raise TagError(e)
 
