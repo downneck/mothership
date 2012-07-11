@@ -1,2 +1,5 @@
-{% for kv in r['data']|sort(attribute='hostname')%}
-{% if kv['hostname'] is none %}{%else%}{{kv['hostname']}}.{% endif %}{% if kv['realm'] is none %}{%else%}{{kv['realm']}}.{% endif %}{% if kv['site_id'] is none %}GLOBAL{%else%}{{kv['site_id']}}{% endif %} {{kv['key']}}={{kv['value']}}{% endfor %}
+
+tag name:               {{r['data']['name']}}
+start port:             {{r['data']['start_port']}}
+stop port:              {{r['data']['stop_port']}}
+security level:         {{r['data']['security_level']}}
