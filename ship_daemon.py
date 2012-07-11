@@ -43,7 +43,6 @@ class ShipDaemonError(Exception):
 def __generate_json_header():
     jbuf = {}
     jbuf['status'] = 0
-    jbuf['nodeID'] = 0
     jbuf['msg'] = ""
     jbuf['timestamp'] = str(datetime.datetime.now())
     jbuf['nodename'] = gethostname()
