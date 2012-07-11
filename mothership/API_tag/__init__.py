@@ -453,9 +453,9 @@ class API_tag:
                 raise TagError("API_tag/tag: no entry exists for name=%s. use API_tag/add to add a tag first" % name )
             kv = API_kv()
             ret = kv.add(query)
-            if ret == "success"
+            if ret == "success":
                 return ret
-            else
+            else:
                 raise TagError("API_tag/tag: something has gone horribly wrong!") 
         except Exception, e:
             raise TagError(e)
