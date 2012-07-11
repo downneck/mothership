@@ -80,7 +80,7 @@ def print_commands(cfg, module_map):
 def print_command_args(cfg, module_map):
     try:
         revmodule_map = swap_dict(module_map)
-        module, call = sys.argv[1].split('/')
+	module, call = sys.argv[1].split('/')
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
         mmeta = myjson.loads(response.content)
         if mmeta['status'] != 0:
@@ -201,18 +201,26 @@ def call_command(cfg, module_map):
 # the module
 def print_responsedata(responsedata, mmeta):
     """
-    prints out response data according to a jinja2 template defined in the module
+    prints out response data according to a jinja2 template
+    defined in the module directory
 
-    this frontend always uses "mothership/<modulename>/template.cmdln" for its template file
+    this frontend tries to use "mothership/<modulename>/template.cmdln.<call>"
+    for its template file. if it doesn't find a call-specific template, it will
+    attempt to use "mothership/<modulename>/template.cmdln" as a default. 
+    if all else fails, just spit out the response data.
     """
     module = mmeta['request'].split('/metadata')[0].split('/')[1]
     env = Environment(loader=FileSystemLoader('mothership/'+module))
     try:
+        template = env.get_template("template.cmdln.%s" % sys.argv[1].split('/')[1])
+        print template.render(r=responsedata)
+    #except Exception, e:
+    except:
         template = env.get_template('template.cmdln')
-    except Exception, e:
-        raise ShipCLIError("template.cmdln not found for module: %s\nError: %s" % (module, e))
-    print template.render(r=responsedata)
-
+        print template.render(r=responsedata)
+    else:
+        # no template! just spit the data out
+        print responsedata
 
 # main execution block
 if __name__ == "__main__":
