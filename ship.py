@@ -87,6 +87,8 @@ def print_command_args(cfg, module_map):
             raise ShipCLIError("Error:\n%s" % mmeta['msg'])
         if not call in mmeta['data']['methods'].keys():
             raise ShipCLIError("Invalid command issued: %s" % sys.argv[1].split('/')[1])
+        if 'description' in mmeta['data']['methods'][call]:
+            print mmeta['data']['methods'][call]['description']
         if 'args' in mmeta['data']['methods'][call]['required_args']:
             print "\nRequired arguments:"
             for k in mmeta['data']['methods'][call]['required_args']['args'].keys():
@@ -114,7 +116,11 @@ def call_command(cfg, module_map):
 
             # set up our command line options through optparse. will
             # change this to argparse if we upgrade past python 2.7
-            parser = OptionParser()
+            if 'description' in  mmeta['data']['methods'][call]:
+                usage = "Usage: ship %s/%s [options]\n\n%s" % (module, call, mmeta['data']['methods'][call]['description'])
+            else:
+                usage = "Usage: ship %s/%s [options]" % (module, call)
+            parser = OptionParser(usage=usage)
             arglist = {}
             if 'args' in mmeta['data']['methods'][call]['required_args']:
                 for k in mmeta['data']['methods'][call]['required_args']['args'].keys():
