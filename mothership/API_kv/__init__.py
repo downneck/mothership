@@ -71,7 +71,7 @@ class API_kv:
                                 'ol': 'v',
                             },
                             'any': {
-                                'vartype': 'None',
+                                'vartype': 'bool',
                                 'desc': 'return the first entry we can find (overrides all other options)',
                                 'ol': 'a',
                             },
@@ -107,7 +107,7 @@ class API_kv:
                                 'ol': 'v',
                             },
                             'all': {
-                                'vartype': 'None',
+                                'vartype': 'bool',
                                 'desc': 'gimme everything! (return all KV entries, overrides all other options)',
                                 'ol': 'a',
                             },
@@ -245,7 +245,7 @@ class API_kv:
 
         try:
             # to make our conditionals easier
-            if 'unqdn' not in query.keys():
+            if 'unqdn' not in query.keys() or query['unqdn'] == 'GLOBAL':
                 unqdn = None
             else:
                 unqdn = query['unqdn']
@@ -438,7 +438,7 @@ class API_kv:
 
         try:
             # to make our conditionals easier
-            if 'unqdn' not in query.keys():
+            if 'unqdn' not in query.keys() or query['unqdn'] == 'GLOBAL':
                 unqdn = None
             else:
                 unqdn = query['unqdn']

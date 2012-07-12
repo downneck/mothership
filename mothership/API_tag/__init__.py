@@ -515,7 +515,7 @@ class API_tag:
                 return "success"
             else:
                 # mapping does not exist, explode
-                raise TagError("API_tag/untag: mapping not found for tag \"%s\" and unqdn \"%s\"" % (query['name'], query['unqdn']) 
+                raise TagError("API_tag/untag: mapping not found for tag \"%s\" and unqdn \"%s\"" % (query['name'], query['unqdn']))
         except Exception, e:
             # something odd happened, explode violently
             raise TagError(e)
