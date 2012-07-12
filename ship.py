@@ -213,20 +213,28 @@ def print_responsedata(responsedata, mmeta):
         module = mmeta['request'].split('/metadata')[0].split('/')[1]
         env = Environment(loader=FileSystemLoader('mothership/'+module))
         try:
+            # try to load up a template called template.cmdln.<call>
+            # this allows us to format output specifically to each call
+            # if necessary
             template = env.get_template("template.cmdln.%s" % sys.argv[1].split('/')[1])
             print template.render(r=responsedata)
-        #except Exception, e:
         except:
+            # template.cmdln.<call> apparently doesn't exist. load the default template
             template = env.get_template('template.cmdln')
             print template.render(r=responsedata)
         else:
-            # no template! just spit the data out
+            # no template at all! just spit the data out
             print responsedata
     elif responsedata['msg']:
+        # if we didn't get anything back in the data field, it's possible
+        # we got back an error message instead. they go in the 'msg' field of 
+        # the standard JSON response
         print responsedata['msg']
     else:
         # TODO: dunno if i want to print anything here. revisit this later
-        # print "Nothing found"
+        #
+        # no data, no msg, no error. let's just go away quietly and pretend
+        # like this never happened...
         sys.exit(1)
 
 # main execution block
