@@ -209,18 +209,25 @@ def print_responsedata(responsedata, mmeta):
     attempt to use "mothership/<modulename>/template.cmdln" as a default. 
     if all else fails, just spit out the response data.
     """
-    module = mmeta['request'].split('/metadata')[0].split('/')[1]
-    env = Environment(loader=FileSystemLoader('mothership/'+module))
-    try:
-        template = env.get_template("template.cmdln.%s" % sys.argv[1].split('/')[1])
-        print template.render(r=responsedata)
-    #except Exception, e:
-    except:
-        template = env.get_template('template.cmdln')
-        print template.render(r=responsedata)
+    if responsedata['data']:
+        module = mmeta['request'].split('/metadata')[0].split('/')[1]
+        env = Environment(loader=FileSystemLoader('mothership/'+module))
+        try:
+            template = env.get_template("template.cmdln.%s" % sys.argv[1].split('/')[1])
+            print template.render(r=responsedata)
+        #except Exception, e:
+        except:
+            template = env.get_template('template.cmdln')
+            print template.render(r=responsedata)
+        else:
+            # no template! just spit the data out
+            print responsedata
+    elif responsedata['msg']:
+        print responsedata['msg']
     else:
-        # no template! just spit the data out
-        print responsedata
+        # TODO: dunno if i want to print anything here. revisit this later
+        # print "Nothing found"
+        sys.exit(1)
 
 # main execution block
 if __name__ == "__main__":
