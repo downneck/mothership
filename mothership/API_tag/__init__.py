@@ -536,12 +536,3 @@ class API_tag:
                 return None
         except Exception, e:
             raise TagError(e)
-        
-
-
-
-
-
-
-
-
