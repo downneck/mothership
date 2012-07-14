@@ -206,7 +206,6 @@ class TestAPI_list_values(unittest.TestCase):
             "jira",
             "postgres",
             "swappy",
-            "puppet",
             "adhoc",
             "app",
             "authsvc",
@@ -290,9 +289,9 @@ class TestAPI_list_values(unittest.TestCase):
             "mta",
             "relay",
             "zenossdb",
-            "hudson"
+            "hudson",
+            "puppet"
         ]
-
         self.assertEqual(result, ret)
         print "[API_list_values] test_lsv_tags_good: PASSED"
 

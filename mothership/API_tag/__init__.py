@@ -336,11 +336,11 @@ class API_tag:
             result = self.__get_tag(cfg, name)
             if result:
                cfg.dbsess.delete(result)
-               cfg.dbsess.commit 
+               cfg.dbsess.commit()
                cfg.log.debug("API_tag/delete: deleted tag: %s" % name)
                return "success"
             else:
-                return None
+               return None
         except Exception, e:
             # something odd happened, explode violently
             raise TagError(e)
