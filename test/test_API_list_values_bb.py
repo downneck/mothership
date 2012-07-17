@@ -184,14 +184,14 @@ class TestAPI_list_values(unittest.TestCase):
         ]
 
         self.assertEqual(result, ret)
-        print "[API_list_values] test_lsv_users_good: PASSED"
+        print "[API_list_values] BB_test_lsv_users_good: PASSED"
 
     # users=True tags=True, bad output
     def test_lsv_users_and_tags_bad(self):
         query = {'users': True, 'tags': True}
 
         self.assertRaises(ListValuesError, lsv.lsv, query)
-        print "[API_list_values] test_lsv_users_and_tags_bad: PASSED (raised ListValuesError)"
+        print "[API_list_values] BB_test_lsv_users_and_tags_bad: PASSED (raised ListValuesError)"
 
     # tags=True, good output
     def test_lsv_tags_good(self):
@@ -293,7 +293,7 @@ class TestAPI_list_values(unittest.TestCase):
             "hudson",
         ]
         self.assertEqual(result, ret)
-        print "[API_list_values] test_lsv_tags_good: PASSED"
+        print "[API_list_values] BB_test_lsv_tags_good: PASSED"
 
     # ips=True, good output
     def test_lsv_ips_good(self):
@@ -372,7 +372,7 @@ class TestAPI_list_values(unittest.TestCase):
         ]
 
         self.assertEqual(result, ret)
-        print "[API_list_values] test_lsv_ips_good: PASSED"
+        print "[API_list_values] BB_test_lsv_ips_good: PASSED"
 
     # groups=True, good output
     def test_lsv_groups_good(self):
@@ -872,7 +872,7 @@ class TestAPI_list_values(unittest.TestCase):
         ]
 
         self.assertEqual(result, ret)
-        print "[API_list_values] test_lsv_groups_good: PASSED"
+        print "[API_list_values] BB_test_lsv_groups_good: PASSED"
 
     # available_hardware=True, good output
     def test_lsv_available_hardware_good(self):
@@ -882,7 +882,7 @@ class TestAPI_list_values(unittest.TestCase):
         ret = [ "H739TK1" ]
 
         self.assertEqual(result, ret)
-        print "[API_list_values] test_lsv_available_hardware_good: PASSED"
+        print "[API_list_values] BB_test_lsv_available_hardware_good: PASSED"
 
     # vlans=True, good output
     def test_lsv_vlans_good(self):
@@ -892,4 +892,4 @@ class TestAPI_list_values(unittest.TestCase):
         ret = [ 200, 201, 666 ]
 
         self.assertEqual(result, ret)
-        print "[API_list_values] test_lsv_vlans_good: PASSED"
+        print "[API_list_values] BB_test_lsv_vlans_good: PASSED"
