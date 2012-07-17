@@ -203,14 +203,35 @@ class TestAPI_tag(unittest.TestCase):
         print "[API_tag] BB_test_tag_add_name_security_good: PASSED"
  
 
-
-
-
     ######################################
     # testing delete()                   #
     ######################################
 
+    # just name, good results 
+    def test_tag_delete_name_good(self):
+        query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1}
+        tag.add(query)
+        query = {'name': 'frank'}
+        result = tag.delete(query)
 
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_delete_name_good: PASSED"
+ 
+    # bad name, null results 
+    def test_tag_delete_bad_name_null(self):
+        query = {'name': 'FAILURE'}
+        result = tag.delete(query)
+
+        self.assertEqual(result, None)
+        print "[API_tag] BB_test_tag_delete_bad_name_null: PASSED"
+ 
+    # good name, failure due to existing mapping
+    def test_tag_delete_name_mapping_failure(self):
+        query = {'name': 'puppet'}
+
+        self.assertRaises(TagError, tag.delete, query)
+        print "[API_tag] BB_test_tag_delete_name_mapping_failure: PASSED (raised TagError)"
+ 
 
     ######################################
     # testing update()                   #
