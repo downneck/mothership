@@ -184,6 +184,24 @@ class TestAPI_tag(unittest.TestCase):
         self.assertRaises(TagError, tag.add, query)
         print "[API_tag] BB_test_tag_add_name_security_start_failure: PASSED (raised TagError)"
  
+    # just name, good results 
+    def test_tag_add_name_good(self):
+        query = {'name': 'frank'}
+        result = tag.add(query)
+        tag.delete(query) # clean up after ourselves
+
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_add_name_good: PASSED"
+ 
+    # just name, security, good results 
+    def test_tag_add_name_security_good(self):
+        query = {'name': 'frank', 'security_level': 1}
+        result = tag.add(query)
+        tag.delete(query) # clean up after ourselves
+
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_add_name_security_good: PASSED"
+ 
 
 
 
