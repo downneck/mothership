@@ -407,7 +407,8 @@ class API_kv:
                 return None
 
         except Exception, e:
-            raise KVError(e)
+            cfg.dbsess.rollback()
+            raise KVError("API_kv/select: error: %s" % e) 
 
 
     def collect(self, query):
@@ -497,7 +498,8 @@ class API_kv:
         except Exception, e:
             cfg.log.debug("Error: %s" % e)
             cfg.log.debug("dumping buffer: %s" % buf)
-            raise KVError(e)
+            cfg.dbsess.rollback()
+            raise KVError("API_kv/collect: error: %s" % e) 
 
 
     # add a new kv entry
@@ -561,7 +563,8 @@ class API_kv:
             cfg.dbsess.commit()
             return 'success'
         except Exception, e:
-            raise KVError(e)
+            cfg.dbsess.rollback()
+            raise KVError("API_kv/add: error: %s" % e) 
 
 
     def update(self, query):
@@ -634,9 +637,11 @@ class API_kv:
                 cfg.dbsess.commit()
                 return 'success'
             else:
+                cfg.dbsess.rollback()
                 raise KVError("API_kv/update: query failed for unqdn=%s key=%s value=%s, no record to update" % (unqdn, key, value))
         except Exception, e:
-            raise KVError(e)
+            cfg.dbsess.rollback()
+            raise KVError("API_kv/update: error: %s" % e) 
 
     def delete(self, query):
         """
@@ -704,9 +709,11 @@ class API_kv:
                 return 'success'
             else:
                 cfg.log.debug("API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value))
+                cfg.dbsess.rollback()
                 raise KVError("API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value))
         except Exception, e:
-            raise KVError(e)
+            cfg.dbsess.rollback()
+            raise KVError("API_kv/delete: error: %s" % e) 
 
     # create a new KV object, return it. for use internally only
     def __new(self, unqdn, key, value):
@@ -723,6 +730,10 @@ class API_kv:
         [return]
         returns a KV ORMobject
         """
-        hostname, realm, site_id = mothership.split_fqdn(unqdn)
-        kv = KV(key, value, hostname, realm, site_id)
-        return kv
+        try:
+            hostname, realm, site_id = mothership.split_fqdn(unqdn)
+            kv = KV(key, value, hostname, realm, site_id)
+            return kv
+        except Exception, e:
+            cfg.dbsess.rollback()
+            raise KVError("API_kv/__new: error: %s" % e) 

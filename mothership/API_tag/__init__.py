@@ -303,6 +303,7 @@ class API_tag:
             return 'success'
         except Exception, e:
             # something odd happened, explode violently
+            cfg.dbsess.rollback()
             raise TagError(e)
 
 
@@ -343,6 +344,7 @@ class API_tag:
                return None
         except Exception, e:
             # something odd happened, explode violently
+            cfg.dbsess.rollback()
             raise TagError(e)
 
 
@@ -408,6 +410,7 @@ class API_tag:
             return 'success'
         except Exception, e:
             # something odd happened, explode violently
+            cfg.dbsess.rollback()
             raise TagError(e)
 
 
@@ -462,9 +465,11 @@ class API_tag:
             if ret == "success":
                 return ret
             else:
+                cfg.dbsess.rollback()
                 raise TagError("API_tag/tag: something has gone horribly wrong!") 
         except Exception, e:
             # something odd happened, explode violently
+            cfg.dbsess.rollback()
             raise TagError(e)
 
 
@@ -515,9 +520,11 @@ class API_tag:
                 return "success"
             else:
                 # mapping does not exist, explode
+                cfg.dbsess.rollback()
                 raise TagError("API_tag/untag: mapping not found for tag \"%s\" and unqdn \"%s\"" % (query['name'], query['unqdn']))
         except Exception, e:
             # something odd happened, explode violently
+            cfg.dbsess.rollback()
             raise TagError(e)
 
 
