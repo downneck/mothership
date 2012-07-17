@@ -1,6 +1,7 @@
 import unittest
 
 from mothership.API_tag import * 
+from mothership.API_kv import * 
 from mothership.configure import *
 import mothership.validate
 from mothership.common import *
@@ -21,6 +22,7 @@ cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 tag = API_tag(cfg)
 cfg.module_metadata['API_tag'] = tag
+
 
 # UnitTesting for API_tag module
 class TestAPI_tag(unittest.TestCase):
@@ -78,63 +80,90 @@ class TestAPI_tag(unittest.TestCase):
     # testing add()                      #
     ######################################
  
-    # test unqdn=decorati1.satest.jfk, failure results  
-    def test_kv_add_unqdn_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk'}
+    # test name=None, failure 
+    def test_tag_add_name_bad(self):
+        query = {'name': None}
 
-        self.assertRaises(KVError, kv.add, query)
-        print "[API_tag] BB_test_kv_add_unqdn_bad: PASSED (raised KVError)"
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_add_name_bad: PASSED (raised TagError)"
  
-    # test unqdn=decorati1.satest.jfk, key=tag, failure results  
-    def test_kv_add_unqdn_and_tag_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag'}
+    # test name=foo, start_port=frank, failure 
+    def test_tag_add_name_good_start_port_bad(self):
+        query = {'name': 'frank', 'start_port': 'frank'}
 
-        self.assertRaises(KVError, kv.add, query)
-        print "[API_tag] BB_test_kv_add_unqdn_and_tag_bad: PASSED (raised KVError)"
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_name_good_start_port_bad: PASSED (raised TagError)"
  
-    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', good results  
-    def test_kv_add_unqdn_tag_and_value_good(self):
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
-        result = kv.add(query)
-        kv.delete(query) # clean up after ourselves
+    # test name=foo, stop_port=frank, failure 
+    def test_tag_add_name_good_stop_port_bad(self):
+        query = {'name': 'frank', 'stop_port': 'frank'}
 
-        self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_kv_add_unqdn_tag_and_value_good: PASSED"
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_name_good_stop_port_bad: PASSED (raised TagError)"
+ 
+    # test name=foo, security_level=frank, failure 
+    def test_tag_add_name_good_security_level_bad(self):
+        query = {'name': 'frank', 'security_level': 'frank'}
 
-    # test unqdn=decorati1.satest.jfk, key=tag, value='apache', failure results  
-    def test_kv_add_duplicate_unqdn_tag_and_value_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'apache'}
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_name_good_security_level_bad: PASSED (raised TagError)"
+ 
+    # test name=foo, start_port=80, stop_port=frank, failure 
+    def test_tag_add_name_and_start_port_good_stop_port_bad(self):
+        query = {'name': 'frank', 'start_port': 80, 'stop_port': 'frank'}
 
-        self.assertRaises(KVError, kv.add, query)
-        print "[API_tag] BB_test_kv_add_duplicate_unqdn_tag_and_value_bad: PASSED (raised KVError)"
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_name_and_start_port_good_stop_port_bad: PASSED (raised TagError)"
+ 
+    # test name=foo, stop_port=80, start_port=frank, failure 
+    def test_tag_add_name_and_stop_port_good_start_port_bad(self):
+        query = {'name': 'frank', 'stop_port': 80, 'start_port': 'frank'}
 
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_name_and_stop_port_good_start_port_bad: PASSED (raised TagError)"
+ 
+    # everything good except security_level 
+    def test_tag_add_everything_good_except_security_level_failure(self):
+        query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 'fred'}
+
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_everything_good_except_security_level_failure: PASSED (raised TagError)"
+ 
+    # everything good except start_port 
+    def test_tag_add_everything_good_except_start_port_failure(self):
+        query = {'name': 'frank', 'stop_port': 80, 'start_port': 'fred', 'security_level': 1}
+
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_everything_good_except_start_port_failure: PASSED (raised TagError)"
+ 
+    # everything good except stop_port 
+    def test_tag_add_everything_good_except_stop_port_failure(self):
+        query = {'name': 'frank', 'stop_port': 'fred', 'start_port': 80, 'security_level': 1}
+
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_everything_good_except_stop_port_failure: PASSED (raised TagError)"
+ 
+    # everything good, superfluous query, failure 
+    def test_tag_add_everything_good_superfluous_query_failure(self):
+        query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1, 'durr': 'stuff'}
+
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_everything_good_superfluous_query_failure: PASSED (raised TagError)"
+ 
+    # add, everything good, good results 
+#    def test_tag_add_everything_good(self):
+#        query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1}
+#        result = tag.add(query)
+#        tag.delete(query) # clean up after ourselves
+#
+#        self.assertEqual(result, 'success')
+#        print "[API_tag] BB_test_tag_everything_good: PASSED (raised TagError)"
+ 
 
     ######################################
     # testing delete()                   #
     ######################################
 
-    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', good results  
-    def test_kv_delete_unqdn_tag_and_value_good(self):
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
-        kv.add(query) # setup for the test
-        result = kv.delete(query)
-
-        self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_kv_delete_unqdn_tag_and_value_good: PASSED"
-
-    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', failure results  
-    def test_kv_delete_nonexistent_unqdn_tag_and_value_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
-
-        self.assertRaises(KVError, kv.delete, query)
-        print "[API_tag] BB_test_kv_delete_nonexistent_unqdn_tag_and_value_bad: PASSED (raised KVError)"
-
-    # test unqdn=decorati1.satest.jfk, failure results 
-    def test_kv_delete_unqdn_only_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk'}
-
-        self.assertRaises(KVError, kv.delete, query)
-        print "[API_tag] BB_test_kv_delete_unqdn_only_bad: PASSED (raised KVError)"
 
 
     ######################################
@@ -143,30 +172,30 @@ class TestAPI_tag(unittest.TestCase):
 
     # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap',
     # new_value=anotherrandomstringofcrap, good results  
-    def test_kv_update_unqdn_tag_value_and_newvalue_good(self):
-        # set up for the test
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
-        kv.add(query)
-        # the test
-        query['new_value'] = 'anotherrandomstringofcrap'
-        result = kv.update(query)
-        # set up for cleanup
-        query.pop('new_value')
-        query['value'] = 'anotherrandomstringofcrap'
-        # clean up after ourselves
-        kv.delete(query)
-
-        self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_kv_update_unqdn_tag_value_and_newvalue_good: PASSED"
-
-    # test unqdn=decorati1.satest.jfk, key=tag, value='stringofcrap',
-    # new_value=anotherrandomstringofcrap, good results  
-    def test_kv_update_nonexistent_value_bad(self):
-        # set up for the test
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
-        # the test
-        query['new_value'] = 'anotherrandomstringofcrap'
-
-        self.assertRaises(KVError, kv.update, query)
-        print "[API_tag] BB_test_kv_update_nonexistent_value_bad: PASSED (raised KVError)"
-
+#    def test_tag_update_unqdn_tag_value_and_newvalue_good(self):
+#        # set up for the test
+#        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+#        tag.add(query)
+#        # the test
+#        query['new_value'] = 'anotherrandomstringofcrap'
+#        result = tag.update(query)
+#        # set up for cleanup
+#        query.pop('new_value')
+#        query['value'] = 'anotherrandomstringofcrap'
+#        # clean up after ourselves
+#        tag.delete(query)
+#
+#        self.assertEqual(result, 'success')
+#        print "[API_tag] BB_test_tag_update_unqdn_tag_value_and_newvalue_good: PASSED"
+#
+#    # test unqdn=decorati1.satest.jfk, key=tag, value='stringofcrap',
+#    # new_value=anotherrandomstringofcrap, good results  
+#    def test_tag_update_nonexistent_value_bad(self):
+#        # set up for the test
+#        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+#        # the test
+#        query['new_value'] = 'anotherrandomstringofcrap'
+#
+#        self.assertRaises(TagError, tag.update, query)
+#        print "[API_tag] BB_test_tag_update_nonexistent_value_bad: PASSED (raised TagError)"
+#

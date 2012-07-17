@@ -266,7 +266,7 @@ class API_tag:
 
         try:
             # to make our conditionals easier
-            if 'name' not in query.keys():
+            if 'name' not in query.keys() or not query['name']:
                 cfg.log.debug("API_tag/add: no name provided!")
                 raise TagError("API_tag/add: no name provided!")
             else:
@@ -535,4 +535,5 @@ class API_tag:
             else:
                 return None
         except Exception, e:
+            cfg.dbsess.rollback()
             raise TagError(e)
