@@ -242,7 +242,8 @@ class API_tag:
                 return None
         except Exception, e:
             # something odd happened, explode violently
-            raise TagError(e)
+            cfg.log.debug("API_tag/display: error: %s" % e)
+            raise TagError("API_tag/display: error: %s" % e)
 
 
     def add(self, query):
@@ -304,7 +305,8 @@ class API_tag:
         except Exception, e:
             # something odd happened, explode violently
             cfg.dbsess.rollback()
-            raise TagError(e)
+            cfg.log.debug("API_tag/add: error: %s" % e)
+            raise TagError("API_tag/add: error: %s" % e)
 
 
     def delete(self, query):
@@ -336,16 +338,17 @@ class API_tag:
                 raise TagError("API_tag/delete: tag is still mapped to servers! unmap before deleting")
             result = self.__get_tag(cfg, name)
             if result:
-               cfg.dbsess.delete(result)
-               cfg.dbsess.commit()
-               cfg.log.debug("API_tag/delete: deleted tag: %s" % name)
-               return "success"
+                cfg.dbsess.delete(result)
+                cfg.dbsess.commit()
+                cfg.log.debug("API_tag/delete: deleted tag: %s" % name)
+                return "success"
             else:
-               return None
+                return None
         except Exception, e:
             # something odd happened, explode violently
             cfg.dbsess.rollback()
-            raise TagError(e)
+            cfg.log.debug("API_tag/delete: error: %s" % e)
+            raise TagError("API_tag/delete: error: %s" % e)
 
 
     def update(self, query):
@@ -411,7 +414,8 @@ class API_tag:
         except Exception, e:
             # something odd happened, explode violently
             cfg.dbsess.rollback()
-            raise TagError(e)
+            cfg.log.debug("API_tag/update: error: %s" % e)
+            raise TagError("API_tag/update: error: %s" % e)
 
 
     def tag(self, query):
@@ -470,7 +474,8 @@ class API_tag:
         except Exception, e:
             # something odd happened, explode violently
             cfg.dbsess.rollback()
-            raise TagError(e)
+            cfg.log.debug("API_tag/tag: error: %s" % e)
+            raise TagError("API_tag/tag: error: %s" % e)
 
 
     def untag(self, query):
@@ -525,7 +530,8 @@ class API_tag:
         except Exception, e:
             # something odd happened, explode violently
             cfg.dbsess.rollback()
-            raise TagError(e)
+            cfg.log.debug("API_tag/untag: error: %s" % e)
+            raise TagError("API_tag/untag: error: %s" % e)
 
 
 # internal functions below here
@@ -543,4 +549,5 @@ class API_tag:
                 return None
         except Exception, e:
             cfg.dbsess.rollback()
-            raise TagError(e)
+            cfg.log.debug("API_tag/__get_tag: error: %s" % e)
+            raise TagError("API_tag/__get_tag: error: %s" % e)

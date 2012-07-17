@@ -22,7 +22,11 @@ cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 tag = API_tag(cfg)
 cfg.module_metadata['API_tag'] = tag
-
+# instantiate lss and kv
+lss = API_list_servers(cfg)
+cfg.module_metadata['API_list_servers'] = lss
+kv = API_kv(cfg)
+cfg.module_metadata['API_kv'] = kv
 
 # UnitTesting for API_tag module
 class TestAPI_tag(unittest.TestCase):
@@ -151,13 +155,13 @@ class TestAPI_tag(unittest.TestCase):
         print "[API_tag] BB_test_tag_everything_good_superfluous_query_failure: PASSED (raised TagError)"
  
     # add, everything good, good results 
-#    def test_tag_add_everything_good(self):
-#        query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1}
-#        result = tag.add(query)
-#        tag.delete(query) # clean up after ourselves
-#
-#        self.assertEqual(result, 'success')
-#        print "[API_tag] BB_test_tag_everything_good: PASSED (raised TagError)"
+    def test_tag_add_everything_good(self):
+        query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1}
+        result = tag.add(query)
+        tag.delete(query) # clean up after ourselves
+
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_everything_good: PASSED (raised TagError)"
  
 
     ######################################
