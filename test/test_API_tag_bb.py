@@ -237,6 +237,44 @@ class TestAPI_tag(unittest.TestCase):
     # testing update()                   #
     ######################################
 
+    # bad name, good security_level, failure 
+    def test_tag_update_bad_name_good_security_failure(self):
+        query = {'name': 'FAILURE', 'security_level': 1}
+
+        self.assertRaises(TagError, tag.update, query)
+        print "[API_tag] BB_test_tag_update_bad_name_good_security_failure: PASSED (raised TagError)"
+ 
+    # name only, failure 
+    def test_tag_update_name_only_failure(self):
+        query = {'name': 'puppet'}
+
+        self.assertRaises(TagError, tag.update, query)
+        print "[API_tag] BB_test_tag_update_name_only_failure: PASSED (raised TagError)"
+
+    # set everything. start_port > stop_port, failure
+    def test_tag_update_start_gt_stop_failure(self):
+        query = {'name': 'puppet', 'start_port': 90, 'stop_port': 70, 'security_level': 1}
+
+        self.assertRaises(TagError, tag.update, query)
+        print "[API_tag] BB_test_tag_update_start_gt_stop_failure: PASSED (raised TagError)"
+
+    # set everything except stop_port. start_port > existing.stop_port (80), failure
+    def test_tag_update_start_gt_existing_stop_failure(self):
+        query = {'name': 'puppet', 'start_port': 90, 'security_level': 1}
+
+        self.assertRaises(TagError, tag.update, query)
+        print "[API_tag] BB_test_tag_update_start_gt_existing_stop_failure: PASSED (raised TagError)"
+
+    # set everything except start_port. existing.start_port (80) > stop_port, failure
+    def test_tag_update_existing_start_gt_stop_failure(self):
+        query = {'name': 'puppet', 'stop_port': 70, 'security_level': 1}
+
+        self.assertRaises(TagError, tag.update, query)
+        print "[API_tag] BB_test_tag_update_existing_start_gt_stop_failure: PASSED (raised TagError)"
+
+
+
+
     # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap',
     # new_value=anotherrandomstringofcrap, good results  
 #    def test_tag_update_unqdn_tag_value_and_newvalue_good(self):

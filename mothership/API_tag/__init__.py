@@ -406,9 +406,25 @@ class API_tag:
             else:
                 security_level = None
 
+            if not security_level and not start_port and not stop_port:
+                cfg.log.debug("API_tag/update: no updates specified!")
+                raise TagError("API_tag/update: no updates specified!")
+
+            # because you know someone will try this...
+            if start_port and stop_port and start_port > stop_port:
+                cfg.log.debug("API_tag/update: start_port cannot be greater than stop_port!")
+                raise TagError("API_tag/update: start_port cannot be greater than stop_port!")
+
             # make sure the tag we've been asked to update actually exists
             tag = self.__get_tag(cfg, name)
             if tag:
+                # because you know someone will try this...
+                if start_port and not stop_port and tag.stop_port and start_port > tag.stop_port:
+                    cfg.log.debug("API_tag/update: start_port cannot be greater than stop_port!")
+                    raise TagError("API_tag/update: start_port cannot be greater than stop_port!")
+                if not start_port and stop_port and tag.start_port and tag.start_port > stop_port:
+                    cfg.log.debug("API_tag/update: start_port cannot be greater than stop_port!")
+                    raise TagError("API_tag/update: start_port cannot be greater than stop_port!")
                 tag.start_port = start_port
                 tag.stop_port = stop_port
                 tag.security_level = security_level 
