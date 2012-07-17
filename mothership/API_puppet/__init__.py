@@ -153,7 +153,7 @@ class API_puppet:
                             parameters['bond_options'] = network.bond_options
             else:
                 self.cfg.log.debug("API_puppet/classify: hostname not found: %s" % query['hostname'])
-                cfg.dbsess.rollback()
+                self.cfg.dbsess.rollback()
                 raise PuppetError("API_puppet/classify: hostname not found: %s" % query['hostname'])
             
             # Tag
@@ -202,7 +202,7 @@ class API_puppet:
 
         except Exception, e:
             self.cfg.log.debug("API_puppet/classify: query failed. Error: %s" % e)
-            cfg.dbsess.rollback()
+            self.cfg.dbsess.rollback()
             raise PuppetError("API_puppet/classify: query failed. Error: %s" % e)
 
         return node
