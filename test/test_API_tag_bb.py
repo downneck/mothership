@@ -22,9 +22,7 @@ cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 tag = API_tag(cfg)
 cfg.module_metadata['API_tag'] = tag
-# instantiate lss and kv
-lss = API_list_servers(cfg)
-cfg.module_metadata['API_list_servers'] = lss
+# instantiate kv
 kv = API_kv(cfg)
 cfg.module_metadata['API_kv'] = kv
 
@@ -96,73 +94,99 @@ class TestAPI_tag(unittest.TestCase):
         query = {'name': 'frank', 'start_port': 'frank'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_name_good_start_port_bad: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_add_name_good_start_port_bad: PASSED (raised TagError)"
  
     # test name=foo, stop_port=frank, failure 
     def test_tag_add_name_good_stop_port_bad(self):
         query = {'name': 'frank', 'stop_port': 'frank'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_name_good_stop_port_bad: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_add_name_good_stop_port_bad: PASSED (raised TagError)"
  
     # test name=foo, security_level=frank, failure 
     def test_tag_add_name_good_security_level_bad(self):
         query = {'name': 'frank', 'security_level': 'frank'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_name_good_security_level_bad: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_add_name_good_security_level_bad: PASSED (raised TagError)"
  
     # test name=foo, start_port=80, stop_port=frank, failure 
     def test_tag_add_name_and_start_port_good_stop_port_bad(self):
         query = {'name': 'frank', 'start_port': 80, 'stop_port': 'frank'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_name_and_start_port_good_stop_port_bad: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_add_name_and_start_port_good_stop_port_bad: PASSED (raised TagError)"
  
     # test name=foo, stop_port=80, start_port=frank, failure 
     def test_tag_add_name_and_stop_port_good_start_port_bad(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 'frank'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_name_and_stop_port_good_start_port_bad: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_add_name_and_stop_port_good_start_port_bad: PASSED (raised TagError)"
  
     # everything good except security_level 
     def test_tag_add_everything_good_except_security_level_failure(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 'fred'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_everything_good_except_security_level_failure: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_add_everything_good_except_security_level_failure: PASSED (raised TagError)"
  
     # everything good except start_port 
     def test_tag_add_everything_good_except_start_port_failure(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 'fred', 'security_level': 1}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_everything_good_except_start_port_failure: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_add_everything_good_except_start_port_failure: PASSED (raised TagError)"
  
     # everything good except stop_port 
     def test_tag_add_everything_good_except_stop_port_failure(self):
         query = {'name': 'frank', 'stop_port': 'fred', 'start_port': 80, 'security_level': 1}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_everything_good_except_stop_port_failure: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_add_everything_good_except_stop_port_failure: PASSED (raised TagError)"
  
     # everything good, superfluous query, failure 
     def test_tag_add_everything_good_superfluous_query_failure(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1, 'durr': 'stuff'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_everything_good_superfluous_query_failure: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_add_everything_good_superfluous_query_failure: PASSED (raised TagError)"
  
-    # add, everything good, good results 
+    # everything good, good results 
     def test_tag_add_everything_good(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1}
         result = tag.add(query)
         tag.delete(query) # clean up after ourselves
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_everything_good: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_add_everything_good: PASSED"
  
+    # just name, stop, start, good results 
+    def test_tag_add_name_stop_start_good(self):
+        query = {'name': 'frank', 'stop_port': 80, 'start_port': 80}
+        result = tag.add(query)
+        tag.delete(query) # clean up after ourselves
+
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_add_name_stop_start_good: PASSED"
+ 
+    # just name, stop, security_level, failure
+    def test_tag_add_name_stop_security_failure(self):
+        query = {'name': 'frank', 'stop_port': 80, 'security_level': 1}
+
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_add_name_stop_security_failure: PASSED (raised TagError)"
+ 
+    # just name, security, start, failure 
+    def test_tag_add_name_security_start_failure(self):
+        query = {'name': 'frank', 'security_level': 1, 'start_port': 80}
+
+        self.assertRaises(TagError, tag.add, query)
+        print "[API_tag] BB_test_tag_add_name_security_start_failure: PASSED (raised TagError)"
+ 
+
+
+
 
     ######################################
     # testing delete()                   #

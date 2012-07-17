@@ -292,6 +292,14 @@ class API_tag:
             else:
                 security_level = None
 
+            if start_port and not stop_port:
+                cfg.log.debug("API_tag/add: start_port requires a stop_port!")
+                raise TagError("API_tag/add: start_port requires a stop_port!")
+            elif stop_port and not start_port:
+                cfg.log.debug("API_tag/add: stop_port requires a start_port!")
+                raise TagError("API_tag/add: stop_port requires a start_port!")
+                 
+
             # Check for duplicate tags.
             duptag = self.display(query)
             if duptag:
