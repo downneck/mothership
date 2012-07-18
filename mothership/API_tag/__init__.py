@@ -280,15 +280,15 @@ class API_tag:
                     raise TagError("API_tag/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             if 'start_port' in query.keys() and query['start_port']:
-                start_port = query['start_port']
+                start_port = int(query['start_port'])
             else:
                 start_port = None
             if 'stop_port' in query.keys() and query['stop_port']:
-                stop_port = query['stop_port']
+                stop_port = int(query['stop_port'])
             else:
                 stop_port = None
             if 'security_level' in query.keys() and query['security_level']:
-                security_level = query['security_level']
+                security_level = int(query['security_level'])
             else:
                 security_level = None
 
@@ -394,15 +394,15 @@ class API_tag:
 
             # to make everything just a bit more readable 
             if 'start_port' in query.keys() and query['start_port'] and query['start_port'] != "None":
-                start_port = query['start_port']
+                start_port = int(query['start_port'])
             else:
                 start_port = None
             if 'stop_port' in query.keys() and query['stop_port'] and query['stop_port'] != "None":
-                stop_port = query['stop_port']
+                stop_port = int(query['stop_port'])
             else:
                 stop_port = None
             if 'security_level' in query.keys() and query['security_level'] and query['security_level'] != "None":
-                security_level = query['security_level']
+                security_level = int(query['security_level'])
             else:
                 security_level = None
 
