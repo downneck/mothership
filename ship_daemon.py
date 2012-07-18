@@ -257,7 +257,7 @@ def callable_path(pname, callpath):
         query = bottle.request.GET
         pnameMetadata = cfg.module_metadata[pname]
         cfg.log.debug("query keys: %s" % query.keys())
-        # everyone has a 'metadata' construct
+        # every API module has a 'metadata' construct
         # hard wire it into callpath options
         # this is an info-level request so no re-auth
         if callpath == 'metadata':

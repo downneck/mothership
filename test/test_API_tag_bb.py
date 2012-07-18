@@ -156,7 +156,8 @@ class TestAPI_tag(unittest.TestCase):
     def test_tag_add_everything_good(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1}
         result = tag.add(query)
-        tag.delete(query) # clean up after ourselves
+        # put everything back where we found it
+        tag.delete(query)
 
         self.assertEqual(result, 'success')
         print "[API_tag] BB_test_tag_add_everything_good: PASSED"
@@ -165,7 +166,8 @@ class TestAPI_tag(unittest.TestCase):
     def test_tag_add_name_stop_start_good(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80}
         result = tag.add(query)
-        tag.delete(query) # clean up after ourselves
+        # put everything back where we found it
+        tag.delete(query)
 
         self.assertEqual(result, 'success')
         print "[API_tag] BB_test_tag_add_name_stop_start_good: PASSED"
@@ -188,7 +190,8 @@ class TestAPI_tag(unittest.TestCase):
     def test_tag_add_name_good(self):
         query = {'name': 'frank'}
         result = tag.add(query)
-        tag.delete(query) # clean up after ourselves
+        # put everything back where we found it
+        tag.delete(query)
 
         self.assertEqual(result, 'success')
         print "[API_tag] BB_test_tag_add_name_good: PASSED"
@@ -197,7 +200,8 @@ class TestAPI_tag(unittest.TestCase):
     def test_tag_add_name_security_good(self):
         query = {'name': 'frank', 'security_level': 1}
         result = tag.add(query)
-        tag.delete(query) # clean up after ourselves
+        # put everything back where we found it
+        tag.delete(query)
 
         self.assertEqual(result, 'success')
         print "[API_tag] BB_test_tag_add_name_security_good: PASSED"
@@ -272,35 +276,52 @@ class TestAPI_tag(unittest.TestCase):
         self.assertRaises(TagError, tag.update, query)
         print "[API_tag] BB_test_tag_update_existing_start_gt_stop_failure: PASSED (raised TagError)"
 
+    # just name, start_port, good results 
+    def test_tag_update_start_port_good(self):
+        query = {'name': 'puppet', 'start_port': 70}
+        result = tag.update(query)
+        # put everything back where we found it
+        query['start_port'] = 80
+        tag.update(query)
+
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_update_start_port_good: PASSED"
+
+    # just name, stop_port, good results 
+    def test_tag_update_stop_port_good(self):
+        query = {'name': 'puppet', 'stop_port': 90}
+        result = tag.update(query)
+        # put everything back where we found it
+        query['stop_port'] = 80
+        tag.update(query)
+
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_update_stop_port_good: PASSED"
+
+    # just name, security_level, good results 
+    def test_tag_update_security_level_good(self):
+        query = {'name': 'puppet', 'security_level': 7}
+        result = tag.update(query)
+        # put everything back where we found it
+        query['security_level'] = 1
+        tag.update(query)
+
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_update_security_level_good: PASSED"
+
+    # everything, good results 
+    def test_tag_update_everything_good(self):
+        query = {'name': 'puppet', 'stop_port': 90, 'start_port': 70, 'security_level': 7}
+        result = tag.update(query)
+        # put everything back where we found it
+        query = {'name': 'puppet', 'stop_port': 80, 'start_port': 80, 'security_level': 1}
+        tag.update(query)
+
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_update_everything_good: PASSED"
 
 
 
-    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap',
-    # new_value=anotherrandomstringofcrap, good results  
-#    def test_tag_update_unqdn_tag_value_and_newvalue_good(self):
-#        # set up for the test
-#        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
-#        tag.add(query)
-#        # the test
-#        query['new_value'] = 'anotherrandomstringofcrap'
-#        result = tag.update(query)
-#        # set up for cleanup
-#        query.pop('new_value')
-#        query['value'] = 'anotherrandomstringofcrap'
-#        # clean up after ourselves
-#        tag.delete(query)
-#
-#        self.assertEqual(result, 'success')
-#        print "[API_tag] BB_test_tag_update_unqdn_tag_value_and_newvalue_good: PASSED"
-#
-#    # test unqdn=decorati1.satest.jfk, key=tag, value='stringofcrap',
-#    # new_value=anotherrandomstringofcrap, good results  
-#    def test_tag_update_nonexistent_value_bad(self):
-#        # set up for the test
-#        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
-#        # the test
-#        query['new_value'] = 'anotherrandomstringofcrap'
-#
-#        self.assertRaises(TagError, tag.update, query)
-#        print "[API_tag] BB_test_tag_update_nonexistent_value_bad: PASSED (raised TagError)"
-#
+
+
+
