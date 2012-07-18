@@ -268,15 +268,6 @@ longassret = [
     },
     {
       "realm": "satest",
-      "hostname": "decorati1",
-      "site_id": "jfk",
-      "value": "apache",
-      "table_name": "kv",
-      "key": "tag",
-      "id": 49
-    },
-    {
-      "realm": "satest",
       "hostname": "jira1",
       "site_id": "jfk",
       "value": "mysql",
@@ -496,34 +487,34 @@ class TestAPI_kv(unittest.TestCase):
         self.assertNotEqual(result, ret)
         print "[API_kv] BB_test_kv_select_key_tag_bad: PASSED"
 
-    # test key=tag unqdn=decorati1.satest.jfk, good results
+    # test key=tag unqdn=jira1.satest.jfk, good results
     def test_kv_select_key_tag_and_unqdn_good(self):
-        query = {'key': 'tag', 'unqdn': 'decorati1.satest.jfk'}
+        query = {'key': 'tag', 'unqdn': 'jira1.satest.jfk'}
         result = kv.select(query)
 
         # pre-define expected output
         ret = [{
                'realm': 'satest',
-               'hostname': 'decorati1',
+               'hostname': 'jira1',
                'site_id': 'jfk',
-               'value': 'apache',
+               'value': 'mysql',
                'table_name': 'kv',
                'key': 'tag',
-               'id': 49
+               'id': 51
         },]
 
         self.assertEqual(result, ret)
         print "[API_kv] BB_test_kv_select_key_tag_and_unqdn_good: PASSED"
 
-    # test key=tag unqdn=decorati1.satest.jfk, failure results
+    # test key=tag unqdn=jira1.satest.jfk, failure results
     def test_kv_select_key_tag_and_unqdn_bad(self):
-        query = {'key': 'tag', 'unqdn': 'decorati1.satest.jfk'}
+        query = {'key': 'tag', 'unqdn': 'jira1.satest.jfk'}
         result = kv.select(query)
 
         # pre-define expected output
         ret = [{
                'realm': 'satest',
-               'hostname': 'decorati1',
+               'hostname': 'jira1',
                'site_id': 'jfk',
                'value': 'FAILURE',
                'table_name': 'kv',
@@ -534,34 +525,34 @@ class TestAPI_kv(unittest.TestCase):
         self.assertNotEqual(result, ret)
         print "[API_kv] BB_test_kv_select_key_tag_and_unqdn_bad: PASSED"
 
-    # test value=apache unqdn=decorati1.satest.jfk, good results
+    # test value=mysql unqdn=jira1.satest.jfk, good results
     def test_kv_select_unqdn_and_value_good(self):
-        query = {'value': 'apache', 'unqdn': 'decorati1.satest.jfk'}
+        query = {'value': 'mysql', 'unqdn': 'jira1.satest.jfk'}
         result = kv.select(query)
 
         # pre-define expected output
         ret = [{
                'realm': 'satest',
-               'hostname': 'decorati1',
+               'hostname': 'jira1',
                'site_id': 'jfk',
-               'value': 'apache',
+               'value': 'mysql',
                'table_name': 'kv',
                'key': 'tag',
-               'id': 49
+               'id': 51
         },]
 
         self.assertEqual(result, ret)
         print "[API_kv] BB_test_kv_select_unqdn_and_value_good: PASSED"
 
-    # test value=apache unqdn=decorati1.satest.jfk, failure results
+    # test value=mysql unqdn=jira1.satest.jfk, failure results
     def test_kv_select_unqdn_and_value_bad(self):
-        query = {'value': 'apache', 'unqdn': 'decorati1.satest.jfk'}
+        query = {'value': 'apache', 'unqdn': 'jira1.satest.jfk'}
         result = kv.select(query)
 
         # pre-define expected output
         ret = [{
                'realm': 'satest',
-               'hostname': 'decorati1',
+               'hostname': 'jira1',
                'site_id': 'jfk',
                'value': 'FAILURE',
                'table_name': 'kv',
@@ -572,34 +563,34 @@ class TestAPI_kv(unittest.TestCase):
         self.assertNotEqual(result, ret)
         print "[API_kv] BB_test_kv_select_unqdn_and_value_bad: PASSED"
 
-    # test unqdn=decorati1.satest.jfk, good results
+    # test unqdn=jira1.satest.jfk, good results
     def test_kv_select_unqdn_good(self):
-        query = {'unqdn': 'decorati1.satest.jfk'}
+        query = {'unqdn': 'jira1.satest.jfk'}
         result = kv.select(query)
 
         # pre-define expected output
         ret = [{
                'realm': 'satest',
-               'hostname': 'decorati1',
+               'hostname': 'jira1',
                'site_id': 'jfk',
-               'value': 'apache',
+               'value': 'mysql',
                'table_name': 'kv',
                'key': 'tag',
-               'id': 49
+               'id': 51
         },]
 
         self.assertEqual(result, ret)
         print "[API_kv] BB_test_kv_select_unqdn_good: PASSED"
 
-    # test unqdn=decorati1.satest.jfk, failure results
+    # test unqdn=jira1.satest.jfk, failure results
     def test_kv_select_unqdn_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk'}
+        query = {'unqdn': 'jira1.satest.jfk'}
         result = kv.select(query)
 
         # pre-define expected output
         ret = [{
                'realm': 'satest',
-               'hostname': 'decorati1',
+               'hostname': 'jira1',
                'site_id': 'jfk',
                'value': 'FAILURE',
                'table_name': 'kv',
@@ -668,18 +659,18 @@ class TestAPI_kv(unittest.TestCase):
         self.assertEqual(result, longassret)
         print "[API_kv] BB_test_kv_collect_all_override_good: PASSED"
  
-    # test key=tag, value=apache, good results
+    # test key=tag, value=mysql, good results
     def test_kv_collect_key_and_value_good(self):
-        query = {'key': 'tag', 'value': 'apache'}
+        query = {'key': 'tag', 'value': 'mysql'}
         result = kv.collect(query)
         ret = [{
                'realm': 'satest',
-               'hostname': 'decorati1',
+               'hostname': 'jira1',
 	       'site_id': 'jfk',
-	       'value': 'apache',
+	       'value': 'mysql',
 	       'table_name': 'kv',
 	       'key': 'tag',
-	       'id': 49
+	       'id': 51 
 	}]
 
         self.assertEqual(result, ret)
@@ -693,26 +684,26 @@ class TestAPI_kv(unittest.TestCase):
         self.assertEqual(result, [])
         print "[API_kv] BB_test_kv_collect_key_and_value_bad: PASSED"
  
-    # test key=tag, value=apache, unqdn=decorati1.satest.jfk, good results
+    # test key=tag, value=mysql unqdn=jira1.satest.jfk, good results
     def test_kv_collect_key_and_value_and_unqdn_good(self):
-        query = {'key': 'tag', 'value': 'apache', 'unqdn': 'decorati1.satest.jfk'}
+        query = {'key': 'tag', 'value': 'mysql', 'unqdn': 'jira1.satest.jfk'}
         result = kv.collect(query)
         ret = [{
                'realm': 'satest',
-               'hostname': 'decorati1',
+               'hostname': 'jira1',
 	       'site_id': 'jfk',
-	       'value': 'apache',
+	       'value': 'mysql',
 	       'table_name': 'kv',
 	       'key': 'tag',
-	       'id': 49
+	       'id': 51 
 	}]
 
         self.assertEqual(result, ret)
         print "[API_kv] BB_test_kv_collect_key_and_value_and_unqdn_good: PASSED" 
 
-    # test key=tag, value=failure, unqdn=decorati1.satest.jfk, failure results 
+    # test key=tag, value=failure, unqdn=jira1.satest.jfk, failure results 
     def test_kv_collect_key_and_value_bad(self):
-        query = {'key': 'tag', 'value': 'FAILURE', 'unqdn': 'decorati1.satest.jfk'}
+        query = {'key': 'tag', 'value': 'FAILURE', 'unqdn': 'jira1.satest.jfk'}
         result = kv.collect(query)
 
         self.assertEqual(result, [])
@@ -723,32 +714,32 @@ class TestAPI_kv(unittest.TestCase):
     # testing add()                      #
     ######################################
  
-    # test unqdn=decorati1.satest.jfk, failure results  
+    # test unqdn=jira1.satest.jfk, failure results  
     def test_kv_add_unqdn_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk'}
+        query = {'unqdn': 'jira1.satest.jfk'}
 
         self.assertRaises(KVError, kv.add, query)
         print "[API_kv] BB_test_kv_add_unqdn_bad: PASSED (raised KVError)"
  
-    # test unqdn=decorati1.satest.jfk, key=tag, failure results  
+    # test unqdn=jira1.satest.jfk, key=tag, failure results  
     def test_kv_add_unqdn_and_tag_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag'}
+        query = {'unqdn': 'jira1.satest.jfk', 'key': 'tag'}
 
         self.assertRaises(KVError, kv.add, query)
         print "[API_kv] BB_test_kv_add_unqdn_and_tag_bad: PASSED (raised KVError)"
  
-    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', good results  
+    # test unqdn=jira1.satest.jfk, key=tag, value='randomstringofcrap', good results  
     def test_kv_add_unqdn_tag_and_value_good(self):
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+        query = {'unqdn': 'jira1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
         result = kv.add(query)
         kv.delete(query) # clean up after ourselves
 
         self.assertEqual(result, 'success')
         print "[API_kv] BB_test_kv_add_unqdn_tag_and_value_good: PASSED"
 
-    # test unqdn=decorati1.satest.jfk, key=tag, value='apache', failure results  
+    # test unqdn=jira1.satest.jfk, key=tag, value='apache', failure results  
     def test_kv_add_duplicate_unqdn_tag_and_value_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'apache'}
+        query = {'unqdn': 'jira1.satest.jfk', 'key': 'tag', 'value': 'apache'}
 
         self.assertRaises(KVError, kv.add, query)
         print "[API_kv] BB_test_kv_add_duplicate_unqdn_tag_and_value_bad: PASSED (raised KVError)"
@@ -758,25 +749,25 @@ class TestAPI_kv(unittest.TestCase):
     # testing delete()                   #
     ######################################
 
-    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', good results  
+    # test unqdn=jira1.satest.jfk, key=tag, value='randomstringofcrap', good results  
     def test_kv_delete_unqdn_tag_and_value_good(self):
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+        query = {'unqdn': 'jira1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
         kv.add(query) # setup for the test
         result = kv.delete(query)
 
         self.assertEqual(result, 'success')
         print "[API_kv] BB_test_kv_delete_unqdn_tag_and_value_good: PASSED"
 
-    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap', failure results  
+    # test unqdn=jira1.satest.jfk, key=tag, value='randomstringofcrap', failure results  
     def test_kv_delete_nonexistent_unqdn_tag_and_value_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+        query = {'unqdn': 'jira1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
 
         self.assertRaises(KVError, kv.delete, query)
         print "[API_kv] BB_test_kv_delete_nonexistent_unqdn_tag_and_value_bad: PASSED (raised KVError)"
 
-    # test unqdn=decorati1.satest.jfk, failure results 
+    # test unqdn=jira1.satest.jfk, failure results 
     def test_kv_delete_unqdn_only_bad(self):
-        query = {'unqdn': 'decorati1.satest.jfk'}
+        query = {'unqdn': 'jira1.satest.jfk'}
 
         self.assertRaises(KVError, kv.delete, query)
         print "[API_kv] BB_test_kv_delete_unqdn_only_bad: PASSED (raised KVError)"
@@ -786,11 +777,11 @@ class TestAPI_kv(unittest.TestCase):
     # testing update()                   #
     ######################################
 
-    # test unqdn=decorati1.satest.jfk, key=tag, value='randomstringofcrap',
+    # test unqdn=jira1.satest.jfk, key=tag, value='randomstringofcrap',
     # new_value=anotherrandomstringofcrap, good results  
     def test_kv_update_unqdn_tag_value_and_newvalue_good(self):
         # set up for the test
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+        query = {'unqdn': 'jira1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
         kv.add(query)
         # the test
         query['new_value'] = 'anotherrandomstringofcrap'
@@ -804,11 +795,11 @@ class TestAPI_kv(unittest.TestCase):
         self.assertEqual(result, 'success')
         print "[API_kv] BB_test_kv_update_unqdn_tag_value_and_newvalue_good: PASSED"
 
-    # test unqdn=decorati1.satest.jfk, key=tag, value='stringofcrap',
+    # test unqdn=jira1.satest.jfk, key=tag, value='stringofcrap',
     # new_value=anotherrandomstringofcrap, good results  
     def test_kv_update_nonexistent_value_bad(self):
         # set up for the test
-        query = {'unqdn': 'decorati1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
+        query = {'unqdn': 'jira1.satest.jfk', 'key': 'tag', 'value': 'randomstringofcrap'}
         # the test
         query['new_value'] = 'anotherrandomstringofcrap'
 
