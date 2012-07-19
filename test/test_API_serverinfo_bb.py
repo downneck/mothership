@@ -134,20 +134,20 @@ class TestAPI_serverinfo(unittest.TestCase):
     # testing si()                       #
     ######################################
 
-    # hostname=xenserver2.satest.jfk, good output
-    def test_si_hostname_good(self):
-        query = {'hostname': 'xenserver2.satest.jfk'}
+    # unqdn=xenserver2.satest.jfk, good output
+    def test_si_unqdn_good(self):
+        query = {'unqdn': 'xenserver2.satest.jfk'}
         result = si.si(query)
 
         self.assertEqual(result, bigassret)
-        print "[API_serverinfo] BB_test_si_hostname_good: PASSED"
+        print "[API_serverinfo] BB_test_si_unqdn_good: PASSED"
 
-    # hostname=garbage, bad output
-    def test_si_hostname_bad(self):
-        query = {'hostname': 'garbage'}
+    # unqdn=garbage, bad output
+    def test_si_unqdn_bad(self):
+        query = {'unqdn': 'garbage'}
 
         self.assertRaises(ServerInfoError, si.si, query)
-        print "[API_serverinfo] BB_test_si_hostname_bad: PASSED (raised ServerInfoError)"
+        print "[API_serverinfo] BB_test_si_unqdn_bad: PASSED (raised ServerInfoError)"
 
     # hw_tag=4VK27L1, good output
     def test_si_hwtag_good(self):

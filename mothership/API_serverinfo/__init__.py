@@ -76,9 +76,9 @@ class API_serverinfo:
                                 'desc': 'search for a MAC address', # its description
                                 'ol': 'm', # the one-letter designation for this option (ie -w)
                             },
-                            'hostname': { # an arg
+                            'unqdn': { # an arg
                                 'vartype': 'string', # its type
-                                'desc': 'search for a hostname', # its description
+                                'desc': 'search for an unqdn (hostname.realm.site_id)', # its description
                                 'ol': 'n', # the one-letter designation for this option (ie -w)
                             },
                         },
@@ -147,19 +147,19 @@ class API_serverinfo:
             self.cfg.dbsess.rollback()
             raise ServerInfoError("API_serverinfo/_get_host_from_mac: no host found with MAC address: %s" % key)
 
-    def _get_host_from_hostname(self, key):
+    def _get_host_from_unqdn(self, key):
         try:
-            s = mothership.validate.v_get_host_obj(self.cfg, key)
+            s = mothership.validate.v_get_server_obj(self.cfg, key)
             if s:
                 if type(s) == list:
-                    self.cfg.log.debug("API_serverinfo/_get_host_from_hostname: hostname not unique enough")
-                    raise ServerInfoError("API_serverinfo/_get_host_from_hostname: hostname not unique enough")
+                    self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn: hostname not unique enough")
+                    raise ServerInfoError("API_serverinfo/_get_host_from_unqdn: hostname not unique enough")
                 self.cfg.log.debug("API_serverinfo/_get_host_from hostname (validate): %s.%s.%s" % (s.hostname, s.realm, s.site_id))
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except Exception, e:
-            self.cfg.log.debug("API_serverinfo/_get_host_from_hostname was not able to find a hostname")
+            self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn was not able to find a hostname")
             self.cfg.dbsess.rollback()
-            raise ServerInfoError("API_serverinfo/_get_host_from_hostname: no host found with name: %s. Error: %s" % (key, e))
+            raise ServerInfoError("API_serverinfo/_get_host_from_unqdn: no host found with name: %s. Error: %s" % (key, e))
 
     def si(self, query):
         """
@@ -202,8 +202,8 @@ class API_serverinfo:
             if key == 'ip':
                 ret = self._get_host_from_ip(query[key])
                 break
-            if key == 'hostname':
-                ret = self._get_host_from_hostname(query[key])
+            if key == 'unqdn':
+                ret = self._get_host_from_unqdn(query[key])
                 break
             if key == 'mac':
                 ret = self._get_host_from_mac(query[key])
