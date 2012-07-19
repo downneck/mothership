@@ -52,9 +52,9 @@ class API_puppet:
                     'admin_only': False, 
                     'required_args': {
                         'args': {
-                            'hostname': {
+                            'unqdn': {
                                 'vartype': 'string',
-                                'desc': 'hostname of the server to classify',
+                                'desc': 'unqdn of the server to classify',
                                 'ol': 'n',
                             },
                         },
@@ -114,18 +114,19 @@ class API_puppet:
         sudoers = []
         node = {}
 
-        # make sure we got a hostname
+        # make sure we got a unqdn 
         try:
-            if not 'hostname' in query or not query['hostname']:
-                self.cfg.log.debug("API_puppet/classify: you must specify a hostname to query for")
-                raise PuppetError("API_puppet/classify: you must specify a hostname to query for")
-            self.cfg.log.debug("API_puppet/classify: querying for hostname: %s" % query['hostname'])
+            if not 'unqdn' in query or not query['unqdn']:
+                self.cfg.log.debug("API_puppet/classify: you must specify a unqdn to query for")
+                raise PuppetError("API_puppet/classify: you must specify a unqdn to query for")
+            self.cfg.log.debug("API_puppet/classify: querying for unqdn : %s" % query['unqdn'])
 
-            s = mothership.validate.v_get_host_obj(self.cfg, query['hostname'])
+            s = mothership.validate.v_get_server_obj(self.cfg, query['unqdn'])
 
+            # theoretically this should never happen. holdover from old days
             if type(s) == list:
-                self.cfg.log.debug("API_puppet/classify: hostname is not unique enough")
-                raise PuppetError("API_puppet/classify: hostname is not unique enough")
+                self.cfg.log.debug("API_puppet/classify: unqdn is not unique enough")
+                raise PuppetError("API_puppet/classify: unqdn is not unique enough")
                 
 
             if s:
@@ -152,9 +153,9 @@ class API_puppet:
                         if network.bond_options:
                             parameters['bond_options'] = network.bond_options
             else:
-                self.cfg.log.debug("API_puppet/classify: hostname not found: %s" % query['hostname'])
+                self.cfg.log.debug("API_puppet/classify: unqdn not found: %s" % query['unqdn'])
                 self.cfg.dbsess.rollback()
-                raise PuppetError("API_puppet/classify: hostname not found: %s" % query['hostname'])
+                raise PuppetError("API_puppet/classify: unqdn not found: %s" % query['unqdn'])
             
             # Tag
             if mtag and mtag.name:

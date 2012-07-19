@@ -30,8 +30,8 @@ class TestAPI_puppet(unittest.TestCase):
     ######################################
 
     # any=True, good output
-    def test_p_classify_hostname_good(self):
-        query = {'hostname': 'stage2.satest.jfk'}
+    def test_p_classify_unqdn_good(self):
+        query = {'unqdn': 'stage2.satest.jfk'}
         result = p.classify(query)
 
         # pre-define expected output
@@ -76,14 +76,14 @@ class TestAPI_puppet(unittest.TestCase):
         }
 
         self.assertEqual(result, ret)
-        print "[API_puppet] BB_test_p_classify_hostname_good: PASSED"
+        print "[API_puppet] BB_test_p_classify_unqdn_good: PASSED"
 
     # test unqdn=garbage, failure results
-    def test_p_classify_hostname_bad(self):
-        query = {'hostname': 'garbage'}
+    def test_p_classify_unqdn_bad(self):
+        query = {'unqdn': 'garbage'}
 
         self.assertRaises(PuppetError, p.classify, query)
-        print "[API_puppet] BB_test_p_classify_hostname_bad: PASSED (raised PuppetError)"
+        print "[API_puppet] BB_test_p_classify_unqdn_bad: PASSED (raised PuppetError)"
 
     # test snort=snort, failure results
     def test_p_classify_unknown_query_key_bad(self):

@@ -1396,7 +1396,7 @@ def gen_sudoers_groups(cfg, unqdn):
     """
     kvobj = mothership.API_kv.API_kv(cfg)
     # get the server entry
-    s = mothership.validate.v_get_host_obj(cfg, unqdn)
+    s = mothership.validate.v_get_server_obj(cfg, unqdn)
     if s:
         unqdn = '.'.join([s.hostname,s.realm,s.site_id])
         fqdn = '.'.join([unqdn,cfg.domain])
