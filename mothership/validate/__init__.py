@@ -871,8 +871,8 @@ def v_validate_name(cfg, name):
         raise ValidationError('v_validate_name() called without a name!')
     if re.search("[^A-Za-z0-9_\-.]", name):
         raise ValidationError('name contains illegal characters! allowed characters are: A-Z a-z 0-9 _ - .')
-    if len(name) < 4:
-        raise ValidationError('too short! name must have more than 3 characters')
+    if len(name) < 1:
+        raise ValidationError('too short! name must have more than 1 character')
     return True
 
 # very basic validation of site_id
