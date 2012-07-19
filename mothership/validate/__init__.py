@@ -405,6 +405,25 @@ def v_get_fqn(cfg, name):
         raise ValidationError("get_fqn() called incorrectly!")
 
 
+def v_split_unqn(unqn):
+    """
+    [description]
+    split a unqn into realm, site_id, domain
+    this assumes you've validated the unqn first
+
+    [parameter info]
+    required:
+        unqn: the fully-qualified or unqualified name we're splitting
+
+    [return value]
+    returns three fields, populated or unpopulated, depending on what the unqdn had 
+    """
+    if not unqn:
+        raise ValidationError("validate/v_split_unqn: refusing to split an empty unqn") 
+    parts = unqn.split(".")
+    return [None] * (3 - len(parts)) + parts[0:3]
+
+
 # split a fqn into realm, site_id, domain
 # this assumes you've validated the fqn first
 def v_split_fqn(fqn):
@@ -453,6 +472,9 @@ def v_unqn_in_servers(cfg, realm, site_id):
     True/False based on success/failure
     """
 
+    v_validate_site_id(cfg, site_id)
+    v_validate_realm(cfg, realm)
+
     # gather realm, site_id data
     d = cfg.dbsess.query(Server).\
     filter(Server.realm==realm).\
@@ -461,7 +483,7 @@ def v_unqn_in_servers(cfg, realm, site_id):
     if d:
         return True
     else:
-        return False
+        raise ValidationError("validate/v_unqn_in_servers: realm.site_id valid but not instantiated: %s.%s" % (realm, site_id)) 
 
 
 # find out if a realm.site_id is in the Users table
@@ -480,6 +502,9 @@ def v_unqn_in_users(cfg, realm, site_id):
     True/False based on success/failure
     """
 
+    v_validate_site_id(cfg, site_id)
+    v_validate_realm(cfg, realm)
+
     # gather realm, site_id data
     d = cfg.dbsess.query(Users).\
     filter(Users.realm==realm).\
@@ -488,7 +513,7 @@ def v_unqn_in_users(cfg, realm, site_id):
     if d:
         return True
     else:
-        return False
+        raise ValidationError("validate/v_unqn_in_users: realm.site_id valid but not instantiated: %s.%s" % (realm, site_id)) 
 
 
 # find out if a realm.site_id is in the Groups table
@@ -507,6 +532,9 @@ def v_unqn_in_groups(cfg, realm, site_id):
     True/False based on success/failure
     """
 
+    v_validate_site_id(cfg, site_id)
+    v_validate_realm(cfg, realm)
+
     # gather realm, site_id data
     d = cfg.dbsess.query(Groups).\
     filter(Groups.realm==realm).\
@@ -515,7 +543,7 @@ def v_unqn_in_groups(cfg, realm, site_id):
     if d:
         return True
     else:
-        return False
+        raise ValidationError("validate/v_unqn_in_groups: realm.site_id valid but not instantiated: %s.%s" % (realm, site_id)) 
 
 
 # find out if a realm.site_id is in the KV table
@@ -534,6 +562,9 @@ def v_unqn_in_kv(cfg, realm, site_id):
     True/False based on success/failure
     """
 
+    v_validate_site_id(cfg, site_id)
+    v_validate_realm(cfg, realm)
+
     # gather realm, site_id data
     d = cfg.dbsess.query(KV).\
     filter(KV.realm==realm).\
@@ -542,7 +573,7 @@ def v_unqn_in_kv(cfg, realm, site_id):
     if d:
         return True
     else:
-        return False
+        raise ValidationError("validate/v_unqn_in_kv: realm.site_id valid but not instantiated: %s.%s" % (realm, site_id)) 
 
 
 # find out if a realm.site_id is in the dns_addendum table
@@ -561,6 +592,9 @@ def v_unqn_in_dns_addendum(cfg, realm, site_id):
     True/False based on success/failure
     """
 
+    v_validate_site_id(cfg, site_id)
+    v_validate_realm(cfg, realm)
+
     # gather realm, site_id data
     d = cfg.dbsess.query(DnsAddendum).\
     filter(DnsAddendum.realm==realm).\
@@ -569,7 +603,7 @@ def v_unqn_in_dns_addendum(cfg, realm, site_id):
     if d:
         return True
     else:
-        return False
+        raise ValidationError("validate/v_unqn_in_dns_addendum: realm.site_id valid but not instantiated: %s.%s" % (realm, site_id)) 
 
 
 def v_get_user_obj(cfg, username):
@@ -660,46 +694,36 @@ def v_get_group_obj(cfg, groupname):
         return None 
 
 
-def v_get_host_obj(cfg, hostname):
+def v_get_server_obj(cfg, unqdn):
     """
     [description]
-    host names can be passed to functions in several ways, sometimes containing realm and/or site_id information. this function takes arbitrary input and parses it, then calls v_host_picker() to select a server object from the database and returns it.
+    gets a server object from the server table based on unqdn 
 
     [parameter info]
     required:
         cfg: the config object. useful everywhere
-        hostname: the hostname we want to parse
+        unqdn: the unqdn of the server we want to fetch
 
     [return value]
-    returns a Servers object
+    returns a Servers object or raises an error
     """
-    # create a list of all the hosts with this name in the db
-    # we explicitly use the list function because the return behaves
-    # differently depending on the number of host instances in the db
-    # just one instance returns a host object, more than one returns a
-    # list of host objects
-    h = hostname.split('.')
-    if len(h) == 1:
-        h = list(cfg.dbsess.query(Server).\
-        filter(Server.hostname==hostname))
-    elif len(h) > 1:
-        # validate/construct/get the realm.site_id.domain data
-        fqdn = v_get_fqn(cfg, name=hostname)
-        hostname, realm, site_id, domain = v_split_fqn(fqdn)
-        fqn = realm+'.'+site_id+'.'+domain
-        h = list(cfg.dbsess.query(Server).\
-        filter(Server.hostname==hostname).\
-        filter(Server.realm==realm).\
-        filter(Server.site_id==site_id))
+    # get the realm.site_id.domain data
+    hostname, realm, site_id = v_split_unqn(unqdn)
+    if hostname:
+        v_validate_name(cfg, hostname)
+        v_validate_realm(cfg, realm)
+        v_validate_site_id(cfg, site_id)
+    else:
+        raise ValidationError("validate/v_get_server_obj: incomplete unqdn (no hostname!): %s" % unqdn)
+    h = cfg.dbsess.query(Server).\
+    filter(Server.hostname==hostname).\
+    filter(Server.realm==realm).\
+    filter(Server.site_id==site_id).first()
 
     if h:
-        h = v_host_picker(cfg, h)
-        if h:
-            return h
-        else:
-            raise ValidationError('something has gone terribly wrong in the v_get_host_obj() function')
+        return h
     else:
-        return None 
+        raise ValidationError("validate/v_get_server_obj: no object found for: %s" % unqdn)
 
 
 def v_parse_name(cfg, username=None, groupname=None, hostname=None):
@@ -845,13 +869,48 @@ def v_validate_name(cfg, name):
 
     if not name:
         raise ValidationError('v_validate_name() called without a name!')
-
     if re.search("[^A-Za-z0-9_\-.]", name):
-        print 'name contains illegal characters! allowed characters are: A-Z a-z 0-9 _ - .'
-        return False
-
+        raise ValidationError('name contains illegal characters! allowed characters are: A-Z a-z 0-9 _ - .')
     if len(name) < 4:
-        print 'too short! name must have more than 3 characters'
-        return False
-
+        raise ValidationError('too short! name must have more than 3 characters')
     return True
+
+# very basic validation of site_id
+def v_validate_site_id(cfg, site_id):
+    """
+    [description]
+    very basic validation of site_id
+
+    [parameter info]
+    required:
+        cfg: the config object. useful everywhere
+        site_id: the site_id we're validating
+
+    [return value]
+    returns true if valid, raises an exception if not
+    """
+
+    if not site_id in cfg.site_ids:
+        raise ValidationError("site_id is not valid: %s" % site_id)
+    else:
+        return True
+
+# very basic validation of realm
+def v_validate_realm(cfg, realm):
+    """
+    [description]
+    very basic validation of realm
+
+    [parameter info]
+    required:
+        cfg: the config object. useful everywhere
+        realm: the realm we're validating
+
+    [return value]
+    returns true if valid, raises an exception if not
+    """
+
+    if not realm in cfg.realms:
+        raise ValidationError("realm is not valid: %s" % realm)
+    else:
+        return True

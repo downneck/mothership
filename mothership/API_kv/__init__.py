@@ -23,6 +23,7 @@ import mothership
 
 from mothership.mothership_models import *
 from mothership.common import *
+from mothership.validate import *
 
 class KVError(Exception):
     pass
@@ -276,9 +277,9 @@ class API_kv:
             # translate our unqdn to hostname, realm, site_id
             try:
                 if unqdn:
-                    hostname, realm, site_id = mothership.split_fqdn(unqdn)
+                    hostname, realm, site_id = v_split_unqn(unqdn)
             except Exception, e:
-                cfg.log.debug("API_kv/select: mothership.split_fqdn(unqdn) failed!\nerror: %s" % e)
+                cfg.log.debug("API_kv/select: %s" % e)
 
             # grab the first thing we can find.
             if any:
@@ -475,7 +476,7 @@ class API_kv:
 
             # filtery by unqdn (or any portion thereof)
             if unqdn != None:
-                hostname, realm, site_id = mothership.split_fqdn(unqdn)
+                hostname, realm, site_id = v_split_unqn(unqdn)
                 buf += "unqdn=%s hostname=%s realm=%s site_id=%s " % (unqdn, hostname, realm, site_id)
                 results = results.\
                     filter(or_(KV.site_id==site_id, KV.site_id==None)).\
@@ -619,7 +620,7 @@ class API_kv:
 
             # filtery by unqdn (or any portion thereof)
             if unqdn != None:
-                hostname, realm, site_id = mothership.split_fqdn(unqdn)
+                hostname, realm, site_id = v_split_unqn(unqdn)
                 buf += "unqdn=%s hostname=%s realm=%s site_id=%s " % (unqdn, hostname, realm, site_id)
             else:
                 buf += "unqdn=(global!) hostname=%s realm=%s site_id=%s " % (hostname, realm, site_id)
@@ -689,7 +690,7 @@ class API_kv:
 
             # filtery by unqdn (or any portion thereof)
             if unqdn != 'GLOBAL':
-                hostname, realm, site_id = mothership.split_fqdn(unqdn)
+                hostname, realm, site_id = v_split_unqn(unqdn)
                 buf += "unqdn=%s hostname=%s realm=%s site_id=%s " % (unqdn, hostname, realm, site_id)
             else:
                 buf += "unqdn=(global!)"
@@ -731,9 +732,16 @@ class API_kv:
         returns a KV ORMobject
         """
         try:
-            hostname, realm, site_id = mothership.split_fqdn(unqdn)
+            hostname, realm, site_id = v_split_unqn(unqdn)
+            if hostname:
+                v_get_server_obj(self.cfg, unqdn)
+            elif realm:
+                v_unqn_in_servers(self.cfg, realm, site_id)
+            elif site_id:
+                v_validate_site_id(self.cfg, site_id)
+ 
             kv = KV(key, value, hostname, realm, site_id)
             return kv
         except Exception, e:
-            cfg.dbsess.rollback()
+            self.cfg.dbsess.rollback()
             raise KVError("API_kv/__new: error: %s" % e) 

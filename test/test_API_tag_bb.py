@@ -365,6 +365,14 @@ class TestAPI_tag(unittest.TestCase):
         self.assertEqual(result, 'success')
         print "[API_tag] BB_test_tag_tag_name_unqdn_is_GLOBAL_good: PASSED"
 
+    # name, unqdn invalid, failure 
+    def test_tag_tag_bad_host_failure(self):
+        query = {'name': 'puppet', 'unqdn': 'blarg1.satest.jfk'} 
+
+        self.assertRaises(TagError, tag.tag, query)
+        print "[API_tag] BB_test_tag_tag_bad_host_failure: PASSED (raised TagError)"
+
+
 
     ######################################
     # testing untag()                    #
