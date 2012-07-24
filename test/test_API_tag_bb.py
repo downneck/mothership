@@ -319,9 +319,49 @@ class TestAPI_tag(unittest.TestCase):
 
         self.assertEqual(result, 'success')
         print "[API_tag] BB_test_tag_update_everything_good: PASSED"
+ 
 
+    ######################################
+    # testing tag()                      #
+    ######################################
 
+    # name, unqdn=server.realm.site, good results
+    def test_tag_tag_name_unqdn_is_server_realm_site_good(self):
+        query = {'name': 'puppet', 'unqdn': 'cm1.satest.jfk'}
+        result = tag.tag(query)
+        # put everything back where we found it
+        tag.untag(query)
 
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_tag_name_unqdn_is_server_realm_site_good: PASSED"
+ 
+    # name, unqdn=realm.site, good results
+    def test_tag_tag_name_unqdn_is_realm_site_good(self):
+        query = {'name': 'puppet', 'unqdn': 'satest.jfk'}
+        result = tag.tag(query)
+        # put everything back where we found it
+        tag.untag(query)
 
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_tag_name_unqdn_is_realm_site_good: PASSED"
 
+    # name, unqdn=site, good results
+    def test_tag_tag_name_unqdn_is_site_good(self):
+        query = {'name': 'puppet', 'unqdn': 'jfk'}
+        result = tag.tag(query)
+        # put everything back where we found it
+        tag.untag(query)
+
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_tag_name_unqdn_is_site_good: PASSED"
+
+    # name, unqdn=GLOBAL, good results
+    def test_tag_tag_name_unqdn_is_GLOBAL_good(self):
+        query = {'name': 'puppet', 'unqdn': 'GLOBAL'}
+        result = tag.tag(query)
+        # put everything back where we found it
+        tag.untag(query)
+
+        self.assertEqual(result, 'success')
+        print "[API_tag] BB_test_tag_tag_name_unqdn_is_GLOBAL_good: PASSED"
 

@@ -173,7 +173,7 @@ class API_tag:
                             },
                             'unqdn': {
                                 'vartype': 'string',
-                                'desc': 'unqdn of the server to map the tag onto',
+                                'desc': 'unqdn of the server to map the tag onto (use the keyword "GLOBAL" to map a tag globally)',
                                 'ol': 'u',
                             },
                         },
@@ -197,7 +197,7 @@ class API_tag:
                             },
                             'unqdn': {
                                 'vartype': 'string',
-                                'desc': 'unqdn of the server to unmap the tag from',
+                                'desc': 'unqdn of the server to unmap the tag from (use the keyword "GLOBAL" to unmap a globally mapped tag)',
                                 'ol': 'u',
                             },
                         },
