@@ -1,13 +1,11 @@
-QUICKSTART
-==========
+### QUICKSTART
 
 Read Install Dependencies section
 Read Bootstrap section
 Read INSTALL file
 Read UPGRADE file (if upgrading)
 
-Install Dependencies
-==========================
+### Install Dependencies
   * Dependencies:  SQLAlchemy
   *                PyYAML
   *                psycopg2
@@ -27,19 +25,20 @@ Install Dependencies
   *       sudo port install py26-psycopg2  # Need to use pip if using postgresql8.5 or higher
   *       sudo pip-2.6 install cmdln
 
-Bootstrap for OSX
-==========================
+### Bootstrap for OSX
 
 * sudo python_select python26    # Or use -l and select whatever python you want
 * sudo -u postgres createuser <your user id>   # Say yes to superuser unless you want to spend forever on perms
 * sudo -u postgres /opt/local/lib/postgresql84/bin/pg_ctl -D /opt/local/var/db/postgresql84/defaultdb start (If you need to start postgres)
 * Ensure you have some sort of postgresql based database lying around
 
-Contributors - Main Team
-==========================
-Alain Hoang
-Andres Pereira
+#### Current Contributors
 David Kovach
+
+#### Historical Contributors
+Andres Pereira
 Jared Brothers
 Kent Lee
-Matt Osterhaus
+Alain Hoang
+Riccardo Setti
+Matthew Osterhaus
