@@ -78,7 +78,7 @@ class API_userdata:
                     },
                     'optional_args': {
                         'min': 0,
-                        'max': 3,
+                        'max': 8,
                         'args': {
                             'first_name': {
                                 'vartype': 'string',
@@ -145,19 +145,179 @@ class API_userdata:
                         'string': 'success',
                     },
                 },
-# # # # # # # # # # # #
-# GOOD TO HERE
-# # # # # # # # # # # #
-                'update': {
-                    'description': 'update a tag entry in the tags table. use "None" to clear a setting',
+                'umodify': {
+                    'description': 'modify an existing user entry',
                     'rest_type': 'PUT',
                     'admin_only': True, 
                     'required_args': {
                         'args': {
-                            'name': {
+                            'unqun': {
                                 'vartype': 'string',
-                                'desc': 'name of the tag to update in the database',
+                                'desc': 'username.realm.site_id of the user to modify',
+                                'ol': 'u',
+                            },
+                        },
+                    },
+                    'optional_args': {
+                        'min': 1,
+                        'max': 8,
+                        'args': {
+                            'first_name': {
+                                'vartype': 'string',
+                                'desc': 'user\'s first name (default John)',
+                                'ol': 'f',
+                            },
+                            'last_name': {
+                                'vartype': 'string',
+                                'desc': 'user\'s last name (default Doe)',
+                                'ol': 'l',
+                            },
+                            'ssh_key': {
+                                'vartype': 'string',
+                                'desc': 'a string containing the user\'s ssh key blob',
+                                'ol': 'k',
+                            },
+                            'shell': {
+                                'vartype': 'string',
+                                'desc': "user's shell (default: %s)" % cfg.shell,
+                                'ol': 's',
+                            },
+                            'email_address': {
+                                'vartype': 'string',
+                                'desc': "user's email address (default: username@%s)" % cfg.email_domain,
+                                'ol': 'e',
+                            },
+                            'home_dir': {
+                                'vartype': 'string',
+                                'desc': "user's home directory (default: %s/username)" % cfg.hdir,
+                                'ol': 'e',
+                            },
+                            'user_type': {
+                                'vartype': 'string',
+                                'desc': "user type, pick one of: %s (default: %s)" % (" ".join(cfg.user_types), cfg.def_user_type),
+                                'ol': 't',
+                            },
+                            'uid': {
+                                'vartype': 'string',
+                                'desc': "user's uid (default will pick the next available uid)",
+                                'ol': 'i',
+                            },
+                        },
+                    },
+                    'return': {
+                        'string': 'success',
+                    },
+                },
+                'uclone': {
+                    'description': 'clone a user from one realm.site_id to another',
+                    'rest_type': 'POST',
+                    'admin_only': True, 
+                    'required_args': {
+                        'args': {
+                            'unqun': {
+                                'vartype': 'string',
+                                'desc': 'username.realm.site_id of the user to clone from',
+                               'ol': 'u',
+                            },
+                            'newunqn': {
+                                'vartype': 'string',
+                                'desc': 'realm.site_id to clone the user into',
                                 'ol': 'n',
+                            },
+                        },
+                    },
+                    'optional_args': {
+                    },
+                    'return': {
+                        'string': 'success',
+                    },
+                },
+                'gdisplay': {
+                    'description': 'display a group\'s info',
+                    'rest_type': 'GET',
+                    'admin_only': False,
+                    'required_args': {
+                        'args': {
+                            'unqgn': {
+                                'vartype': 'string',
+                                'desc': 'name.realm.site_id of the group',
+                                'ol': 'u',
+                            },
+                        },
+                    },
+                    'optional_args': {
+                    },
+                    'return': {
+                        'group': 'ORMobject',
+                    },
+                },
+                'gadd': {
+                    'description': 'create a group entry in the group table',
+                    'rest_type': 'POST',
+                    'admin_only': True,
+                    'required_args': {
+                        'args': {
+                            'unqgn': {
+                                'vartype': 'string',
+                                'desc': 'group.realm.site_id of the group to add to the database',
+                                'ol': 'u',
+                            },
+                        },
+                    },
+                    'optional_args': {
+                        'min': 0,
+                        'max': 3,
+                        'args': {
+                            'description': {
+                                'vartype': 'string',
+                                'desc': 'a description of the group',
+                                'ol': 'd',
+                            },
+                            'sudo_cmds': {
+                                'vartype': 'string',
+                                'desc': 'commands users of this group are allowd to run as root',
+                                'ol': 's',
+                            },
+                            'gid': {
+                                'vartype': 'string',
+                                'desc': 'group id number to assign to the group',
+                                'ol': 'g',
+                            },
+                        },
+                    },
+                    'return': {
+                        'string': 'success',
+                    },
+                },
+                'gdelete': {
+                    'description': 'delete a group entry from the groups table',
+                    'rest_type': 'DELETE',
+                    'admin_only': True, 
+                    'required_args': {
+                        'args': {
+                            'unqgn': {
+                                'vartype': 'string',
+                                'desc': 'groupname.realm.site_id of the group to delete from the database',
+                                'ol': 'g',
+                            },
+                        },
+                    },
+                    'optional_args': {
+                    },
+                    'return': {
+                        'string': 'success',
+                    },
+                },
+                'gmodify': {
+                    'description': 'modify an existing group entry',
+                    'rest_type': 'PUT',
+                    'admin_only': True, 
+                    'required_args': {
+                        'args': {
+                            'unqgn': {
+                                'vartype': 'string',
+                                'desc': 'groupname.realm.site_id of the group to modify',
+                                'ol': 'u',
                             },
                         },
                     },
@@ -165,20 +325,20 @@ class API_userdata:
                         'min': 1,
                         'max': 3,
                         'args': {
-                            'start_port': {
-                                'vartype': 'int',
-                                'desc': 'start of port range',
+                            'description': {
+                                'vartype': 'string',
+                                'desc': 'a description of the group',
+                                'ol': 'd',
+                            },
+                            'sudo_cmds': {
+                                'vartype': 'string',
+                                'desc': 'commands users of this group are allowd to run as root',
                                 'ol': 's',
                             },
-                            'stop_port': {
-                                'vartype': 'int',
-                                'desc': 'end of port range',
-                                'ol': 't',
-                            },
-                            'security_level': {
-                                'vartype': 'int',
-                                'desc': 'security level override',
-                                'ol': 'e',
+                            'gid': {
+                                'vartype': 'string',
+                                'desc': 'group id number to assign to the group',
+                                'ol': 'g',
                             },
                         },
                     },
@@ -186,21 +346,21 @@ class API_userdata:
                         'string': 'success',
                     },
                 },
-                'tag': {
-                    'description': 'map a tag to a server (tag! you\'re it!)',
+                'gclone': {
+                    'description': 'clone a group from one realm.site_id to another',
                     'rest_type': 'POST',
                     'admin_only': True, 
                     'required_args': {
                         'args': {
-                            'name': {
+                            'unqgn': {
                                 'vartype': 'string',
-                                'desc': 'name of the tag to map',
-                                'ol': 'n',
+                                'desc': 'groupname.realm.site_id of the group to clone from',
+                               'ol': 'u',
                             },
-                            'unqdn': {
+                            'newunqn': {
                                 'vartype': 'string',
-                                'desc': 'unqdn of the server to map the tag onto (use the keyword "GLOBAL" to map a tag globally)',
-                                'ol': 'u',
+                                'desc': 'realm.site_id to clone the group into',
+                                'ol': 'n',
                             },
                         },
                     },
@@ -210,21 +370,45 @@ class API_userdata:
                         'string': 'success',
                     },
                 },
-                'untag': {
-                    'description': 'unmap a tag from a server',
-                    'rest_type': 'DELETE',
+                'utog': {
+                    'description': 'map a username.realm.site_id to group in the same realm.site_id',
+                    'rest_type': 'POST',
                     'admin_only': True, 
                     'required_args': {
                         'args': {
-                            'name': {
+                            'unqun': {
                                 'vartype': 'string',
-                                'desc': 'name of the tag to unmap',
-                                'ol': 'n',
+                                'desc': 'username.realm.site_id of the user to map',
+                               'ol': 'u',
                             },
-                            'unqdn': {
+                            'groupname': {
                                 'vartype': 'string',
-                                'desc': 'unqdn of the server to unmap the tag from (use the keyword "GLOBAL" to unmap a globally mapped tag)',
-                                'ol': 'u',
+                                'desc': 'groupname (without the realm.site_id) to map the user to',
+                                'ol': 'g',
+                            },
+                        },
+                    },
+                    'optional_args': {
+                    },
+                    'return': {
+                        'string': 'success',
+                    },
+                },
+                'urmg': {
+                    'description': 'remove a username.realm.site_id from a group in the same realm.site_id',
+                    'rest_type': 'POST',
+                    'admin_only': True, 
+                    'required_args': {
+                        'args': {
+                            'unqun': {
+                                'vartype': 'string',
+                                'desc': 'username.realm.site_id of the user to unmap',
+                               'ol': 'u',
+                            },
+                            'groupname': {
+                                'vartype': 'string',
+                                'desc': 'groupname (without the realm.site_id) to remove the user from',
+                                'ol': 'g',
                             },
                         },
                     },

@@ -55,7 +55,7 @@ class API_puppet:
                             'unqdn': {
                                 'vartype': 'string',
                                 'desc': 'unqdn of the server to classify',
-                                'ol': 'n',
+                                'ol': 'u',
                             },
                         },
                     },
@@ -101,7 +101,6 @@ class API_puppet:
         [return value]
         returns a dict of information if successful
         """
-        name = "" 
         classes = []
         mtags = []
         environment = ""

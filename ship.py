@@ -70,7 +70,7 @@ def print_commands(cfg, module_map):
             raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
         print "Available module commands:\n"
         for k in mmeta['data']['methods'].keys():
-            print sys.argv[1]+'/'+k
+            print sys.argv[1]+'/'+k+' - '+mmeta['data']['methods'][k]['description']
         print "\nRun \"ship <submodule>/<command>\" for more information"
     except Exception, e:
         raise ShipCLIError("Error: %s" % e)
