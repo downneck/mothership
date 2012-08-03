@@ -365,13 +365,33 @@ class TestAPI_tag(unittest.TestCase):
         self.assertEqual(result, 'success')
         print "[API_tag] BB_test_tag_tag_name_unqdn_is_GLOBAL_good: PASSED"
 
-    # name, unqdn invalid, failure 
-    def test_tag_tag_bad_host_failure(self):
+    # name, hostname invalid, failure 
+    def test_tag_tag_bad_hostname_failure(self):
         query = {'name': 'puppet', 'unqdn': 'blarg1.satest.jfk'} 
 
         self.assertRaises(TagError, tag.tag, query)
-        print "[API_tag] BB_test_tag_tag_bad_host_failure: PASSED (raised TagError)"
+        print "[API_tag] BB_test_tag_tag_bad_hostname_failure: PASSED (raised TagError)"
 
+    # name invalid, unqdn, failure 
+    def test_tag_tag_bad_tagname_failure(self):
+        query = {'name': 'shreveport', 'unqdn': 'jira1.satest.jfk'} 
+
+        self.assertRaises(TagError, tag.tag, query)
+        print "[API_tag] BB_test_tag_tag_bad_tagname_failure: PASSED (raised TagError)"
+
+    # name, realm invalid, failure 
+    def test_tag_tag_bad_realm_failure(self):
+        query = {'name': 'puppet', 'unqdn': 'jira1.fubar.jfk'} 
+
+        self.assertRaises(TagError, tag.tag, query)
+        print "[API_tag] BB_test_tag_tag_bad_realm_failure: PASSED (raised TagError)"
+
+    # name, site_id invalid, failure 
+    def test_tag_tag_bad_site_id_failure(self):
+        query = {'name': 'puppet', 'unqdn': 'jira1.satest.foo'} 
+
+        self.assertRaises(TagError, tag.tag, query)
+        print "[API_tag] BB_test_tag_tag_bad_site_id_failure: PASSED (raised TagError)"
 
 
     ######################################
@@ -418,3 +438,30 @@ class TestAPI_tag(unittest.TestCase):
         self.assertEqual(result, 'success')
         print "[API_tag] BB_test_tag_untag_name_unqdn_is_GLOBAL_good: PASSED"
 
+    # name, hostname invalid, failure 
+    def test_tag_untag_bad_hostname_failure(self):
+        query = {'name': 'puppet', 'unqdn': 'blarg1.satest.jfk'} 
+
+        self.assertRaises(TagError, tag.untag, query)
+        print "[API_tag] BB_test_tag_untag_bad_hostname_failure: PASSED (raised TagError)"
+
+    # name invalid, unqdn, failure 
+    def test_tag_untag_bad_tagname_failure(self):
+        query = {'name': 'shreveport', 'unqdn': 'jira1.satest.jfk'} 
+
+        self.assertRaises(TagError, tag.untag, query)
+        print "[API_tag] BB_test_tag_untag_bad_tagname_failure: PASSED (raised TagError)"
+
+    # name, realm invalid, failure 
+    def test_tag_untag_bad_realm_failure(self):
+        query = {'name': 'puppet', 'unqdn': 'jira1.fubar.jfk'} 
+
+        self.assertRaises(TagError, tag.untag, query)
+        print "[API_tag] BB_test_tag_untag_bad_realm_failure: PASSED (raised TagError)"
+
+    # name, site_id invalid, failure 
+    def test_tag_untag_bad_site_id_failure(self):
+        query = {'name': 'puppet', 'unqdn': 'jira1.satest.foo'} 
+
+        self.assertRaises(TagError, tag.untag, query)
+        print "[API_tag] BB_test_tag_untag_bad_site_id_failure: PASSED (raised TagError)"
