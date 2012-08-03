@@ -740,7 +740,7 @@ class API_kv:
             elif realm:
                 v_unqn_in_servers(self.cfg, realm, site_id)
             elif site_id:
-                v_validate_site_id(self.cfg, site_id)
+                v_site_id(self.cfg, site_id)
  
             kv = KV(key, value, hostname, realm, site_id)
             return kv
