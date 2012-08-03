@@ -21,7 +21,7 @@
 import sys
 
 import mothership.API_kv
-import mothership.validate
+from mothership.validate import *
 from mothership.common import *
 from mothership.mothership_models import *
 
@@ -149,7 +149,7 @@ class API_serverinfo:
 
     def _get_host_from_unqdn(self, key):
         try:
-            s = mothership.validate.v_get_server_obj(self.cfg, key)
+            s = v_get_server_obj(self.cfg, key)
             if s:
                 if type(s) == list:
                     self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn: hostname not unique enough")

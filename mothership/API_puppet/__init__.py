@@ -21,7 +21,7 @@ import mothership
 import mothership.API_kv
 import mothership.users
 import mothership.common
-import mothership.validate
+from mothership.validate import *
 from mothership.mothership_models import *
 
 class PuppetError(Exception):
@@ -121,7 +121,7 @@ class API_puppet:
                 raise PuppetError("API_puppet/classify: you must specify a unqdn to query for")
             self.cfg.log.debug("API_puppet/classify: querying for unqdn : %s" % query['unqdn'])
 
-            s = mothership.validate.v_get_server_obj(self.cfg, query['unqdn'])
+            s = v_get_server_obj(self.cfg, query['unqdn'])
 
             # theoretically this should never happen. holdover from old days
             if type(s) == list:
