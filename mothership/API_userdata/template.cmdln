@@ -1,0 +1,5 @@
+
+tag name:               {{r['data']['name']}}
+start port:             {{r['data']['start_port']}}
+stop port:              {{r['data']['stop_port']}}
+security level:         {{r['data']['security_level']}}
