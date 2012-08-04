@@ -38,7 +38,7 @@ class API_kv:
         self.metadata = {
             'config': {
                 'shortname': 'kv',
-                'description': 'allows interaction with the KeyValue table',
+                'description': 'allows interaction with the KeyValue table (not to be taken lightly)',
                 'module_dependencies': {
                     'mothership_models': 1,
                 },
