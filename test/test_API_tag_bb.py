@@ -73,7 +73,7 @@ class TestAPI_tag(unittest.TestCase):
     def test_tag_display_bad_name_null_result(self):
         query = {'name': 'FAILURE'}
 
-        self.assertRaises(Tagerror, tag.display, query)
+        self.assertRaises(TagError, tag.display, query)
         print "[API_tag] BB_test_tag_display_name_bad: PASSED (raised TagError)"
 
 
