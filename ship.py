@@ -155,7 +155,6 @@ def call_command(cfg, module_map):
             (options, args) = parser.parse_args(sys.argv[2:])
             for k in arglist.keys():
                 a = vars(options)[k]
-                print buf
                 if a:
                     if buf:
                         buf += '&'
