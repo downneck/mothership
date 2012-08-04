@@ -53,7 +53,7 @@ def get_submodules(cfg, module_map):
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
-                raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
+                raise ShipCLIError("Error output:\n%s" % mmeta['msg'])
             buf += "%s (%s): %s" % (module_map[i], i.split('API_')[1], mmeta['data']['config']['description'])
             buf += "\n"
         buf += "\n\nRun \"ship <submodule>\" for more information"
@@ -70,7 +70,7 @@ def get_commands(cfg, module_map):
         mmeta = myjson.loads(response.content)
         buf = ""
         if mmeta['status'] != 0:
-            raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
+            raise ShipCLIError("Error output:\n%s" % mmeta['msg'])
         buf += "Available module commands:\n\n"
         for k in mmeta['data']['methods'].keys():
             buf += sys.argv[1]+'/'+k+' - '+mmeta['data']['methods'][k]['description']
@@ -121,7 +121,7 @@ def call_command(cfg, module_map):
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
-                raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
+                raise ShipCLIError("Error output:\n%s" % mmeta['msg'])
 
             # set up our command line options through optparse. will
             # change this to argparse if we upgrade past python 2.7
@@ -156,6 +156,12 @@ def call_command(cfg, module_map):
             if not arglist:
                 raise ShipCLIError("Error: no arguments defined")
 
+            # do we have any required arguments?
+            if 'args' in mmeta['data']['methods'][call]['required_args'].keys():
+                required_args = mmeta['data']['methods'][call]['required_args']['args'].keys()
+            else:
+                required_args = [] 
+
             # parse our options and build a urlencode string to pass
             # over to the API service
             #
@@ -164,9 +170,13 @@ def call_command(cfg, module_map):
             files = {}
             for k in arglist.keys():
                 a = vars(options)[k]
-                if arglist[k] == "file":
+                # if the variable type expected by ship_daemon is "file", we
+                # need to operate slightly differently
+                if a and k and arglist[k] == "file":
                     files[k] = open(a)
-                elif a:
+                # if the variable type isn't "file", jam the query onto
+                # the end of our query string buffer
+                elif a and k:
                     if buf:
                         buf += '&'
                     if a != True:
@@ -174,11 +184,13 @@ def call_command(cfg, module_map):
                     else:
                         buf += k
                 # if options[k] is empty and is a required option, explode
-                elif k in mmeta['data']['methods'][call]['required_args']['args'].keys():
+                elif not a and k in required_args: 
                     raise ShipCLIError(get_command_args(cfg, module_map))
+                # this just means's it's an unpopulated optional argument
+                else:
+                    pass
 
             # make the call out to our API service, expect JSON back,
-            # load the JSON into the equivalent python variable type
             if mmeta['data']['methods'][call]['rest_type'] == 'GET':
                 callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'POST':
@@ -187,9 +199,15 @@ def call_command(cfg, module_map):
                 callresponse = requests.delete('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'PUT':
                 callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, files=files, auth=(cfg.api_admin_user, cfg.api_admin_pass))
+            # load the JSON response into the equivalent python variable type
             responsedata = myjson.loads(callresponse.content)
             if responsedata['status'] != 0:
-                raise ShipCLIError("Error occurred:\n%s" % responsedata['msg'])
+                raise ShipCLIError("Error output:\n%s" % responsedata['msg'])
+
+            # close any open files 
+            if files:
+                for k in files.keys():
+                    files[k].close()
 
             # if we get just a unicode string back, it's a status
             # message...print it. otherwise, we got back a dict or list
@@ -295,8 +313,8 @@ if __name__ == "__main__":
         # check the status on our JSON response. 0 == good, anything
         # else == bad. expect error information in the 'msg' payload
         if response_dict['status'] != 0:
-            log.debug("Error occurred:\n%s" % response_dict['msg'])
-            raise ShipCLIError("Error occurred:\n%s" % response_dict['msg'])
+            log.debug("Error output:\n%s" % response_dict['msg'])
+            raise ShipCLIError("Error output:\n%s" % response_dict['msg'])
         # if it didn't blow up, populate the module list
         module_list = response_dict['data']
         module_map = {}
@@ -344,6 +362,7 @@ if __name__ == "__main__":
         sys.exit(1)
     except ShipCLIError as e:
         print "Error in command line. \n\n%s" % e
+        log.debug("Error in command line. \n\n%s" % e)
         sys.exit(1)
     except Exception, e:
         print "Error in __main__: %s" % e
