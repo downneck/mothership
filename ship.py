@@ -155,6 +155,7 @@ def call_command(cfg, module_map):
             (options, args) = parser.parse_args(sys.argv[2:])
             for k in arglist.keys():
                 a = vars(options)[k]
+                print buf
                 if a:
                     if buf:
                         buf += '&'
@@ -162,9 +163,8 @@ def call_command(cfg, module_map):
                         buf += k+'='+str(a.replace(' ', '%20'))
                     else:
                         buf += k
-
-            if args:
-                raise ShipCLIError("Perhaps you forgot to put a '-' or '--' in front of your options?")
+                else:
+                    raise ShipCLIError("Perhaps you forgot to put a '-' or '--' in front of your options?")
                 
 
             # make the call out to our API service, expect JSON back,

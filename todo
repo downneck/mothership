@@ -1,2 +1,4 @@
 figure out why we allow options without dashes
 ./ship ud/udisplay bobsponge.satest.jfk : returns empty stuff instead of raising an error
+
+made a hacky workaround to blow up if an "option" is empty. still need to completely figure out how the querys are constructed by optparse and fix this for real.
