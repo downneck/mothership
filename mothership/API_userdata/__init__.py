@@ -459,7 +459,12 @@ class API_userdata:
                 self.cfg.log.debug("API_userdata/udisplay: user %s not found." % unqun)
                 raise UserdataError("API_userdata/udisplay: user %s not found" % unqun)
         
-            return u.to_dict()
+            if u:
+                return u.to_dict()
+            else:
+                self.cfg.log.debug("API_userdata/udisplay: user %s not found." % unqun)
+                raise UserdataError("API_userdata/udisplay: user %s not found" % unqun)
+                
 
         except Exception, e:
             self.cfg.log.debug("API_userdata/udisplay: %s" % e) 
