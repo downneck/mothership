@@ -53,48 +53,48 @@ def v_domain(cfg, domain):
 
 
 # Validates ssh2 pubkeys
-def v_ssh2_pubkey(cfg, key):
+def v_ssh2_pubkey(key):
     """
     [description]
     validates ssh2 public keys
 
     [parameter info]
     required:
-        cfg: the config object. useful everywhere
         key: the ssh2 public key we're trying to validate
 
     [return value]
     True/False based on success of validation
     """
-
-    DSA_KEY_ID="ssh-dss"
-    RSA_KEY_ID="ssh-rsa"
-
-    if re.match(DSA_KEY_ID+'|'+RSA_KEY_ID, key):
-        k = key.split(' ')
-    else:
-        return False
-
-    if k:
-        try:
-            data = base64.decodestring(k[1])
-        except IndexError:
-            raise ValidationError("validate/v_ssh2_pubkey: invalid key") 
-        int_len = 4
-        str_len = struct.unpack('>I', data[:int_len])[0] # this should return 7
-        if DSA_KEY_ID in key:
-          if data[int_len:int_len+str_len] == DSA_KEY_ID:
-              return True
-          else:
-              raise ValidationError("validate/v_ssh2_pubkey: invalid key") 
+    try:
+        DSA_KEY_ID="ssh-dss"
+        RSA_KEY_ID="ssh-rsa"
+    
+        if re.match(DSA_KEY_ID+'|'+RSA_KEY_ID, key):
+            k = key.split(' ')
         else:
-            if data[int_len:int_len+str_len] == RSA_KEY_ID:
-              return True
+            raise ValidationError("validate/v_ssh2_pubkey: invalid ssh2 key: %s" % key)
+    
+        if k:
+            try:
+                data = base64.decodestring(k[1])
+            except IndexError:
+                raise ValidationError("validate/v_ssh2_pubkey: invalid ssh2 key: %s" % key)
+            int_len = 4
+            str_len = struct.unpack('>I', data[:int_len])[0] # this should return 7
+            if DSA_KEY_ID in key:
+              if data[int_len:int_len+str_len] == DSA_KEY_ID:
+                  return True
+              else:
+                  raise ValidationError("validate/v_ssh2_pubkey: invalid ssh2 key: %s" % key) 
             else:
-              raise ValidationError("validate/v_ssh2_pubkey: invalid key") 
-    else:
-       raise ValidationError("validate/v_ssh2_pubkey: invalid key") 
-
+                if data[int_len:int_len+str_len] == RSA_KEY_ID:
+                  return True
+                else:
+                  raise ValidationError("validate/v_ssh2_pubkey: invalid ssh2 key: %s" % key)
+        else:
+           raise ValidationError("validate/v_ssh2_pubkey: invalid ssh2 key: %s" % key) 
+    except Exception, e:
+        raise ValidationError("validate/v_ssh2_pubkey: invalid ssh2 key: %s" % key)
 
 # Validates UNIX uids
 def v_uid(cfg, uid):
