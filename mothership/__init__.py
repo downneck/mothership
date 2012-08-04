@@ -1088,14 +1088,14 @@ def split_fqdn(fqdn):
     parts = fqdn.split(".")
     return [None] * (3 - len(parts)) + parts[0:3]
 
-def add_ldap_groups(hostname, realm, site_id):
-    groups = []
-    if hostname and realm and site_id:
-        groups.append("%s_%s_%s" % (hostname, realm, site_id))
-    if realm and site_id:
-        groups.append("%s_%s" % (realm, site_id))
-    groups.append("%s" % (site_id))
-    return groups
+#def add_ldap_groups(hostname, realm, site_id):
+#    groups = []
+#    if hostname and realm and site_id:
+#        groups.append("%s_%s_%s" % (hostname, realm, site_id))
+#    if realm and site_id:
+#        groups.append("%s_%s" % (realm, site_id))
+#    groups.append("%s" % (site_id))
+#    return groups
 
 def get_unqdn(cfg, name):
     """

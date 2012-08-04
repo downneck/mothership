@@ -576,7 +576,7 @@ class API_userdata:
                     self.cfg.log.debug("API_userdata/uadd: uid exists already: %s" % uid)
                     raise UserdataError("API_userdata/uadd: uid exists already: %s" % uid)
             else:
-                uid = __next_available_uid(realm, site_id)
+                uid = self.__next_available_uid(realm, site_id)
             
 # more validation here, please
 
@@ -834,7 +834,101 @@ class API_userdata:
 #            raise TagError("API_tag/untag: error: %s" % e)
 #
 #
+
+
 # internal functions below here
+
+
+    def __get_group_obj(self, unqgn):
+        """
+        [description]
+        for a given unqgn, fetch the group object 
+    
+        [parameter info]
+        required:
+            unqgn: the groupname we want to parse
+    
+        [return value]
+        returns a Groups object or None
+        """
+        try: 
+            groupname, realm, site_id = v_split_unqn(unqgn)
+            v_name(self.cfg, groupname)
+            v_realm(self.cfg, realm)
+            v_site_id(self.cfg, site_id)
+            g = list(self.cfg.dbsess.query(Groups).\
+            filter(Groups.groupname==groupname).\
+            filter(Groups.realm==realm).\
+            filter(Groups.site_id==site_id))
+    
+            if g:
+                return g
+            else:
+                return None 
+        except Exception, e:
+            raise UserdataError("API_userdata/__get_group_obj: error: %s" % e)
+
+    # semi-local. might get promoted to nonlocal some day
+    def _gen_sudoers_groups(self, unqdn):
+        """
+        [description]
+        generates the group lines for sudoers
+    
+        [parameter info]
+        required:
+            unqdn: the unqualified domain name of the host we want to generate for
+    
+        [return value]
+        returns list of sudoers lines or None 
+        """
+        try:
+            kvobj = mothership.API_kv.API_kv(self.cfg)
+            # get the server entry
+            s = mothership.validate.v_get_server_obj(self.cfg, unqdn)
+            if s:
+                unqdn = '.'.join([s.hostname,s.realm,s.site_id])
+                # probably don't need this any more
+                #fqdn = '.'.join([unqdn,self.cfg.domain])
+            else:
+                raise UsersError("Host does not exist: %s" % unqdn)
+        
+            kquery = {'unqdn': unqdn}
+            kquery['key'] = 'tag'
+            kvs = kvobj.collect(kquery)
+            groups = []
+        
+            # get sudo groups for all tags in kv
+            for kv in kvs:
+                unqgn = kv['value']+'_sudo.'+s.realm+'.'+s.site_id
+                g = self.__get_group_obj(unqgn)
+                if g:
+                    groups.append(g[0])
+                else:
+                    pass
+        
+            # get sudo group for primary tag
+            g = self.__get_group_obj(s.tag+'_sudo.'+s.realm+'.'+s.site_id)
+            if g:
+                groups.append(g[0])
+            else:
+                pass
+        
+            # stitch it all together
+            sudoers = []
+            for g in groups:
+                if self.cfg.sudo_nopass and g.sudo_cmds:
+                    sudoers.append("%%%s ALL=(ALL) NOPASSWD:%s" % (g.groupname, g.sudo_cmds))
+                elif g.sudo_cmds:
+                    sudoers.append("%%%s ALL=(ALL) %s" % (g.groupname, g.sudo_cmds))
+                else:
+                    pass
+            if sudoers:
+                return sudoers
+            else:
+                return None
+        except Exception, e:
+            raise UserdataError("API_userdata/_gen_sudoers_groups: %s" % e)
+
 
     def __next_available_uid(self, realm, site_id):
         """
@@ -843,35 +937,36 @@ class API_userdata:
     
         [parameter info]
         required:
-            cfg: the config object. useful everywhere
             realm: the realm we're checking uids for
             site_id: the site_id we're checking uids for
     
         [return value]
         returns an integer representing the next available UID
         """
-    
-        i = cfg.uid_start
-        uidlist = []
-        u = self.cfg.dbsess.query(Users).\
-        filter(Users.realm==realm).\
-        filter(Users.site_id==site_id).all()
-        for userentry in u:
-            uidlist.append(userentry.uid)
-        uidlist.sort(key=int)
-        if not uidlist:
-            # if we don't have any users in the users table
-            # return the default first uid as configured in the yaml
-            return self.cfg.uid_start
-        else:
-            for uu in uidlist:
-                if uu < self.cfg.uid_start:
-                    pass
-                elif not i == uu and i < self.cfg.uid_end:
-                    return i
-                elif i < self.cfg.uid_end:
-                    i += 1
-                else:
-                    self.cfg.log.debug("API_userdata/__next_available_uid: No available UIDs!")
-                    raise UserdataError("API_userdata/__next_available_uid: No available UIDs!")
-            return i
+        try: 
+            i = self.cfg.uid_start
+            uidlist = []
+            u = self.cfg.dbsess.query(Users).\
+            filter(Users.realm==realm).\
+            filter(Users.site_id==site_id).all()
+            for userentry in u:
+                uidlist.append(userentry.uid)
+            uidlist.sort(key=int)
+            if not uidlist:
+                # if we don't have any users in the users table
+                # return the default first uid as configured in the yaml
+                return self.cfg.uid_start
+            else:
+                for uu in uidlist:
+                    if uu < self.cfg.uid_start:
+                        pass
+                    elif not i == uu and i < self.cfg.uid_end:
+                        return i
+                    elif i < self.cfg.uid_end:
+                        i += 1
+                    else:
+                        self.cfg.log.debug("API_userdata/__next_available_uid: No available UIDs!")
+                        raise UserdataError("API_userdata/__next_available_uid: No available UIDs!")
+                return i
+        except Exception, e:
+            raise UserdataError("API_userdata/__next_available_uid: %s" % e)

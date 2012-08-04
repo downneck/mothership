@@ -19,7 +19,7 @@ module controlling various puppet interactions
 
 import mothership
 import mothership.API_kv
-import mothership.users
+import mothership.API_userdata
 import mothership.common
 from mothership.validate import *
 from mothership.mothership_models import *
@@ -33,6 +33,7 @@ class API_puppet:
     def __init__(self, cfg):
         self.cfg = cfg
         self.kvobj = mothership.API_kv.API_kv(cfg)
+        self.userdataobj = mothership.API_userdata.API_userdata(cfg)
         self.version = 1
         self.namespace = 'API_puppet'
         self.metadata = {
@@ -42,7 +43,7 @@ class API_puppet:
                 'module_dependencies': {
                     'mothership_models': 1,
                     'mothership.API_kv': 1,
-                    'mothership.users': 1,
+                    'mothership.API_userdata': 1,
                 },
             },
             'methods': {
@@ -133,9 +134,9 @@ class API_puppet:
                 parameters['unqdn'] = unqdn
                 parameters['site_id'] = s.site_id
                 parameters['realm'] = s.realm
-                # LDAP groups - FIX: wtf is this?
-                for g in mothership.add_ldap_groups(s.hostname, s.realm, s.site_id):
-                    groups.append(g)
+                groups.append("%s_%s_%s" % (s.hostname, s.realm, s.site_id))
+                groups.append("%s_%s" % (s.realm, s.site_id))
+                groups.append("%s" % (s.site_id))
 
                 mtag = self.cfg.dbsess.query(Tag).filter(Tag.name==s.tag).first()
                 parameters['server_id'] = s.id
@@ -190,7 +191,7 @@ class API_puppet:
                     parameters[kv['key']] = kv['value']
 
             # sudoers
-            sudoers = mothership.users.gen_sudoers_groups(self.cfg, unqdn)
+            sudoers = self.userdataobj._gen_sudoers_groups(unqdn)
             parameters['mtags'] = mtags
             parameters['groups'] = groups
             if sudoers:
