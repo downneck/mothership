@@ -714,13 +714,13 @@ class API_userdata:
             if 'first_name' in query.keys() and query['first_name']:
                 v_name(query['first_name'])
                 u.first_name = query['first_name']
-            # last name, validate or default
+            # last name, validate or leave alone 
             if 'last_name' in query.keys() and query['last_name']:
                 v_name(query['last_name'])
                 u.last_name = query['last_name']
             else:
                 last_name = u.last_name
-            # user type, validate or default
+            # user type, validate or leave alone 
             if 'user_type' in query.keys() and query['user_type']:
                 user_type = query['user_type']
                 if user_type not in self.cfg.user_types:
@@ -728,12 +728,12 @@ class API_userdata:
                     raise UserdataError("API_userdata/umodify: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
             else:
                 user_type = u.user_type
-            # shell, assign or default
+            # shell, assign or leave alone 
             if 'shell' in query.keys() and query['shell']:
                 shell = query['shell']
             else:
                 shell = u.shell 
-            # ssh_keys file, validate or assign empty string 
+            # ssh_keys file, validate or leave alone 
             if files:
                 if len(files) > 1:
                     self.cfg.log.debug("API_userdata/umodify: too many files uploaded for ssh_keys, refusing to continue")
@@ -744,32 +744,29 @@ class API_userdata:
                         ssh_keys.append(key)
                 ssh_public_key = ''.join(ssh_keys).rstrip()
             else:
-                ssh_public_key = "" 
+                ssh_public_key = u.ssh_public_key 
 
             # this is down here instead of up above with its buddies because we need the
             # username to construct a home dir and email if they're not supplied 
             if 'home_dir' in query.keys() and query['home_dir']:
                 home_dir = query['home_dir']
             else:
-                home_dir = "%s/%s" % (self.cfg.hdir, username)
+                home_dir = u.home_dir 
             if 'email_address' in query.keys() and query['email_address']:
                 email_address = query['email_address']
             else:
-                email_address = "%s@%s" % (username, self.cfg.email_domain) 
-            # uid, validate or generate
-            # this is down here instead of up above with its buddies because we need the
-            # realm and site_id to query for existing uids
+                email_address = u.email_address 
+            # uid, validate or leave alone 
             if 'uid' in query.keys() and query['uid']:
-                uid = query['uid']
-                v_uid(self.cfg, uid)
+                v_uid(self.cfg, query['uid'])
+                u.uid = query['uid']
                 if v_uid_in_db(self.cfg, uid, realm, site_id):
                     self.cfg.log.debug("API_userdata/umodify: uid exists already: %s" % uid)
                     raise UserdataError("API_userdata/umodify: uid exists already: %s" % uid)
             else:
-                uid = self.__next_available_uid(realm, site_id)
+                uid = u.uid
 
-            # create the user object, push it to the db, return status
-            u = Users(first_name, last_name, ssh_public_key, username, site_id, realm, uid, user_type, home_dir, shell, email_address, active=True)
+            # push the modified user object to the db, return status
             self.cfg.dbsess.add(u)
             self.cfg.dbsess.commit()
             return 'success'
