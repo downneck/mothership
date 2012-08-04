@@ -27,7 +27,7 @@ class TestAPI_list_values(unittest.TestCase):
     ######################################
 
     # users=True, good output
-    def test_lsv_users_good(self):
+    def test1(self):
         query = {'users': True}
         result = lsv.lsv(query)
 
@@ -184,17 +184,17 @@ class TestAPI_list_values(unittest.TestCase):
         ]
 
         self.assertEqual(result, ret)
-        print "[API_list_values] BB_test_lsv_users_good: PASSED"
+        print "[API_list_values] test1: PASSED"
 
     # users=True tags=True, bad output
-    def test_lsv_users_and_tags_bad(self):
+    def test2(self):
         query = {'users': True, 'tags': True}
 
         self.assertRaises(ListValuesError, lsv.lsv, query)
-        print "[API_list_values] BB_test_lsv_users_and_tags_bad: PASSED (raised ListValuesError)"
+        print "[API_list_values] test2: PASSED"
 
     # tags=True, good output
-    def test_lsv_tags_good(self):
+    def test3(self):
         query = {'tags': True}
         result = lsv.lsv(query)
 
@@ -293,10 +293,10 @@ class TestAPI_list_values(unittest.TestCase):
             "puppet",
         ]
         self.assertEqual(result, ret)
-        print "[API_list_values] BB_test_lsv_tags_good: PASSED"
+        print "[API_list_values] test3: PASSED"
 
     # ips=True, good output
-    def test_lsv_ips_good(self):
+    def test4(self):
         query = {'ips': True}
         result = lsv.lsv(query)
 
@@ -372,10 +372,10 @@ class TestAPI_list_values(unittest.TestCase):
         ]
 
         self.assertEqual(result, ret)
-        print "[API_list_values] BB_test_lsv_ips_good: PASSED"
+        print "[API_list_values] test4: PASSED"
 
     # groups=True, good output
-    def test_lsv_groups_good(self):
+    def test5(self):
         query = {'groups': True}
         result = lsv.lsv(query)
 
@@ -872,24 +872,24 @@ class TestAPI_list_values(unittest.TestCase):
         ]
 
         self.assertEqual(result, ret)
-        print "[API_list_values] BB_test_lsv_groups_good: PASSED"
+        print "[API_list_values] test5: PASSED"
 
     # available_hardware=True, good output
-    def test_lsv_available_hardware_good(self):
+    def test6(self):
         query = {'available_hardware': True}
         result = lsv.lsv(query)
 
         ret = [ "H739TK1" ]
 
         self.assertEqual(result, ret)
-        print "[API_list_values] BB_test_lsv_available_hardware_good: PASSED"
+        print "[API_list_values] test6: PASSED"
 
     # vlans=True, good output
-    def test_lsv_vlans_good(self):
+    def test7(self):
         query = {'vlans': True}
         result = lsv.lsv(query)
 
         ret = [ 200, 201, 666 ]
 
         self.assertEqual(result, ret)
-        print "[API_list_values] BB_test_lsv_vlans_good: PASSED"
+        print "[API_list_values] test7: PASSED"

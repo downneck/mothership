@@ -135,68 +135,68 @@ class TestAPI_serverinfo(unittest.TestCase):
     ######################################
 
     # unqdn=xenserver2.satest.jfk, good output
-    def test_si_unqdn_good(self):
+    def test1(self):
         query = {'unqdn': 'xenserver2.satest.jfk'}
         result = si.si(query)
 
         self.assertEqual(result, bigassret)
-        print "[API_serverinfo] BB_test_si_unqdn_good: PASSED"
+        print "[API_serverinfo] test1: PASSED"
 
     # unqdn=garbage, bad output
-    def test_si_unqdn_bad(self):
+    def test2(self):
         query = {'unqdn': 'garbage'}
 
         self.assertRaises(ServerInfoError, si.si, query)
-        print "[API_serverinfo] BB_test_si_unqdn_bad: PASSED (raised ServerInfoError)"
+        print "[API_serverinfo] test2: PASSED"
 
     # hw_tag=4VK27L1, good output
-    def test_si_hwtag_good(self):
+    def test3(self):
         query = {'hw_tag': '4VK27L1'}
         result = si.si(query)
 
         self.assertEqual(result, bigassret)
-        print "[API_serverinfo] BB_test_si__hw_tag__good: PASSED"
+        print "[API_serverinfo] test3: PASSED"
 
     # hw_tag=garbage, bad output
-    def test_si_hw_tag_bad(self):
+    def test4(self):
         query = {'hw_tag': 'garbage'}
 
         self.assertRaises(ServerInfoError, si.si, query)
-        print "[API_serverinfo] BB_test_si__hw_tag__bad: PASSED (raised ServerInfoError)"
+        print "[API_serverinfo] test4: PASSED"
 
     # mac=00:21:9b:98:49:24, good output
-    def test_si_mac_good(self):
+    def test5(self):
         query = {'mac': '00:21:9b:98:49:24'}
         result = si.si(query)
 
         self.assertEqual(result, bigassret)
-        print "[API_serverinfo] BB_test_si_mac_good: PASSED"
+        print "[API_serverinfo] test5: PASSED"
 
     # mac=00:00:00:00:00:00, bad output
-    def test_si_mac_bad(self):
+    def test6(self):
         query = {'mac': '00:00:00:00:00:00'}
 
         self.assertRaises(ServerInfoError, si.si, query)
-        print "[API_serverinfo] BB_test_si_mac_bad: PASSED (raised ServerInfoError)"
+        print "[API_serverinfo] test6: PASSED"
 
     # ip=123.123.123.123, good output
-    def test_si_ip_good(self):
+    def test7(self):
         query = {'ip': '10.190.44.9'}
         result = si.si(query)
 
         self.assertEqual(result, bigassret)
-        print "[API_serverinfo] BB_test_si_ip_good: PASSED"
+        print "[API_serverinfo] test7: PASSED"
 
     # ip=garbage, bad output
-    def test_si_ip_bad(self):
+    def test8(self):
         query = {'ip': '1.1.1.1'}
 
         self.assertRaises(ServerInfoError, si.si, query)
-        print "[API_serverinfo] BB_test_si_ip_bad: PASSED (raised ServerInfoError)"
+        print "[API_serverinfo] test8: PASSED"
 
     # test unqdn=garbage, failure results
-    def test_si_unknown_query_key_bad(self):
+    def test9(self):
         query = {'blargle': 'garbage'}
 
         self.assertRaises(ServerInfoError, si.si, query)
-        print "[API_serverinfo] BB_test_si_unqknown_query_key_bad: PASSED (raised ServerInfoError)"
+        print "[API_serverinfo] test9: PASSED"

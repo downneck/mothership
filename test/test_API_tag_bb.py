@@ -34,7 +34,7 @@ class TestAPI_tag(unittest.TestCase):
     ######################################
 
     # name=apache, good output
-    def test_display_good_result(self):
+    def test1(self):
         query = {'name': 'apache'}
         result = tag.display(query)
 
@@ -49,10 +49,10 @@ class TestAPI_tag(unittest.TestCase):
         }
 
         self.assertEqual(result, ret)
-        print "[API_tag] BB_test_tag_display_good_result: PASSED"
+        print "[API_tag] test1: PASSED"
 
     # name=puppet, bad output
-    def test_tag_display_bad_result(self):
+    def test2(self):
         query = {'name': 'puppet'}
         result = tag.display(query)
 
@@ -67,14 +67,14 @@ class TestAPI_tag(unittest.TestCase):
         }
 
         self.assertNotEqual(result, ret)
-        print "[API_tag] BB_test_tag_display_bad_result: PASSED"
+        print "[API_tag] test2: PASSED"
 
     # name=FAILURE, null results 
-    def test_tag_display_bad_name_null_result(self):
+    def test3(self):
         query = {'name': 'FAILURE'}
 
         self.assertRaises(TagError, tag.display, query)
-        print "[API_tag] BB_test_tag_display_name_bad: PASSED (raised TagError)"
+        print "[API_tag] test3: PASSED"
 
 
     ######################################
@@ -82,128 +82,128 @@ class TestAPI_tag(unittest.TestCase):
     ######################################
  
     # test name=None, failure 
-    def test_tag_add_name_bad(self):
+    def test4(self):
         query = {'name': None}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_name_bad: PASSED (raised TagError)"
+        print "[API_tag] test4: PASSED"
  
     # test name=foo, start_port=frank, failure 
-    def test_tag_add_name_good_start_port_bad(self):
+    def test5(self):
         query = {'name': 'frank', 'start_port': 'frank'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_name_good_start_port_bad: PASSED (raised TagError)"
+        print "[API_tag] test5: PASSED"
  
     # test name=foo, stop_port=frank, failure 
-    def test_tag_add_name_good_stop_port_bad(self):
+    def test6(self):
         query = {'name': 'frank', 'stop_port': 'frank'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_name_good_stop_port_bad: PASSED (raised TagError)"
+        print "[API_tag] test6: PASSED"
  
     # test name=foo, security_level=frank, failure 
-    def test_tag_add_name_good_security_level_bad(self):
+    def test7(self):
         query = {'name': 'frank', 'security_level': 'frank'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_name_good_security_level_bad: PASSED (raised TagError)"
+        print "[API_tag] test7: PASSED"
  
     # test name=foo, start_port=80, stop_port=frank, failure 
-    def test_tag_add_name_and_start_port_good_stop_port_bad(self):
+    def test8(self):
         query = {'name': 'frank', 'start_port': 80, 'stop_port': 'frank'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_name_and_start_port_good_stop_port_bad: PASSED (raised TagError)"
+        print "[API_tag] test8: PASSED"
  
     # test name=foo, stop_port=80, start_port=frank, failure 
-    def test_tag_add_name_and_stop_port_good_start_port_bad(self):
+    def test9(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 'frank'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_name_and_stop_port_good_start_port_bad: PASSED (raised TagError)"
+        print "[API_tag] test9: PASSED"
  
     # everything good except security_level 
-    def test_tag_add_everything_good_except_security_level_failure(self):
+    def test10(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 'fred'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_everything_good_except_security_level_failure: PASSED (raised TagError)"
+        print "[API_tag] test10: PASSED"
  
     # everything good except start_port 
-    def test_tag_add_everything_good_except_start_port_failure(self):
+    def test11(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 'fred', 'security_level': 1}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_everything_good_except_start_port_failure: PASSED (raised TagError)"
+        print "[API_tag] test11: PASSED"
  
     # everything good except stop_port 
-    def test_tag_add_everything_good_except_stop_port_failure(self):
+    def test12(self):
         query = {'name': 'frank', 'stop_port': 'fred', 'start_port': 80, 'security_level': 1}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_everything_good_except_stop_port_failure: PASSED (raised TagError)"
+        print "[API_tag] test12: PASSED"
  
     # everything good, superfluous query, failure 
-    def test_tag_add_everything_good_superfluous_query_failure(self):
+    def test13(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1, 'durr': 'stuff'}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_everything_good_superfluous_query_failure: PASSED (raised TagError)"
+        print "[API_tag] test13: PASSED"
  
     # everything good, good results 
-    def test_tag_add_everything_good(self):
+    def test14(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1}
         result = tag.add(query)
         # put everything back where we found it
         tag.delete(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_add_everything_good: PASSED"
+        print "[API_tag] test14: PASSED"
  
     # just name, stop, start, good results 
-    def test_tag_add_name_stop_start_good(self):
+    def test15(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80}
         result = tag.add(query)
         # put everything back where we found it
         tag.delete(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_add_name_stop_start_good: PASSED"
+        print "[API_tag] test15: PASSED"
  
     # just name, stop, security_level, failure
-    def test_tag_add_name_stop_security_failure(self):
+    def test16(self):
         query = {'name': 'frank', 'stop_port': 80, 'security_level': 1}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_name_stop_security_failure: PASSED (raised TagError)"
+        print "[API_tag] test16: PASSED"
  
     # just name, security, start, failure 
-    def test_tag_add_name_security_start_failure(self):
+    def test17(self):
         query = {'name': 'frank', 'security_level': 1, 'start_port': 80}
 
         self.assertRaises(TagError, tag.add, query)
-        print "[API_tag] BB_test_tag_add_name_security_start_failure: PASSED (raised TagError)"
+        print "[API_tag] test17: PASSED"
  
     # just name, good results 
-    def test_tag_add_name_good(self):
+    def test18(self):
         query = {'name': 'frank'}
         result = tag.add(query)
         # put everything back where we found it
         tag.delete(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_add_name_good: PASSED"
+        print "[API_tag] test18: PASSED"
  
     # just name, security, good results 
-    def test_tag_add_name_security_good(self):
+    def test19(self):
         query = {'name': 'frank', 'security_level': 1}
         result = tag.add(query)
         # put everything back where we found it
         tag.delete(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_add_name_security_good: PASSED"
+        print "[API_tag] test19: PASSED"
  
 
     ######################################
@@ -211,28 +211,28 @@ class TestAPI_tag(unittest.TestCase):
     ######################################
 
     # just name, good results 
-    def test_tag_delete_name_good(self):
+    def test20(self):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1}
         tag.add(query)
         query = {'name': 'frank'}
         result = tag.delete(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_delete_name_good: PASSED"
+        print "[API_tag] test20: PASSED"
  
     # bad name, null results 
-    def test_tag_delete_bad_name_null(self):
+    def test21(self):
         query = {'name': 'FAILURE'}
 
         self.assertRaises(TagError, tag.delete, query)
-        print "[API_tag] BB_test_tag_delete_name_bad: PASSED (raised TagError"
+        print "[API_tag] test21: PASSED"
  
     # good name, failure due to existing mapping
-    def test_tag_delete_name_mapping_failure(self):
+    def test22(self):
         query = {'name': 'puppet'}
 
         self.assertRaises(TagError, tag.delete, query)
-        print "[API_tag] BB_test_tag_delete_name_mapping_failure: PASSED (raised TagError)"
+        print "[API_tag] test22: PASSED"
  
 
     ######################################
@@ -240,42 +240,42 @@ class TestAPI_tag(unittest.TestCase):
     ######################################
 
     # bad name, good security_level, failure 
-    def test_tag_update_bad_name_good_security_failure(self):
+    def test23(self):
         query = {'name': 'FAILURE', 'security_level': 1}
 
         self.assertRaises(TagError, tag.update, query)
-        print "[API_tag] BB_test_tag_update_bad_name_good_security_failure: PASSED (raised TagError)"
+        print "[API_tag] test23: PASSED"
  
     # name only, failure 
-    def test_tag_update_name_only_failure(self):
+    def test24(self):
         query = {'name': 'puppet'}
 
         self.assertRaises(TagError, tag.update, query)
-        print "[API_tag] BB_test_tag_update_name_only_failure: PASSED (raised TagError)"
+        print "[API_tag] test24: PASSED"
 
     # set everything. start_port > stop_port, failure
-    def test_tag_update_start_gt_stop_failure(self):
+    def test25(self):
         query = {'name': 'puppet', 'start_port': 90, 'stop_port': 70, 'security_level': 1}
 
         self.assertRaises(TagError, tag.update, query)
-        print "[API_tag] BB_test_tag_update_start_gt_stop_failure: PASSED (raised TagError)"
+        print "[API_tag] test25: PASSED"
 
     # set everything except stop_port. start_port > existing.stop_port (80), failure
-    def test_tag_update_start_gt_existing_stop_failure(self):
+    def test26(self):
         query = {'name': 'puppet', 'start_port': 90, 'security_level': 1}
 
         self.assertRaises(TagError, tag.update, query)
-        print "[API_tag] BB_test_tag_update_start_gt_existing_stop_failure: PASSED (raised TagError)"
+        print "[API_tag] test26: PASSED"
 
     # set everything except start_port. existing.start_port (80) > stop_port, failure
-    def test_tag_update_existing_start_gt_stop_failure(self):
+    def test27(self):
         query = {'name': 'puppet', 'stop_port': 70, 'security_level': 1}
 
         self.assertRaises(TagError, tag.update, query)
-        print "[API_tag] BB_test_tag_update_existing_start_gt_stop_failure: PASSED (raised TagError)"
+        print "[API_tag] test27: PASSED"
 
     # just name, start_port, good results 
-    def test_tag_update_start_port_good(self):
+    def test28(self):
         query = {'name': 'puppet', 'start_port': 70}
         result = tag.update(query)
         # put everything back where we found it
@@ -283,10 +283,10 @@ class TestAPI_tag(unittest.TestCase):
         tag.update(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_update_start_port_good: PASSED"
+        print "[API_tag] test28: PASSED"
 
     # just name, stop_port, good results 
-    def test_tag_update_stop_port_good(self):
+    def test29(self):
         query = {'name': 'puppet', 'stop_port': 90}
         result = tag.update(query)
         # put everything back where we found it
@@ -294,10 +294,10 @@ class TestAPI_tag(unittest.TestCase):
         tag.update(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_update_stop_port_good: PASSED"
+        print "[API_tag] test29: PASSED"
 
     # just name, security_level, good results 
-    def test_tag_update_security_level_good(self):
+    def test30(self):
         query = {'name': 'puppet', 'security_level': 7}
         result = tag.update(query)
         # put everything back where we found it
@@ -305,10 +305,10 @@ class TestAPI_tag(unittest.TestCase):
         tag.update(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_update_security_level_good: PASSED"
+        print "[API_tag] test30: PASSED"
 
     # everything, good results 
-    def test_tag_update_everything_good(self):
+    def test31(self):
         query = {'name': 'puppet', 'stop_port': 90, 'start_port': 70, 'security_level': 7}
         result = tag.update(query)
         # put everything back where we found it
@@ -316,7 +316,7 @@ class TestAPI_tag(unittest.TestCase):
         tag.update(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_update_everything_good: PASSED"
+        print "[API_tag] test31: PASSED"
  
 
     ######################################
@@ -324,72 +324,72 @@ class TestAPI_tag(unittest.TestCase):
     ######################################
 
     # name, unqdn=server.realm.site, good results
-    def test_tag_tag_name_unqdn_is_server_realm_site_good(self):
+    def test32(self):
         query = {'name': 'puppet', 'unqdn': 'cm1.satest.jfk'}
         result = tag.tag(query)
         # put everything back where we found it
         tag.untag(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_tag_name_unqdn_is_server_realm_site_good: PASSED"
+        print "[API_tag] test32: PASSED"
  
     # name, unqdn=realm.site, good results
-    def test_tag_tag_name_unqdn_is_realm_site_good(self):
+    def test33(self):
         query = {'name': 'puppet', 'unqdn': 'satest.jfk'}
         result = tag.tag(query)
         # put everything back where we found it
         tag.untag(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_tag_name_unqdn_is_realm_site_good: PASSED"
+        print "[API_tag] test33: PASSED"
 
     # name, unqdn=site, good results
-    def test_tag_tag_name_unqdn_is_site_good(self):
+    def test34(self):
         query = {'name': 'puppet', 'unqdn': 'jfk'}
         result = tag.tag(query)
         # put everything back where we found it
         tag.untag(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_tag_name_unqdn_is_site_good: PASSED"
+        print "[API_tag] test34: PASSED"
 
     # name, unqdn=GLOBAL, good results
-    def test_tag_tag_name_unqdn_is_GLOBAL_good(self):
+    def test35(self):
         query = {'name': 'puppet', 'unqdn': 'GLOBAL'}
         result = tag.tag(query)
         # put everything back where we found it
         tag.untag(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_tag_name_unqdn_is_GLOBAL_good: PASSED"
+        print "[API_tag] test35: PASSED"
 
     # name, hostname invalid, failure 
-    def test_tag_tag_bad_hostname_failure(self):
+    def test36(self):
         query = {'name': 'puppet', 'unqdn': 'blarg1.satest.jfk'} 
 
         self.assertRaises(TagError, tag.tag, query)
-        print "[API_tag] BB_test_tag_tag_bad_hostname_failure: PASSED (raised TagError)"
+        print "[API_tag] test36: PASSED"
 
     # name invalid, unqdn, failure 
-    def test_tag_tag_bad_tagname_failure(self):
+    def test37(self):
         query = {'name': 'shreveport', 'unqdn': 'jira1.satest.jfk'} 
 
         self.assertRaises(TagError, tag.tag, query)
-        print "[API_tag] BB_test_tag_tag_bad_tagname_failure: PASSED (raised TagError)"
+        print "[API_tag] test37: PASSED"
 
     # name, realm invalid, failure 
-    def test_tag_tag_bad_realm_failure(self):
+    def test38(self):
         query = {'name': 'puppet', 'unqdn': 'jira1.fubar.jfk'} 
 
         self.assertRaises(TagError, tag.tag, query)
-        print "[API_tag] BB_test_tag_tag_bad_realm_failure: PASSED (raised TagError)"
+        print "[API_tag] test38: PASSED"
 
     # name, site_id invalid, failure 
-    def test_tag_tag_bad_site_id_failure(self):
+    def test39(self):
         query = {'name': 'puppet', 'unqdn': 'jira1.satest.foo'} 
 
         self.assertRaises(TagError, tag.tag, query)
-        print "[API_tag] BB_test_tag_tag_bad_site_id_failure: PASSED (raised TagError)"
+        print "[API_tag] test39: PASSED"
 
 
     ######################################
@@ -397,69 +397,69 @@ class TestAPI_tag(unittest.TestCase):
     ######################################
 
     # name, unqdn=server.realm.site, good results
-    def test_tag_untag_name_unqdn_is_server_realm_site_good(self):
+    def test40(self):
         query = {'name': 'puppet', 'unqdn': 'cm1.satest.jfk'}
         # setup
         tag.tag(query)
         result = tag.untag(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_untag_name_unqdn_is_server_realm_site_good: PASSED"
+        print "[API_tag] test40: PASSED"
  
     # name, unqdn=realm.site, good results
-    def test_tag_untag_name_unqdn_is_realm_site_good(self):
+    def test41(self):
         query = {'name': 'puppet', 'unqdn': 'satest.jfk'}
         # setup
         tag.tag(query)
         result = tag.untag(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_untag_name_unqdn_is_realm_site_good: PASSED"
+        print "[API_tag] test41: PASSED"
 
     # name, unqdn=site, good results
-    def test_tag_untag_name_unqdn_is_site_good(self):
+    def test42(self):
         query = {'name': 'puppet', 'unqdn': 'jfk'}
         # setup
         tag.tag(query)
         result = tag.untag(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_tag_name_unqdn_is_site_good: PASSED"
+        print "[API_tag] test42: THE ANSWER TO LIFE, THE UNIVERSE, AND EVERYTHING (PASSED)"
 
     # name, unqdn=GLOBAL, good results
-    def test_tag_untag_name_unqdn_is_GLOBAL_good(self):
+    def test43(self):
         query = {'name': 'puppet', 'unqdn': 'GLOBAL'}
         # setup
         tag.tag(query)
         result = tag.untag(query)
 
         self.assertEqual(result, 'success')
-        print "[API_tag] BB_test_tag_untag_name_unqdn_is_GLOBAL_good: PASSED"
+        print "[API_tag] test43: PASSED"
 
     # name, hostname invalid, failure 
-    def test_tag_untag_bad_hostname_failure(self):
+    def test44(self):
         query = {'name': 'puppet', 'unqdn': 'blarg1.satest.jfk'} 
 
         self.assertRaises(TagError, tag.untag, query)
-        print "[API_tag] BB_test_tag_untag_bad_hostname_failure: PASSED (raised TagError)"
+        print "[API_tag] test44: PASSED"
 
     # name invalid, unqdn, failure 
-    def test_tag_untag_bad_tagname_failure(self):
+    def test45(self):
         query = {'name': 'shreveport', 'unqdn': 'jira1.satest.jfk'} 
 
         self.assertRaises(TagError, tag.untag, query)
-        print "[API_tag] BB_test_tag_untag_bad_tagname_failure: PASSED (raised TagError)"
+        print "[API_tag] test45: PASSED"
 
     # name, realm invalid, failure 
-    def test_tag_untag_bad_realm_failure(self):
+    def test46(self):
         query = {'name': 'puppet', 'unqdn': 'jira1.fubar.jfk'} 
 
         self.assertRaises(TagError, tag.untag, query)
-        print "[API_tag] BB_test_tag_untag_bad_realm_failure: PASSED (raised TagError)"
+        print "[API_tag] test47: PASSED"
 
     # name, site_id invalid, failure 
-    def test_tag_untag_bad_site_id_failure(self):
+    def test47(self):
         query = {'name': 'puppet', 'unqdn': 'jira1.satest.foo'} 
 
         self.assertRaises(TagError, tag.untag, query)
-        print "[API_tag] BB_test_tag_untag_bad_site_id_failure: PASSED (raised TagError)"
+        print "[API_tag] test47: PASSED"

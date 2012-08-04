@@ -66,87 +66,87 @@ class TestAPI_list_servers(unittest.TestCase):
     ######################################
 
     # all=True, good output
-    def test_lss_all_good(self):
+    def test1(self):
         query = {'all': True}
         result = lss.lss(query)
 
         # pre-define expected output
         self.assertEqual(result, bigassret)
-        print "[API_list_servers] BB_test_lss_all_good: PASSED"
+        print "[API_list_servers] test1: PASSED"
 
     # test empty query, failure results
-    def test_lss_empty_query_bad(self):
+    def test2(self):
         query = {}
       
         self.assertRaises(ListServersError, lss.lss, query)
-        print "[API_list_servers] BB_test_lss_empty_query_bad: PASSED (raised ListServersError)"
+        print "[API_list_servers] test2: PASSED"
 
     # vlan=200, good output
-    def test_lss_vlan_good(self):
+    def test3(self):
         query = {'vlan': 200}
         result = lss.lss(query)
 
         self.assertEqual(result, bigassret)
-        print "[API_list_servers] BB_test_lss_vlan_good: PASSED"
+        print "[API_list_servers] test3: PASSED"
 
     # vlan=3400, empty output
-    def test_lss_vlan_empty(self):
+    def test4(self):
         query = {'vlan': 3400}
         result = lss.lss(query)
 
         self.assertEqual(result, [])
-        print "[API_list_servers] BB_test_lss_vlan_empty: PASSED"
+        print "[API_list_servers] test4: PASSED"
 
     # test vlan=garbage, failure output 
-    def test_lss_vlan_bad(self):
+    def test5(self):
         query = {'vlan': 'garbage'}
       
         self.assertRaises(ListServersError, lss.lss, query)
-        print "[API_list_servers] BB_test_lss_vlan_bad: PASSED (raised ListServersError)"
+        print "[API_list_servers] test5: PASSED"
 
     # site_id=jfk, good output
-    def test_lss_site_id_good(self):
+    def test6(self):
         query = {'site_id': 'jfk'}
         result = lss.lss(query)
 
         self.assertEqual(result, bigassret)
-        print "[API_list_servers] BB_test_lss__site_id__good: PASSED"
+        print "[API_list_servers] test6: PASSED"
 
     # realm=satest, good output
-    def test_lss_realm_good(self):
+    def test7(self):
         query = {'realm': 'satest'}
         result = lss.lss(query)
 
         self.assertEqual(result, bigassret)
-        print "[API_list_servers] BB_test_lss_realm_good: PASSED"
+        print "[API_list_servers] test7: PASSED"
 
     # ram=4, good output
-    def test_lss_ram_good(self):
+    def test8(self):
         query = {'ram': 4}
         result = lss.lss(query)
 
         ret = ['hudson1.satest.jfk', 'hudson2.satest.jfk']
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_ram_good: PASSED"
+        print "[API_list_servers] test8: PASSED"
 
     # ram=3, empty output
-    def test_lss_ram_empty(self):
+    def test9(self):
         query = {'ram': 3}
         result = lss.lss(query)
 
         self.assertEqual(result, [])
-        print "[API_list_servers] BB_test_lss_ram_empty: PASSED"
+        print "[API_list_servers] test9: PASSED"
 
     # test ram=garbage, failure output 
-    def test_lss_ram_bad(self):
+    def test10(self):
         query = {'ram': 'garbage'}
       
         self.assertRaises(ListServersError, lss.lss, query)
-        print "[API_list_servers] BB_test_lss_ram_bad: PASSED (raised ListServersError)"
+        print "[API_list_servers] test10: PASSED"
 
     # tag=splunklightforwarder, good output
-    def test_lss_tag_good(self):
+    def test11(self):
         query = {'tag': 'splunklightforwarder'}
         result = lss.lss(query)
 
@@ -158,43 +158,43 @@ class TestAPI_list_servers(unittest.TestCase):
         ]
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_tag_good: PASSED"
+        print "[API_list_servers] test11: PASSED"
 
     # tag=garbage, empty output
-    def test_lss_tag_empty(self):
+    def test12(self):
         query = {'tag': 'garbage'}
         result = lss.lss(query)
 
         self.assertEqual(result, [])
-        print "[API_list_servers] BB_test_lss_tag_empty: PASSED"
+        print "[API_list_servers] test12: PASSED"
 
     # disk=200, good output
-    def test_lss_disk_good(self):
+    def test13(self):
         query = {'disk': 200}
         result = lss.lss(query)
 
 	ret = ['hudson1.satest.jfk', 'hudson2.satest.jfk']
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_disk_good: PASSED"
+        print "[API_list_servers] test13: PASSED"
 
     # disk=1, empty output
-    def test_lss_disk_empty(self):
+    def test14(self):
         query = {'disk': 1}
         result = lss.lss(query)
 
         self.assertEqual(result, [])
-        print "[API_list_servers] BB_test_lss_tag_empty: PASSED"
+        print "[API_list_servers] test14: PASSED"
 
     # test disk=garbage, failure output 
-    def test_lss_disk_bad(self):
+    def test15(self):
         query = {'disk': 'garbage'}
       
         self.assertRaises(ListServersError, lss.lss, query)
-        print "[API_list_servers] BB_test_lss_disk_bad: PASSED (raised ListServersError)"
+        print "[API_list_servers] test15: PASSED"
 
     # manufacturer=IBM, good output
-    def test_lss_manufacturer_good(self):
+    def test16(self):
         query = {'manufacturer': 'IBM'}
         result = lss.lss(query)
 
@@ -202,18 +202,18 @@ class TestAPI_list_servers(unittest.TestCase):
 
         # pre-define expected output
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_manufacturer_good: PASSED"
+        print "[API_list_servers] test16: PASSED"
 
     # manufacturer=garbage, empty output
-    def test_lss_manufacturer_empty(self):
+    def test17(self):
         query = {'manufacturer': 'garbage'}
         result = lss.lss(query)
 
         self.assertEqual(result, [])
-        print "[API_list_servers] BB_test_lss_manufacturer_empty: PASSED"
+        print "[API_list_servers] test17: PASSED"
 
     # virtual=true, good output
-    def test_lss_virutal_good(self):
+    def test18(self):
         query = {'virtual': True}
         result = lss.lss(query)
 
@@ -246,10 +246,10 @@ class TestAPI_list_servers(unittest.TestCase):
         ]
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_virtual_good: PASSED"
+        print "[API_list_servers] test18: PASSED"
 
     # physical=true, good output
-    def test_lss_physical_good(self):
+    def test19(self):
         query = {'physical': True}
         result = lss.lss(query)
 
@@ -266,17 +266,17 @@ class TestAPI_list_servers(unittest.TestCase):
         ] 
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_physical_good: PASSED"
+        print "[API_list_servers] test19: PASSED"
 
     # test incompatible query parameters, failure results
-    def test_lss_physical_virtual_bad(self):
+    def test20(self):
         query = {'physical': True, 'virtual': True}
       
         self.assertRaises(ListServersError, lss.lss, query)
-        print "[API_list_servers] BB_test_lss_physical_virtual_bad: PASSED (raised ListServersError)"
+        print "[API_list_servers] test20: PASSED"
 
     # hw_tag=4VK27L1, good output
-    def test_lss_hw_tag_good(self):
+    def test21(self):
         query = {'hw_tag': '4VK27L1'}
         result = lss.lss(query)
 
@@ -292,18 +292,18 @@ class TestAPI_list_servers(unittest.TestCase):
         ] 
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss__hw_tag__good: PASSED"
+        print "[API_list_servers] test21: PASSED"
 
     # hw_tag=garbage, empty output
-    def test_lss_hw_tag_empty(self):
+    def test22(self):
         query = {'hw_tag': 'garbage'}
         result = lss.lss(query)
 
         self.assertEqual(result, [])
-        print "[API_list_servers] BB_test_lss__hw_tag__empty: PASSED"
+        print "[API_list_servers] test22: PASSED"
 
     # hostname=stage2.satest.jfk, good output
-    def test_lss_hostname_only_good(self):
+    def test23(self):
         query = {'hostname': 'stage2'}
         result = lss.lss(query)
 
@@ -311,10 +311,10 @@ class TestAPI_list_servers(unittest.TestCase):
         ret = ["stage2.satest.jfk",] 
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_hostname_only_good: PASSED"
+        print "[API_list_servers] test23: PASSED"
 
     # hostname=stage2.satest.jfk, good output
-    def test_lss_hostname_full_unqdn_good(self):
+    def test24(self):
         query = {'hostname': 'stage2.satest.jfk'}
         result = lss.lss(query)
 
@@ -322,18 +322,18 @@ class TestAPI_list_servers(unittest.TestCase):
         ret = ["stage2.satest.jfk",] 
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_hostname_full_unqdn_good: PASSED"
+        print "[API_list_servers] test24: PASSED"
 
     # hostname=garbage, empty output
-    def test_lss_hostname_garbage_empty(self):
+    def test25(self):
         query = {'hostname': 'garbage'}
         result = lss.lss(query)
 
         self.assertEqual(result, [])
-        print "[API_list_servers] BB_test_lss_hostname_garbage_empty: PASSED"
+        print "[API_list_servers] test25: PASSED"
 
     # cores=2, good output
-    def test_lss_cores_good(self):
+    def test26(self):
         query = {'cores': 2}
         result = lss.lss(query)
 
@@ -341,25 +341,25 @@ class TestAPI_list_servers(unittest.TestCase):
         ret = ['hudson1.satest.jfk', 'hudson2.satest.jfk'] 
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_cores_good: PASSED"
+        print "[API_list_servers] test26: PASSED"
 
     # cores=132, empty output
-    def test_lss_cores_empty(self):
+    def test27(self):
         query = {'cores': 132}
         result = lss.lss(query)
 
         self.assertEqual(result, [])
-        print "[API_list_servers] BB_test_lss_cores_empty: PASSED"
+        print "[API_list_servers] test27: PASSED"
 
     # test cores=garbage, failure output 
-    def test_lss_cores_bad(self):
+    def test28(self):
         query = {'cores': 'garbage'}
       
         self.assertRaises(ListServersError, lss.lss, query)
-        print "[API_list_servers] BB_test_lss_cores_bad: PASSED (raised ListServersError)"
+        print "[API_list_servers] test28: PASSED"
 
     # test model='System x3650', good results
-    def test_lss_model_good(self):
+    def test29(self):
         query = {'model': 'Server x3650'}
         result = lss.lss(query)
 
@@ -367,12 +367,12 @@ class TestAPI_list_servers(unittest.TestCase):
         ret = ['zendc1.satest.jfk']
 
         self.assertEqual(result, ret)
-        print "[API_list_servers] BB_test_lss_model_good: PASSED"
+        print "[API_list_servers] test29: PASSED"
 
     # test model=garbage, empty results
-    def test_lss_model_empty(self):
+    def test30(self):
         query = {'model': 'garbage'}
         result = lss.lss(query)
 
         self.assertEqual(result, [])
-        print "[API_list_servers] BB_test_lss_model_empty: PASSED"
+        print "[API_list_servers] test30: PASSED"
