@@ -160,7 +160,7 @@ class API_userdata:
                     },
                     'optional_args': {
                         'min': 1,
-                        'max': 8,
+                        'max': 9,
                         'args': {
                             'first_name': {
                                 'vartype': 'str',
@@ -204,7 +204,7 @@ class API_userdata:
                             },
                             'active': {
                                 'vartype': 'str',
-                                'desc': "True/False, whether the user is active or not. deactivate the user to disable him/her without removing the user from mothership",
+                                'desc': "true/false (or t/f), activate/deactivate. deactivate the user to disable without removing the user info from mothership",
                                 'ol': 'a',
                             },
                         },
@@ -760,9 +760,9 @@ class API_userdata:
                     u.uid = query['uid']
 
             # activate/deactivate the user
-            if 'active' in query.keys() and query['active'] == False:
+            if 'active' in query.keys() and query['active'] in ['F', 'f', 'False', 'false']:
                 u.active = False
-            elif 'active' in query.keys() and query['active'] == True:
+            elif 'active' in query.keys() and query['active'] in ['T', 't', 'True', 'true']:
                 u.active = True
 
             # push the modified user object to the db, return status
