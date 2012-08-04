@@ -536,7 +536,7 @@ class API_userdata:
                 shell = query['shell']
             else:
                 shell = self.cfg.shell
-            # ssh_keys file, validate or assign blank array
+            # ssh_keys file, validate or assign empty string 
             if files:
                 if len(files) > 1:
                     self.cfg.log.debug("API_userdata/uadd: too many files uploaded for ssh_keys, refusing to continue")
@@ -547,7 +547,7 @@ class API_userdata:
                         ssh_keys.append(key)
                 ssh_public_key = ''.join(ssh_keys).rstrip()
             else:
-                ssh_keys = [] 
+                ssh_public_key = "" 
 
             # input validation for username
             username, realm, site_id = v_split_unqn(unqun)
