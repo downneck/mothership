@@ -20,7 +20,7 @@
 from sqlalchemy import or_, desc, MetaData
 
 import mothership
-#from mothership.mothership_models import *
+from mothership.mothership_models import *
 from mothership.common import *
 #from mothership.API_list_servers import *
 #from mothership.API_kv import *
@@ -91,8 +91,8 @@ class API_userdata:
                                 'ol': 'l',
                             },
                             'ssh_key': {
-                                'vartype': 'string',
-                                'desc': 'a string containing the user\'s ssh key blob',
+                                'vartype': 'list',
+                                'desc': 'a list containing the user\'s ssh key blob(s)',
                                 'ol': 'k',
                             },
                             'shell': {
@@ -173,8 +173,8 @@ class API_userdata:
                                 'ol': 'l',
                             },
                             'ssh_key': {
-                                'vartype': 'string',
-                                'desc': 'a string containing the user\'s ssh key blob',
+                                'vartype': 'list',
+                                'desc': 'a list containing the user\'s ssh key blob(s)',
                                 'ol': 'k',
                             },
                             'shell': {
@@ -500,8 +500,8 @@ class API_userdata:
         try:
             # to make our conditionals easier
             if 'unqun' not in query.keys() or not query['unqun']:
-                self.cfg.log.debug("API_useradata/udisplay: no username.realm.site_id provided!")
-                raise UserdataError("API_useradata/udisplay: no username.realm.site_id provided!")
+                self.cfg.log.debug("API_useradata/uadd: no username.realm.site_id provided!")
+                raise UserdataError("API_useradata/uadd: no username.realm.site_id provided!")
             else:
                 unqun = query['unqun']
 
@@ -513,11 +513,13 @@ class API_userdata:
                     raise TagError("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             if 'first_name' in query.keys() and query['first_name']:
-                first_name = query['first_name']
+                first_name = query['first_name']i
+                v_name(self.cfg, first_name)
             else:
                 first_name = "John" 
             if 'last_name' in query.keys() and query['last_name']:
                 last_name = query['']
+                v_name(self.cfg, last_name)
             else:
                 last_name = "Doe"
             if 'uid' in query.keys() and query['uid']:
@@ -526,6 +528,9 @@ class API_userdata:
                 uid = None
             if 'user_type' in query.keys() and query['user_type']:
                 user_type = query['user_type']
+                if user_type not in self.cfg.user_types:
+                    self.cfg.log.debug("Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
+                    raise UserdataError("Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
             else:
                 user_type = self.cfg.def_user_type 
             if 'shell' in query.keys() and query['shell']:
@@ -539,15 +544,44 @@ class API_userdata:
             if 'ssh_key' in query.keys() and query['ssh_key']:
                 ssh_key = query['ssh_key']
             else:
-                ssh_key = None
+                ssh_key = [] 
             if 'home_dir' in query.keys() and query['home_dir']:
                 home_dir = query['home_dir']
             else:
                 home_dir = None
 
-# do stuff here
+            # input validation for username
+            username, realm, site_id = v_split_unqn(unqun)
+            if username and realm and site_id:
+                v_name(self.cfg, username)
+                v_realm(self.cfg, realm)
+                v_site_id(self.cfg, site_id)
+            else:
+                self.cfg.log.debug("API_userdata/uadd: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+                raise UserdataError("API_userdata/uadd: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+
+            # make sure we're not trying to add a duplicate
+            u = self.cfg.dbsess.query(Users).\
+            filter(Users.username==username).\
+            filter(Users.realm==realm).\
+            filter(Users.site_id==site_id).first()
+            if u:
+                self.cfg.log.debug("API_userdata/uadd: user exists already: %s" % unqun)
+                raise UserdataError("API_userdata/uadd: user exists already: %s" % unqun)
+
+            # validate uid or generate a new one
+            if uid:
+                v_uid(self.cfg, uid)
+                if v_uid_in_db(self.cfg, uid, realm, site_id):
+                    self.cfg.log.debug("API_userdata/uadd: uid exists already: %s" % uid)
+                    raise UserdataError("API_userdata/uadd: uid exists already: %s" % uid)
+            else:
+                uid = __next_available_uid(realm, site_id)
+            
+# more validation here, please
 
 
+            u = Users(first_name, last_name, ssh_key, username, site_id, realm, uid, user_type, home_dir, shell, email_address, active=True)
             self.cfg.dbsess.add(u)
             self.cfg.dbsess.commit()
             return 'success'
@@ -805,18 +839,42 @@ class API_userdata:
 
 # internal functions below here
 
-    def __get_tag(self, self.cfg. name):
+    def __next_available_uid(self, realm, site_id):
+         """
+        [description]
+        searches the db for existing UIDS and picks the next available UID within the parameters configured in mothership.yaml
+    
+        [parameter info]
+        required:
+            cfg: the config object. useful everywhere
+            realm: the realm we're checking uids for
+            site_id: the site_id we're checking uids for
+    
+        [return value]
+        returns an integer representing the next available UID
         """
-        stuff here
-        """
-        try:
-            result = self.cfg.dbsess.query(Tag).\
-                     filter(Tag.name == name).first()
-            if result:
-                return result
-            else:
-                return None
-        except Exception, e:
-            self.cfg.dbsess.rollback()
-            self.cfg.log.debug("API_tag/__get_tag: error: %s" % e)
-            raise TagError("API_tag/__get_tag: error: %s" % e)
+    
+        i = cfg.uid_start
+        uidlist = []
+        u = self.cfg.dbsess.query(Users).\
+        filter(Users.realm==realm).\
+        filter(Users.site_id==site_id).all()
+        for userentry in u:
+            uidlist.append(userentry.uid)
+        uidlist.sort(key=int)
+        if not uidlist:
+            # if we don't have any users in the users table
+            # return the default first uid as configured in the yaml
+            return self.cfg.uid_start
+        else:
+            for uu in uidlist:
+                if uu < self.cfg.uid_start:
+                    pass
+                elif not i == uu and i < self.cfg.uid_end:
+                    return i
+                elif i < self.cfg.uid_end:
+                    i += 1
+                else:
+                    self.cfg.log.debug("API_userdata/__next_available_uid: No available UIDs!")
+                    raise UserdataError("API_userdata/__next_available_uid: No available UIDs!")
+            return i

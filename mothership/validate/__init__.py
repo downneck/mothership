@@ -115,13 +115,14 @@ def v_uid(cfg, uid):
         if uid >= cfg.uid_start and uid <= cfg.uid_end:
             return True
         else:
-            print "UID is outside the allowed range (%s to %s)" % (cfg.uid_start, cfg.uid_end)
-            return False 
+            cfg.log.debug("UID is outside the allowed range (%s to %s)" % (cfg.uid_start, cfg.uid_end))
+            raise ValidationError("UID is outside the allowed range (%s to %s)" % (cfg.uid_start, cfg.uid_end))
     elif uid == None:
-        return False
+        cfg.log.debug("UID is empty!")
+        raise ValidationError("UID is empty!")
     else:
-        print "UID must be an integer!"
-        return False
+        cfg.log.debug("UID must be an integer!")
+        raise ValidationError("UID must be an integer!")
 
 # Looks for a UID in the db and returns true if present, false if absent
 def v_uid_in_db(cfg, uid, realm, site_id):
