@@ -296,7 +296,7 @@ class API_tag:
                  
 
             # Check for duplicate tags.
-            duptag = self.display(query)
+            duptag = self.__get_tag(name)
             if duptag:
                 self.cfg.log.debug("API_tag/add: entry exists for name=%s" % name)
                 raise TagError("API_tag/add: entry exists for name=%s" % name )
@@ -324,10 +324,6 @@ class API_tag:
         [return]
         Returns "success" if successful, None if unsuccessful 
         """
-        # setting variables
-        # config object. love this guy.
-        cfg = self.cfg
-
         try:
             # to make our conditionals easier
             if 'name' not in query.keys():
@@ -367,9 +363,6 @@ class API_tag:
         [return]
         Returns success if successful, raises an error if not
         """
-        # setting variables
-        # config object. love this guy.
-        cfg = self.cfg
         # setting our valid query keys
         common = MothershipCommon(self.cfg)
         valid_qkeys = common.get_valid_qkeys(self.namespace, 'update')
@@ -453,9 +446,6 @@ class API_tag:
         [return]
         Returns success if successful, raises an error if not
         """
-        # setting variables
-        # config object. love this guy.
-        cfg = self.cfg
         # setting our valid query keys
         common = MothershipCommon(self.cfg)
         valid_qkeys = common.get_valid_qkeys(self.namespace, 'tag')
@@ -513,9 +503,6 @@ class API_tag:
         [return]
         Returns success if successful, raises an error if not
         """
-        # setting variables
-        # config object. love this guy.
-        cfg = self.cfg
         # setting our valid query keys
         common = MothershipCommon(self.cfg)
         valid_qkeys = common.get_valid_qkeys(self.namespace, 'untag')
