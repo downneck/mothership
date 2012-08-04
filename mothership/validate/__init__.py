@@ -828,7 +828,7 @@ def v_get_server_obj(cfg, unqdn):
 
 
 # VERY basic validation of user- group- or host-name input
-def v_name(cfg, name):
+def v_name(name):
     """
     [description]
     VERY basic validation of user- group- or host-name input

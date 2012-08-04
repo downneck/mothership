@@ -480,7 +480,7 @@ class API_userdata:
             raise UserdataError("API_userdata/udisplay: %s" % e) 
 
 
-    def uadd(self, query, files):
+    def uadd(self, query, files=None):
         """
         [description]
         create a new tags entry
@@ -579,6 +579,8 @@ class API_userdata:
             else:
                 email_address = "%s@%s" % (username, self.cfg.email_domain) 
             # uid, validate or generate
+            # this is down here instead of up above with its buddies because we need the
+            # realm and site_id to query for existing uids
             if 'uid' in query.keys() and query['uid']:
                 uid = query['uid']
                 v_uid(self.cfg, uid)
@@ -588,7 +590,7 @@ class API_userdata:
             else:
                 uid = self.__next_available_uid(realm, site_id)
 
-            # create the user object
+            # create the user object, push it to the db, return status
             u = Users(first_name, last_name, ssh_public_key, username, site_id, realm, uid, user_type, home_dir, shell, email_address, active=True)
             self.cfg.dbsess.add(u)
             self.cfg.dbsess.commit()
@@ -659,7 +661,130 @@ class API_userdata:
             raise UserdataError("API_userdata/udelete: error: %s" % e)
 
 
-############## under construction to here, ssh keys don't work
+    def umodify(self, query, files):
+        """
+        [description]
+        create a new tags entry
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns true if successful, raises an error if not
+        """
+        # setting our valid query keys
+        common = MothershipCommon(self.cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'uadd')
+
+        try:
+            # to make our conditionals easier
+            if 'unqun' not in query.keys() or not query['unqun']:
+                self.cfg.log.debug("API_useradata/uadd: no username.realm.site_id provided!")
+                raise UserdataError("API_useradata/uadd: no username.realm.site_id provided!")
+            else:
+                unqun = query['unqun']
+
+
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # first name, validate or default
+            if 'first_name' in query.keys() and query['first_name']:
+                first_name = query['first_name']
+                v_name(self.cfg, first_name)
+            else:
+                first_name = "John"
+            # last name, validate or default
+            if 'last_name' in query.keys() and query['last_name']:
+                last_name = query['']
+                v_name(self.cfg, last_name)
+            else:
+                last_name = "Doe"
+            # user type, validate or default
+            if 'user_type' in query.keys() and query['user_type']:
+                user_type = query['user_type']
+                if user_type not in self.cfg.user_types:
+                    self.cfg.log.debug("API_userdata/uadd: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
+                    raise UserdataError("API_userdata/uadd: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
+            else:
+                user_type = self.cfg.def_user_type
+            # shell, assign or default
+            if 'shell' in query.keys() and query['shell']:
+                shell = query['shell']
+            else:
+                shell = self.cfg.shell
+            # ssh_keys file, validate or assign empty string 
+            if files:
+                if len(files) > 1:
+                    self.cfg.log.debug("API_userdata/uadd: too many files uploaded for ssh_keys, refusing to continue")
+                    raise UserdataError("API_userdata/uadd: too many files uploaded for ssh_keys, refusing to continue")
+                ssh_keys = []
+                for key in files[0].readlines():
+                    if v_ssh2_pubkey(key):
+                        ssh_keys.append(key)
+                ssh_public_key = ''.join(ssh_keys).rstrip()
+            else:
+                ssh_public_key = "" 
+
+            # input validation for username
+            username, realm, site_id = v_split_unqn(unqun)
+            if username and realm and site_id:
+                v_name(self.cfg, username)
+                v_realm(self.cfg, realm)
+                v_site_id(self.cfg, site_id)
+            else:
+                self.cfg.log.debug("API_userdata/uadd: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+                raise UserdataError("API_userdata/uadd: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+
+            # make sure we're not trying to add a duplicate
+            u = self.cfg.dbsess.query(Users).\
+            filter(Users.username==username).\
+            filter(Users.realm==realm).\
+            filter(Users.site_id==site_id).first()
+            if u:
+                self.cfg.log.debug("API_userdata/uadd: user exists already: %s" % unqun)
+                raise UserdataError("API_userdata/uadd: user exists already: %s" % unqun)
+           
+            # this is down here instead of up above with its buddies because we need the
+            # username to construct a home dir and email if they're not supplied 
+            if 'home_dir' in query.keys() and query['home_dir']:
+                home_dir = query['home_dir']
+            else:
+                home_dir = "%s/%s" % (self.cfg.hdir, username)
+            if 'email_address' in query.keys() and query['email_address']:
+                email_address = query['email_address']
+            else:
+                email_address = "%s@%s" % (username, self.cfg.email_domain) 
+            # uid, validate or generate
+            # this is down here instead of up above with its buddies because we need the
+            # realm and site_id to query for existing uids
+            if 'uid' in query.keys() and query['uid']:
+                uid = query['uid']
+                v_uid(self.cfg, uid)
+                if v_uid_in_db(self.cfg, uid, realm, site_id):
+                    self.cfg.log.debug("API_userdata/uadd: uid exists already: %s" % uid)
+                    raise UserdataError("API_userdata/uadd: uid exists already: %s" % uid)
+            else:
+                uid = self.__next_available_uid(realm, site_id)
+
+            # create the user object, push it to the db, return status
+            u = Users(first_name, last_name, ssh_public_key, username, site_id, realm, uid, user_type, home_dir, shell, email_address, active=True)
+            self.cfg.dbsess.add(u)
+            self.cfg.dbsess.commit()
+            return 'success'
+        except Exception, e:
+            # something odd happened, explode violently
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_userdata/uadd: error: %s" % e)
+            raise UserdataError("API_userdata/uadd: error: %s" % e)
+
+
+
+############## good to here 
 
 #    def update(self, query):
 #        """
