@@ -543,7 +543,6 @@ class API_userdata:
                     raise UserdataError("API_userdata/uadd: too many files uploaded for ssh_keys, refusing to continue")
                 ssh_keys = []
                 for key in files[0].readlines():
-                    key = key
                     if v_ssh2_pubkey(key):
                         ssh_keys.append(key)
                 ssh_public_key = ''.join(ssh_keys).rstrip()
