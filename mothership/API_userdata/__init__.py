@@ -634,7 +634,7 @@ class API_userdata:
             for qk in query.keys():
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_userdata/udelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-                    raise TagError("API_userdata/udelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/udelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # input validation for username
             username, realm, site_id = v_split_unqn(unqun)
@@ -775,6 +775,78 @@ class API_userdata:
             self.cfg.log.debug("API_userdata/umodify: error: %s" % e)
             raise UserdataError("API_userdata/umodify: error: %s" % e)
 
+
+    def uclone(self, query):
+        """
+        [description]
+        delete a user from the users table
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns "success" if successful, None if unsuccessful 
+        """
+        try:
+            # to make our conditionals easier
+            if 'unqun' not in query.keys() or not query['unqun']:
+                self.cfg.log.debug("API_useradata/uclone: no username.realm.site_id provided!")
+                raise UserdataError("API_useradata/uclone: no username.realm.site_id provided!")
+            else:
+                unqun = query['unqun']
+            if 'newunqn' not in query.keys() or not query['newunqn']:
+                self.cfg.log.debug("API_useradata/uclone: no new realm.site_id provided!")
+                raise UserdataError("API_useradata/uclone: no new realm.site_id provided!")
+            else:
+                newunqn = query['newunqn']
+
+            # setting our valid query keys
+            common = MothershipCommon(self.cfg)
+            valid_qkeys = common.get_valid_qkeys(self.namespace, 'uclone')
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_userdata/uclone: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/uclone: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # input validation for username
+            username, realm, site_id = v_split_unqn(unqun)
+            if username and realm and site_id:
+                v_name(username)
+                v_realm(self.cfg, realm)
+                v_site_id(self.cfg, site_id)
+            else:
+                self.cfg.log.debug("API_userdata/uclone: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+                raise UserdataError("API_userdata/uclone: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+
+            # input validation for new realm.site_id
+            blank, nrealm, nsite_id = v_split_unqn(newunqn)
+            if nrealm and nsite_id:
+                v_realm(self.cfg, nrealm)
+                v_site_id(self.cfg, nsite_id)
+            else:
+                self.cfg.log.debug("API_userdata/uclone: newunqn must be in the format realm.site_id. newunqn: %s" % newunqn)
+                raise UserdataError("API_userdata/uclone: newunqn must be in the format realm.site_id. newunqn: %s" % newunqn)
+
+            u = self.cfg.dbsess.query(Users).\
+            filter(Users.username==username).\
+            filter(Users.realm==realm).\
+            filter(Users.site_id==site_id).first()
+            if u:
+                newu = Users(u.first_name, u.last_name, u.ssh_public_key, u.username, nsite_id, nrealm, u.uid, u.type, u.hdir, u.shell, u.email, active=True)
+                self.cfg.dbsess.add(newu)
+                self.cfg.dbsess.commit()
+                self.cfg.log.debug("API_userdata/uclone: created user: %s.%s" % (newu.username, newunqn))
+                return "success"
+            else:
+                self.cfg.log.debug("API_userdata/uclone: user not found: %s" % unqun)
+                raise UserdataError("API_userdata/uclone: user not found: %s" % unqun)
+        except Exception, e:
+            # something odd happened, explode violently
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_userdata/uclone: error: %s" % e)
+            raise UserdataError("API_userdata/uclone: error: %s" % e)
 
 
 ############## good to here 
