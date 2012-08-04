@@ -46,58 +46,67 @@ def swap_dict(odict):
 
 
 # if someone runs: ship
-def print_submodules(cfg, module_map):
+def get_submodules(cfg, module_map):
     try:
-        print "Available submodules:\n"
+        buf = "Available submodules:\n"
         for i in module_map.keys():
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
                 raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
-            print "%s (%s): %s" % (module_map[i], i.split('API_')[1], mmeta['data']['config']['description'])
-        print "\nRun \"ship <submodule>\" for more information"
+            buf += "%s (%s): %s" % (module_map[i], i.split('API_')[1], mmeta['data']['config']['description'])
+            buf += "\n"
+        buf += "\n\nRun \"ship <submodule>\" for more information"
+        return buf
     except Exception, e:
         raise ShipCLIError("Error: %s" % e)
 
 
 # if someone runs: ship <module>
-def print_commands(cfg, module_map):
+def get_commands(cfg, module_map):
     try:
         revmodule_map = swap_dict(module_map)
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[sys.argv[1]]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
         mmeta = myjson.loads(response.content)
+        buf = ""
         if mmeta['status'] != 0:
             raise ShipCLIError("Error occurred:\n%s" % mmeta['msg'])
-        print "Available module commands:\n"
+        buf += "Available module commands:\n\n"
         for k in mmeta['data']['methods'].keys():
-            print sys.argv[1]+'/'+k+' - '+mmeta['data']['methods'][k]['description']
-        print "\nRun \"ship <submodule>/<command>\" for more information"
+            buf += sys.argv[1]+'/'+k+' - '+mmeta['data']['methods'][k]['description']
+            buf += "\n"
+        buf += "\nRun \"ship <submodule>/<command>\" for more information"
+        return buf
     except Exception, e:
         raise ShipCLIError("Error: %s" % e)
 
 
 # if someone runs: ship <module>/<command>
-def print_command_args(cfg, module_map):
+def get_command_args(cfg, module_map):
     try:
         revmodule_map = swap_dict(module_map)
 	module, call = sys.argv[1].split('/')
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
         mmeta = myjson.loads(response.content)
+        buf = ""
         if mmeta['status'] != 0:
             raise ShipCLIError("Error:\n%s" % mmeta['msg'])
         if not call in mmeta['data']['methods'].keys():
             raise ShipCLIError("Invalid command issued: %s" % sys.argv[1].split('/')[1])
         if 'description' in mmeta['data']['methods'][call]:
-            print mmeta['data']['methods'][call]['description']
+            buf += mmeta['data']['methods'][call]['description']
+            buf += "\n\n"
         if 'args' in mmeta['data']['methods'][call]['required_args']:
-            print "\nRequired arguments:"
+            buf += "Required arguments:\n"
             for k in mmeta['data']['methods'][call]['required_args']['args'].keys():
-                print "--%s (-%s): %s" % (k, mmeta['data']['methods'][call]['required_args']['args'][k]['ol'], mmeta['data']['methods'][call]['required_args']['args'][k]['desc'])
+                buf += "--%s (-%s): %s" % (k, mmeta['data']['methods'][call]['required_args']['args'][k]['ol'], mmeta['data']['methods'][call]['required_args']['args'][k]['desc'])
+                buf += "\n"
         if 'args' in mmeta['data']['methods'][call]['optional_args']:
-            print "\nOptional arguments, supply a minimum of %s and a maximum of %s of the following:" % (mmeta['data']['methods'][call]['optional_args']['min'], mmeta['data']['methods'][call]['optional_args']['max'])
+            buf += "\nOptional arguments, supply a minimum of %s and a maximum of %s of the following:\n" % (mmeta['data']['methods'][call]['optional_args']['min'], mmeta['data']['methods'][call]['optional_args']['max'])
             for k in mmeta['data']['methods'][call]['optional_args']['args'].keys():
-                print "--%s (-%s): %s" % (k, mmeta['data']['methods'][call]['optional_args']['args'][k]['ol'], mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'])
-        print ""
+                buf += "--%s (-%s): %s" % (k, mmeta['data']['methods'][call]['optional_args']['args'][k]['ol'], mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'])
+                buf += "\n"
+        return buf
     except Exception, e:
         raise ShipCLIError(e)
 
@@ -162,9 +171,9 @@ def call_command(cfg, module_map):
                         buf += k+'='+str(a.replace(' ', '%20'))
                     else:
                         buf += k
-#                else:
-#                    raise ShipCLIError("Perhaps you forgot to put a '-' or '--' in front of your options?")
-                
+                # if options[k] is empty and is a required option, explode
+                elif k in mmeta['data']['methods'][call]['required_args']['args'].keys():
+                    raise ShipCLIError(get_command_args(cfg, module_map))
 
             # make the call out to our API service, expect JSON back,
             # load the JSON into the equivalent python variable type
@@ -196,7 +205,7 @@ def call_command(cfg, module_map):
         else:
             raise ShipCLIError("Invalid module specified: %s" % sys.argv[1].split('/')[0])
     except Exception, e:
-        raise ShipCLIError("Error: %s" % e)
+        raise ShipCLIError(e)
 
 
 # prints out response data, according to a jinja2 template defined in
@@ -211,7 +220,13 @@ def print_responsedata(responsedata, mmeta):
     attempt to use "mothership/<modulename>/template.cmdln" as a default. 
     if all else fails, just spit out the response data.
     """
-    if responsedata['data']:
+    if responsedata['msg']:
+        # if we got back something in the "msg" field, it means an error occurred
+        # the REST daemon may populate something in the data field to assist
+        # troubleshooting, but the CLI isn't concerned with that. just let the 
+        # user know what the error message was 
+        print responsedata['msg']
+    elif responsedata['data']:
         module = mmeta['request'].split('/metadata')[0].split('/')[1]
         env = Environment(loader=FileSystemLoader('mothership/'+module))
         try:
@@ -227,11 +242,6 @@ def print_responsedata(responsedata, mmeta):
         else:
             # no template at all! just spit the data out
             print responsedata
-    elif responsedata['msg']:
-        # if we didn't get anything back in the data field, it's possible
-        # we got back an error message instead. they go in the 'msg' field of 
-        # the standard JSON response
-        print responsedata['msg']
     else:
         # TODO: dunno if i want to print anything here. revisit this later
         #
@@ -300,16 +310,16 @@ if __name__ == "__main__":
         #
         # user ran: ship
         if len(sys.argv) < 2:
-            log.debug("print_submodules called()")
-            print_submodules(cfg, module_map)
+            log.debug("get_submodules called()")
+            print get_submodules(cfg, module_map)
         # user ran: ship <valid module>
         elif len(sys.argv) == 2 and sys.argv[1] in module_map.values():
-            log.debug("print_commands called()")
-            print_commands(cfg, module_map)
+            log.debug("get_commands called()")
+            print get_commands(cfg, module_map)
         # user ran: ship <valid module>/<valid command>
         elif len(sys.argv) == 2 and sys.argv[1].split('/')[0] in module_map.values():
-            log.debug("print_command_args called()")
-            print_command_args(cfg, module_map)
+            log.debug("get_command_args called()")
+            print get_command_args(cfg, module_map)
         # user ran: ship <invalid module>/<invalid command>
         elif len(sys.argv) == 2 and sys.argv[1].split('/')[0] not in module_map.values():
             raise ShipCLIError("Requested module does not exist: %s" % "API_"+sys.argv[1].split('/')[0])
@@ -329,6 +339,9 @@ if __name__ == "__main__":
         print "ERROR: %s" % e
         log.debug("Missing config file: mothership_cli.yaml")
         log.debug("ERROR: %s" % e)
+        sys.exit(1)
+    except ShipCLIError, e:
+        print "Error in command line. \n\n%s" % e
         sys.exit(1)
     except Exception, e:
         print "Error in __main__: %s" % e

@@ -286,6 +286,7 @@ def callable_path(pname, callpath):
         # everyone wants query strings, blow up and spit out information if
         # we don't get any query strings
         else:
+            jbuf['msg'] = "Invalid query string passed! See 'data' for valid query strings'" 
             jbuf['data'] = {}
             jbuf['data']['available_query_strings'] = {}
             try:
