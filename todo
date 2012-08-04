@@ -1,0 +1,2 @@
+figure out why we allow options without dashes
+./ship ud/udisplay bobsponge.satest.jfk : returns empty stuff instead of raising an error

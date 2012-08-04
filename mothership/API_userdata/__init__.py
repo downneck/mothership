@@ -19,12 +19,12 @@
 
 from sqlalchemy import or_, desc, MetaData
 
-#import mothership
+import mothership
 #from mothership.mothership_models import *
 from mothership.common import *
 #from mothership.API_list_servers import *
 #from mothership.API_kv import *
-#from mothership.validate import *
+from mothership.validate import *
 
 class UserdataError(Exception):
     pass
@@ -52,7 +52,7 @@ class API_userdata:
                         'args': {
                             'unqun': {
                                 'vartype': 'string',
-                                'desc': 'name.realm.site_id of the user',
+                                'desc': 'username.realm.site_id of the user',
                                 'ol': 'u',
                             },
                         },
@@ -422,10 +422,10 @@ class API_userdata:
         }
 
 
-    def display(self, query):
+    def udisplay(self, query):
         """
         [description]
-        display the information for a tag
+        display the information for a user 
 
         [parameter info]
         required:
@@ -434,27 +434,38 @@ class API_userdata:
         [return]
         Returns the tag ORMobject if successful, None if unsuccessful 
         """
-        # setting variables
-        # config object. love this guy.
-        cfg = self.cfg
-
         try:
             # to make our conditionals easier
-            if 'name' not in query.keys():
-                cfg.log.debug("API_tag/display: no name provided!")
-                raise TagError("API_tag/display: no name provided!")
+            if 'unqun' not in query.keys() or not query['unqun']:
+                self.cfg.log.debug("API_useradata/udisplay: no username.realm.site_id provided!")
+                raise UserdataError("API_useradata/udisplay: no username.realm.site_id provided!")
             else:
-                name = query['name']
-            result = self.__get_tag(cfg, name)
-            if result:
-                return result.to_dict()
-            else:
-                return None
-        except Exception, e:
-            # something odd happened, explode violently
-            cfg.log.debug("API_tag/display: error: %s" % e)
-            raise TagError("API_tag/display: error: %s" % e)
+                unqun = query['unqun']
 
+            username, realm, site_id = v_split_unqn(unqun)
+            if username and realm and site_id:
+                v_name(self.cfg, username)
+                v_realm(self.cfg, realm)
+                v_site_id(self.cfg, site_id)
+            else:
+                self.cfg.log.debug("API_userdata/udisplay: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+                raise UserdataError("API_userdata/udisplay: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+            try:
+                u = self.cfg.dbsess.query(Users).\
+                filter(Users.username==username).\
+                filter(Users.realm==realm).\
+                filter(Users.site_id==site_id).first()
+            except:
+                self.cfg.log.debug("API_userdata/udisplay: user %s not found." % unqun)
+                raise UserdataError("API_userdata/udisplay: user %s not found" % unqun)
+        
+            return u.to_dict()
+
+        except Exception, e:
+            self.cfg.log.debug("API_userdata/udisplay: %s" % e) 
+            raise UserdataError("API_userdata/udisplay: %s" % e) 
+
+################# good to here
 
     def add(self, query):
         """

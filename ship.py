@@ -163,6 +163,9 @@ def call_command(cfg, module_map):
                     else:
                         buf += k
 
+            if args:
+                raise ShipCLIError("Perhaps you forgot to put a '-' or '--' in front of your options?")
+                
 
             # make the call out to our API service, expect JSON back,
             # load the JSON into the equivalent python variable type
