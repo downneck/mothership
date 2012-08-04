@@ -91,8 +91,8 @@ class API_userdata:
                                 'ol': 'l',
                             },
                             'ssh_key': {
-                                'vartype': 'list',
-                                'desc': 'a list containing the user\'s ssh key blob(s)',
+                                'vartype': 'file',
+                                'desc': 'a file containing the user\'s ssh key(s)',
                                 'ol': 'k',
                             },
                             'shell': {
@@ -173,8 +173,8 @@ class API_userdata:
                                 'ol': 'l',
                             },
                             'ssh_key': {
-                                'vartype': 'list',
-                                'desc': 'a list containing the user\'s ssh key blob(s)',
+                                'vartype': 'file',
+                                'desc': 'a file containing the user\'s ssh key(s)',
                                 'ol': 'k',
                             },
                             'shell': {
@@ -536,11 +536,12 @@ class API_userdata:
                 shell = query['shell']
             else:
                 shell = self.cfg.shell
-            # ssh_key array, validate or assign blank array
+            # ssh_key file, validate or assign blank array
             if 'ssh_key' in query.keys() and query['ssh_key']:
-                ssh_key = list(query['ssh_key'])
+                ssh_key = query['ssh_key']
                 for key in ssh_key:
                     v_ssh2_pubkey(key)
+            # under construction
             else:
                 ssh_key = [] 
 

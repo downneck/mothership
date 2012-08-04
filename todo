@@ -1,13 +1,1 @@
-figure out why we allow options without dashes
-./ship ud/udisplay bobsponge.satest.jfk : returns empty stuff instead of raising an error
-
-made a hacky workaround to blow up if an "option" is empty. still need to completely figure out how the querys are constructed by optparse and fix this for real.
-
-hacky workaround sucks and is removed.
-
-
-
-
---------------
-
-need to figure out a good way to get multiple ssh keys into mothership via REST or command line
+work on uploading ssh key file

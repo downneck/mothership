@@ -153,7 +153,6 @@ def call_command(cfg, module_map):
                                           '--'+k, help=mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'],\
                                           action="store_true")
                         arglist[k] = mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype']
-                
             if not arglist:
                 raise ShipCLIError("Error: no arguments defined")
 
@@ -162,7 +161,10 @@ def call_command(cfg, module_map):
             #
             # spaces in URLs make mothership sad, so replace with %20
             (options, args) = parser.parse_args(sys.argv[2:])
+            files = {}
             for k in arglist.keys():
+                if mmeta['data']['methods'][call]['required_args']['args'][k]['vartype'] == "file":
+                    files[k] = open(vars(options)[k])
                 a = vars(options)[k]
                 if a:
                     if buf:
@@ -180,11 +182,11 @@ def call_command(cfg, module_map):
             if mmeta['data']['methods'][call]['rest_type'] == 'GET':
                 callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'POST':
-                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
+                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, files=files, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'DELETE':
                 callresponse = requests.delete('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'PUT':
-                callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
+                callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, files=files, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             responsedata = myjson.loads(callresponse.content)
             if responsedata['status'] != 0:
                 raise ShipCLIError("Error occurred:\n%s" % responsedata['msg'])
