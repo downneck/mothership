@@ -58,7 +58,7 @@ class API_kv:
                         'args': {
                             'unqdn': {
                                 'vartype': 'string',
-                                'desc': 'unqdn/realm_path of the entry. enter any portion or none',
+                                'desc': 'unqdn/realm_path of the entry. enter any portion or "GLOBAL" to select a global value',
                                 'ol': 'u',
                             },
                             'key': {
@@ -94,7 +94,7 @@ class API_kv:
                         'args': {
                             'unqdn': {
                                 'vartype': 'string',
-                                'desc': 'unqdn/realm_path of the entries. enter any portion or none',
+                                'desc': 'unqdn/realm_path of the entries. enter any portion or "GLOBAL" to select all global values',
                                 'ol': 'u',
                             },
                             'key': {
@@ -187,7 +187,7 @@ class API_kv:
                         'args': {
                             'unqdn': {
                                 'vartype': 'string',
-                                'desc': 'unqdn/realm_path of the entry. enter any portion or none',
+                                'desc': 'unqdn/realm_path of the entry. enter any portion or "GLOBAL" to update a global value',
                                 'ol': 'u',
                             },
                             'key': {
