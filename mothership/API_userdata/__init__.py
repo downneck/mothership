@@ -20,6 +20,7 @@
 from sqlalchemy import or_, desc, MetaData
 
 import mothership
+import mothership.ssh
 from mothership.mothership_models import *
 from mothership.common import *
 #from mothership.API_list_servers import *
@@ -480,7 +481,7 @@ class API_userdata:
             raise UserdataError("API_userdata/udisplay: %s" % e) 
 
 
-    def uadd(self, query):
+    def uadd(self, query, files):
         """
         [description]
         create a new tags entry
@@ -527,8 +528,8 @@ class API_userdata:
             if 'user_type' in query.keys() and query['user_type']:
                 user_type = query['user_type']
                 if user_type not in self.cfg.user_types:
-                    self.cfg.log.debug("Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
-                    raise UserdataError("Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
+                    self.cfg.log.debug("API_userdata/uadd: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
+                    raise UserdataError("API_userdata/uadd: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
             else:
                 user_type = self.cfg.def_user_type
             # shell, assign or default
@@ -536,14 +537,19 @@ class API_userdata:
                 shell = query['shell']
             else:
                 shell = self.cfg.shell
-            # ssh_key file, validate or assign blank array
-            if 'ssh_key' in query.keys() and query['ssh_key']:
-                ssh_key = query['ssh_key']
-                for key in ssh_key:
-                    v_ssh2_pubkey(key)
-            # under construction
+            # ssh_keys file, validate or assign blank array
+            if files:
+                if len(files) > 1:
+                    self.cfg.log.debug("API_userdata/uadd: too many files uploaded for ssh_keys, refusing to continue")
+                    raise UserdataError("API_userdata/uadd: too many files uploaded for ssh_keys, refusing to continue")
+                ssh_keys = []
+                for key in files[0].readlines():
+                    key = key
+                    if v_ssh2_pubkey(key):
+                        ssh_keys.append(key)
+                ssh_public_key = ''.join(ssh_keys).rstrip()
             else:
-                ssh_key = [] 
+                ssh_keys = [] 
 
             # input validation for username
             username, realm, site_id = v_split_unqn(unqun)
@@ -585,7 +591,7 @@ class API_userdata:
                 uid = self.__next_available_uid(realm, site_id)
 
             # create the user object
-            u = Users(first_name, last_name, ssh_key, username, site_id, realm, uid, user_type, home_dir, shell, email_address, active=True)
+            u = Users(first_name, last_name, ssh_public_key, username, site_id, realm, uid, user_type, home_dir, shell, email_address, active=True)
             self.cfg.dbsess.add(u)
             self.cfg.dbsess.commit()
             return 'success'

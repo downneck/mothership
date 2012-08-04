@@ -255,20 +255,24 @@ def callable_path(pname, callpath):
     # assuming we're authed, do stuff
     try:
         query = bottle.request.GET
+        filesdata = bottle.request.files
+        files = []
+        for kkkk in filesdata.keys():
+            files.append(filesdata[kkkk].file)
         pnameMetadata = cfg.module_metadata[pname]
         cfg.log.debug("query keys: %s" % query.keys())
         # every API module has a 'metadata' construct
         # hard wire it into callpath options
         # this is an info-level request so no re-auth
         if callpath == 'metadata':
-            cfg.log.debug(myjson.JSONEncoder(indent=4).encode(pnameMetadata.metadata))
+            #cfg.log.debug(myjson.JSONEncoder(indent=4).encode(pnameMetadata.metadata))
             jbuf['data'] = pnameMetadata.metadata
             return myjson.JSONEncoder().encode(jbuf)
         else:
             pnameCallpath = pnameMetadata.metadata['methods'][callpath]
         # we got an actual callpath! do stuff.
         if query:
-            cfg.log.debug("method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath]))
+            #cfg.log.debug("method called: %s" % myjson.JSONEncoder(indent=4).encode(cfg.module_metadata[pname].metadata['methods'][callpath]))
             if bottle.request.method == pnameCallpath['rest_type']:
                 # check to see if the function we're calling is defined as "admin-only"
                 # which requires a different user/pass than "info-only" requests
@@ -278,8 +282,11 @@ def callable_path(pname, callpath):
                         response.content_type='text/html'
                         raise bottle.HTTPError(401, '/'+pname+'/'+callpath) 
                 buf = getattr(pnameMetadata, callpath)
-                jbuf['data'] = buf(query)
-                cfg.log.debug(myjson.JSONEncoder(indent=4).encode(jbuf))
+                if filesdata:
+                    jbuf['data'] = buf(query, files)
+                else:
+                    jbuf['data'] = buf(query)
+                #cfg.log.debug(myjson.JSONEncoder(indent=4).encode(jbuf))
                 return myjson.JSONEncoder().encode(jbuf)
             else:
                 raise ShipDaemonError("request method \"%s\" does not match allowed type \"%s\" for call \"/%s/%s\"" % (bottle.request.method, pnameCallpath['rest_type'], pname, callpath))

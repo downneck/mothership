@@ -163,10 +163,10 @@ def call_command(cfg, module_map):
             (options, args) = parser.parse_args(sys.argv[2:])
             files = {}
             for k in arglist.keys():
-                if mmeta['data']['methods'][call]['required_args']['args'][k]['vartype'] == "file":
-                    files[k] = open(vars(options)[k])
                 a = vars(options)[k]
-                if a:
+                if arglist[k] == "file":
+                    files[k] = open(a)
+                elif a:
                     if buf:
                         buf += '&'
                     if a != True:
@@ -342,7 +342,7 @@ if __name__ == "__main__":
         log.debug("Missing config file: mothership_cli.yaml")
         log.debug("ERROR: %s" % e)
         sys.exit(1)
-    except ShipCLIError, e:
+    except ShipCLIError as e:
         print "Error in command line. \n\n%s" % e
         sys.exit(1)
     except Exception, e:

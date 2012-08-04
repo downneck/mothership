@@ -63,7 +63,7 @@ def v_ssh2_pubkey(key):
         key: the ssh2 public key we're trying to validate
 
     [return value]
-    True/False based on success of validation
+    True/Exception based on success of validation
     """
     try:
         DSA_KEY_ID="ssh-dss"
