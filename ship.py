@@ -162,8 +162,8 @@ def call_command(cfg, module_map):
                         buf += k+'='+str(a.replace(' ', '%20'))
                     else:
                         buf += k
-                else:
-                    raise ShipCLIError("Perhaps you forgot to put a '-' or '--' in front of your options?")
+#                else:
+#                    raise ShipCLIError("Perhaps you forgot to put a '-' or '--' in front of your options?")
                 
 
             # make the call out to our API service, expect JSON back,

@@ -108,7 +108,7 @@ class API_userdata:
                             'home_dir': {
                                 'vartype': 'string',
                                 'desc': "user's home directory (default: %s/username)" % cfg.hdir,
-                                'ol': 'e',
+                                'ol': 'd',
                             },
                             'user_type': {
                                 'vartype': 'string',
@@ -190,7 +190,7 @@ class API_userdata:
                             'home_dir': {
                                 'vartype': 'string',
                                 'desc': "user's home directory (default: %s/username)" % cfg.hdir,
-                                'ol': 'e',
+                                'ol': 'd',
                             },
                             'user_type': {
                                 'vartype': 'string',
@@ -442,7 +442,7 @@ class API_userdata:
             for qk in query.keys():
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-                    raise TagError("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # to make our conditionals easier
             if 'unqun' not in query.keys() or not query['unqun']:
@@ -479,7 +479,6 @@ class API_userdata:
             self.cfg.log.debug("API_userdata/udisplay: %s" % e) 
             raise UserdataError("API_userdata/udisplay: %s" % e) 
 
-################# good to here
 
     def uadd(self, query):
         """
@@ -494,7 +493,7 @@ class API_userdata:
         Returns true if successful, raises an error if not
         """
         # setting our valid query keys
-        common = MothershipCommon(cfg)
+        common = MothershipCommon(self.cfg)
         valid_qkeys = common.get_valid_qkeys(self.namespace, 'uadd')
 
         try:
@@ -510,7 +509,7 @@ class API_userdata:
             for qk in query.keys():
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-                    raise TagError("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # first name, validate or default
             if 'first_name' in query.keys() and query['first_name']:
@@ -524,15 +523,6 @@ class API_userdata:
                 v_name(self.cfg, last_name)
             else:
                 last_name = "Doe"
-            # uid, validate or generate
-            if 'uid' in query.keys() and query['uid']:
-                uid = query['uid']
-                v_uid(self.cfg, uid)
-                if v_uid_in_db(self.cfg, uid, realm, site_id):
-                    self.cfg.log.debug("API_userdata/uadd: uid exists already: %s" % uid)
-                    raise UserdataError("API_userdata/uadd: uid exists already: %s" % uid)
-            else:
-                uid = self.__next_available_uid(realm, site_id)
             # user type, validate or default
             if 'user_type' in query.keys() and query['user_type']:
                 user_type = query['user_type']
@@ -548,7 +538,7 @@ class API_userdata:
                 shell = self.cfg.shell
             # ssh_key array, validate or assign blank array
             if 'ssh_key' in query.keys() and query['ssh_key']:
-                ssh_key = query['ssh_key']
+                ssh_key = list(query['ssh_key'])
                 for key in ssh_key:
                     v_ssh2_pubkey(key)
             else:
@@ -583,6 +573,15 @@ class API_userdata:
                 email_address = query['email_address']
             else:
                 email_address = "%s@%s" % (username, self.cfg.email_domain) 
+            # uid, validate or generate
+            if 'uid' in query.keys() and query['uid']:
+                uid = query['uid']
+                v_uid(self.cfg, uid)
+                if v_uid_in_db(self.cfg, uid, realm, site_id):
+                    self.cfg.log.debug("API_userdata/uadd: uid exists already: %s" % uid)
+                    raise UserdataError("API_userdata/uadd: uid exists already: %s" % uid)
+            else:
+                uid = self.__next_available_uid(realm, site_id)
 
             # create the user object
             u = Users(first_name, last_name, ssh_key, username, site_id, realm, uid, user_type, home_dir, shell, email_address, active=True)
@@ -593,49 +592,70 @@ class API_userdata:
             # something odd happened, explode violently
             self.cfg.dbsess.rollback()
             self.cfg.log.debug("API_userdata/uadd: error: %s" % e)
-            raise TagError("API_userdata/uadd: error: %s" % e)
+            raise UserdataError("API_userdata/uadd: error: %s" % e)
 
 
+    def udelete(self, query):
+        """
+        [description]
+        delete a user from the users table
 
-#    def delete(self, query):
-#        """
-#        [description]
-#        delete a tag from the tag table
-#
-#        [parameter info]
-#        required:
-#            query: the query dict being passed to us from the called URI
-#
-#        [return]
-#        Returns "success" if successful, None if unsuccessful 
-#        """
-#
-#        try:
-#            # to make our conditionals easier
-#            if 'name' not in query.keys():
-#                self.cfg.log.debug("API_tag/delete: no name provided!")
-#                raise TagError("API_tag/delete: no name provided!")
-#            else:
-#                name = query['name']
-#            listservers = API_list_servers(self.cfg.
-#            lssquery = {'tag': name}
-#            if listservers.lss(lssquery):
-#                raise TagError("API_tag/delete: tag is still mapped to servers! unmap before deleting")
-#            result = self.__get_tag(self.cfg. name)
-#            if result:
-#                self.cfg.dbsess.delete(result)
-#                self.cfg.dbsess.commit()
-#                self.cfg.log.debug("API_tag/delete: deleted tag: %s" % name)
-#                return "success"
-#            else:
-#                return None
-#        except Exception, e:
-#            # something odd happened, explode violently
-#            self.cfg.dbsess.rollback()
-#            self.cfg.log.debug("API_tag/delete: error: %s" % e)
-#            raise TagError("API_tag/delete: error: %s" % e)
-#
-#
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns "success" if successful, None if unsuccessful 
+        """
+        try:
+            # to make our conditionals easier
+            if 'unqun' not in query.keys() or not query['unqun']:
+                self.cfg.log.debug("API_useradata/udelete: no username.realm.site_id provided!")
+                raise UserdataError("API_useradata/udelete: no username.realm.site_id provided!")
+            else:
+                unqun = query['unqun']
+
+            # setting our valid query keys
+            common = MothershipCommon(self.cfg)
+            valid_qkeys = common.get_valid_qkeys(self.namespace, 'uadd')
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_userdata/udelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise TagError("API_userdata/udelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # input validation for username
+            username, realm, site_id = v_split_unqn(unqun)
+            if username and realm and site_id:
+                v_name(self.cfg, username)
+                v_realm(self.cfg, realm)
+                v_site_id(self.cfg, site_id)
+            else:
+                self.cfg.log.debug("API_userdata/udelete: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+                raise UserdataError("API_userdata/udelete: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+
+            u = self.cfg.dbsess.query(Users).\
+            filter(Users.username==username).\
+            filter(Users.realm==realm).\
+            filter(Users.site_id==site_id).first()
+            if u:
+                self.cfg.dbsess.delete(u)
+                self.cfg.dbsess.commit()
+                self.cfg.log.debug("API_userdata/udelete: deleted user: %s" % unqun)
+                return "success"
+            else:
+                self.cfg.log.debug("API_userdata/udelete: user not found: %s" % unqun)
+                raise UserdataError("API_userdata/udelete: user not found: %s" % unqun)
+
+        except Exception, e:
+            # something odd happened, explode violently
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_userdata/udelete: error: %s" % e)
+            raise UserdataError("API_userdata/udelete: error: %s" % e)
+
+
+############## under construction to here, ssh keys don't work
+
 #    def update(self, query):
 #        """
 #        [description]
@@ -658,16 +678,16 @@ class API_userdata:
 #        try:
 #            # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
 #            if 'name' not in query.keys():
-#                self.cfg.log.debug("API_tag/update: no name provided!")
-#                raise TagError("API_tag/update: no name provided!")
+#                self.cfg.log.debug("API_userdata/update: no name provided!")
+#                raise UserdataError("API_userdata/update: no name provided!")
 #            else:
 #                name = query['name']
 #
 #            # check for wierd query keys, explode
 #            for qk in query.keys():
 #                if qk not in valid_qkeys:
-#                    self.cfg.log.debug("API_tag/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-#                    raise TagError("API_tag/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+#                    self.cfg.log.debug("API_userdata/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+#                    raise UserdataError("API_userdata/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 #
 #            # to make everything just a bit more readable 
 #            if 'start_port' in query.keys() and query['start_port'] and query['start_port'] != "None":
@@ -684,24 +704,24 @@ class API_userdata:
 #                security_level = None
 #
 #            if not security_level and not start_port and not stop_port:
-#                self.cfg.log.debug("API_tag/update: no updates specified!")
-#                raise TagError("API_tag/update: no updates specified!")
+#                self.cfg.log.debug("API_userdata/update: no updates specified!")
+#                raise UserdataError("API_userdata/update: no updates specified!")
 #
 #            # because you know someone will try this...
 #            if start_port and stop_port and (start_port > stop_port):
-#                self.cfg.log.debug("API_tag/update: start_port (%s) cannot be greater than stop_port (%s)!" % (start_port, stop_port))
-#                raise TagError("API_tag/update: start_port (%s) cannot be greater than stop_port (%s)!" % (start_port, stop_port))
+#                self.cfg.log.debug("API_userdata/update: start_port (%s) cannot be greater than stop_port (%s)!" % (start_port, stop_port))
+#                raise UserdataError("API_userdata/update: start_port (%s) cannot be greater than stop_port (%s)!" % (start_port, stop_port))
 #
 #            # make sure the tag we've been asked to update actually exists
 #            tag = self.__get_tag(self.cfg. name)
 #            if tag:
 #                # because you know someone will try this...
 #                if start_port and not stop_port and tag.stop_port and (start_port > tag.stop_port):
-#                    self.cfg.log.debug("API_tag/update: start_port (%s) cannot be greater than tag.stop_port (%s)!" % (start_port, tag.stop_port))
-#                    raise TagError("API_tag/update: start_port (%s) cannot be greater than tag.stop_port (%s)!" % (start_port, tag.stop_port))
+#                    self.cfg.log.debug("API_userdata/update: start_port (%s) cannot be greater than tag.stop_port (%s)!" % (start_port, tag.stop_port))
+#                    raise UserdataError("API_userdata/update: start_port (%s) cannot be greater than tag.stop_port (%s)!" % (start_port, tag.stop_port))
 #                if not start_port and stop_port and tag.start_port and (tag.start_port > stop_port):
-#                    self.cfg.log.debug("API_tag/update: tag.start_port (%s) cannot be greater than stop_port (%s)!" % (tag.start_port, stop_port))
-#                    raise TagError("API_tag/update: tag.start_port (%s) cannot be greater than stop_port (%s)!" % (tag.start_port, stop_port))
+#                    self.cfg.log.debug("API_userdata/update: tag.start_port (%s) cannot be greater than stop_port (%s)!" % (tag.start_port, stop_port))
+#                    raise UserdataError("API_userdata/update: tag.start_port (%s) cannot be greater than stop_port (%s)!" % (tag.start_port, stop_port))
 #                if start_port:
 #                    tag.start_port = start_port
 #                if stop_port:
@@ -709,17 +729,17 @@ class API_userdata:
 #                if security_level:
 #                    tag.security_level = security_level 
 #            else:
-#                self.cfg.log.debug("API_tag/update: no entry exists for name=%s. use API_userdata/uadd instead" % name)
-#                raise TagError("API_tag/update: no entry exists for name=%s. use API_userdata/uadd instead" % name )
-#            self.cfg.log.debug("API_tag/update: updating entry for name=%s with: start_port=%s stop_port=%s security_level=%s" % (tag.name, tag.start_port, tag.stop_port, tag.security_level))
+#                self.cfg.log.debug("API_userdata/update: no entry exists for name=%s. use API_userdata/uadd instead" % name)
+#                raise UserdataError("API_userdata/update: no entry exists for name=%s. use API_userdata/uadd instead" % name )
+#            self.cfg.log.debug("API_userdata/update: updating entry for name=%s with: start_port=%s stop_port=%s security_level=%s" % (tag.name, tag.start_port, tag.stop_port, tag.security_level))
 #            self.cfg.dbsess.add(tag)
 #            self.cfg.dbsess.commit()
 #            return 'success'
 #        except Exception, e:
 #            # something odd happened, explode violently
 #            self.cfg.dbsess.rollback()
-#            self.cfg.log.debug("API_tag/update: error: %s" % e)
-#            raise TagError("API_tag/update: error: %s" % e)
+#            self.cfg.log.debug("API_userdata/update: error: %s" % e)
+#            raise UserdataError("API_userdata/update: error: %s" % e)
 #
 #
 #    def tag(self, query):
@@ -744,29 +764,29 @@ class API_userdata:
 #        try:
 #            # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
 #            if 'name' not in query.keys():
-#                self.cfg.log.debug("API_tag/tag: no name provided!")
-#                raise TagError("API_tag/tag: no name provided!")
+#                self.cfg.log.debug("API_userdata/tag: no name provided!")
+#                raise UserdataError("API_userdata/tag: no name provided!")
 #            else:
 #                name = query['name']
 #            if 'unqdn' not in query.keys():
-#                self.cfg.log.debug("API_tag/tag: no unqdn provided!")
-#                raise TagError("API_tag/tag: no unqdn provided!")
+#                self.cfg.log.debug("API_userdata/tag: no unqdn provided!")
+#                raise UserdataError("API_userdata/tag: no unqdn provided!")
 #            else:
 #                unqdn = query['unqdn']
 #
 #            # check for wierd query keys, explode
 #            for qk in query.keys():
 #                if qk not in valid_qkeys:
-#                    self.cfg.log.debug("API_tag/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-#                    raise TagError("API_tag/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+#                    self.cfg.log.debug("API_userdata/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+#                    raise UserdataError("API_userdata/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 #
 #            # make sure the tag we've been asked to update actually exists
 #            tag = self.__get_tag(self.cfg. name)
 #            if tag:
-#                self.cfg.log.debug("API_tag/tag: mapping tag \"%s\" to unqdn\"%s\"" % (name, unqdn))
+#                self.cfg.log.debug("API_userdata/tag: mapping tag \"%s\" to unqdn\"%s\"" % (name, unqdn))
 #            else:
-#                self.cfg.log.debug("API_tag/tag: no entry exists for name=%s. use API_userdata/uadd to add a tag first" % name)
-#                raise TagError("API_tag/tag: no entry exists for name=%s. use API_userdata/uadd to add a tag first" % name )
+#                self.cfg.log.debug("API_userdata/tag: no entry exists for name=%s. use API_userdata/uadd to add a tag first" % name)
+#                raise UserdataError("API_userdata/tag: no entry exists for name=%s. use API_userdata/uadd to add a tag first" % name )
 #            kv = API_kv(self.cfg.
 #            kvquery = {'value': query['name'], 'key': 'tag', 'unqdn': query['unqdn']}
 #            ret = kv.add(kvquery)
@@ -774,12 +794,12 @@ class API_userdata:
 #                return ret
 #            else:
 #                self.cfg.dbsess.rollback()
-#                raise TagError("API_tag/tag: something has gone horribly wrong!") 
+#                raise UserdataError("API_userdata/tag: something has gone horribly wrong!") 
 #        except Exception, e:
 #            # something odd happened, explode violently
 #            self.cfg.dbsess.rollback()
-#            self.cfg.log.debug("API_tag/tag: error: %s" % e)
-#            raise TagError("API_tag/tag: error: %s" % e)
+#            self.cfg.log.debug("API_userdata/tag: error: %s" % e)
+#            raise UserdataError("API_userdata/tag: error: %s" % e)
 #
 #
 #    def untag(self, query):
@@ -804,21 +824,21 @@ class API_userdata:
 #        try:
 #            # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
 #            if 'name' not in query.keys():
-#                self.cfg.log.debug("API_tag/untag: no name provided!")
-#                raise TagError("API_tag/untag: no name provided!")
+#                self.cfg.log.debug("API_userdata/untag: no name provided!")
+#                raise UserdataError("API_userdata/untag: no name provided!")
 #            else:
 #                name = query['name']
 #            if 'unqdn' not in query.keys():
-#                self.cfg.log.debug("API_tag/untag: no unqdn provided!")
-#                raise TagError("API_tag/untag: no unqdn provided!")
+#                self.cfg.log.debug("API_userdata/untag: no unqdn provided!")
+#                raise UserdataError("API_userdata/untag: no unqdn provided!")
 #            else:
 #                unqdn = query['unqdn']
 #
 #            # check for wierd query keys, explode
 #            for qk in query.keys():
 #                if qk not in valid_qkeys:
-#                    self.cfg.log.debug("API_tag/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-#                    raise TagError("API_tag/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+#                    self.cfg.log.debug("API_userdata/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+#                    raise UserdataError("API_userdata/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 #
 #            # make sure the tag mapping we've been asked to update actually exists
 #            kv = API_kv(self.cfg.
@@ -830,12 +850,12 @@ class API_userdata:
 #            else:
 #                # mapping does not exist, explode
 #                self.cfg.dbsess.rollback()
-#                raise TagError("API_tag/untag: mapping not found for tag \"%s\" and unqdn \"%s\"" % (query['name'], query['unqdn']))
+#                raise UserdataError("API_userdata/untag: mapping not found for tag \"%s\" and unqdn \"%s\"" % (query['name'], query['unqdn']))
 #        except Exception, e:
 #            # something odd happened, explode violently
 #            self.cfg.dbsess.rollback()
-#            self.cfg.log.debug("API_tag/untag: error: %s" % e)
-#            raise TagError("API_tag/untag: error: %s" % e)
+#            self.cfg.log.debug("API_userdata/untag: error: %s" % e)
+#            raise UserdataError("API_userdata/untag: error: %s" % e)
 #
 #
 
