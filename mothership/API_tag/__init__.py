@@ -223,27 +223,24 @@ class API_tag:
             query: the query dict being passed to us from the called URI
 
         [return]
-        Returns the tag ORMobject if successful, None if unsuccessful 
+        Returns the tag ORMobject if successful, failure notice if unsuccsesful 
         """
-        # setting variables
-        # config object. love this guy.
-        cfg = self.cfg
-
         try:
             # to make our conditionals easier
             if 'name' not in query.keys():
-                cfg.log.debug("API_tag/display: no name provided!")
+                self.cfg.log.debug("API_tag/display: no name provided!")
                 raise TagError("API_tag/display: no name provided!")
             else:
                 name = query['name']
-            result = self.__get_tag(cfg, name)
+            result = self.__get_tag(name)
             if result:
                 return result.to_dict()
             else:
-                return None
+                self.cfg.log.debug("API_tag/display: tag not found: %s" % name) 
+                raise TagError("API_tag/display: tag not found: %s" % name) 
         except Exception, e:
             # something odd happened, explode violently
-            cfg.log.debug("API_tag/display: error: %s" % e)
+            self.cfg.log.debug("API_tag/display: error: %s" % e)
             raise TagError("API_tag/display: error: %s" % e)
 
 
@@ -259,17 +256,14 @@ class API_tag:
         [return]
         Returns true if successful, raises an error if not
         """
-        # setting variables
-        # config object. love this guy.
-        cfg = self.cfg
         # setting our valid query keys
-        common = MothershipCommon(cfg)
+        common = MothershipCommon(self.cfg)
         valid_qkeys = common.get_valid_qkeys(self.namespace, 'add')
 
         try:
             # to make our conditionals easier
             if 'name' not in query.keys() or not query['name']:
-                cfg.log.debug("API_tag/add: no name provided!")
+                self.cfg.log.debug("API_tag/add: no name provided!")
                 raise TagError("API_tag/add: no name provided!")
             else:
                 name = query['name']
@@ -277,7 +271,7 @@ class API_tag:
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    cfg.log.debug("API_tag/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    self.cfg.log.debug("API_tag/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise TagError("API_tag/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             if 'start_port' in query.keys() and query['start_port']:
@@ -294,27 +288,27 @@ class API_tag:
                 security_level = None
 
             if start_port and not stop_port:
-                cfg.log.debug("API_tag/add: start_port requires a stop_port!")
+                self.cfg.log.debug("API_tag/add: start_port requires a stop_port!")
                 raise TagError("API_tag/add: start_port requires a stop_port!")
             elif stop_port and not start_port:
-                cfg.log.debug("API_tag/add: stop_port requires a start_port!")
+                self.cfg.log.debug("API_tag/add: stop_port requires a start_port!")
                 raise TagError("API_tag/add: stop_port requires a start_port!")
                  
 
             # Check for duplicate tags.
             duptag = self.display(query)
             if duptag:
-                cfg.log.debug("API_tag/add: entry exists for name=%s" % name)
+                self.cfg.log.debug("API_tag/add: entry exists for name=%s" % name)
                 raise TagError("API_tag/add: entry exists for name=%s" % name )
             tag = Tag(name, start_port, stop_port, security_level)
-            cfg.log.debug("API_tag/add: creating entry for name=%s start_port=%s stop_port=%s security_level=%s" % (tag.name, tag.start_port, tag.stop_port, tag.security_level))
-            cfg.dbsess.add(tag)
-            cfg.dbsess.commit()
+            self.cfg.log.debug("API_tag/add: creating entry for name=%s start_port=%s stop_port=%s security_level=%s" % (tag.name, tag.start_port, tag.stop_port, tag.security_level))
+            self.cfg.dbsess.add(tag)
+            self.cfg.dbsess.commit()
             return 'success'
         except Exception, e:
             # something odd happened, explode violently
-            cfg.dbsess.rollback()
-            cfg.log.debug("API_tag/add: error: %s" % e)
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_tag/add: error: %s" % e)
             raise TagError("API_tag/add: error: %s" % e)
 
 
@@ -337,26 +331,27 @@ class API_tag:
         try:
             # to make our conditionals easier
             if 'name' not in query.keys():
-                cfg.log.debug("API_tag/delete: no name provided!")
+                self.cfg.log.debug("API_tag/delete: no name provided!")
                 raise TagError("API_tag/delete: no name provided!")
             else:
                 name = query['name']
-            listservers = API_list_servers(cfg)
+            listservers = API_list_servers(self.cfg)
             lssquery = {'tag': name}
             if listservers.lss(lssquery):
                 raise TagError("API_tag/delete: tag is still mapped to servers! unmap before deleting")
-            result = self.__get_tag(cfg, name)
+            result = self.__get_tag(name)
             if result:
-                cfg.dbsess.delete(result)
-                cfg.dbsess.commit()
-                cfg.log.debug("API_tag/delete: deleted tag: %s" % name)
+                self.cfg.dbsess.delete(result)
+                self.cfg.dbsess.commit()
+                self.cfg.log.debug("API_tag/delete: deleted tag: %s" % name)
                 return "success"
             else:
-                return None
+                self.cfg.log.debug("API_tag/delete: tag not found: %s" % name) 
+                raise TagError("API_tag/delete: tag not found: %s" % name) 
         except Exception, e:
             # something odd happened, explode violently
-            cfg.dbsess.rollback()
-            cfg.log.debug("API_tag/delete: error: %s" % e)
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_tag/delete: error: %s" % e)
             raise TagError("API_tag/delete: error: %s" % e)
 
 
@@ -376,13 +371,13 @@ class API_tag:
         # config object. love this guy.
         cfg = self.cfg
         # setting our valid query keys
-        common = MothershipCommon(cfg)
+        common = MothershipCommon(self.cfg)
         valid_qkeys = common.get_valid_qkeys(self.namespace, 'update')
 
         try:
             # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
             if 'name' not in query.keys():
-                cfg.log.debug("API_tag/update: no name provided!")
+                self.cfg.log.debug("API_tag/update: no name provided!")
                 raise TagError("API_tag/update: no name provided!")
             else:
                 name = query['name']
@@ -390,7 +385,7 @@ class API_tag:
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    cfg.log.debug("API_tag/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    self.cfg.log.debug("API_tag/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise TagError("API_tag/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # to make everything just a bit more readable 
@@ -408,23 +403,23 @@ class API_tag:
                 security_level = None
 
             if not security_level and not start_port and not stop_port:
-                cfg.log.debug("API_tag/update: no updates specified!")
+                self.cfg.log.debug("API_tag/update: no updates specified!")
                 raise TagError("API_tag/update: no updates specified!")
 
             # because you know someone will try this...
             if start_port and stop_port and (start_port > stop_port):
-                cfg.log.debug("API_tag/update: start_port (%s) cannot be greater than stop_port (%s)!" % (start_port, stop_port))
+                self.cfg.log.debug("API_tag/update: start_port (%s) cannot be greater than stop_port (%s)!" % (start_port, stop_port))
                 raise TagError("API_tag/update: start_port (%s) cannot be greater than stop_port (%s)!" % (start_port, stop_port))
 
             # make sure the tag we've been asked to update actually exists
-            tag = self.__get_tag(cfg, name)
+            tag = self.__get_tag(name)
             if tag:
                 # because you know someone will try this...
                 if start_port and not stop_port and tag.stop_port and (start_port > tag.stop_port):
-                    cfg.log.debug("API_tag/update: start_port (%s) cannot be greater than tag.stop_port (%s)!" % (start_port, tag.stop_port))
+                    self.cfg.log.debug("API_tag/update: start_port (%s) cannot be greater than tag.stop_port (%s)!" % (start_port, tag.stop_port))
                     raise TagError("API_tag/update: start_port (%s) cannot be greater than tag.stop_port (%s)!" % (start_port, tag.stop_port))
                 if not start_port and stop_port and tag.start_port and (tag.start_port > stop_port):
-                    cfg.log.debug("API_tag/update: tag.start_port (%s) cannot be greater than stop_port (%s)!" % (tag.start_port, stop_port))
+                    self.cfg.log.debug("API_tag/update: tag.start_port (%s) cannot be greater than stop_port (%s)!" % (tag.start_port, stop_port))
                     raise TagError("API_tag/update: tag.start_port (%s) cannot be greater than stop_port (%s)!" % (tag.start_port, stop_port))
                 if start_port:
                     tag.start_port = start_port
@@ -433,16 +428,16 @@ class API_tag:
                 if security_level:
                     tag.security_level = security_level 
             else:
-                cfg.log.debug("API_tag/update: no entry exists for name=%s. use API_tag/add instead" % name)
+                self.cfg.log.debug("API_tag/update: no entry exists for name=%s. use API_tag/add instead" % name)
                 raise TagError("API_tag/update: no entry exists for name=%s. use API_tag/add instead" % name )
-            cfg.log.debug("API_tag/update: updating entry for name=%s with: start_port=%s stop_port=%s security_level=%s" % (tag.name, tag.start_port, tag.stop_port, tag.security_level))
-            cfg.dbsess.add(tag)
-            cfg.dbsess.commit()
+            self.cfg.log.debug("API_tag/update: updating entry for name=%s with: start_port=%s stop_port=%s security_level=%s" % (tag.name, tag.start_port, tag.stop_port, tag.security_level))
+            self.cfg.dbsess.add(tag)
+            self.cfg.dbsess.commit()
             return 'success'
         except Exception, e:
             # something odd happened, explode violently
-            cfg.dbsess.rollback()
-            cfg.log.debug("API_tag/update: error: %s" % e)
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_tag/update: error: %s" % e)
             raise TagError("API_tag/update: error: %s" % e)
 
 
@@ -462,18 +457,18 @@ class API_tag:
         # config object. love this guy.
         cfg = self.cfg
         # setting our valid query keys
-        common = MothershipCommon(cfg)
+        common = MothershipCommon(self.cfg)
         valid_qkeys = common.get_valid_qkeys(self.namespace, 'tag')
 
         try:
             # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
             if 'name' not in query.keys():
-                cfg.log.debug("API_tag/tag: no name provided!")
+                self.cfg.log.debug("API_tag/tag: no name provided!")
                 raise TagError("API_tag/tag: no name provided!")
             else:
                 name = query['name']
             if 'unqdn' not in query.keys():
-                cfg.log.debug("API_tag/tag: no unqdn provided!")
+                self.cfg.log.debug("API_tag/tag: no unqdn provided!")
                 raise TagError("API_tag/tag: no unqdn provided!")
             else:
                 unqdn = query['unqdn']
@@ -481,28 +476,28 @@ class API_tag:
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    cfg.log.debug("API_tag/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    self.cfg.log.debug("API_tag/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise TagError("API_tag/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # make sure the tag we've been asked to update actually exists
-            tag = self.__get_tag(cfg, name)
+            tag = self.__get_tag(name)
             if tag:
-                cfg.log.debug("API_tag/tag: mapping tag \"%s\" to unqdn\"%s\"" % (name, unqdn))
+                self.cfg.log.debug("API_tag/tag: mapping tag \"%s\" to unqdn\"%s\"" % (name, unqdn))
             else:
-                cfg.log.debug("API_tag/tag: no entry exists for name=%s. use API_tag/add to add a tag first" % name)
+                self.cfg.log.debug("API_tag/tag: no entry exists for name=%s. use API_tag/add to add a tag first" % name)
                 raise TagError("API_tag/tag: no entry exists for name=%s. use API_tag/add to add a tag first" % name )
-            kv = API_kv(cfg)
+            kv = API_kv(self.cfg)
             kvquery = {'value': query['name'], 'key': 'tag', 'unqdn': query['unqdn']}
             ret = kv.add(kvquery)
             if ret == "success":
                 return ret
             else:
-                cfg.dbsess.rollback()
+                self.cfg.dbsess.rollback()
                 raise TagError("API_tag/tag: something has gone horribly wrong!") 
         except Exception, e:
             # something odd happened, explode violently
-            cfg.dbsess.rollback()
-            cfg.log.debug("API_tag/tag: error: %s" % e)
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_tag/tag: error: %s" % e)
             raise TagError("API_tag/tag: error: %s" % e)
 
 
@@ -522,18 +517,18 @@ class API_tag:
         # config object. love this guy.
         cfg = self.cfg
         # setting our valid query keys
-        common = MothershipCommon(cfg)
+        common = MothershipCommon(self.cfg)
         valid_qkeys = common.get_valid_qkeys(self.namespace, 'untag')
 
         try:
             # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
             if 'name' not in query.keys():
-                cfg.log.debug("API_tag/untag: no name provided!")
+                self.cfg.log.debug("API_tag/untag: no name provided!")
                 raise TagError("API_tag/untag: no name provided!")
             else:
                 name = query['name']
             if 'unqdn' not in query.keys():
-                cfg.log.debug("API_tag/untag: no unqdn provided!")
+                self.cfg.log.debug("API_tag/untag: no unqdn provided!")
                 raise TagError("API_tag/untag: no unqdn provided!")
             else:
                 unqdn = query['unqdn']
@@ -541,11 +536,11 @@ class API_tag:
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    cfg.log.debug("API_tag/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    self.cfg.log.debug("API_tag/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise TagError("API_tag/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # make sure the tag mapping we've been asked to update actually exists
-            kv = API_kv(cfg)
+            kv = API_kv(self.cfg)
             kvquery = {'value': query['name'], 'key': 'tag', 'unqdn': query['unqdn']}
             if kv.select(kvquery):
                 # mapping exists, remove it
@@ -553,29 +548,29 @@ class API_tag:
                 return "success"
             else:
                 # mapping does not exist, explode
-                cfg.dbsess.rollback()
+                self.cfg.dbsess.rollback()
                 raise TagError("API_tag/untag: mapping not found for tag \"%s\" and unqdn \"%s\"" % (query['name'], query['unqdn']))
         except Exception, e:
             # something odd happened, explode violently
-            cfg.dbsess.rollback()
-            cfg.log.debug("API_tag/untag: error: %s" % e)
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_tag/untag: error: %s" % e)
             raise TagError("API_tag/untag: error: %s" % e)
 
 
 # internal functions below here
 
-    def __get_tag(self, cfg, name):
+    def __get_tag(self, name):
         """
         stuff here
         """
         try:
-            result = cfg.dbsess.query(Tag).\
+            result = self.cfg.dbsess.query(Tag).\
                      filter(Tag.name == name).first()
             if result:
                 return result
             else:
                 return None
         except Exception, e:
-            cfg.dbsess.rollback()
-            cfg.log.debug("API_tag/__get_tag: error: %s" % e)
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_tag/__get_tag: error: %s" % e)
             raise TagError("API_tag/__get_tag: error: %s" % e)

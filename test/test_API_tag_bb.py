@@ -72,10 +72,9 @@ class TestAPI_tag(unittest.TestCase):
     # name=FAILURE, null results 
     def test_tag_display_bad_name_null_result(self):
         query = {'name': 'FAILURE'}
-        result = tag.display(query)
 
-        self.assertEqual(result, None)
-        print "[API_tag] BB_test_tag_display_bad_name_null_result: PASSED"
+        self.assertRaises(Tagerror, tag.display, query)
+        print "[API_tag] BB_test_tag_display_name_bad: PASSED (raised TagError)"
 
 
     ######################################
@@ -224,10 +223,9 @@ class TestAPI_tag(unittest.TestCase):
     # bad name, null results 
     def test_tag_delete_bad_name_null(self):
         query = {'name': 'FAILURE'}
-        result = tag.delete(query)
 
-        self.assertEqual(result, None)
-        print "[API_tag] BB_test_tag_delete_bad_name_null: PASSED"
+        self.assertRaises(TagError, tag.delete, query)
+        print "[API_tag] BB_test_tag_delete_name_bad: PASSED (raised TagError"
  
     # good name, failure due to existing mapping
     def test_tag_delete_name_mapping_failure(self):
