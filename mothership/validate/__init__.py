@@ -669,7 +669,7 @@ def v_get_server_obj(cfg, unqdn):
     # get the realm.site_id.domain data
     hostname, realm, site_id = v_split_unqn(unqdn)
     if hostname:
-        v_name(cfg, hostname)
+        v_name(hostname)
         v_realm(cfg, realm)
         v_site_id(cfg, site_id)
     else:

@@ -453,7 +453,7 @@ class API_userdata:
 
             username, realm, site_id = v_split_unqn(unqun)
             if username and realm and site_id:
-                v_name(self.cfg, username)
+                v_name(username)
                 v_realm(self.cfg, realm)
                 v_site_id(self.cfg, site_id)
             else:
@@ -514,13 +514,13 @@ class API_userdata:
             # first name, validate or default
             if 'first_name' in query.keys() and query['first_name']:
                 first_name = query['first_name']
-                v_name(self.cfg, first_name)
+                v_name(first_name)
             else:
                 first_name = "John"
             # last name, validate or default
             if 'last_name' in query.keys() and query['last_name']:
-                last_name = query['']
-                v_name(self.cfg, last_name)
+                last_name = query['last_name']
+                v_name(last_name)
             else:
                 last_name = "Doe"
             # user type, validate or default
@@ -552,7 +552,7 @@ class API_userdata:
             # input validation for username
             username, realm, site_id = v_split_unqn(unqun)
             if username and realm and site_id:
-                v_name(self.cfg, username)
+                v_name(username)
                 v_realm(self.cfg, realm)
                 v_site_id(self.cfg, site_id)
             else:
@@ -634,7 +634,7 @@ class API_userdata:
             # input validation for username
             username, realm, site_id = v_split_unqn(unqun)
             if username and realm and site_id:
-                v_name(self.cfg, username)
+                v_name(username)
                 v_realm(self.cfg, realm)
                 v_site_id(self.cfg, site_id)
             else:
@@ -661,7 +661,7 @@ class API_userdata:
             raise UserdataError("API_userdata/udelete: error: %s" % e)
 
 
-    def umodify(self, query, files):
+    def umodify(self, query, files=None):
         """
         [description]
         create a new tags entry
@@ -675,53 +675,69 @@ class API_userdata:
         """
         # setting our valid query keys
         common = MothershipCommon(self.cfg)
-        valid_qkeys = common.get_valid_qkeys(self.namespace, 'uadd')
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'umodify')
 
         try:
             # to make our conditionals easier
             if 'unqun' not in query.keys() or not query['unqun']:
-                self.cfg.log.debug("API_useradata/uadd: no username.realm.site_id provided!")
-                raise UserdataError("API_useradata/uadd: no username.realm.site_id provided!")
+                self.cfg.log.debug("API_useradata/umodify: no username.realm.site_id provided!")
+                raise UserdataError("API_useradata/umodify: no username.realm.site_id provided!")
             else:
                 unqun = query['unqun']
-
 
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    self.cfg.log.debug("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-                    raise UserdataError("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    self.cfg.log.debug("API_userdata/umodify: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/umodify: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
-            # first name, validate or default
-            if 'first_name' in query.keys() and query['first_name']:
-                first_name = query['first_name']
-                v_name(self.cfg, first_name)
+            # input validation for username
+            username, realm, site_id = v_split_unqn(unqun)
+            if username and realm and site_id:
+                v_name(username)
+                v_realm(self.cfg, realm)
+                v_site_id(self.cfg, site_id)
             else:
-                first_name = "John"
+                self.cfg.log.debug("API_userdata/umodify: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+                raise UserdataError("API_userdata/umodify: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
+
+            # make sure we're updating an existing user 
+            u = self.cfg.dbsess.query(Users).\
+            filter(Users.username==username).\
+            filter(Users.realm==realm).\
+            filter(Users.site_id==site_id).first()
+            if not u:
+                self.cfg.log.debug("API_userdata/umodify: refusing to modify nonexistent user: %s" % unqun)
+                raise UserdataError("API_userdata/umodify: refusing to modify nonexistent user: %s" % unqun)
+           
+            # first name, validate or leave alone 
+            if 'first_name' in query.keys() and query['first_name']:
+                v_name(query['first_name'])
+                u.first_name = query['first_name']
             # last name, validate or default
             if 'last_name' in query.keys() and query['last_name']:
-                last_name = query['']
-                v_name(self.cfg, last_name)
+                v_name(query['last_name'])
+                u.last_name = query['last_name']
             else:
-                last_name = "Doe"
+                last_name = u.last_name
             # user type, validate or default
             if 'user_type' in query.keys() and query['user_type']:
                 user_type = query['user_type']
                 if user_type not in self.cfg.user_types:
-                    self.cfg.log.debug("API_userdata/uadd: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
-                    raise UserdataError("API_userdata/uadd: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
+                    self.cfg.log.debug("API_userdata/umodify: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
+                    raise UserdataError("API_userdata/umodify: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
             else:
-                user_type = self.cfg.def_user_type
+                user_type = u.user_type
             # shell, assign or default
             if 'shell' in query.keys() and query['shell']:
                 shell = query['shell']
             else:
-                shell = self.cfg.shell
+                shell = u.shell 
             # ssh_keys file, validate or assign empty string 
             if files:
                 if len(files) > 1:
-                    self.cfg.log.debug("API_userdata/uadd: too many files uploaded for ssh_keys, refusing to continue")
-                    raise UserdataError("API_userdata/uadd: too many files uploaded for ssh_keys, refusing to continue")
+                    self.cfg.log.debug("API_userdata/umodify: too many files uploaded for ssh_keys, refusing to continue")
+                    raise UserdataError("API_userdata/umodify: too many files uploaded for ssh_keys, refusing to continue")
                 ssh_keys = []
                 for key in files[0].readlines():
                     if v_ssh2_pubkey(key):
@@ -730,25 +746,6 @@ class API_userdata:
             else:
                 ssh_public_key = "" 
 
-            # input validation for username
-            username, realm, site_id = v_split_unqn(unqun)
-            if username and realm and site_id:
-                v_name(self.cfg, username)
-                v_realm(self.cfg, realm)
-                v_site_id(self.cfg, site_id)
-            else:
-                self.cfg.log.debug("API_userdata/uadd: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
-                raise UserdataError("API_userdata/uadd: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
-
-            # make sure we're not trying to add a duplicate
-            u = self.cfg.dbsess.query(Users).\
-            filter(Users.username==username).\
-            filter(Users.realm==realm).\
-            filter(Users.site_id==site_id).first()
-            if u:
-                self.cfg.log.debug("API_userdata/uadd: user exists already: %s" % unqun)
-                raise UserdataError("API_userdata/uadd: user exists already: %s" % unqun)
-           
             # this is down here instead of up above with its buddies because we need the
             # username to construct a home dir and email if they're not supplied 
             if 'home_dir' in query.keys() and query['home_dir']:
@@ -766,8 +763,8 @@ class API_userdata:
                 uid = query['uid']
                 v_uid(self.cfg, uid)
                 if v_uid_in_db(self.cfg, uid, realm, site_id):
-                    self.cfg.log.debug("API_userdata/uadd: uid exists already: %s" % uid)
-                    raise UserdataError("API_userdata/uadd: uid exists already: %s" % uid)
+                    self.cfg.log.debug("API_userdata/umodify: uid exists already: %s" % uid)
+                    raise UserdataError("API_userdata/umodify: uid exists already: %s" % uid)
             else:
                 uid = self.__next_available_uid(realm, site_id)
 
@@ -779,8 +776,8 @@ class API_userdata:
         except Exception, e:
             # something odd happened, explode violently
             self.cfg.dbsess.rollback()
-            self.cfg.log.debug("API_userdata/uadd: error: %s" % e)
-            raise UserdataError("API_userdata/uadd: error: %s" % e)
+            self.cfg.log.debug("API_userdata/umodify: error: %s" % e)
+            raise UserdataError("API_userdata/umodify: error: %s" % e)
 
 
 
@@ -1007,7 +1004,7 @@ class API_userdata:
         """
         try: 
             groupname, realm, site_id = v_split_unqn(unqgn)
-            v_name(self.cfg, groupname)
+            v_name(groupname)
             v_realm(self.cfg, realm)
             v_site_id(self.cfg, site_id)
             g = list(self.cfg.dbsess.query(Groups).\
