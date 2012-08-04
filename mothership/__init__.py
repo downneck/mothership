@@ -26,7 +26,7 @@ import types
 
 #import mothership.kv
 #import mothership.list_values
-import mothership.users
+#import mothership.users
 from mothership.mothership_models import *
 from sqlalchemy import or_, desc, MetaData
 #from mothership.validate import *
