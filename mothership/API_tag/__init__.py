@@ -54,7 +54,7 @@ class API_tag:
                     'required_args': {
                         'args': {
                             'name': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'name of the tag',
                                 'ol': 'n',
                             },
@@ -73,7 +73,7 @@ class API_tag:
                     'required_args': {
                         'args': {
                             'name': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'name of the tag to add to the database',
                                 'ol': 'n',
                             },
@@ -111,7 +111,7 @@ class API_tag:
                     'required_args': {
                         'args': {
                             'name': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'name of the tag to delete from the database',
                                 'ol': 'n',
                             },
@@ -130,7 +130,7 @@ class API_tag:
                     'required_args': {
                         'args': {
                             'name': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'name of the tag to update in the database',
                                 'ol': 'n',
                             },
@@ -168,12 +168,12 @@ class API_tag:
                     'required_args': {
                         'args': {
                             'name': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'name of the tag to map',
                                 'ol': 'n',
                             },
                             'unqdn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'unqdn of the server to map the tag onto (use the keyword "GLOBAL" to map a tag globally)',
                                 'ol': 'u',
                             },
@@ -192,12 +192,12 @@ class API_tag:
                     'required_args': {
                         'args': {
                             'name': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'name of the tag to unmap',
                                 'ol': 'n',
                             },
                             'unqdn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'unqdn of the server to unmap the tag from (use the keyword "GLOBAL" to unmap a globally mapped tag)',
                                 'ol': 'u',
                             },

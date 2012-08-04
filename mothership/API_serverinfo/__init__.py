@@ -62,22 +62,22 @@ class API_serverinfo:
                         'max': 1, # maximum number of optional args we'll accept
                         'args': { # the argument definitions themselves
                             'hw_tag': { # an arg
-                                'vartype': 'string', # its type
+                                'vartype': 'str', # its type
                                 'desc': 'search for a hw_tag (hardware tag)', # its description
                                 'ol': 'w', # the one-letter designation for this option (ie -w)
                             },
                             'ip': { # an arg
-                                'vartype': 'string', # its type
+                                'vartype': 'str', # its type
                                 'desc': 'search for an ip (public or private)', # its description
                                 'ol': 'i', # the one-letter designation for this option (ie -w)
                             },
                             'mac': { # an arg
-                                'vartype': 'string', # its type
+                                'vartype': 'str', # its type
                                 'desc': 'search for a MAC address', # its description
                                 'ol': 'm', # the one-letter designation for this option (ie -w)
                             },
                             'unqdn': { # an arg
-                                'vartype': 'string', # its type
+                                'vartype': 'str', # its type
                                 'desc': 'search for an unqdn (hostname.realm.site_id)', # its description
                                 'ol': 'n', # the one-letter designation for this option (ie -w)
                             },

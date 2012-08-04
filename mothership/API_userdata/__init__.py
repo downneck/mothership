@@ -51,7 +51,7 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqun': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'username.realm.site_id of the user',
                                 'ol': 'u',
                             },
@@ -70,7 +70,7 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqun': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'username.realm.site_id of the user to add to the database',
                                 'ol': 'u',
                             },
@@ -81,12 +81,12 @@ class API_userdata:
                         'max': 8,
                         'args': {
                             'first_name': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'user\'s first name (default John)',
                                 'ol': 'f',
                             },
                             'last_name': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'user\'s last name (default Doe)',
                                 'ol': 'l',
                             },
@@ -96,27 +96,27 @@ class API_userdata:
                                 'ol': 'k',
                             },
                             'shell': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': "user's shell (default: %s)" % cfg.shell,
                                 'ol': 's',
                             },
                             'email_address': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': "user's email address (default: username@%s)" % cfg.email_domain,
                                 'ol': 'e',
                             },
                             'home_dir': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': "user's home directory (default: %s/username)" % cfg.hdir,
                                 'ol': 'd',
                             },
                             'user_type': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': "user type, pick one of: %s (default: %s)" % (" ".join(cfg.user_types), cfg.def_user_type),
                                 'ol': 't',
                             },
                             'uid': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': "user's uid (default will pick the next available uid)",
                                 'ol': 'i',
                             },
@@ -133,7 +133,7 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqun': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'username.realm.site_id of the user to delete from the database',
                                 'ol': 'u',
                             },
@@ -152,7 +152,7 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqun': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'username.realm.site_id of the user to modify',
                                 'ol': 'u',
                             },
@@ -163,12 +163,12 @@ class API_userdata:
                         'max': 8,
                         'args': {
                             'first_name': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'user\'s first name (default John)',
                                 'ol': 'f',
                             },
                             'last_name': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'user\'s last name (default Doe)',
                                 'ol': 'l',
                             },
@@ -178,29 +178,34 @@ class API_userdata:
                                 'ol': 'k',
                             },
                             'shell': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': "user's shell (default: %s)" % cfg.shell,
                                 'ol': 's',
                             },
                             'email_address': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': "user's email address (default: username@%s)" % cfg.email_domain,
                                 'ol': 'e',
                             },
                             'home_dir': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': "user's home directory (default: %s/username)" % cfg.hdir,
                                 'ol': 'd',
                             },
                             'user_type': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': "user type, pick one of: %s (default: %s)" % (" ".join(cfg.user_types), cfg.def_user_type),
                                 'ol': 't',
                             },
                             'uid': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': "user's uid (default will pick the next available uid)",
                                 'ol': 'i',
+                            },
+                            'active': {
+                                'vartype': 'str',
+                                'desc': "True/False, whether the user is active or not. deactivate the user to disable him/her without removing the user from mothership",
+                                'ol': 'a',
                             },
                         },
                     },
@@ -215,12 +220,12 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqun': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'username.realm.site_id of the user to clone from',
                                'ol': 'u',
                             },
                             'newunqn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'realm.site_id to clone the user into',
                                 'ol': 'n',
                             },
@@ -239,7 +244,7 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqgn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'name.realm.site_id of the group',
                                 'ol': 'u',
                             },
@@ -258,7 +263,7 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqgn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'group.realm.site_id of the group to add to the database',
                                 'ol': 'u',
                             },
@@ -269,17 +274,17 @@ class API_userdata:
                         'max': 3,
                         'args': {
                             'description': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'a description of the group',
                                 'ol': 'd',
                             },
                             'sudo_cmds': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'commands users of this group are allowd to run as root',
                                 'ol': 's',
                             },
                             'gid': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'group id number to assign to the group',
                                 'ol': 'g',
                             },
@@ -296,7 +301,7 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqgn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'groupname.realm.site_id of the group to delete from the database',
                                 'ol': 'g',
                             },
@@ -315,7 +320,7 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqgn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'groupname.realm.site_id of the group to modify',
                                 'ol': 'u',
                             },
@@ -326,17 +331,17 @@ class API_userdata:
                         'max': 3,
                         'args': {
                             'description': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'a description of the group',
                                 'ol': 'd',
                             },
                             'sudo_cmds': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'commands users of this group are allowd to run as root',
                                 'ol': 's',
                             },
                             'gid': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'group id number to assign to the group',
                                 'ol': 'g',
                             },
@@ -353,12 +358,12 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqgn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'groupname.realm.site_id of the group to clone from',
                                'ol': 'u',
                             },
                             'newunqn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'realm.site_id to clone the group into',
                                 'ol': 'n',
                             },
@@ -377,12 +382,12 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqun': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'username.realm.site_id of the user to map',
                                'ol': 'u',
                             },
                             'groupname': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'groupname (without the realm.site_id) to map the user to',
                                 'ol': 'g',
                             },
@@ -401,12 +406,12 @@ class API_userdata:
                     'required_args': {
                         'args': {
                             'unqun': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'username.realm.site_id of the user to unmap',
                                'ol': 'u',
                             },
                             'groupname': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'groupname (without the realm.site_id) to remove the user from',
                                 'ol': 'g',
                             },
@@ -718,21 +723,16 @@ class API_userdata:
             if 'last_name' in query.keys() and query['last_name']:
                 v_name(query['last_name'])
                 u.last_name = query['last_name']
-            else:
-                last_name = u.last_name
             # user type, validate or leave alone 
             if 'user_type' in query.keys() and query['user_type']:
-                user_type = query['user_type']
-                if user_type not in self.cfg.user_types:
+                if query['user_type'] not in self.cfg.user_types:
                     self.cfg.log.debug("API_userdata/umodify: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
                     raise UserdataError("API_userdata/umodify: Invalid user type, please use one of the following: " + ', '.join(self.cfg.user_types))
-            else:
-                user_type = u.user_type
+                else:
+                    u.user_type = query['user_type']
             # shell, assign or leave alone 
             if 'shell' in query.keys() and query['shell']:
-                shell = query['shell']
-            else:
-                shell = u.shell 
+                u.shell = query['shell']
             # ssh_keys file, validate or leave alone 
             if files:
                 if len(files) > 1:
@@ -742,29 +742,28 @@ class API_userdata:
                 for key in files[0].readlines():
                     if v_ssh2_pubkey(key):
                         ssh_keys.append(key)
-                ssh_public_key = ''.join(ssh_keys).rstrip()
-            else:
-                ssh_public_key = u.ssh_public_key 
+                u.ssh_public_key = ''.join(ssh_keys).rstrip()
 
             # this is down here instead of up above with its buddies because we need the
             # username to construct a home dir and email if they're not supplied 
             if 'home_dir' in query.keys() and query['home_dir']:
-                home_dir = query['home_dir']
-            else:
-                home_dir = u.home_dir 
+                u.hdir = query['home_dir']
             if 'email_address' in query.keys() and query['email_address']:
-                email_address = query['email_address']
-            else:
-                email_address = u.email_address 
+                u.email = query['email_address']
             # uid, validate or leave alone 
             if 'uid' in query.keys() and query['uid']:
                 v_uid(self.cfg, query['uid'])
-                u.uid = query['uid']
-                if v_uid_in_db(self.cfg, uid, realm, site_id):
-                    self.cfg.log.debug("API_userdata/umodify: uid exists already: %s" % uid)
-                    raise UserdataError("API_userdata/umodify: uid exists already: %s" % uid)
-            else:
-                uid = u.uid
+                if v_uid_in_db(self.cfg, query['uid'], realm, site_id):
+                    self.cfg.log.debug("API_userdata/umodify: uid exists already: %s" % query['uid'])
+                    raise UserdataError("API_userdata/umodify: uid exists already: %s" % query['uid'])
+                else:
+                    u.uid = query['uid']
+
+            # activate/deactivate the user
+            if 'active' in query.keys() and query['active'] == False:
+                u.active = False
+            elif 'active' in query.keys() and query['active'] == True:
+                u.active = True
 
             # push the modified user object to the db, return status
             self.cfg.dbsess.add(u)

@@ -54,7 +54,7 @@ class API_puppet:
                     'required_args': {
                         'args': {
                             'unqdn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'unqdn of the server to classify',
                                 'ol': 'u',
                             },
@@ -75,13 +75,13 @@ class API_puppet:
                                 'tag',
                             ],
                             'parameters': {
-                                'parameter1': 'string',
-                                'parameter2': 'string',
+                                'parameter1': 'str',
+                                'parameter2': 'str',
                                 'parameter3': [
                                     'sub-parameter',
                                     'sub-parameter',
                                 ],
-                                'parameter4': 'string',
+                                'parameter4': 'str',
                             },
                         },
                     },

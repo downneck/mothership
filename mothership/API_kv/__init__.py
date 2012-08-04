@@ -57,17 +57,17 @@ class API_kv:
                         'max': 3,
                         'args': {
                             'unqdn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'unqdn/realm_path of the entry. enter any portion or "GLOBAL" to select a global value',
                                 'ol': 'u',
                             },
                             'key': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'key to filter on (leave blank or omit for all keys)',
                                 'ol': 'k',
                             },
                             'value': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'value to filter on',
                                 'ol': 'v',
                             },
@@ -93,17 +93,17 @@ class API_kv:
                         'max': 3,
                         'args': {
                             'unqdn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'unqdn/realm_path of the entries. enter any portion or "GLOBAL" to select all global values',
                                 'ol': 'u',
                             },
                             'key': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'key to filter on (leave blank or omit for all keys)',
                                 'ol': 'k',
                             },
                             'value': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'value to filter on',
                                 'ol': 'v',
                             },
@@ -128,17 +128,17 @@ class API_kv:
                     'required_args': {
                         'args': {
                             'unqdn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'unqdn/realm_path of the entry. enter any portion or "GLOBAL" to add a global value',
                                 'ol': 'u',
                             },
                             'key': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'key to add',
                                 'ol': 'k',
                             },
                             'value': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'value to add',
                                 'ol': 'v',
                             },
@@ -157,17 +157,17 @@ class API_kv:
                     'required_args': {
                         'args': {
                             'unqdn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'unqdn/realm_path of the entry. enter any portion or "GLOBAL" to delete a global value',
                                 'ol': 'u',
                             },
                             'key': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'key to remove',
                                 'ol': 'k',
                             },
                             'value': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'value to remove',
                                 'ol': 'v',
                             },
@@ -186,22 +186,22 @@ class API_kv:
                     'required_args': {
                         'args': {
                             'unqdn': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'unqdn/realm_path of the entry. enter any portion or "GLOBAL" to update a global value',
                                 'ol': 'u',
                             },
                             'key': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'key to update',
                                 'ol': 'k',
                             },
                             'value': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'value to update',
                                 'ol': 'v',
                             },
                             'new_value': {
-                                'vartype': 'string',
+                                'vartype': 'str',
                                 'desc': 'new value to update to',
                                 'ol': 'n',
                             },
