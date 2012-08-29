@@ -79,7 +79,6 @@ class TestAPI_userdata(unittest.TestCase):
         self.assertRaises(UserdataError, ud.udisplay, query)
         print "[API_userdata] test6: PASSED"
 
-
     ######################################
     # testing uadd()                     #
     ######################################
@@ -91,4 +90,30 @@ class TestAPI_userdata(unittest.TestCase):
         ud.udelete(query)
         self.assertEqual(result, 'success')
         print "[API_userdata] test7: PASSED"
+
+    # add everything except ssh key, success
+    def test8(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 1337, 'user_type': 'employee', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff'}
+        result = ud.uadd(query)
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.udelete(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test8: PASSED"
+
+    # add everything, success
+    def test9(self):
+        filedata = open('test/ssh_pubkey_good').read()
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 1337, 'user_type': 'employee', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff', 'ssh_key': filedata}
+        result = ud.uadd(query)
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.udelete(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test9: PASSED"
+
+    # add everything, bad key, error raised
+    def test10(self):
+        filedata = open('test/ssh_pubkey_bad').read()
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 1337, 'user_type': 'employee', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff', 'ssh_key': filedata}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test10: PASSED"
 
