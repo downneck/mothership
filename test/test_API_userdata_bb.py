@@ -52,7 +52,6 @@ class TestAPI_userdata(unittest.TestCase):
     # bad username, error raised 
     def test2(self):
         query = {'unqdn': 'garbage.satest.jfk'}
-
         self.assertRaises(UserdataError, ud.udisplay, query)
         print "[API_userdata] test2: PASSED"
 

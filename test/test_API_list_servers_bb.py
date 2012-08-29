@@ -70,7 +70,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test1(self):
         query = {'all': True}
         result = lss.lss(query)
-
         # pre-define expected output
         self.assertEqual(result, bigassret)
         print "[API_list_servers] test1: PASSED"
@@ -78,7 +77,6 @@ class TestAPI_list_servers(unittest.TestCase):
     # test empty query, failure results
     def test2(self):
         query = {}
-      
         self.assertRaises(ListServersError, lss.lss, query)
         print "[API_list_servers] test2: PASSED"
 
@@ -86,7 +84,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test3(self):
         query = {'vlan': 200}
         result = lss.lss(query)
-
         self.assertEqual(result, bigassret)
         print "[API_list_servers] test3: PASSED"
 
@@ -94,14 +91,12 @@ class TestAPI_list_servers(unittest.TestCase):
     def test4(self):
         query = {'vlan': 3400}
         result = lss.lss(query)
-
         self.assertEqual(result, [])
         print "[API_list_servers] test4: PASSED"
 
     # test vlan=garbage, failure output 
     def test5(self):
         query = {'vlan': 'garbage'}
-      
         self.assertRaises(ListServersError, lss.lss, query)
         print "[API_list_servers] test5: PASSED"
 
@@ -109,7 +104,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test6(self):
         query = {'site_id': 'jfk'}
         result = lss.lss(query)
-
         self.assertEqual(result, bigassret)
         print "[API_list_servers] test6: PASSED"
 
@@ -117,7 +111,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test7(self):
         query = {'realm': 'satest'}
         result = lss.lss(query)
-
         self.assertEqual(result, bigassret)
         print "[API_list_servers] test7: PASSED"
 
@@ -125,9 +118,7 @@ class TestAPI_list_servers(unittest.TestCase):
     def test8(self):
         query = {'ram': 4}
         result = lss.lss(query)
-
         ret = ['hudson1.satest.jfk', 'hudson2.satest.jfk']
-
         self.assertEqual(result, ret)
         print "[API_list_servers] test8: PASSED"
 
@@ -135,14 +126,12 @@ class TestAPI_list_servers(unittest.TestCase):
     def test9(self):
         query = {'ram': 3}
         result = lss.lss(query)
-
         self.assertEqual(result, [])
         print "[API_list_servers] test9: PASSED"
 
     # test ram=garbage, failure output 
     def test10(self):
         query = {'ram': 'garbage'}
-      
         self.assertRaises(ListServersError, lss.lss, query)
         print "[API_list_servers] test10: PASSED"
 
@@ -150,14 +139,12 @@ class TestAPI_list_servers(unittest.TestCase):
     def test11(self):
         query = {'tag': 'splunklightforwarder'}
         result = lss.lss(query)
-
         ret = [
             "stage2.satest.jfk",
             "cobbler1.satest.jfk",
             "ns1.satest.jfk",
             "ns2.satest.jfk"
         ]
-
         self.assertEqual(result, ret)
         print "[API_list_servers] test11: PASSED"
 
@@ -165,7 +152,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test12(self):
         query = {'tag': 'garbage'}
         result = lss.lss(query)
-
         self.assertEqual(result, [])
         print "[API_list_servers] test12: PASSED"
 
@@ -173,9 +159,7 @@ class TestAPI_list_servers(unittest.TestCase):
     def test13(self):
         query = {'disk': 200}
         result = lss.lss(query)
-
 	ret = ['hudson1.satest.jfk', 'hudson2.satest.jfk']
-
         self.assertEqual(result, ret)
         print "[API_list_servers] test13: PASSED"
 
@@ -183,14 +167,12 @@ class TestAPI_list_servers(unittest.TestCase):
     def test14(self):
         query = {'disk': 1}
         result = lss.lss(query)
-
         self.assertEqual(result, [])
         print "[API_list_servers] test14: PASSED"
 
     # test disk=garbage, failure output 
     def test15(self):
         query = {'disk': 'garbage'}
-      
         self.assertRaises(ListServersError, lss.lss, query)
         print "[API_list_servers] test15: PASSED"
 
@@ -198,9 +180,7 @@ class TestAPI_list_servers(unittest.TestCase):
     def test16(self):
         query = {'manufacturer': 'IBM'}
         result = lss.lss(query)
-
         ret = ['zendc1.satest.jfk',]
-
         # pre-define expected output
         self.assertEqual(result, ret)
         print "[API_list_servers] test16: PASSED"
@@ -209,7 +189,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test17(self):
         query = {'manufacturer': 'garbage'}
         result = lss.lss(query)
-
         self.assertEqual(result, [])
         print "[API_list_servers] test17: PASSED"
 
@@ -217,7 +196,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test18(self):
         query = {'virtual': True}
         result = lss.lss(query)
-
         # pre-define expected output
         ret = [
             "cm1.satest.jfk",
@@ -245,7 +223,6 @@ class TestAPI_list_servers(unittest.TestCase):
             "zbx1.satest.jfk",
             "zenoss1.satest.jfk"
         ]
-
         self.assertEqual(result, ret)
         print "[API_list_servers] test18: PASSED"
 
@@ -253,7 +230,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test19(self):
         query = {'physical': True}
         result = lss.lss(query)
-
         # pre-define expected output
         ret = [
             "ci1.satest.jfk",
@@ -265,14 +241,12 @@ class TestAPI_list_servers(unittest.TestCase):
             "xenserver3.satest.jfk",
             "zendc1.satest.jfk"
         ] 
-
         self.assertEqual(result, ret)
         print "[API_list_servers] test19: PASSED"
 
     # test incompatible query parameters, failure results
     def test20(self):
         query = {'physical': True, 'virtual': True}
-      
         self.assertRaises(ListServersError, lss.lss, query)
         print "[API_list_servers] test20: PASSED"
 
@@ -280,7 +254,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test21(self):
         query = {'hw_tag': '4VK27L1'}
         result = lss.lss(query)
-
         # pre-define expected output
         ret = [
             "stage2.satest.jfk",
@@ -291,7 +264,6 @@ class TestAPI_list_servers(unittest.TestCase):
             "ns2.satest.jfk",
             "puppet.satest.jfk"
         ] 
-
         self.assertEqual(result, ret)
         print "[API_list_servers] test21: PASSED"
 
@@ -299,7 +271,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test22(self):
         query = {'hw_tag': 'garbage'}
         result = lss.lss(query)
-
         self.assertEqual(result, [])
         print "[API_list_servers] test22: PASSED"
 
@@ -307,10 +278,8 @@ class TestAPI_list_servers(unittest.TestCase):
     def test23(self):
         query = {'hostname': 'stage2'}
         result = lss.lss(query)
-
         # pre-define expected output
         ret = ["stage2.satest.jfk",] 
-
         self.assertEqual(result, ret)
         print "[API_list_servers] test23: PASSED"
 
@@ -318,10 +287,8 @@ class TestAPI_list_servers(unittest.TestCase):
     def test24(self):
         query = {'hostname': 'stage2.satest.jfk'}
         result = lss.lss(query)
-
         # pre-define expected output
         ret = ["stage2.satest.jfk",] 
-
         self.assertEqual(result, ret)
         print "[API_list_servers] test24: PASSED"
 
@@ -329,7 +296,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test25(self):
         query = {'hostname': 'garbage'}
         result = lss.lss(query)
-
         self.assertEqual(result, [])
         print "[API_list_servers] test25: PASSED"
 
@@ -337,10 +303,8 @@ class TestAPI_list_servers(unittest.TestCase):
     def test26(self):
         query = {'cores': 2}
         result = lss.lss(query)
-
         # pre-define expected output
         ret = ['hudson1.satest.jfk', 'hudson2.satest.jfk'] 
-
         self.assertEqual(result, ret)
         print "[API_list_servers] test26: PASSED"
 
@@ -348,14 +312,12 @@ class TestAPI_list_servers(unittest.TestCase):
     def test27(self):
         query = {'cores': 132}
         result = lss.lss(query)
-
         self.assertEqual(result, [])
         print "[API_list_servers] test27: PASSED"
 
     # test cores=garbage, failure output 
     def test28(self):
         query = {'cores': 'garbage'}
-      
         self.assertRaises(ListServersError, lss.lss, query)
         print "[API_list_servers] test28: PASSED"
 
@@ -363,10 +325,8 @@ class TestAPI_list_servers(unittest.TestCase):
     def test29(self):
         query = {'model': 'Server x3650'}
         result = lss.lss(query)
-
         # pre-define expected output
         ret = ['zendc1.satest.jfk']
-
         self.assertEqual(result, ret)
         print "[API_list_servers] test29: PASSED"
 
@@ -374,6 +334,5 @@ class TestAPI_list_servers(unittest.TestCase):
     def test30(self):
         query = {'model': 'garbage'}
         result = lss.lss(query)
-
         self.assertEqual(result, [])
         print "[API_list_servers] test30: PASSED"

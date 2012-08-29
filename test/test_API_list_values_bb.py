@@ -31,7 +31,6 @@ class TestAPI_list_values(unittest.TestCase):
     def test1(self):
         query = {'users': True}
         result = lsv.lsv(query)
-
         # pre-define expected output
         ret = [
             "cpothier.satest.jfk uid:502 active",
@@ -183,14 +182,12 @@ class TestAPI_list_values(unittest.TestCase):
             "hurricane.satest.jfk uid:640 active",
             "ssmith.satest.jfk uid:641 active"
         ]
-
         self.assertEqual(result, ret)
         print "[API_list_values] test1: PASSED"
 
     # users=True tags=True, bad output
     def test2(self):
         query = {'users': True, 'tags': True}
-
         self.assertRaises(ListValuesError, lsv.lsv, query)
         print "[API_list_values] test2: PASSED"
 
@@ -198,7 +195,6 @@ class TestAPI_list_values(unittest.TestCase):
     def test3(self):
         query = {'tags': True}
         result = lsv.lsv(query)
-
         ret = [
             "xen",
             "mysql",
@@ -300,7 +296,6 @@ class TestAPI_list_values(unittest.TestCase):
     def test4(self):
         query = {'ips': True}
         result = lsv.lsv(query)
-
         ret = [
             "10.190.33.75",
             "10.190.33.150",
@@ -371,7 +366,6 @@ class TestAPI_list_values(unittest.TestCase):
             "172.16.20.251",
             "172.16.20.252"
         ]
-
         self.assertEqual(result, ret)
         print "[API_list_values] test4: PASSED"
 
@@ -379,7 +373,6 @@ class TestAPI_list_values(unittest.TestCase):
     def test5(self):
         query = {'groups': True}
         result = lsv.lsv(query)
-
         ret = [
             "cognos.satest.jfk gid:3005",
             "data.satest.jfk gid:3008",
@@ -871,7 +864,6 @@ class TestAPI_list_values(unittest.TestCase):
             "test6_satest_jfk.satest.jfk gid:767",
             "test6_satest_jfk_sudo.satest.jfk gid:768"
         ]
-
         self.assertEqual(result, ret)
         print "[API_list_values] test5: PASSED"
 
@@ -879,9 +871,7 @@ class TestAPI_list_values(unittest.TestCase):
     def test6(self):
         query = {'available_hardware': True}
         result = lsv.lsv(query)
-
         ret = [ "H739TK1" ]
-
         self.assertEqual(result, ret)
         print "[API_list_values] test6: PASSED"
 
@@ -889,8 +879,6 @@ class TestAPI_list_values(unittest.TestCase):
     def test7(self):
         query = {'vlans': True}
         result = lsv.lsv(query)
-
         ret = [ 200, 201, 666 ]
-
         self.assertEqual(result, ret)
         print "[API_list_values] test7: PASSED"

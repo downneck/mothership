@@ -138,14 +138,12 @@ class TestAPI_serverinfo(unittest.TestCase):
     def test1(self):
         query = {'unqdn': 'xenserver2.satest.jfk'}
         result = si.si(query)
-
         self.assertEqual(result, bigassret)
         print "[API_serverinfo] test1: PASSED"
 
     # unqdn=garbage, bad output
     def test2(self):
         query = {'unqdn': 'garbage'}
-
         self.assertRaises(ServerInfoError, si.si, query)
         print "[API_serverinfo] test2: PASSED"
 
@@ -153,14 +151,12 @@ class TestAPI_serverinfo(unittest.TestCase):
     def test3(self):
         query = {'hw_tag': '4VK27L1'}
         result = si.si(query)
-
         self.assertEqual(result, bigassret)
         print "[API_serverinfo] test3: PASSED"
 
     # hw_tag=garbage, bad output
     def test4(self):
         query = {'hw_tag': 'garbage'}
-
         self.assertRaises(ServerInfoError, si.si, query)
         print "[API_serverinfo] test4: PASSED"
 
@@ -168,14 +164,12 @@ class TestAPI_serverinfo(unittest.TestCase):
     def test5(self):
         query = {'mac': '00:21:9b:98:49:24'}
         result = si.si(query)
-
         self.assertEqual(result, bigassret)
         print "[API_serverinfo] test5: PASSED"
 
     # mac=00:00:00:00:00:00, bad output
     def test6(self):
         query = {'mac': '00:00:00:00:00:00'}
-
         self.assertRaises(ServerInfoError, si.si, query)
         print "[API_serverinfo] test6: PASSED"
 
@@ -183,20 +177,17 @@ class TestAPI_serverinfo(unittest.TestCase):
     def test7(self):
         query = {'ip': '10.190.44.9'}
         result = si.si(query)
-
         self.assertEqual(result, bigassret)
         print "[API_serverinfo] test7: PASSED"
 
     # ip=garbage, bad output
     def test8(self):
         query = {'ip': '1.1.1.1'}
-
         self.assertRaises(ServerInfoError, si.si, query)
         print "[API_serverinfo] test8: PASSED"
 
     # test unqdn=garbage, failure results
     def test9(self):
         query = {'blargle': 'garbage'}
-
         self.assertRaises(ServerInfoError, si.si, query)
         print "[API_serverinfo] test9: PASSED"

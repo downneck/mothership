@@ -43,7 +43,6 @@ class TestAPI_list_servers(unittest.TestCase):
     def test1(self):
         query = {'all': True}
         result = lss.lss(query)
-
         # pre-define expected output
         self.assertEqual(result, bigassret)
         print "[API_list_servers] test1: PASSED"
@@ -51,6 +50,5 @@ class TestAPI_list_servers(unittest.TestCase):
     # test empty query, failure results
     def test2(self):
         query = {}
-      
         self.assertRaises(ListServersError, lss.lss, query)
         print "[API_list_servers] test2: PASSED"

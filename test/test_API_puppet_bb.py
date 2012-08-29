@@ -34,7 +34,6 @@ class TestAPI_puppet(unittest.TestCase):
     def test1(self):
         query = {'unqdn': 'stage2.satest.jfk'}
         result = p.classify(query)
-
         # pre-define expected output
         ret = {
             "environment": "satest",
@@ -75,20 +74,17 @@ class TestAPI_puppet(unittest.TestCase):
                 "ldap_sync_pass": "aJLxA33Ng"
             }
         }
-
         self.assertEqual(result, ret)
         print "[API_puppet] test1: PASSED"
 
     # test unqdn=garbage, failure results
     def test2(self):
         query = {'unqdn': 'garbage'}
-
         self.assertRaises(PuppetError, p.classify, query)
         print "[API_puppet] test2: PASSED"
 
     # test snort=snort, failure results
     def test3(self):
         query = {'snort': 'snort'}
-
         self.assertRaises(PuppetError, p.classify, query)
         print "[API_puppet] test3: PASSED"
