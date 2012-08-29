@@ -110,10 +110,46 @@ class TestAPI_userdata(unittest.TestCase):
         self.assertEqual(result, 'success')
         print "[API_userdata] test9: PASSED"
 
-    # add everything, bad key, error raised
+    # add everything, bad ssh_key, error raised
     def test10(self):
         filedata = open('test/ssh_pubkey_bad').read()
         query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 1337, 'user_type': 'employee', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff', 'ssh_key': filedata}
         self.assertRaises(UserdataError, ud.udisplay, query)
         print "[API_userdata] test10: PASSED"
+
+    # bad querykey, error raised
+    def test11(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'MEAT': 'MACHINE'}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test11: PASSED"
+
+    # uid too high (>65535, configured in mothership_daemon.yaml), error raised
+    def test12(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 65539}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test12: PASSED"
+
+    # uid too low (<500, configured in mothership_daemon.yaml), error raised
+    def test13(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 1}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test13: PASSED"
+
+    # bad username, little bobby tables, error raised.
+    def test14(self):
+        query = {'unqun': "Robert'); DROP TABLE Students;.satest.jfk"}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test14: PASSED"
+
+    # bad realm, error raised 
+    def test15(self):
+        query = {'unqun': 'jiffyjeff.badrealm.jfk'}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test15: PASSED"
+
+    # bad site_id, error raised 
+    def test16(self):
+        query = {'unqun': 'jiffyjeff.satest.badsite'}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test16: PASSED"
 
