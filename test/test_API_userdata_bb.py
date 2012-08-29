@@ -102,22 +102,20 @@ class TestAPI_userdata(unittest.TestCase):
 
     # add everything, success
     def test9(self):
-        filedata = open('test/ssh_pubkey_good').read()
-        query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 1337, 'user_type': 'employee', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff', 'ssh_key': filedata}
-        result = ud.uadd(query)
+        filedata = [open('test/ssh_pubkey_good')]
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 1337, 'user_type': 'employee', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff'}
+        result = ud.uadd(query, files=filedata)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
         self.assertEqual(result, 'success')
         print "[API_userdata] test9: PASSED"
 
-    # test is broken, not raising an exception. fix it.
-    #
     # add everything, bad ssh_key, error raised
-    #def test10(self):
-    #    filedata = open('test/ssh_pubkey_bad').readlines()
-    #    query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 1337, 'user_type': 'employee', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff', 'ssh_key': filedata}
-    #    self.assertRaises(UserdataError, ud.uadd, query)
-    #    print "[API_userdata] test10: PASSED"
+    def test10(self):
+        filedata = [open('test/ssh_pubkey_bad')]
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 1337, 'user_type': 'employee', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff'}
+        self.assertRaises(UserdataError, ud.uadd, query, files=filedata)
+        print "[API_userdata] test10: PASSED"
 
     # bad querykey, error raised
     def test11(self):
