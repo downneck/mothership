@@ -29,7 +29,8 @@ cfg.log_to_console = False
 cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 lss = API_list_servers(cfg)
-
+# ensure we populate the metadata
+cfg.module_metadata['API_list_servers'] = lss
 
 # UnitTesting for API_list_servers module
 class TestAPI_list_servers(unittest.TestCase):
@@ -39,28 +40,17 @@ class TestAPI_list_servers(unittest.TestCase):
     ######################################
 
     # any=True, good output
-    def test_kv_select_any_good(self):
-        query = {'any': True}
-        result = kv.select(query)
+    def test1(self):
+        query = {'all': True}
+        result = lss.lss(query)
 
         # pre-define expected output
-        ret = [{
-               'realm': None,
-               'hostname': None,
-               'site_id': None,
-               'value': '359924B5-B1E4-468F-BD94-784FCD366BFA',
-               'table_name': 'kv',
-               'key': 'mc_secret',
-               'id': 1
-        },]
+        self.assertEqual(result, bigassret)
+        print "[API_list_servers] test1: PASSED"
 
-        self.assertEqual(result, ret)
-        print "****** test_kv_select_any_good: PASSED"
-
-    # test unqdn=garbage, failure results
-    def test_kv_select_unqdn_garbage_input_bad(self):
-        query = {'unqdn': 'garbage'}
-
-        self.assertRaises(KVError, kv.select, query)
-        print "****** test_kv_select_garbage_input_bad: PASSED (raised KVError)"
-
+    # test empty query, failure results
+    def test2(self):
+        query = {}
+      
+        self.assertRaises(ListServersError, lss.lss, query)
+        print "[API_list_servers] test2: PASSED"
