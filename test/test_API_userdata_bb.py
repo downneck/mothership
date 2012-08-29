@@ -30,7 +30,6 @@ class TestAPI_userdata(unittest.TestCase):
     def test1(self):
         query = {'unqun': 'bobsponge.satest.jfk'}
         result = ud.udisplay(query)
-
         # pre-define expected output
         ret = {
                'username': 'bobsponge',
@@ -47,7 +46,6 @@ class TestAPI_userdata(unittest.TestCase):
                'type': 'employee',
                'email': 'bobsponge@gilt.com' 
         }
-
         self.assertEqual(result, ret)
         print "[API_userdata] test1: PASSED"
 
@@ -61,14 +59,37 @@ class TestAPI_userdata(unittest.TestCase):
     # bad realm, error raised 
     def test3(self):
         query = {'unqdn': 'bobsponge.garbage.jfk'}
-
         self.assertRaises(UserdataError, ud.udisplay, query)
         print "[API_userdata] test3: PASSED"
 
     # bad site_id, error raised 
     def test4(self):
         query = {'unqdn': 'bobsponge.satest.garbage'}
-
         self.assertRaises(UserdataError, ud.udisplay, query)
         print "[API_userdata] test4: PASSED"
+
+    # empty unqdn, error raised 
+    def test5(self):
+        query = {'unqdn': ''}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test5: PASSED"
+
+    # invalid querykey, error raised 
+    def test6(self):
+        query = {'sizzle': 'steak'}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test6: PASSED"
+
+
+    ######################################
+    # testing uadd()                     #
+    ######################################
+
+    # basic add, just username, success
+    def test7(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        result = ud.uadd(query)
+        ud.udelete(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test7: PASSED"
 
