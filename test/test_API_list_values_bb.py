@@ -17,6 +17,7 @@ cfg.log_to_console = False
 cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 lsv = API_list_values(cfg)
+cfg.module_metadata['API_list_values'] = lsv
 
 
 # UnitTesting for API_list_values module

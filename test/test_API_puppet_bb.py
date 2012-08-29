@@ -18,6 +18,7 @@ cfg.log_to_console = False
 cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 p = API_puppet(cfg)
+cfg.module_metadata['API_puppet'] = p
 # needed to keep the KV from freaking out
 cfg.module_metadata['API_kv'] = API_kv(cfg)
 
