@@ -36,7 +36,7 @@ cfg.module_metadata['API_list_servers'] = lss
 class TestAPI_list_servers(unittest.TestCase):
 
     ######################################
-    # testing select()                   #
+    # testing lss()                      #
     ######################################
 
     # any=True, good output
