@@ -1,7 +1,6 @@
 write templates for gdisplay, gadd?
 figure templating scheme the fuck out
 test gidsplay, gadd
-write __next_available_gid
 
 
 write remaining API_userdata/g* (group) functions

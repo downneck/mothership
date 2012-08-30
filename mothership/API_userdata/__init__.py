@@ -620,7 +620,7 @@ class API_userdata:
 
             # setting our valid query keys
             common = MothershipCommon(self.cfg)
-            valid_qkeys = common.get_valid_qkeys(self.namespace, 'uadd')
+            valid_qkeys = common.get_valid_qkeys(self.namespace, 'udelete')
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
@@ -943,7 +943,54 @@ class API_userdata:
             raise UserdataError("API_userdata/gadd: error: %s" % e)
 
 
+    def gdelete(self, query):
+        """
+        [description]
+        delete a group from the groups table
 
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns "success" if successful, None if unsuccessful 
+        """
+        try:
+            # to make our conditionals easier
+            if 'unqgn' not in query.keys() or not query['unqgn']:
+                self.cfg.log.debug("API_groupadata/gdelete: no groupname.realm.site_id provided!")
+                raise UserdataError("API_groupadata/gdelete: no groupname.realm.site_id provided!")
+            else:
+                unqgn = query['unqgn']
+
+            # setting our valid query keys
+            common = MothershipCommon(self.cfg)
+            valid_qkeys = common.get_valid_qkeys(self.namespace, 'gdelete')
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_groupdata/gdelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_groupdata/gdelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # find us a groupname to delete, validation done in the __get_group_obj function
+            g = self.__get_group_obj(unqgn) 
+            if g:
+                self.cfg.dbsess.delete(g)
+                self.cfg.dbsess.commit()
+                self.cfg.log.debug("API_groupdata/gdelete: deleted group: %s" % unqgn)
+                return "success"
+            else:
+                self.cfg.log.debug("API_groupdata/gdelete: group not found: %s" % unqgn)
+                raise UserdataError("API_groupdata/gdelete: group not found: %s" % unqgn)
+
+        except Exception, e:
+            # something odd happened, explode violently
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_groupdata/gdelete: error: %s" % e)
+            raise UserdataError("API_groupdata/gdelete: error: %s" % e)
+
+
+####### under construction to here
 
     #################################
     # internal functions below here #
@@ -1112,3 +1159,45 @@ class API_userdata:
                 return i
         except Exception, e:
             raise UserdataError("API_userdata/__next_available_uid: %s" % e)
+
+
+    def __next_available_gid(self, realm, site_id):
+        """
+        [description]
+        searches the db for existing GIDS and picks the next available GID within the parameters configured in mothership.yaml
+    
+        [parameter info]
+        required:
+            realm: the realm we're checking gids for
+            site_id: the site_id we're checking gids for
+    
+        [return value]
+        returns an integer representing the next available GID
+        """
+        try: 
+            i = self.cfg.gid_start
+            gidlist = []
+            g = self.cfg.dbsess.query(Groups).\
+            filter(Groups.realm==realm).\
+            filter(Groups.site_id==site_id).all()
+            for groupentry in g:
+                gidlist.append(groupentry.gid)
+            gidlist.sort(key=int)
+            if not gidlist:
+                # if we don't have any groups in the groups table
+                # return the default first gid as configured in the yaml
+                return self.cfg.gid_start
+            else:
+                for gg in gidlist:
+                    if gg < self.cfg.gid_start:
+                        pass
+                    elif not i == gg and i < self.cfg.gid_end:
+                        return i
+                    elif i < self.cfg.gid_end:
+                        i += 1
+                    else:
+                        self.cfg.log.debug("API_userdata/__next_available_gid: No available GIDs!")
+                        raise UserdataError("API_userdata/__next_available_gid: No available GIDs!")
+                return i
+        except Exception, e:
+            raise UserdataError("API_userdata/__next_available_gid: %s" % e)
