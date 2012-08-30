@@ -140,7 +140,7 @@ def v_uid_in_db(cfg, uid, realm, site_id):
     [return value]
     True/False based on success of validation
     """
-
+    v_uid(cfg, uid)
     uidlist = []
     u = cfg.dbsess.query(Users).\
         filter(Users.realm==realm).\
@@ -170,7 +170,7 @@ def v_gid_in_db(cfg, gid, realm, site_id):
     returns an integer representing the GID if the GID is in the db
     returns False if the GID is not in the db
     """
-
+    v_gid(cfg, gid)
     gidlist = []
     g = cfg.dbsess.query(Groups).\
         filter(Groups.realm==realm).\
@@ -202,13 +202,14 @@ def v_gid(cfg, gid):
         if gid >= cfg.gid_start and gid <= cfg.gid_end:
             return True
         else:
-            print "GID is outside the allowed range (%s to %s)" % (cfg.gid_start, cfg.gid_end)
-            return False
+            cfg.log.debug("GID is outside the allowed range (%s to %s)" % (cfg.gid_start, cfg.gid_end))
+            raise ValidationError("GID is outside the allowed range (%s to %s)" % (cfg.gid_start, cfg.gid_end))
     elif gid == None:
-        return False
+        cfg.log.debug("GID is empty") 
+        raise ValidationError("GID is empty") 
     else:
-        print "GID must be an integer!"
-        return False
+        cfg.log.debug("GID must be an integer! GID: %s" % gid)
+        raise ValidationError("GID must be an integer! GID: %s" % gid)
 
 
 # deprecated in API rewrite
