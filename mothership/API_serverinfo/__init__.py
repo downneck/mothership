@@ -79,7 +79,7 @@ class API_serverinfo:
                             'unqdn': { # an arg
                                 'vartype': 'str', # its type
                                 'desc': 'search for an unqdn (hostname.realm.site_id)', # its description
-                                'ol': 'n', # the one-letter designation for this option (ie -w)
+                                'ol': 'u', # the one-letter designation for this option (ie -w)
                             },
                         },
                     },

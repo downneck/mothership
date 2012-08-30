@@ -38,7 +38,7 @@ class API_userdata:
         self.metadata = {
             'config': {
                 'shortname': 'ud',
-                'description': 'allows the creation and manipulation of tags',
+                'description': 'allows for the creation and manipulation of users and groups within mothership',
                 'module_dependencies': {
                     'common': 1,
                 },
