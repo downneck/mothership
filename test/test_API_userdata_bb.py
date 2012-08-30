@@ -339,3 +339,9 @@ class TestAPI_userdata(unittest.TestCase):
         self.assertRaises(UserdataError, ud.uclone, query)
         print "[API_userdata] test39: PASSED"
 
+    # bad username, little bobby tables, error raised.
+    def test40(self):
+        query = {'unqun': "Robert'); DROP TABLE Students;.satest.jfk", 'newunqn': 'qa.sfo'}
+        self.assertRaises(UserdataError, ud.uclone, query)
+        print "[API_userdata] test40: PASSED"
+
