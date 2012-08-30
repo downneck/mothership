@@ -578,7 +578,7 @@ class API_userdata:
             # this is down here instead of up above with its buddies because we need the
             # realm and site_id to query for existing uids
             if 'uid' in query.keys() and query['uid']:
-                uid = query['uid']
+                uid = int(query['uid'])
                 v_uid(self.cfg, uid)
                 if v_uid_in_db(self.cfg, uid, realm, site_id):
                     self.cfg.log.debug("API_userdata/uadd: uid exists already: %s" % uid)
@@ -718,12 +718,10 @@ class API_userdata:
                 u.email = query['email_address']
             # uid, validate or leave alone 
             if 'uid' in query.keys() and query['uid']:
-                v_uid(self.cfg, query['uid'])
-                if v_uid_in_db(self.cfg, query['uid'], u.realm, u.site_id):
+                if u.uid != int(query['uid']) and v_uid_in_db(self.cfg, int(query['uid']), u.realm, u.site_id):
                     self.cfg.log.debug("API_userdata/umodify: uid exists already: %s" % query['uid'])
                     raise UserdataError("API_userdata/umodify: uid exists already: %s" % query['uid'])
-                else:
-                    u.uid = query['uid']
+                u.uid = int(query['uid'])
 
             # activate/deactivate the user
             if 'active' in query.keys() and query['active'] in ['F', 'f', 'False', 'false']:
@@ -922,7 +920,7 @@ class API_userdata:
             # this is down here instead of up above with its buddies because we need the
             # realm and site_id to query for existing uids
             if 'gid' in query.keys() and query['gid']:
-                gid = query['gid']
+                gid = int(query['gid'])
                 v_gid(self.cfg, gid)
                 if v_gid_in_db(self.cfg, gid, realm, site_id):
                     self.cfg.log.debug("API_userdata/gadd: gid exists already: %s" % gid)
@@ -1037,12 +1035,10 @@ class API_userdata:
 
             # gid, validate or leave alone 
             if 'gid' in query.keys() and query['gid']:
-                v_gid(self.cfg, query['gid'])
-                if v_gid_in_db(self.cfg, query['gid'], g.realm, g.site_id):
+                if g.gid != int(query['gid']) and v_gid_in_db(self.cfg, int(query['gid']), g.realm, g.site_id):
                     self.cfg.log.debug("API_userdata/gmodify: gid exists already: %s" % query['gid'])
                     raise UserdataError("API_userdata/gmodify: gid exists already: %s" % query['gid'])
-                else:
-                    g.gid = query['gid']
+                g.gid = int(query['gid'])
 
             # push the modified group object to the db, return status
             self.cfg.dbsess.add(g)
