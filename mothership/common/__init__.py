@@ -34,7 +34,9 @@ class MothershipCommon(object):
         if 'args' in self.cfg.module_metadata[module].metadata['methods'][call]['required_args'].keys():
             minargs += len(self.cfg.module_metadata[module].metadata['methods'][call]['required_args']['args'].keys())
         if 'max' in self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']:
-            maxargs = minargs + self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']['max'] 
+            maxargs = minargs + self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']['max']
+        else:
+            maxargs = minargs 
         if 'min' in self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']:
             minargs += self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']['min']
         if numargs > maxargs:

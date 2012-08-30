@@ -173,47 +173,37 @@ class API_serverinfo:
         [return value]
         returns a dict of ORMobjects if successful, "None" if unsuccessful
         """
-        cfg = self.cfg
-        metadata = self.metadata
-        ret = None
+        try:
+            cfg = self.cfg
+            metadata = self.metadata
+            ret = None
 
-        maxargs = metadata['methods']['si']['optional_args']['max']
-        minargs = metadata['methods']['si']['optional_args']['min']
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'si')
 
-        if not self.common.check_max_num_args(len(query), metadata['methods']['si']['optional_args']['max']):
-            retval = "API_serverinfo: too many queries! max number of queries is: %s. You passed: %s" % (maxargs, len(query))
-            cfg.log.debug(retval)
-            raise ServerInfoError(retval)
+            keys = query.keys()
+            for key  in keys:
+                if key == 'hw_tag':
+                    ret = self._get_host_from_hwtag(query[key])
+                    break
+                if key == 'ip':
+                    ret = self._get_host_from_ip(query[key])
+                    break
+                if key == 'unqdn':
+                    ret = self._get_host_from_unqdn(query[key])
+                    break
+                if key == 'mac':
+                    ret = self._get_host_from_mac(query[key])
+                    break
 
-        if not self.common.check_min_num_args(len(query), metadata['methods']['si']['optional_args']['min']):
-            retval = "API_serverinfo: not enough queries! min number of queries is: %s. You passed: %s" % (self.metadata['methods']['si']['optional_args']['min'], len(query))
-            cfg.log.debug(retval )
-            raise ServerInfoError(retval)
-
-        retval = "API_serverinfo: num queries: %s " % len(query)
-        retval += "API_serverinfo: max num queries: %s" % metadata['methods']['si']['optional_args']['max']
-        cfg.log.debug(retval)
-
-        keys = query.keys()
-        for key  in keys:
-            if key == 'hw_tag':
-                ret = self._get_host_from_hwtag(query[key])
-                break
-            if key == 'ip':
-                ret = self._get_host_from_ip(query[key])
-                break
-            if key == 'unqdn':
-                ret = self._get_host_from_unqdn(query[key])
-                break
-            if key == 'mac':
-                ret = self._get_host_from_mac(query[key])
-                break
-
-        if ret:
-            return ret
-        else:
-            cfg.log.debug("API_serverinfo/si: no host found!") 
-            raise ServerInfoError("API_serverinfo/si: no host found!")
+            if ret:
+                return ret
+            else:
+                cfg.log.debug("API_serverinfo/si: no host found!") 
+                raise ServerInfoError("API_serverinfo/si: no host found!")
+        except Exception, e:
+            cfg.log.debug("API_serverinfo/si: %s" % e)
+            raise ServerInfoError("API_serverinfo/si: %s" % e)
 
     def _get_serverinfo(self, host, realm, site_id):
         """

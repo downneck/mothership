@@ -303,7 +303,7 @@ class API_userdata:
                             'unqgn': {
                                 'vartype': 'str',
                                 'desc': 'groupname.realm.site_id of the group to delete from the database',
-                                'ol': 'g',
+                                'ol': 'u',
                             },
                         },
                     },
