@@ -153,6 +153,12 @@ class TestAPI_userdata(unittest.TestCase):
         self.assertRaises(UserdataError, ud.uadd, query)
         print "[API_userdata] test16: PASSED"
 
+    # bad type, error raised 
+    def test30(self):
+        query = {'unqun': 'jiffyjeff.satest.badsite', 'user_type': 'garbage'}
+        self.assertRaises(UserdataError, ud.uadd, query)
+        print "[API_userdata] test30: PASSED"
+
     ######################################
     # testing udelete()                  #
     ######################################
@@ -167,7 +173,169 @@ class TestAPI_userdata(unittest.TestCase):
 
     # nonexistent user, error raised 
     def test18(self):
-        query = {'unqun': 'jiffyjeff.satest.badsite'}
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
         self.assertRaises(UserdataError, ud.udelete, query)
         print "[API_userdata] test18: PASSED"
+
+    # bad querykey, error raised 
+    def test19(self):
+        query = {'unqun': 'bobsponge.satest.jfk', 'MEAT': 'MACHINE'}
+        self.assertRaises(UserdataError, ud.udelete, query)
+        print "[API_userdata] test19: PASSED"
+
+    # bad realm, error raised 
+    def test20(self):
+        query = {'unqun': 'bobsponge.badrealm.jfk'}
+        self.assertRaises(UserdataError, ud.udelete, query)
+        print "[API_userdata] test20: PASSED"
+
+    # bad site_id, error raised 
+    def test21(self):
+        query = {'unqun': 'bobsponge.satest.badsite'}
+        self.assertRaises(UserdataError, ud.udelete, query)
+        print "[API_userdata] test21: PASSED"
+
+    ######################################
+    # testing umodify()                  #
+    ######################################
+
+    # modify everything, success
+    def test22(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 31336}
+        ud.uadd(query)
+        filedata = [open('test/ssh_pubkey_good')]
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 31337, 'user_type': 'consultant', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff'}
+        result = ud.umodify(query, files=filedata)
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.udelete(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test22: PASSED"
+
+    # nonexistent user, error raised 
+    def test23(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 31336}
+        self.assertRaises(UserdataError, ud.umodify, query)
+        print "[API_userdata] test23: PASSED"
+
+    # bad querykey, error raised 
+    def test24(self):
+        query = {'unqun': 'bobsponge.satest.jfk', 'uid': 31337, 'MEAT': 'MACHINE'}
+        self.assertRaises(UserdataError, ud.umodify, query)
+        print "[API_userdata] test24: PASSED"
+
+    # bad realm, error raised 
+    def test25(self):
+        query = {'unqun': 'bobsponge.badrealm.jfk', 'uid': 31337}
+        self.assertRaises(UserdataError, ud.umodify, query)
+        print "[API_userdata] test25: PASSED"
+
+    # bad site_id, error raised 
+    def test26(self):
+        query = {'unqun': 'bobsponge.satest.badsite', 'uid': 31337}
+        self.assertRaises(UserdataError, ud.umodify, query)
+        print "[API_userdata] test26: PASSED"
+
+    # bad ssh_key, error raised 
+    def test27(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.uadd(query)
+        filedata = [open('test/ssh_pubkey_bad')]
+        self.assertRaises(UserdataError, ud.umodify, query, files=filedata)
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.udelete(query)
+        print "[API_userdata] test27: PASSED"
+
+    # uid too high (>65535, configured in mothership_daemon.yaml), error raised 
+    def test28(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.uadd(query)
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 65539}
+        self.assertRaises(UserdataError, ud.umodify, query)
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.udelete(query)
+        print "[API_userdata] test28: PASSED"
+
+    # uid too low (<500, configured in mothership_daemon.yaml), error raised 
+    def test29(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.uadd(query)
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 9}
+        self.assertRaises(UserdataError, ud.umodify, query)
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.udelete(query)
+        print "[API_userdata] test29: PASSED"
+
+    # uid too low (<500, configured in mothership_daemon.yaml), error raised 
+    def test31(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.uadd(query)
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 9}
+        self.assertRaises(UserdataError, ud.umodify, query)
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.udelete(query)
+        print "[API_userdata] test31: PASSED"
+
+    # bad user_type, error raised 
+    def test32(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.uadd(query)
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'user_type': 'jerk'}
+        self.assertRaises(UserdataError, ud.umodify, query)
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.udelete(query)
+        print "[API_userdata] test32: PASSED"
+
+    # deactivate user, success
+    def test33(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 31336}
+        ud.uadd(query)
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'active': 'False'}
+        result = ud.umodify(query)
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.udelete(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test33: PASSED"
+
+    ######################################
+    # testing uclone()                   #
+    ######################################
+
+    # basic clone, success
+    def test34(self):
+        query = {'unqun': 'bobsponge.satest.jfk', 'newunqn': 'qa.sfo'}
+        result = ud.uclone(query)
+        query = {'unqun': 'bobsponge.qa.sfo'}
+        ud.udelete(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test34: PASSED"
+
+    # nonexistent user, error raised
+    def test35(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'newunqn': 'qa.sfo'}
+        self.assertRaises(UserdataError, ud.uclone, query)
+        print "[API_userdata] test35: PASSED"
+
+    # bad new realm, error raised
+    def test36(self):
+        query = {'unqun': 'bobsponge.satest.jfk', 'newunqn': 'badrealm.sfo'}
+        self.assertRaises(UserdataError, ud.uclone, query)
+        print "[API_userdata] test36: PASSED"
+
+    # bad new site_id, error raised
+    def test37(self):
+        query = {'unqun': 'bobsponge.satest.jfk', 'newunqn': 'qa.badsite'}
+        self.assertRaises(UserdataError, ud.uclone, query)
+        print "[API_userdata] test37: PASSED"
+
+    # bad querykey, error raised
+    def test38(self):
+        query = {'unqun': 'bobsponge.satest.jfk', 'MEAT': 'MACHINE'}
+        self.assertRaises(UserdataError, ud.uclone, query)
+        print "[API_userdata] test38: PASSED"
+
+    # empty newunqn, error raised
+    def test39(self):
+        query = {'unqun': 'bobsponge.satest.jfk', 'newunqn': ''}
+        self.assertRaises(UserdataError, ud.uclone, query)
+        print "[API_userdata] test39: PASSED"
 
