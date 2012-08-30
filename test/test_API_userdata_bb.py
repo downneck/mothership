@@ -431,3 +431,34 @@ class TestAPI_userdata(unittest.TestCase):
         self.assertEqual(result, 'success')
         print "[API_userdata] test50: PASSED"
 
+    # add everything, success
+    def test51(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': '8182', 'sudo_cmds': 'ls, cp', 'description': 'jiffy jeff! jeff! jeff! what? what? what?'}
+        result = ud.gadd(query)
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gdelete(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test51: PASSED"
+
+    # add everything with sudo_cmds translation ("All" -> "ALL"), success
+    # for this we need to double check the entry using gdisplay
+    def test52(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': '8182', 'sudo_cmds': 'All', 'description': 'jeff'}
+        result = ud.gadd(query)
+        self.assertEqual(result, 'success')
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        result = ud.gdisplay(query)
+        # remove the index id, it's going to change every time this is run
+        result.pop("id")
+        ret = {
+               "realm": "satest",
+               "description": "jeff",
+               "site_id": "jfk",
+               "sudo_cmds": "ALL",
+               "groupname": "jiffyjeff",
+               "gid": 8182,
+        }
+        ud.gdelete(query)
+        self.assertEqual(result, ret)
+        print "[API_userdata] test52: PASSED"
+
