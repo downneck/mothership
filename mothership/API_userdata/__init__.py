@@ -719,7 +719,7 @@ class API_userdata:
             # uid, validate or leave alone 
             if 'uid' in query.keys() and query['uid']:
                 v_uid(self.cfg, query['uid'])
-                if v_uid_in_db(self.cfg, query['uid'], realm, site_id):
+                if v_uid_in_db(self.cfg, query['uid'], u.realm, u.site_id):
                     self.cfg.log.debug("API_userdata/umodify: uid exists already: %s" % query['uid'])
                     raise UserdataError("API_userdata/umodify: uid exists already: %s" % query['uid'])
                 else:
@@ -883,10 +883,10 @@ class API_userdata:
             v_name(groupname)
             v_realm(self.cfg, realm)
             v_site_id(self.cfg, site_id)
-            g = list(self.cfg.dbsess.query(Groups).\
+            g = self.cfg.dbsess.query(Groups).\
             filter(Groups.groupname==groupname).\
             filter(Groups.realm==realm).\
-            filter(Groups.site_id==site_id))
+            filter(Groups.site_id==site_id).first()
     
             if g:
                 return g
@@ -913,10 +913,10 @@ class API_userdata:
             v_name(username)
             v_realm(self.cfg, realm)
             v_site_id(self.cfg, site_id)
-            u = list(self.cfg.dbsess.query(Users).\
+            u = self.cfg.dbsess.query(Users).\
             filter(Users.username==username).\
             filter(Users.realm==realm).\
-            filter(Users.site_id==site_id))
+            filter(Users.site_id==site_id).first()
     
             if u:
                 return u
@@ -956,18 +956,19 @@ class API_userdata:
             groups = []
         
             # get sudo groups for all tags in kv
-            for kv in kvs:
-                unqgn = kv['value']+'_sudo.'+s.realm+'.'+s.site_id
-                g = self.__get_group_obj(unqgn)
-                if g:
-                    groups.append(g[0])
-                else:
-                    pass
+            if kvs:
+                for kv in kvs:
+                    unqgn = kv['value']+'_sudo.'+s.realm+'.'+s.site_id
+                    g = self.__get_group_obj(unqgn)
+                    if g:
+                        groups.append(g)
+                    else:
+                        pass
         
             # get sudo group for primary tag
             g = self.__get_group_obj(s.tag+'_sudo.'+s.realm+'.'+s.site_id)
             if g:
-                groups.append(g[0])
+                groups.append(g)
             else:
                 pass
         
