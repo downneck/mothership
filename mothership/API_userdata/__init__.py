@@ -958,8 +958,8 @@ class API_userdata:
         try:
             # to make our conditionals easier
             if 'unqgn' not in query.keys() or not query['unqgn']:
-                self.cfg.log.debug("API_groupadata/gdelete: no groupname.realm.site_id provided!")
-                raise UserdataError("API_groupadata/gdelete: no groupname.realm.site_id provided!")
+                self.cfg.log.debug("API_userdata/gdelete: no groupname.realm.site_id provided!")
+                raise UserdataError("API_userdata/gdelete: no groupname.realm.site_id provided!")
             else:
                 unqgn = query['unqgn']
 
@@ -969,25 +969,152 @@ class API_userdata:
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    self.cfg.log.debug("API_groupdata/gdelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-                    raise UserdataError("API_groupdata/gdelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    self.cfg.log.debug("API_userdata/gdelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/gdelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # find us a groupname to delete, validation done in the __get_group_obj function
             g = self.__get_group_obj(unqgn) 
             if g:
                 self.cfg.dbsess.delete(g)
                 self.cfg.dbsess.commit()
-                self.cfg.log.debug("API_groupdata/gdelete: deleted group: %s" % unqgn)
+                self.cfg.log.debug("API_userdata/gdelete: deleted group: %s" % unqgn)
                 return "success"
             else:
-                self.cfg.log.debug("API_groupdata/gdelete: group not found: %s" % unqgn)
-                raise UserdataError("API_groupdata/gdelete: group not found: %s" % unqgn)
+                self.cfg.log.debug("API_userdata/gdelete: group not found: %s" % unqgn)
+                raise UserdataError("API_userdata/gdelete: group not found: %s" % unqgn)
 
         except Exception, e:
             # something odd happened, explode violently
             self.cfg.dbsess.rollback()
-            self.cfg.log.debug("API_groupdata/gdelete: error: %s" % e)
-            raise UserdataError("API_groupdata/gdelete: error: %s" % e)
+            self.cfg.log.debug("API_userdata/gdelete: error: %s" % e)
+            raise UserdataError("API_userdata/gdelete: error: %s" % e)
+
+
+    def gmodify(self, query, files=None):
+        """
+        [description]
+        create a new tags entry
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns true if successful, raises an error if not
+        """
+        # setting our valid query keys
+        common = MothershipCommon(self.cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'gmodify')
+
+        try:
+            # to make our conditionals easier
+            if 'unqgn' not in query.keys() or not query['unqgn']:
+                self.cfg.log.debug("API_userdata/gmodify: no groupname.realm.site_id provided!")
+                raise UserdataError("API_userdata/gmodify: no groupname.realm.site_id provided!")
+            else:
+                unqgn = query['unqgn']
+
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_userdata/gmodify: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/gmodify: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # find us a groupname to modify, validation done in the __get_group_obj function
+            g = self.__get_group_obj(unqgn) 
+            if not g:
+                self.cfg.log.debug("API_userdata/gmodify: refusing to modify nonexistent group: %s" % unqgn)
+                raise UserdataError("API_userdata/gmodify: refusing to modify nonexistent group: %s" % unqgn)
+           
+            # description, assign or leave alone
+            if 'description' in query.keys() and query['description']:
+                g.description = query['description']
+
+            # sudo commands. if "all" (case insensetive), translate to "ALL". if not and not blank, assign
+            if 'sudo_cmds' in query.keys() and query['sudo_cmds']:
+                g.sudo_cmds = query['sudo_cmds']
+                if sudo_cmds.upper() == 'ALL':
+                    g.sudo_cmds = 'ALL'
+
+            # gid, validate or leave alone 
+            if 'gid' in query.keys() and query['gid']:
+                v_gid(self.cfg, query['gid'])
+                if v_gid_in_db(self.cfg, query['gid'], g.realm, g.site_id):
+                    self.cfg.log.debug("API_userdata/gmodify: gid exists already: %s" % query['gid'])
+                    raise UserdataError("API_userdata/gmodify: gid exists already: %s" % query['gid'])
+                else:
+                    g.gid = query['gid']
+
+            # push the modified group object to the db, return status
+            self.cfg.dbsess.add(g)
+            self.cfg.dbsess.commit()
+            return 'success'
+        except Exception, e:
+            # something odd happened, explode violently
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_userdata/gmodify: error: %s" % e)
+            raise UserdataError("API_userdata/gmodify: error: %s" % e)
+
+
+    def gclone(self, query):
+        """
+        [description]
+        delete a group from the groups table
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns "success" if successful, None if unsuccessful 
+        """
+        try:
+            # to make our conditionals easier
+            if 'unqgn' not in query.keys() or not query['unqgn']:
+                self.cfg.log.debug("API_userdata/gclone: no groupname.realm.site_id provided!")
+                raise UserdataError("API_userdata/gclone: no groupname.realm.site_id provided!")
+            else:
+                unqgn = query['unqgn']
+            if 'newunqn' not in query.keys() or not query['newunqn']:
+                self.cfg.log.debug("API_userdata/gclone: no new realm.site_id provided!")
+                raise UserdataError("API_userdata/gclone: no new realm.site_id provided!")
+            else:
+                newunqn = query['newunqn']
+
+            # setting our valid query keys
+            common = MothershipCommon(self.cfg)
+            valid_qkeys = common.get_valid_qkeys(self.namespace, 'gclone')
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_userdata/gclone: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/gclone: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # input validation for new realm.site_id
+            blank, nrealm, nsite_id = v_split_unqn(newunqn)
+            if nrealm and nsite_id:
+                v_realm(self.cfg, nrealm)
+                v_site_id(self.cfg, nsite_id)
+            else:
+                self.cfg.log.debug("API_userdata/gclone: newunqn must be in the format realm.site_id. newunqn: %s" % newunqn)
+                raise UserdataError("API_userdata/gclone: newunqn must be in the format realm.site_id. newunqn: %s" % newunqn)
+
+            # find us a groupname to clone, validation done in the __get_group_obj function
+            g = self.__get_group_obj(unqgn) 
+            if g:
+                newg = Groups(g.description, g.sudo_cmds, g.groupname, nsite_id, nrealm, g.gid)
+                self.cfg.dbsess.add(newg)
+                self.cfg.dbsess.commit()
+                self.cfg.log.debug("API_userdata/gclone: created group: %s.%s" % (newg.groupname, newunqn))
+                return "success"
+            else:
+                self.cfg.log.debug("API_userdata/gclone: group not found: %s" % unqgn)
+                raise UserdataError("API_userdata/gclone: group not found: %s" % unqgn)
+        except Exception, e:
+            # something odd happened, explode violently
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_userdata/gclone: error: %s" % e)
+            raise UserdataError("API_userdata/gclone: error: %s" % e)
 
 
 ####### under construction to here
