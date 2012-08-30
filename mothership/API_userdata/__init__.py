@@ -427,6 +427,10 @@ class API_userdata:
         }
 
 
+    #############################
+    # user manipulation methods #
+    #############################
+
     def udisplay(self, query):
         """
         [description]
@@ -1054,9 +1058,9 @@ class API_userdata:
 #
 #
 
-
-# internal functions below here
-
+    #################################
+    # internal functions below here #
+    #################################
 
     def __get_group_obj(self, unqgn):
         """
