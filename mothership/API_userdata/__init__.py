@@ -459,7 +459,8 @@ class API_userdata:
                 raise UserdataError("API_useradata/udisplay: no username.realm.site_id provided!")
             else:
                 unqun = query['unqun']
-
+            # check for min/max number of optional arguments
+            common.check_num_opt_args(query, self.namespace, 'udisplay')
             try:
                 # find us a username to display, validation done in the __get_user_obj function
                 u = self.__get_user_obj(unqun) 
@@ -509,7 +510,8 @@ class API_userdata:
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise UserdataError("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-
+            # check for min/max number of optional arguments
+            common.check_num_opt_args(query, self.namespace, 'uadd')
             # first name, validate or default
             if 'first_name' in query.keys() and query['first_name']:
                 first_name = query['first_name']
@@ -626,7 +628,8 @@ class API_userdata:
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_userdata/udelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise UserdataError("API_userdata/udelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-
+            # check for min/max number of optional arguments
+            common.check_num_opt_args(query, self.namespace, 'udelete')
             # find us a username to delete, validation done in the __get_user_obj function
             u = self.__get_user_obj(unqun) 
             if u:
@@ -674,7 +677,8 @@ class API_userdata:
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_userdata/umodify: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise UserdataError("API_userdata/umodify: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-
+            # check for min/max number of optional arguments
+            common.check_num_opt_args(query, self.namespace, 'umodify')
             # find us a username to modify, validation done in the __get_user_obj function
             u = self.__get_user_obj(unqun) 
             if not u:
@@ -837,7 +841,8 @@ class API_userdata:
                 raise UserdataError("API_useradata/gdisplay: no groupname.realm.site_id provided!")
             else:
                 unqgn = query['unqgn']
-
+            # check for min/max number of optional arguments
+            common.check_num_opt_args(query, self.namespace, 'gdisplay')
             try:
                 g = self.__get_group_obj(unqgn) 
             except Exception, e:
@@ -885,7 +890,8 @@ class API_userdata:
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_userdata/gadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise UserdataError("API_userdata/gadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-
+            # check for min/max number of optional arguments
+            common.check_num_opt_args(query, self.namespace, 'gadd')
             # description, assign or default
             if 'description' in query.keys() and query['description']:
                 description = query['description']
@@ -968,7 +974,8 @@ class API_userdata:
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_userdata/gdelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise UserdataError("API_userdata/gdelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-
+            # check for min/max number of optional arguments
+            common.check_num_opt_args(query, self.namespace, 'gdelete')
             # find us a groupname to delete, validation done in the __get_group_obj function
             g = self.__get_group_obj(unqgn) 
             if g:
@@ -1016,7 +1023,8 @@ class API_userdata:
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_userdata/gmodify: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise UserdataError("API_userdata/gmodify: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-
+            # check for min/max number of optional arguments
+            common.check_num_opt_args(query, self.namespace, 'gmodify')
             # find us a groupname to modify, validation done in the __get_group_obj function
             g = self.__get_group_obj(unqgn) 
             if not g:
