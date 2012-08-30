@@ -450,8 +450,8 @@ class API_userdata:
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    self.cfg.log.debug("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-                    raise UserdataError("API_userdata/uadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    self.cfg.log.debug("API_userdata/udisplay: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/udisplay: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
             # to make our conditionals easier
             if 'unqun' not in query.keys() or not query['unqun']:
@@ -460,19 +460,9 @@ class API_userdata:
             else:
                 unqun = query['unqun']
 
-            username, realm, site_id = v_split_unqn(unqun)
-            if username and realm and site_id:
-                v_name(username)
-                v_realm(self.cfg, realm)
-                v_site_id(self.cfg, site_id)
-            else:
-                self.cfg.log.debug("API_userdata/udisplay: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
-                raise UserdataError("API_userdata/udisplay: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
             try:
-                u = self.cfg.dbsess.query(Users).\
-                filter(Users.username==username).\
-                filter(Users.realm==realm).\
-                filter(Users.site_id==site_id).first()
+                # find us a username to display, validation done in the __get_user_obj function
+                u = self.__get_user_obj(unqun) 
             except:
                 self.cfg.log.debug("API_userdata/udisplay: user %s not found." % unqun)
                 raise UserdataError("API_userdata/udisplay: user %s not found" % unqun)
@@ -568,11 +558,8 @@ class API_userdata:
                 self.cfg.log.debug("API_userdata/uadd: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
                 raise UserdataError("API_userdata/uadd: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
 
-            # make sure we're not trying to add a duplicate
-            u = self.cfg.dbsess.query(Users).\
-            filter(Users.username==username).\
-            filter(Users.realm==realm).\
-            filter(Users.site_id==site_id).first()
+            # make sure we're not trying to add a duplicate, validation done in the __get_user_obj function
+            u = self.__get_user_obj(unqun) 
             if u:
                 self.cfg.log.debug("API_userdata/uadd: user exists already: %s" % unqun)
                 raise UserdataError("API_userdata/uadd: user exists already: %s" % unqun)
@@ -640,20 +627,8 @@ class API_userdata:
                     self.cfg.log.debug("API_userdata/udelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise UserdataError("API_userdata/udelete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
-            # input validation for username
-            username, realm, site_id = v_split_unqn(unqun)
-            if username and realm and site_id:
-                v_name(username)
-                v_realm(self.cfg, realm)
-                v_site_id(self.cfg, site_id)
-            else:
-                self.cfg.log.debug("API_userdata/udelete: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
-                raise UserdataError("API_userdata/udelete: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
-
-            u = self.cfg.dbsess.query(Users).\
-            filter(Users.username==username).\
-            filter(Users.realm==realm).\
-            filter(Users.site_id==site_id).first()
+            # find us a username to delete, validation done in the __get_user_obj function
+            u = self.__get_user_obj(unqun) 
             if u:
                 self.cfg.dbsess.delete(u)
                 self.cfg.dbsess.commit()
@@ -700,21 +675,8 @@ class API_userdata:
                     self.cfg.log.debug("API_userdata/umodify: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise UserdataError("API_userdata/umodify: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
-            # input validation for username
-            username, realm, site_id = v_split_unqn(unqun)
-            if username and realm and site_id:
-                v_name(username)
-                v_realm(self.cfg, realm)
-                v_site_id(self.cfg, site_id)
-            else:
-                self.cfg.log.debug("API_userdata/umodify: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
-                raise UserdataError("API_userdata/umodify: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
-
-            # make sure we're updating an existing user 
-            u = self.cfg.dbsess.query(Users).\
-            filter(Users.username==username).\
-            filter(Users.realm==realm).\
-            filter(Users.site_id==site_id).first()
+            # find us a username to modify, validation done in the __get_user_obj function
+            u = self.__get_user_obj(unqun) 
             if not u:
                 self.cfg.log.debug("API_userdata/umodify: refusing to modify nonexistent user: %s" % unqun)
                 raise UserdataError("API_userdata/umodify: refusing to modify nonexistent user: %s" % unqun)
@@ -814,16 +776,6 @@ class API_userdata:
                     self.cfg.log.debug("API_userdata/uclone: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise UserdataError("API_userdata/uclone: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
 
-            # input validation for username
-            username, realm, site_id = v_split_unqn(unqun)
-            if username and realm and site_id:
-                v_name(username)
-                v_realm(self.cfg, realm)
-                v_site_id(self.cfg, site_id)
-            else:
-                self.cfg.log.debug("API_userdata/uclone: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
-                raise UserdataError("API_userdata/uclone: unqun must be in the format username.realm.site_id. unqun: %s" % unqun)
-
             # input validation for new realm.site_id
             blank, nrealm, nsite_id = v_split_unqn(newunqn)
             if nrealm and nsite_id:
@@ -833,10 +785,8 @@ class API_userdata:
                 self.cfg.log.debug("API_userdata/uclone: newunqn must be in the format realm.site_id. newunqn: %s" % newunqn)
                 raise UserdataError("API_userdata/uclone: newunqn must be in the format realm.site_id. newunqn: %s" % newunqn)
 
-            u = self.cfg.dbsess.query(Users).\
-            filter(Users.username==username).\
-            filter(Users.realm==realm).\
-            filter(Users.site_id==site_id).first()
+            # find us a username to clone, validation done in the __get_user_obj function
+            u = self.__get_user_obj(unqun) 
             if u:
                 newu = Users(u.first_name, u.last_name, u.ssh_public_key, u.username, nsite_id, nrealm, u.uid, u.type, u.hdir, u.shell, u.email, active=True)
                 self.cfg.dbsess.add(newu)
@@ -855,208 +805,62 @@ class API_userdata:
 
 ############## good to here 
 
-#    def update(self, query):
-#        """
-#        [description]
-#        update/alter an existing tag entry
-#
-#        [parameter info]
-#        required:
-#            query: the query dict being passed to us from the called URI
-#
-#        [return]
-#        Returns success if successful, raises an error if not
-#        """
-#        # setting variables
-#        # config object. love this guy.
-#        self.cfg.= self.cfg
-#        # setting our valid query keys
-#        common = MothershipCommon(self.cfg.
-#        valid_qkeys = common.get_valid_qkeys(self.namespace, 'update')
-#
-#        try:
-#            # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
-#            if 'name' not in query.keys():
-#                self.cfg.log.debug("API_userdata/update: no name provided!")
-#                raise UserdataError("API_userdata/update: no name provided!")
-#            else:
-#                name = query['name']
-#
-#            # check for wierd query keys, explode
-#            for qk in query.keys():
-#                if qk not in valid_qkeys:
-#                    self.cfg.log.debug("API_userdata/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-#                    raise UserdataError("API_userdata/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-#
-#            # to make everything just a bit more readable 
-#            if 'start_port' in query.keys() and query['start_port'] and query['start_port'] != "None":
-#                start_port = int(query['start_port'])
-#            else:
-#                start_port = None
-#            if 'stop_port' in query.keys() and query['stop_port'] and query['stop_port'] != "None":
-#                stop_port = int(query['stop_port'])
-#            else:
-#                stop_port = None
-#            if 'security_level' in query.keys() and query['security_level'] and query['security_level'] != "None":
-#                security_level = int(query['security_level'])
-#            else:
-#                security_level = None
-#
-#            if not security_level and not start_port and not stop_port:
-#                self.cfg.log.debug("API_userdata/update: no updates specified!")
-#                raise UserdataError("API_userdata/update: no updates specified!")
-#
-#            # because you know someone will try this...
-#            if start_port and stop_port and (start_port > stop_port):
-#                self.cfg.log.debug("API_userdata/update: start_port (%s) cannot be greater than stop_port (%s)!" % (start_port, stop_port))
-#                raise UserdataError("API_userdata/update: start_port (%s) cannot be greater than stop_port (%s)!" % (start_port, stop_port))
-#
-#            # make sure the tag we've been asked to update actually exists
-#            tag = self.__get_tag(self.cfg. name)
-#            if tag:
-#                # because you know someone will try this...
-#                if start_port and not stop_port and tag.stop_port and (start_port > tag.stop_port):
-#                    self.cfg.log.debug("API_userdata/update: start_port (%s) cannot be greater than tag.stop_port (%s)!" % (start_port, tag.stop_port))
-#                    raise UserdataError("API_userdata/update: start_port (%s) cannot be greater than tag.stop_port (%s)!" % (start_port, tag.stop_port))
-#                if not start_port and stop_port and tag.start_port and (tag.start_port > stop_port):
-#                    self.cfg.log.debug("API_userdata/update: tag.start_port (%s) cannot be greater than stop_port (%s)!" % (tag.start_port, stop_port))
-#                    raise UserdataError("API_userdata/update: tag.start_port (%s) cannot be greater than stop_port (%s)!" % (tag.start_port, stop_port))
-#                if start_port:
-#                    tag.start_port = start_port
-#                if stop_port:
-#                    tag.stop_port = stop_port
-#                if security_level:
-#                    tag.security_level = security_level 
-#            else:
-#                self.cfg.log.debug("API_userdata/update: no entry exists for name=%s. use API_userdata/uadd instead" % name)
-#                raise UserdataError("API_userdata/update: no entry exists for name=%s. use API_userdata/uadd instead" % name )
-#            self.cfg.log.debug("API_userdata/update: updating entry for name=%s with: start_port=%s stop_port=%s security_level=%s" % (tag.name, tag.start_port, tag.stop_port, tag.security_level))
-#            self.cfg.dbsess.add(tag)
-#            self.cfg.dbsess.commit()
-#            return 'success'
-#        except Exception, e:
-#            # something odd happened, explode violently
-#            self.cfg.dbsess.rollback()
-#            self.cfg.log.debug("API_userdata/update: error: %s" % e)
-#            raise UserdataError("API_userdata/update: error: %s" % e)
-#
-#
-#    def tag(self, query):
-#        """
-#        [description]
-#        map a tag to a server/realm/site/global 
-#
-#        [parameter info]
-#        required:
-#            query: the query dict being passed to us from the called URI
-#
-#        [return]
-#        Returns success if successful, raises an error if not
-#        """
-#        # setting variables
-#        # config object. love this guy.
-#        self.cfg.= self.cfg
-#        # setting our valid query keys
-#        common = MothershipCommon(self.cfg.
-#        valid_qkeys = common.get_valid_qkeys(self.namespace, 'tag')
-#
-#        try:
-#            # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
-#            if 'name' not in query.keys():
-#                self.cfg.log.debug("API_userdata/tag: no name provided!")
-#                raise UserdataError("API_userdata/tag: no name provided!")
-#            else:
-#                name = query['name']
-#            if 'unqdn' not in query.keys():
-#                self.cfg.log.debug("API_userdata/tag: no unqdn provided!")
-#                raise UserdataError("API_userdata/tag: no unqdn provided!")
-#            else:
-#                unqdn = query['unqdn']
-#
-#            # check for wierd query keys, explode
-#            for qk in query.keys():
-#                if qk not in valid_qkeys:
-#                    self.cfg.log.debug("API_userdata/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-#                    raise UserdataError("API_userdata/tag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-#
-#            # make sure the tag we've been asked to update actually exists
-#            tag = self.__get_tag(self.cfg. name)
-#            if tag:
-#                self.cfg.log.debug("API_userdata/tag: mapping tag \"%s\" to unqdn\"%s\"" % (name, unqdn))
-#            else:
-#                self.cfg.log.debug("API_userdata/tag: no entry exists for name=%s. use API_userdata/uadd to add a tag first" % name)
-#                raise UserdataError("API_userdata/tag: no entry exists for name=%s. use API_userdata/uadd to add a tag first" % name )
-#            kv = API_kv(self.cfg.
-#            kvquery = {'value': query['name'], 'key': 'tag', 'unqdn': query['unqdn']}
-#            ret = kv.add(kvquery)
-#            if ret == "success":
-#                return ret
-#            else:
-#                self.cfg.dbsess.rollback()
-#                raise UserdataError("API_userdata/tag: something has gone horribly wrong!") 
-#        except Exception, e:
-#            # something odd happened, explode violently
-#            self.cfg.dbsess.rollback()
-#            self.cfg.log.debug("API_userdata/tag: error: %s" % e)
-#            raise UserdataError("API_userdata/tag: error: %s" % e)
-#
-#
-#    def untag(self, query):
-#        """
-#        [description]
-#        unmap a tag from a server/realm/site/global 
-#
-#        [parameter info]
-#        required:
-#            query: the query dict being passed to us from the called URI
-#
-#        [return]
-#        Returns success if successful, raises an error if not
-#        """
-#        # setting variables
-#        # config object. love this guy.
-#        self.cfg.= self.cfg
-#        # setting our valid query keys
-#        common = MothershipCommon(self.cfg.
-#        valid_qkeys = common.get_valid_qkeys(self.namespace, 'untag')
-#
-#        try:
-#            # this is a sanity clause...hey wait a minute! you can't fool me! there ain't no sanity clause
-#            if 'name' not in query.keys():
-#                self.cfg.log.debug("API_userdata/untag: no name provided!")
-#                raise UserdataError("API_userdata/untag: no name provided!")
-#            else:
-#                name = query['name']
-#            if 'unqdn' not in query.keys():
-#                self.cfg.log.debug("API_userdata/untag: no unqdn provided!")
-#                raise UserdataError("API_userdata/untag: no unqdn provided!")
-#            else:
-#                unqdn = query['unqdn']
-#
-#            # check for wierd query keys, explode
-#            for qk in query.keys():
-#                if qk not in valid_qkeys:
-#                    self.cfg.log.debug("API_userdata/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-#                    raise UserdataError("API_userdata/untag: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-#
-#            # make sure the tag mapping we've been asked to update actually exists
-#            kv = API_kv(self.cfg.
-#            kvquery = {'value': query['name'], 'key': 'tag', 'unqdn': query['unqdn']}
-#            if kv.select(kvquery):
-#                # mapping exists, remove it
-#                kv.delete(kvquery)
-#                return "success"
-#            else:
-#                # mapping does not exist, explode
-#                self.cfg.dbsess.rollback()
-#                raise UserdataError("API_userdata/untag: mapping not found for tag \"%s\" and unqdn \"%s\"" % (query['name'], query['unqdn']))
-#        except Exception, e:
-#            # something odd happened, explode violently
-#            self.cfg.dbsess.rollback()
-#            self.cfg.log.debug("API_userdata/untag: error: %s" % e)
-#            raise UserdataError("API_userdata/untag: error: %s" % e)
-#
-#
+
+
+    ##############################
+    # group manipulation methods #
+    ##############################
+
+    def gdisplay(self, query):
+        """
+        [description]
+        display the information for a group 
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns the group ORMobject dict if successful, raises an error if unsuccessful
+        """
+        try:
+            # setting our valid query keys
+            common = MothershipCommon(self.cfg)
+            valid_qkeys = common.get_valid_qkeys(self.namespace, 'gdisplay')
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_userdata/gdisplay: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/gidsplay: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # to make our conditionals easier
+            if 'unqgn' not in query.keys() or not query['unqgn']:
+                self.cfg.log.debug("API_useradata/gdisplay: no username.realm.site_id provided!")
+                raise UserdataError("API_useradata/gdisplay: no username.realm.site_id provided!")
+            else:
+                unqgn = query['unqgn']
+
+            try:
+                g = __get_group_obj(unqgn) 
+            except:
+                self.cfg.log.debug("API_userdata/gdisplay: user %s not found." % unqgn)
+                raise UserdataError("API_userdata/gdisplay: user %s not found" % unqgn)
+        
+            if g:
+                return g.to_dict()
+            else:
+                self.cfg.log.debug("API_userdata/gdisplay: user %s not found." % unqgn)
+                raise UserdataError("API_userdata/gdisplay: user %s not found" % unqgn)
+                
+
+        except Exception, e:
+            self.cfg.log.debug("API_userdata/gdisplay: %s" % e) 
+            raise UserdataError("API_userdata/gdisplay: %s" % e) 
+
+
+
+
+
 
     #################################
     # internal functions below here #
@@ -1072,7 +876,7 @@ class API_userdata:
             unqgn: the groupname we want to parse
     
         [return value]
-        returns a Groups object or None
+        returns a Groups ORM object or None
         """
         try: 
             groupname, realm, site_id = v_split_unqn(unqgn)
@@ -1090,6 +894,37 @@ class API_userdata:
                 return None 
         except Exception, e:
             raise UserdataError("API_userdata/__get_group_obj: error: %s" % e)
+
+
+    def __get_user_obj(self, unqun):
+        """
+        [description]
+        for a given unqun, fetch the user object 
+    
+        [parameter info]
+        required:
+            unqun: the groupname we want to parse
+    
+        [return value]
+        returns a Users ORM object or None
+        """
+        try: 
+            username, realm, site_id = v_split_unqn(unqun)
+            v_name(username)
+            v_realm(self.cfg, realm)
+            v_site_id(self.cfg, site_id)
+            u = list(self.cfg.dbsess.query(Users).\
+            filter(Users.username==username).\
+            filter(Users.realm==realm).\
+            filter(Users.site_id==site_id))
+    
+            if u:
+                return u
+            else:
+                return None 
+        except Exception, e:
+            raise UserdataError("API_userdata/__get_group_obj: error: %s" % e)
+
 
     # semi-local. might get promoted to nonlocal some day
     def _gen_sudoers_groups(self, unqdn):
