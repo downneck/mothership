@@ -15,10 +15,34 @@ class MothershipCommon(object):
     def __init__(self, cfg):
         self.cfg = cfg
 
-    def check_min_num_args(self, len, min):
-        return True
-    def check_max_num_args(self, len, max):
-        return True
+    def check_num_opt_args(self, query, module, call):
+        """
+        [description]
+        check the number of arguments in query against known max/min
+ 
+        [parameter info]
+            required:
+                query: the query being passed to the module call 
+                module: the module we're being called from
+                call: the function we're being called from
+ 
+        [return]
+        no return. Raises an error if too may or too few arguments are supplied 
+        """
+        numargs = len(query.keys())
+        minargs = 0
+        if 'args' in self.cfg.module_metadata[module].metadata['methods'][call]['required_args'].keys():
+            minargs += len(self.cfg.module_metadata[module].metadata['methods'][call]['required_args']['args'].keys())
+        if 'max' in self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']:
+            maxargs = minargs + self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']['max'] 
+        if 'min' in self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']:
+            minargs += self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']['min']
+        if numargs > maxargs:
+            raise ShipCommonError("Please supply no more than %s optional arguments" % self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']['max'])
+        elif numargs < minargs:
+            raise ShipCommonError("Please supply no fewer than %s optional arguments" % self.cfg.module_metadata[module].metadata['methods'][call]['optional_args']['min'])
+
+
     def get_valid_qkeys(self, module, call):
         """
         [description]
@@ -26,7 +50,6 @@ class MothershipCommon(object):
  
         [parameter info]
             required:
-                cfg: the config object. useful everywhere
                 module: the module we're being called from
                 call: the function we're being called from
  
