@@ -280,8 +280,10 @@ def callable_path(pname, callpath):
                     reauthed, jbuf = __auth_conn(jbuf, 'admin')
                     if not reauthed:
                         response.content_type='text/html'
-                        raise bottle.HTTPError(401, '/'+pname+'/'+callpath) 
+                        raise bottle.HTTPError(401, '/'+pname+'/'+callpath)
+                # fetch the method we were asked to call and instantiate it in "buf"
                 buf = getattr(pnameMetadata, callpath)
+                # this is the block that actually runs the called method
                 if filesdata:
                     jbuf['data'] = buf(query, files)
                 else:
