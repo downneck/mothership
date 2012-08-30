@@ -79,6 +79,18 @@ class TestAPI_userdata(unittest.TestCase):
         self.assertRaises(UserdataError, ud.udisplay, query)
         print "[API_userdata] test6: PASSED"
 
+    # too few arguments, error
+    def test48(self):
+        query = {}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test47: PASSED"
+
+    # too many arguments, error
+    def test49(self):
+        query = {'unqun': 'bobsponge.satest.jfk', 'count': 'chocula'}
+        self.assertRaises(UserdataError, ud.udisplay, query)
+        print "[API_userdata] test48: PASSED"
+
     ######################################
     # testing uadd()                     #
     ######################################
@@ -344,4 +356,78 @@ class TestAPI_userdata(unittest.TestCase):
         query = {'unqun': "Robert'); DROP TABLE Students;.satest.jfk", 'newunqn': 'qa.sfo'}
         self.assertRaises(UserdataError, ud.uclone, query)
         print "[API_userdata] test40: PASSED"
+
+    ######################
+    # testing gdisplay() #
+    ######################
+
+    # good input, good output
+    def test41(self):
+        query = {'unqgn': 'test6_satest_jfk.satest.jfk'}
+        result = ud.gdisplay(query)
+        ret = {
+               "realm": "satest",
+               "description": "No description given",
+               "site_id": "jfk",
+               "sudo_cmds": None,
+               "groupname": "test6_satest_jfk",
+               "gid": 767,
+               "id": 547
+        }
+        self.assertEqual(result, ret)
+        print "[API_userdata] test41: PASSED"
+
+    # bad username, error
+    def test42(self):
+        query = {'unqgn': 'garbage.satest.jfk'}
+        self.assertRaises(UserdataError, ud.gdisplay, query)
+        print "[API_userdata] test42: PASSED"
+
+    # bad realm, error
+    def test43(self):
+        query = {'unqgn': 'test6_satest_jfk.garbage.jfk'}
+        self.assertRaises(UserdataError, ud.gdisplay, query)
+        print "[API_userdata] test43: PASSED"
+
+    # bad site_id, error
+    def test44(self):
+        query = {'unqgn': 'test6_satest_jfk.satest.fred'}
+        self.assertRaises(UserdataError, ud.gdisplay, query)
+        print "[API_userdata] test44: PASSED"
+
+    # empty unqgn, error
+    def test45(self):
+        query = {'unqgn': ''}
+        self.assertRaises(UserdataError, ud.gdisplay, query)
+        print "[API_userdata] test45: PASSED"
+
+    # invalid querykey, error
+    def test46(self):
+        query = {'sizzle': 'steak'}
+        self.assertRaises(UserdataError, ud.gdisplay, query)
+        print "[API_userdata] test46: PASSED"
+
+    # too few arguments, error
+    def test47(self):
+        query = {}
+        self.assertRaises(UserdataError, ud.gdisplay, query)
+        print "[API_userdata] test47: PASSED"
+
+    # too many arguments, error
+    def test48(self):
+        query = {'unqgn': 'test6_satest_jfk.satest.jfk', 'count': 'chocula'}
+        self.assertRaises(UserdataError, ud.gdisplay, query)
+        print "[API_userdata] test48: PASSED"
+
+    ##################
+    # testing uadd() #
+    ##################
+
+    # basic add, just groupname, success
+    def test50(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        result = ud.gadd(query)
+        ud.gdelete(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test50: PASSED"
 
