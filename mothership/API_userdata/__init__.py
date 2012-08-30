@@ -835,8 +835,8 @@ class API_userdata:
 
             # to make our conditionals easier
             if 'unqgn' not in query.keys() or not query['unqgn']:
-                self.cfg.log.debug("API_useradata/gdisplay: no username.realm.site_id provided!")
-                raise UserdataError("API_useradata/gdisplay: no username.realm.site_id provided!")
+                self.cfg.log.debug("API_useradata/gdisplay: no groupname.realm.site_id provided!")
+                raise UserdataError("API_useradata/gdisplay: no groupname.realm.site_id provided!")
             else:
                 unqgn = query['unqgn']
 
@@ -858,6 +858,89 @@ class API_userdata:
             raise UserdataError("API_userdata/gdisplay: %s" % e) 
 
 
+    def gadd(self, query, files=None):
+        """
+        [description]
+        create a new tags entry
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns true if successful, raises an error if not
+        """
+        # setting our valid query keys
+        common = MothershipCommon(self.cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'gadd')
+
+        try:
+            # to make our conditionals easier
+            if 'unqgn' not in query.keys() or not query['unqgn']:
+                self.cfg.log.debug("API_useradata/gadd: no groupname.realm.site_id provided!")
+                raise UserdataError("API_useradata/gadd: no groupname.realm.site_id provided!")
+            else:
+                unqgn = query['unqgn']
+
+
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_userdata/gadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/gadd: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+
+            # description, assign or default
+            if 'description' in query.keys() and query['description']:
+                description = query['description']
+            else:
+                description = 'Please add a description for this group!' 
+
+            # sudo commands. if "all" (case insensetive), translate to "ALL". if not and not blank, assign.  
+            if 'sudo_cmds' in query.keys() and query['sudo_cmds']:
+                sudo_cmds = query['sudo_cmds']
+                if sudo_cmds.upper() == 'ALL':
+                    sudo_cmds = 'ALL'
+            else:
+                sudo_cmds = None
+
+            # input validation for groupname
+            groupname, realm, site_id = v_split_unqn(unqgn)
+            if groupname and realm and site_id:
+                v_name(groupname)
+                v_realm(self.cfg, realm)
+                v_site_id(self.cfg, site_id)
+            else:
+                self.cfg.log.debug("API_userdata/gadd: unqgn must be in the format groupname.realm.site_id. unqun: %s" % unqgn)
+                raise UserdataError("API_userdata/gadd: unqgn must be in the format groupname.realm.site_id. unqun: %s" % unqgn)
+
+            # make sure we're not trying to add a duplicate
+            g = self.__get_group_obj(unqgn) 
+            if g:
+                self.cfg.log.debug("API_userdata/gadd: group exists already: %s" % unqgn)
+                raise UserdataError("API_userdata/gadd: group exists already: %s" % unqgn)
+           
+            # gid, validate or generate
+            # this is down here instead of up above with its buddies because we need the
+            # realm and site_id to query for existing uids
+            if 'gid' in query.keys() and query['gid']:
+                gid = query['gid']
+                v_gid(self.cfg, gid)
+                if v_gid_in_db(self.cfg, gid, realm, site_id):
+                    self.cfg.log.debug("API_userdata/gadd: gid exists already: %s" % gid)
+                    raise UserdataError("API_userdata/gadd: gid exists already: %s" % gid)
+            else:
+                gid = self.__next_available_gid(realm, site_id)
+
+            # create the user object, push it to the db, return status
+            g = Groups(description, sudo_cmds, groupname, site_id, realm, gid)
+            self.cfg.dbsess.add(g)
+            self.cfg.dbsess.commit()
+            return 'success'
+        except Exception, e:
+            # something odd happened, explode violently
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_userdata/gadd: error: %s" % e)
+            raise UserdataError("API_userdata/gadd: error: %s" % e)
 
 
 
