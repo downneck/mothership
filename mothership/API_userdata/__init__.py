@@ -841,17 +841,16 @@ class API_userdata:
                 unqgn = query['unqgn']
 
             try:
-                g = __get_group_obj(unqgn) 
-            except:
-                self.cfg.log.debug("API_userdata/gdisplay: user %s not found." % unqgn)
-                raise UserdataError("API_userdata/gdisplay: user %s not found" % unqgn)
+                g = self.__get_group_obj(unqgn) 
+            except Exception, e:
+                self.cfg.log.debug("API_userdata/gdisplay: group %s not found." % unqgn)
+                raise UserdataError("API_userdata/gdisplay: group %s not found" % unqgn)
         
             if g:
                 return g.to_dict()
             else:
                 self.cfg.log.debug("API_userdata/gdisplay: user %s not found." % unqgn)
                 raise UserdataError("API_userdata/gdisplay: user %s not found" % unqgn)
-                
 
         except Exception, e:
             self.cfg.log.debug("API_userdata/gdisplay: %s" % e) 

@@ -252,21 +252,21 @@ def print_responsedata(responsedata, mmeta):
         try:
             # try to load up a template called template.cmdln.<call>
             # this allows us to format output specifically to each call
-            # if necessary
             template = env.get_template("template.cmdln.%s" % sys.argv[1].split('/')[1])
+            if not template:
+                # template.cmdln.<call> apparently doesn't exist. load the default template
+                template = env.get_template('template.cmdln')
             print template.render(r=responsedata)
         except:
-            # template.cmdln.<call> apparently doesn't exist. load the default template
-            template = env.get_template('template.cmdln')
-            print template.render(r=responsedata)
-        else:
             # no template at all! just spit the data out
             print responsedata
     else:
         # TODO: dunno if i want to print anything here. revisit this later
+        # right now, we're printing debug info
         #
         # no data, no msg, no error. let's just go away quietly and pretend
         # like this never happened...
+        print responsedata
         sys.exit(1)
 
 # main execution block

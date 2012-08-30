@@ -1,0 +1,9 @@
+
+username, uid, type:     {{r['data']['username']}}, {{r['data']['uid']}}, {{r['data']['type']}}
+realm.site_id:           {{r['data']['realm']}}.{{r['data']['site_id']}}
+name:                    {{r['data']['first_name']}} {{r['data']['last_name']}}
+active:                  {{r['data']['active']}}
+home dir:                {{r['data']['hdir']}}
+shell:                   {{r['data']['shell']}}
+email:                   {{r['data']['email']}}
+ssh public key:          {{r['data']['ssh_public_key']}}

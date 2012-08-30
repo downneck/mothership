@@ -1,0 +1,5 @@
+
+groupname, gid:     {{r['data']['groupname']}}, {{r['data']['gid']}}
+realm.site_id:      {{r['data']['realm']}}.{{r['data']['site_id']}}
+description:        {{r['data']['description']}}
+sudo commands:      {{r['data']['sudo_cmds']}}
