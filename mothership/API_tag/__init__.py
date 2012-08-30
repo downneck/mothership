@@ -33,6 +33,7 @@ class API_tag:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        self.lss = API_list_servers(cfg)
         self.version = 1
         self.namespace = 'API_tag'
         self.metadata = {
@@ -331,9 +332,8 @@ class API_tag:
                 raise TagError("API_tag/delete: no name provided!")
             else:
                 name = query['name']
-            listservers = API_list_servers(self.cfg)
             lssquery = {'tag': name}
-            if listservers.lss(lssquery):
+            if self.lss.lss(lssquery):
                 raise TagError("API_tag/delete: tag is still mapped to servers! unmap before deleting")
             result = self.__get_tag(name)
             if result:

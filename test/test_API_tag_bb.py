@@ -2,6 +2,7 @@ import unittest
 
 from mothership.API_tag import * 
 from mothership.API_kv import * 
+from mothership.API_list_servers import * 
 from mothership.configure import *
 import mothership.validate
 from mothership.common import *
@@ -22,9 +23,9 @@ cfg.log = MothershipLogger(cfg)
 # instantiate the main class
 tag = API_tag(cfg)
 cfg.module_metadata['API_tag'] = tag
-# instantiate kv
-kv = API_kv(cfg)
-cfg.module_metadata['API_kv'] = kv
+# instantiate kv, list_servers
+cfg.module_metadata['API_kv'] = API_kv(cfg)
+cfg.module_metadata['API_list_servers'] = API_list_servers(cfg)
 
 # UnitTesting for API_tag module
 class TestAPI_tag(unittest.TestCase):
@@ -140,6 +141,7 @@ class TestAPI_tag(unittest.TestCase):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80, 'security_level': 1}
         result = tag.add(query)
         # put everything back where we found it
+        query = {'name': 'frank'}
         tag.delete(query)
         self.assertEqual(result, 'success')
         print "[API_tag] test14: PASSED"
@@ -149,6 +151,7 @@ class TestAPI_tag(unittest.TestCase):
         query = {'name': 'frank', 'stop_port': 80, 'start_port': 80}
         result = tag.add(query)
         # put everything back where we found it
+        query = {'name': 'frank'}
         tag.delete(query)
         self.assertEqual(result, 'success')
         print "[API_tag] test15: PASSED"
@@ -179,6 +182,7 @@ class TestAPI_tag(unittest.TestCase):
         query = {'name': 'frank', 'security_level': 1}
         result = tag.add(query)
         # put everything back where we found it
+        query = {'name': 'frank'}
         tag.delete(query)
         self.assertEqual(result, 'success')
         print "[API_tag] test19: PASSED"

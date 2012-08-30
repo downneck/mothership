@@ -21,9 +21,9 @@
 import sys
 
 import mothership
-import mothership.common
 import mothership.API_kv
 from mothership.mothership_models import *
+from mothership.common import *
 
 from sqlalchemy import or_, desc, MetaData
 
@@ -36,6 +36,7 @@ class API_list_servers:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        self.common = MothershipCommon(cfg)
         self.kvobj = mothership.API_kv.API_kv(cfg)
         self.version = 1
         self.namespace = 'API_list_servers'
@@ -151,59 +152,51 @@ class API_list_servers:
         [return value]
         a list containing the names of servers matching the filters
         """
-
-        result = []
-
-        if len(query.keys()) > self.metadata['methods']['lss']['optional_args']['max']:
-            retval = "API_list_servers/lss: too many queries! max number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['max']
-            retval += "API_list_servers/lss: you tried to pass %s queries\n" % len(query.keys())
-            self.cfg.log.debug(retval)
-            raise ListServersError(retval)
-        else:
-            self.cfg.log.debug("API_list_servers/lss: num queries: %s" % len(query.keys()))
-            self.cfg.log.debug("API_list_servers/lss: max num queries: %s" % self.metadata['methods']['lss']['optional_args']['max'])
-        if len(query.keys()) < self.metadata['methods']['lss']['optional_args']['min']:
-            retval = "API_list_servers/lss: too few queries! min number of queries is: %s\n" % self.metadata['methods']['lss']['optional_args']['min']
-            retval += "API_list_servers/lss: you tried to pass %s queries\n" % len(query.keys())
-            self.cfg.log.debug(retval)
-            raise ListServersError(retval)
-        else:
-            self.cfg.log.debug("API_list_servers/lss: min num queries: %s" % self.metadata['methods']['lss']['optional_args']['min'])
-        if 'physical' in query.keys() and 'virtual' in query.keys():
-            self.cfg.log.debug("API_list_servers/lss: cannot specify both physical and virtual")
-            raise ListServersError("cannot specify both physical and virtual")
-
-        for key in query.keys():
-            if key == 'all':
-                result = self._get_all_servers()
-            elif key == 'hostname':
-                result = self._get_servers_by_hostname(query)
-            elif key == 'physical':
-                result = self._get_physical_servers()
-            elif key == 'virtual':
-                result = self._get_virtual_servers()
-            elif key == 'hw_tag':
-                result = self._get_servers_from_hw_tag(query)
-            elif key == 'vlan':
-                result = self._get_servers_from_vlan(query)
-            elif key == 'site_id':
-                result =  self._get_servers_from_site_id(query)
-            elif key == 'tag':
-                result =  self._get_servers_from_tag(query)
-            elif key == 'realm':
-                result = self._get_servers_from_realm(query)
-            elif key == 'manufacturer':
-                result = self._get_servers_from_manufacturer(query)
-            elif key == 'model':
-                result =  self._get_servers_from_model(query)
-            elif key == 'cores':
-                result = self._get_servers_from_cores(query)
-            elif key == 'ram':
-                result = self._get_servers_from_ram(query)
-            elif key == 'disk':
-                result = self._get_servers_from_disk(query)
-        # send the result back up to the API layer 
-        return result
+        try:
+            result = []
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'lss')
+    
+            if 'physical' in query.keys() and 'virtual' in query.keys():
+                self.cfg.log.debug("API_list_servers/lss: cannot specify both physical and virtual")
+                raise ListServersError("cannot specify both physical and virtual")
+    
+            for key in query.keys():
+                if key == 'all':
+                    result = self._get_all_servers()
+                elif key == 'hostname':
+                    result = self._get_servers_by_hostname(query)
+                elif key == 'physical':
+                    result = self._get_physical_servers()
+                elif key == 'virtual':
+                    result = self._get_virtual_servers()
+                elif key == 'hw_tag':
+                    result = self._get_servers_from_hw_tag(query)
+                elif key == 'vlan':
+                    result = self._get_servers_from_vlan(query)
+                elif key == 'site_id':
+                    result =  self._get_servers_from_site_id(query)
+                elif key == 'tag':
+                    result =  self._get_servers_from_tag(query)
+                elif key == 'realm':
+                    result = self._get_servers_from_realm(query)
+                elif key == 'manufacturer':
+                    result = self._get_servers_from_manufacturer(query)
+                elif key == 'model':
+                    result =  self._get_servers_from_model(query)
+                elif key == 'cores':
+                    result = self._get_servers_from_cores(query)
+                elif key == 'ram':
+                    result = self._get_servers_from_ram(query)
+                elif key == 'disk':
+                    result = self._get_servers_from_disk(query)
+                else:
+                    raise ListServersError("API_list_servers/lss: unknown key: %s" % key)
+            # send the result back up to the API layer 
+            return result
+        except Exception, e:
+            self.cfg.log.debug("API_list_servers/lss: error: %s" % e)
+            raise ListServersError("API_list_servers/lss: error: %s" % e)
 
 
     def _get_all_servers(self):
@@ -218,13 +211,12 @@ class API_list_servers:
         a list containing the names of servers matching the filters
         """
         result = []
-        self.cfg.log.debug("API_list_servers/lss: querying for ALL servers")
         try:
             for serv in self.cfg.dbsess.query(Server).order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for ALL servers. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_all_servers: query failed for ALL servers. Error: %s" % e)
         return result
 
     def _get_servers_by_hostname(self, query):
@@ -240,7 +232,6 @@ class API_list_servers:
         a list containing the names of servers matching the filters
         """
         result = []
-        self.cfg.log.debug("API_list_servers/lss: querying on name: %s" % query['hostname'])
         try:
             search_string = '%' + query['hostname'].split('.')[0] + '%'
             for serv in self.cfg.dbsess.query(Server).\
@@ -249,7 +240,7 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_by_hostname. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_by_hostname: query failed. Error: %s" % e)
         return result
 
     def _get_physical_servers(self):
@@ -265,7 +256,6 @@ class API_list_servers:
         a list containing the names of servers matching the filters
         """
         result = []
-        self.cfg.log.debug("API_list_servers/lss: querying for physical (baremetal) servers")
         try:
             for serv in self.cfg.dbsess.query(Server).\
                     filter(Server.virtual==False).\
@@ -273,7 +263,7 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_physical_servers. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_physical_servers: query failed. Error: %s" % e)
         return result
 
     def _get_virtual_servers(self):
@@ -289,7 +279,6 @@ class API_list_servers:
         a list containing the names of servers matching the filters
         """
         result = []
-        self.cfg.log.debug("API_list_servers/lss: querying for virtual servers")
         try:
             for serv in self.cfg.dbsess.query(Server).\
                     filter(Server.virtual==True).\
@@ -297,7 +286,7 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_virtual_servers. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_virtual_servers: query failed. Error: %s" % e)
         return result
 
     def _get_servers_from_hw_tag(self, query):
@@ -313,14 +302,13 @@ class API_list_servers:
         a list containing the names of servers matching the filters
         """
         result = []
-        self.cfg.log.debug("API_list_servers/lss: querying on hw_tag: %s" % query['hw_tag'])
         try:
             for serv in self.cfg.dbsess.query(Server).\
                     filter(Server.hw_tag==query['hw_tag']):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_from_hw_tag. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_from_hw_tag: query failed. Error: %s" % e)
         return result
     
 
@@ -337,7 +325,6 @@ class API_list_servers:
         a list containing the names of servers matching the filters
         """
         result = []
-        self.cfg.log.debug("API_list_servers/lss: querying on vlan: %s" % query['vlan'])
         try:
             # half-assed type checking, to ensure we don't pass a
             # non-int value and freak out the database
@@ -350,7 +337,7 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_from_vlan. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_from_vlan: query failed. Error: %s" % e)
         return result
 
     def _get_servers_from_site_id(self, query):
@@ -366,7 +353,6 @@ class API_list_servers:
         a list containing the names of servers matching the filters
         """
         result = []
-        self.cfg.log.debug("API_list_servers/lss: querying on site_id: %s" % query['site_id'])
         try:
             for serv in self.cfg.dbsess.query(Server).\
                     filter(Server.site_id==query['site_id']).\
@@ -374,7 +360,7 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_from_site_id. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_from_site_id: query failed. Error: %s" % e)
         return result
     
     def _get_servers_from_tag(self, query):
@@ -389,7 +375,6 @@ class API_list_servers:
         [return value]
         a list containing the names of servers matching the filters
         """
-        self.cfg.log.debug("API_list_servers/lss: querying on tag: %s" % query['tag'])
 
         servers_primary = []
         servers_kv = []
@@ -416,7 +401,7 @@ class API_list_servers:
                     result.append(serv)
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_from_tag. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_from_tag: query failed. Error: %s" % e)
         return result
     
     def _get_servers_from_realm(self, query):
@@ -432,7 +417,6 @@ class API_list_servers:
         a list containing the names of servers matching the filters
         """
         result = []
-        self.cfg.log.debug("API_list_servers/lss: querying on realm: %s" % query['realm'])
         try:
             for serv in self.cfg.dbsess.query(Server).\
                     filter(Server.realm==query['realm']).\
@@ -440,7 +424,7 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_from_realm. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_from_realm: query failed. Error: %s" % e)
         return result
     
     def _get_servers_from_manufacturer(self, query):
@@ -455,7 +439,6 @@ class API_list_servers:
         [return value]
         a list containing the names of servers matching the filters
         """
-        self.cfg.log.debug("API_list_servers/lss: querying on manufacturer: %s" % query['manufacturer'])
         result = []
         try:
             search_string = '%' + query['manufacturer'] + '%'
@@ -466,7 +449,7 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_from_manufacturer. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_from_manufacturer: query failed. Error: %s" % e)
         return result
 
     def _get_servers_from_model(self, query):
@@ -481,7 +464,6 @@ class API_list_servers:
         [return value]
         a list containing the names of servers matching the filters
         """
-        self.cfg.log.debug("API_list_servers/lss: querying on model: %s" % query['model'])
         result = []
         try:
             search_string = '%' + query['model']+ '%' 
@@ -492,7 +474,7 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_from_model. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_from_model: query failed. Error: %s" % e)
         return result
 
     def _get_servers_from_cores(self, query):
@@ -507,7 +489,6 @@ class API_list_servers:
         [return value]
         a list containing the names of servers matching the filters
         """
-        self.cfg.log.debug("API_list_servers/lss: querying on number of cores: %s" % query['cores'])
         result = []
         try:
             # half-assed type checking, to ensure we don't pass a
@@ -519,7 +500,7 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_from_cores. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_from_cores: query failed. Error: %s" % e)
         return result
     
     def _get_servers_from_ram(self, query):
@@ -534,7 +515,6 @@ class API_list_servers:
         [return value]
         a list containing the names of servers matching the filters
         """
-        self.cfg.log.debug("API_list_servers/lss: querying on ram size in GB: %s" % query['ram'])
         result = []
         try:
             # half-assed type checking, to ensure we don't pass a
@@ -546,7 +526,7 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_from_ram. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_from_ram: query failed. Error: %s" % e)
         return result
 
     def _get_servers_from_disk(self, query):
@@ -561,7 +541,6 @@ class API_list_servers:
         [return value]
         a list containing the names of servers matching the filters
         """
-        self.cfg.log.debug("API_list_servers/lss: querying on disk size in GB: %s" % query['disk'])
         result = []
         try:
             # half-assed type checking, to ensure we don't pass a
@@ -573,5 +552,5 @@ class API_list_servers:
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
             self.cfg.dbsess.rollback()
-            raise ListServersError("API_list_servers/lss: query failed for _get_servers_from_disk. Error: %s" % e)
+            raise ListServersError("API_list_servers/_get_servers_from_disk: query failed. Error: %s" % e)
         return result

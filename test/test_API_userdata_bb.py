@@ -237,7 +237,7 @@ class TestAPI_userdata(unittest.TestCase):
 
     # bad ssh_key, error raised 
     def test27(self):
-        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'ssh_key': 'test/ssh_pubkey_bad'}
         ud.uadd(query)
         filedata = [open('test/ssh_pubkey_bad')]
         self.assertRaises(UserdataError, ud.umodify, query, files=filedata)

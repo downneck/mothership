@@ -273,6 +273,8 @@ class API_kv:
             if not unqdn and not key and not value and not any:
                 cfg.log.debug("API_kv/select: no valid query keys!")
                 raise KVError("API_kv/select: no valid query keys!")
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'select')
 
             # translate our unqdn to hostname, realm, site_id
             try:
@@ -462,6 +464,8 @@ class API_kv:
                 if qk not in valid_qkeys:
                     cfg.log.debug("API_kv/collect: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise KVError("API_kv/collect: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'collect')
 
             # get the whole damn KV table
             results = cfg.dbsess.query(KV)
@@ -545,6 +549,8 @@ class API_kv:
                 if qk not in valid_qkeys:
                     cfg.log.debug("API_kv/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise KVError("API_kv/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'add')
 
             # Check for duplicate key=value.
             dupkv = self.select(query)
@@ -614,6 +620,8 @@ class API_kv:
                 if qk not in valid_qkeys:
                     cfg.log.debug("API_kv/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise KVError("API_kv/update: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'update')
 
             # get the whole damn KV table
 
@@ -686,6 +694,8 @@ class API_kv:
                 if qk not in valid_qkeys:
                     cfg.log.debug("API_kv/delete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise KVError("API_kv/delete: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'delete')
 
             # filtery by unqdn (or any portion thereof)
             if unqdn != 'GLOBAL':

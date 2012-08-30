@@ -67,7 +67,7 @@ class TestAPI_kv(unittest.TestCase):
 
     # test 'any' override ('any' option overrides all others)
     def test3(self):
-        query = {'any': True, 'unqdn': 'stage2.satest.jfk', 'key': 'tag', 'value': 'splunklightforwarder'}
+        query = {'any': True, 'unqdn': 'stage2.satest.jfk'}
         result = kv.select(query)
         # pre-define expected output
         ret = [{
@@ -264,7 +264,7 @@ class TestAPI_kv(unittest.TestCase):
 
     # test all=true override, good results
     def test18(self):
-        query = {'all': True, 'unqdn': 'stage2.satest.jfk', 'key': 'tag', 'value': 'splunklightforwarder'}
+        query = {'all': True, 'unqdn': 'stage2.satest.jfk'}
         result = kv.collect(query)
         self.assertEqual(result, longassret)
         print "[API_kv] test18: PASSED"
