@@ -18,7 +18,7 @@
 # imports
 from sqlalchemy import or_, desc, MetaData
 from mothership.mothership_models import *
-import mothership.common
+from mothership.common import *
 
 class ListValuesError(Exception):
     pass
@@ -28,6 +28,7 @@ class API_list_values:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        self.common = MothershipCommon(cfg)
         self.version = 1
         self.namespace = 'API_list_values'
         self.metadata = {
@@ -118,6 +119,8 @@ class API_list_values:
         if query.keys()[0] not in self.metadata['methods']['lsv']['optional_args']['args'].keys():
             self.cfg.log.debug("API_list_values/lsv: unsupported listing for: %s. please specify one of the following: %s" % (query.keys()[0], " ".join(self.metadata['methods']['lsv']['optional_args']['args'].keys())))
             raise ListValuesError("API_list_values/lsv: unsupported listing for: %s. please specify one of the following: %s" % (query.keys()[0], " ".join(self.metadata['methods']['lsv']['optional_args']['args'].keys())))
+        # check for min/max number of optional arguments
+        self.common.check_num_opt_args(query, self.namespace, 'lsv')
 
         # look up all vlans
         if 'vlans' in query.keys():

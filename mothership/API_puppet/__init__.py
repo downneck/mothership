@@ -20,9 +20,9 @@ module controlling various puppet interactions
 import mothership
 import mothership.API_kv
 import mothership.API_userdata
-import mothership.common
 from mothership.validate import *
 from mothership.mothership_models import *
+from mothership.common import *
 
 class PuppetError(Exception):
     pass
@@ -32,6 +32,7 @@ class API_puppet:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        self.common = MothershipCommon(cfg)
         self.kvobj = mothership.API_kv.API_kv(cfg)
         self.userdataobj = mothership.API_userdata.API_userdata(cfg)
         self.version = 1
@@ -120,6 +121,8 @@ class API_puppet:
                 self.cfg.log.debug("API_puppet/classify: you must specify a unqdn to query for")
                 raise PuppetError("API_puppet/classify: you must specify a unqdn to query for")
             self.cfg.log.debug("API_puppet/classify: querying for unqdn : %s" % query['unqdn'])
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'classify')
 
             s = v_get_server_obj(self.cfg, query['unqdn'])
 

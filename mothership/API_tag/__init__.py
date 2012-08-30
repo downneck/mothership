@@ -33,6 +33,7 @@ class API_tag:
 
     def __init__(self, cfg):
         self.cfg = cfg
+        self.common = MothershipCommon(cfg)
         self.lss = API_list_servers(cfg)
         self.version = 1
         self.namespace = 'API_tag'
@@ -233,6 +234,8 @@ class API_tag:
                 raise TagError("API_tag/display: no name provided!")
             else:
                 name = query['name']
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'display')
             result = self.__get_tag(name)
             if result:
                 return result.to_dict()
@@ -274,6 +277,8 @@ class API_tag:
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_tag/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise TagError("API_tag/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'add')
 
             if 'start_port' in query.keys() and query['start_port']:
                 start_port = int(query['start_port'])
@@ -332,6 +337,8 @@ class API_tag:
                 raise TagError("API_tag/delete: no name provided!")
             else:
                 name = query['name']
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'delete')
             lssquery = {'tag': name}
             if self.lss.lss(lssquery):
                 raise TagError("API_tag/delete: tag is still mapped to servers! unmap before deleting")
@@ -374,6 +381,8 @@ class API_tag:
                 raise TagError("API_tag/update: no name provided!")
             else:
                 name = query['name']
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'update')
 
             # check for wierd query keys, explode
             for qk in query.keys():
@@ -462,6 +471,8 @@ class API_tag:
                 raise TagError("API_tag/tag: no unqdn provided!")
             else:
                 unqdn = query['unqdn']
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'tag')
 
             # check for wierd query keys, explode
             for qk in query.keys():
@@ -519,6 +530,8 @@ class API_tag:
                 raise TagError("API_tag/untag: no unqdn provided!")
             else:
                 unqdn = query['unqdn']
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'untag')
 
             # check for wierd query keys, explode
             for qk in query.keys():
