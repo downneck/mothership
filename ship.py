@@ -48,7 +48,7 @@ def swap_dict(odict):
 # if someone runs: ship
 def get_submodules(cfg, module_map):
     try:
-        buf = "Available submodules:\n"
+        buf = "Available submodules:\n\n"
         for i in module_map.keys():
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
             mmeta = myjson.loads(response.content)
@@ -56,7 +56,7 @@ def get_submodules(cfg, module_map):
                 raise ShipCLIError("Error output:\n%s" % mmeta['msg'])
             buf += "%s (%s): %s" % (module_map[i], i.split('API_')[1], mmeta['data']['config']['description'])
             buf += "\n"
-        buf += "\n\nRun \"ship <submodule>\" for more information"
+        buf += "\nRun \"ship <submodule>\" for more information"
         return buf
     except Exception, e:
         raise ShipCLIError("Error: %s" % e)
