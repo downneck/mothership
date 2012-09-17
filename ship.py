@@ -21,7 +21,7 @@ import textwrap
 import time
 import datetime
 import os
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import * 
 # urllib2 sucks when you need to use POST and you don't know beforehand
 # that you need to use POST. we use 'requests' instead so that we
 # can let the modules define themselves
@@ -253,9 +253,10 @@ def print_responsedata(responsedata, mmeta):
             # try to load up a template called template.cmdln.<call>
             # this allows us to format output specifically to each call
             template = env.get_template("template.cmdln.%s" % sys.argv[1].split('/')[1])
-            if not template:
-                # template.cmdln.<call> apparently doesn't exist. load the default template
-                template = env.get_template('template.cmdln')
+            print template.render(r=responsedata)
+        except TemplateNotFound:
+            # template.cmdln.<call> apparently doesn't exist. load the default template
+            template = env.get_template('template.cmdln')
             print template.render(r=responsedata)
         except:
             # no template at all! just spit the data out
