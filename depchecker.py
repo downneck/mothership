@@ -36,22 +36,40 @@ def check_or_die(cmd, descr):
         print "NO"
         return cmd
 
+# requirements go here
 deps = [
     ["which psql", "postgres is installed"],
     ["which python", "python is installed"],
     ["python -c 'import psycopg2'", "psycopg2 is installed"],
-    ["python -c 'import cmdln'", "cmdln is installed"],
+    ["python -c 'import jinja2'", "jinja2 is installed"],
+    ["python -c 'import sqlalchemy'", "sqlalchemy is installed"],
+    ["python -c 'import bottle'", "bottle is installed"],
     ["which cobbler", "cobbler is installed"],
     ["which puppet", "puppet is installed"]
 ]
 
+# optional extras go here (for supporting modules that people may not turn on)
+optional = [
+    ["python -c 'import ldap'", "ldap is installed"],
+]
+
 fail = []
+warn = []
 
 for item in deps:
     retval = check_or_die(item[0], item[1])
     if retval:
         fail.append(retval)
 
+for item in optional:
+    retval = check_or_die(item[0], item[1])
+    if retval:
+        warn.append(retval)
+
+if warn:
+    print "\nThe following optional checks failed. Modules that depend on these libraries will not work:"
+    for warncmd in warn:
+        print warncmd
 
 if not fail:
     print "\nAll check tests passed!  You can begin the configuration phase of mothership"
