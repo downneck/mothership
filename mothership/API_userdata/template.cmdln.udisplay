@@ -1,9 +1,10 @@
 
-username, uid, type:     {{r['data']['username']}}, {{r['data']['uid']}}, {{r['data']['type']}}
-realm.site_id:           {{r['data']['realm']}}.{{r['data']['site_id']}}
-name:                    {{r['data']['first_name']}} {{r['data']['last_name']}}
-active:                  {{r['data']['active']}}
-home dir:                {{r['data']['hdir']}}
-shell:                   {{r['data']['shell']}}
-email:                   {{r['data']['email']}}
-ssh public key:          {{r['data']['ssh_public_key']}}
+username, uid, type:     {{r['data']['user']['username']}}, {{r['data']['user']['uid']}}, {{r['data']['user']['type']}}
+realm.site_id:           {{r['data']['user']['realm']}}.{{r['data']['user']['site_id']}}
+name:                    {{r['data']['user']['first_name']}} {{r['data']['user']['last_name']}}
+active:                  {{r['data']['user']['active']}}
+home dir:                {{r['data']['user']['hdir']}}
+shell:                   {{r['data']['user']['shell']}}
+email:                   {{r['data']['user']['email']}}
+groups:                  {% for g in r['data']['groups'] %}{{g['groupname']}} {% endfor %}
+ssh public key:          {{r['data']['user']['ssh_public_key']}}

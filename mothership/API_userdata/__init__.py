@@ -61,6 +61,10 @@ class API_userdata:
                     },
                     'return': {
                         'user': 'ORMobject',
+                        'groups': [
+                            'group ORMobject',
+                            'group ORMobject',
+                        ],
                     },
                 },
                 'uadd': {
@@ -254,6 +258,10 @@ class API_userdata:
                     },
                     'return': {
                         'group': 'ORMobject',
+                        'users': [
+                            'user ORMobject',
+                            'user ORMobject',
+                        ],
                     },
                 },
                 'gadd': {
@@ -441,7 +449,7 @@ class API_userdata:
             query: the query dict being passed to us from the called URI
 
         [return]
-        Returns the tag ORMobject if successful, None if unsuccessful 
+        Returns the user ORMobject and a list of group ORMobjects if successful, raises an error if unsuccessful 
         """
         try:
             # setting our valid query keys
@@ -452,7 +460,6 @@ class API_userdata:
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_userdata/udisplay: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
                     raise UserdataError("API_userdata/udisplay: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-
             # to make our conditionals easier
             if 'unqun' not in query.keys() or not query['unqun']:
                 self.cfg.log.debug("API_useradata/udisplay: no username.realm.site_id provided!")
@@ -461,20 +468,27 @@ class API_userdata:
                 unqun = query['unqun']
             # check for min/max number of optional arguments
             common.check_num_opt_args(query, self.namespace, 'udisplay')
+            # find us a username to display, validation done in the __get_user_obj function
             try:
-                # find us a username to display, validation done in the __get_user_obj function
                 u = self.__get_user_obj(unqun) 
             except:
                 self.cfg.log.debug("API_userdata/udisplay: user %s not found." % unqun)
                 raise UserdataError("API_userdata/udisplay: user %s not found" % unqun)
-        
+            # got a user, populate the return 
+            ret = {}
             if u:
-                return u.to_dict()
+                ret['user'] = u.to_dict()
             else:
                 self.cfg.log.debug("API_userdata/udisplay: user %s not found." % unqun)
                 raise UserdataError("API_userdata/udisplay: user %s not found" % unqun)
-                
-
+            # user exists, find out what groups it's in 
+            ret['groups'] = []
+            glist = self.__get_groups_by_user(unqun)
+            if glist:
+                for g in glist:
+                    ret['groups'].append(g.to_dict())        
+            # return's populated, return it
+            return ret
         except Exception, e:
             self.cfg.log.debug("API_userdata/udisplay: %s" % e) 
             raise UserdataError("API_userdata/udisplay: %s" % e) 
@@ -483,14 +497,14 @@ class API_userdata:
     def uadd(self, query, files=None):
         """
         [description]
-        create a new tags entry
+        create a new Users entry
 
         [parameter info]
         required:
             query: the query dict being passed to us from the called URI
 
         [return]
-        Returns true if successful, raises an error if not
+        Returns "success" if successful, raises an error if not
         """
         # setting our valid query keys
         common = MothershipCommon(self.cfg)
@@ -633,6 +647,9 @@ class API_userdata:
             # find us a username to delete, validation done in the __get_user_obj function
             u = self.__get_user_obj(unqun) 
             if u:
+                if self.__get_groups_by_user(unqun):
+                    self.cfg.log.debug("API_userdata/udelete: please remove user from all groups before deleting!")
+                    raise UserdataError("API_userdata/udelete: please remove user from all groups before deleting!")
                 self.cfg.dbsess.delete(u)
                 self.cfg.dbsess.commit()
                 self.cfg.log.debug("API_userdata/udelete: deleted user: %s" % unqun)
@@ -843,18 +860,27 @@ class API_userdata:
                 unqgn = query['unqgn']
             # check for min/max number of optional arguments
             common.check_num_opt_args(query, self.namespace, 'gdisplay')
+            # look for the group
             try:
                 g = self.__get_group_obj(unqgn) 
             except Exception, e:
                 self.cfg.log.debug("API_userdata/gdisplay: group %s not found." % unqgn)
                 raise UserdataError("API_userdata/gdisplay: group %s not found" % unqgn)
-        
+            # group exists, populate return
+            ret = {} 
             if g:
-                return g.to_dict()
+                ret['group'] = g.to_dict()
             else:
                 self.cfg.log.debug("API_userdata/gdisplay: user %s not found." % unqgn)
                 raise UserdataError("API_userdata/gdisplay: user %s not found" % unqgn)
-
+            # now that we know the group exists, we can see if it's populated with users
+            ret['users'] = []
+            ulist = self.__get_users_by_group(unqgn)
+            if ulist:
+                for u in ulist:
+                    ret['users'].append(u.to_dict())
+            # return is populated, return it
+            return ret
         except Exception, e:
             self.cfg.log.debug("API_userdata/gdisplay: %s" % e) 
             raise UserdataError("API_userdata/gdisplay: %s" % e) 
@@ -979,6 +1005,9 @@ class API_userdata:
             # find us a groupname to delete, validation done in the __get_group_obj function
             g = self.__get_group_obj(unqgn) 
             if g:
+                if self.__get_users_by_group(unqgn):
+                    self.cfg.log.debug("API_userdata/gdelete: please remove all users from this group before deleting!")
+                    raise UserdataError("API_userdata/gdelete: please remove all users from this group before deleting!")
                 self.cfg.dbsess.delete(g)
                 self.cfg.dbsess.commit()
                 self.cfg.log.debug("API_userdata/gdelete: deleted group: %s" % unqgn)
@@ -1331,3 +1360,54 @@ class API_userdata:
                 return i
         except Exception, e:
             raise UserdataError("API_userdata/__next_available_gid: %s" % e)
+
+    def __get_groups_by_user(self, unqun):
+        """
+        [description]
+        searches the db for user-group mappings by username 
+    
+        [parameter info]
+        required:
+            unqun: the username to search for 
+    
+        [return value]
+        returns a list of Groups ORMobjects or nothing 
+        """
+        try:
+            glist = []
+            u = self.__get_user_obj(unqun)
+            if not u:
+                self.cfg.log.debug("API_userdata/__get_groups_by_user: user not found: %s" % unqun)
+                raise UserdataError("API_userdata/__get_groups_by_user: user not found: %s" % unqun)
+            glist = self.cfg.dbsess.query(UserGroupMapping).\
+            filter(UserGroupMapping.users_id==u.id).all()
+            return glist
+        except Exception, e:
+            raise UserdataError("API_userdata/__get_groups_by_user: %s" % e)
+
+
+    def __get_users_by_group(self, unqgn):
+        """
+        [description]
+        searches the db for user-group mappings by groupname 
+    
+        [parameter info]
+        required:
+            unqgn: the groupname to search for 
+    
+        [return value]
+        returns a list of Groups ORMobjects or nothing 
+        """
+        try:
+            ulist = []
+            g = self.__get_group_obj(unqgn)
+            if not g:
+                self.cfg.log.debug("API_userdata/__get_users_by_group: group not found: %s" % unqgn)
+                raise UserdataError("API_userdata/__get_groups_by_user: group not found: %s" % unqgn)
+            ulist = self.cfg.dbsess.query(UserGroupMapping).\
+            filter(UserGroupMapping.groups_id==g.id).all()
+            return ulist
+        except Exception, e:
+            raise UserdataError("API_userdata/__get_users_by_group: %s" % e)
+
+

@@ -3,5 +3,6 @@ write functions to retrieve user/group lists
 
 write u*g functions
 
+write tests for user-in-group during delete and vice versa
 write moar tests
 
