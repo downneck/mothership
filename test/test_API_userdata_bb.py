@@ -185,12 +185,14 @@ class TestAPI_userdata(unittest.TestCase):
     def test17(self):
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.uadd(query)
+        # this doesn't actually happen yet.
+        #
         # now we need to remove the user from the default groups: web, users
         # otherwise udelete will raise an error
-        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
-        ud.urmg(ugquery)
-        ugquery['groupname'] = 'users'
-        ud.urmg(ugquery)
+        #ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        #ud.urmg(ugquery)
+        #ugquery['groupname'] = 'users'
+        #ud.urmg(ugquery)
         result = ud.udelete(query)
         self.assertEqual(result, 'success')
         print "[API_userdata] test17: PASSED"
