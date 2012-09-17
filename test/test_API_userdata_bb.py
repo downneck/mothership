@@ -635,3 +635,45 @@ class TestAPI_userdata(unittest.TestCase):
         self.assertRaises(UserdataError, ud.gmodify, query)
         print "[API_userdata] test73: PASSED"
 
+    #####################
+    # testing gdelete() #
+    #####################
+
+    # delete, success
+    def testr74(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gadd(query)
+        result = ud.gdelete(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test74: PASSED"
+
+    # too few arguments, error
+    def test75(self):
+        query = {}
+        self.assertRaises(UserdataError, ud.gdelete, query)
+        print "[API_userdata] test75: PASSED"
+
+    # too many arguments, error
+    def test76(self):
+        query = {'unqgn': 'test6_satest_jfk.satest.jfk', 'gid': '12345', 'description': 'jeff', 'sudo_cmds': 'ALL', 'count': 'chocula'}
+        self.assertRaises(UserdataError, ud.gdelete, query)
+        print "[API_userdata] test76: PASSED"
+
+    # bad realm, error
+    def test77(self):
+        query = {'unqgn': 'jiffyjeff.fred.jfk', 'gid': '6666'}
+        self.assertRaises(UserdataError, ud.gdelete, query)
+        print "[API_userdata] test77: PASSED"
+
+    # bad site_id, error
+    def test77(self):
+        query = {'unqgn': 'jiffyjeff.satest.fred',}
+        self.assertRaises(UserdataError, ud.gdelete, query)
+        print "[API_userdata] test77: PASSED"
+
+    # nonexistent group, error
+    def test78(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk',}
+        self.assertRaises(UserdataError, ud.gdelete, query)
+        print "[API_userdata] test78: PASSED"
+
