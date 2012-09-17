@@ -1,4 +1,7 @@
+add grouplist to udisplay, add userlist to gdisplay
+write functions to retrieve user/group lists
+
+write u*g functions
 
 write moar tests
-don't forget duplicate uid/gid stuff
 
