@@ -822,9 +822,6 @@ class API_userdata:
             raise UserdataError("API_userdata/uclone: error: %s" % e)
 
 
-############## good to here 
-
-
 
     ##############################
     # group manipulation methods #
@@ -960,7 +957,7 @@ class API_userdata:
             else:
                 gid = self.__next_available_gid(realm, site_id)
 
-            # create the user object, push it to the db, return status
+            # create the group object, push it to the db, return status
             g = Groups(description, sudo_cmds, groupname, site_id, realm, gid)
             self.cfg.dbsess.add(g)
             self.cfg.dbsess.commit()
@@ -1149,7 +1146,124 @@ class API_userdata:
             raise UserdataError("API_userdata/gclone: error: %s" % e)
 
 
-####### under construction to here
+    ###################################
+    # user-to-group mapping functions #
+    ###################################
+
+    
+    def utog(self, query):
+        """
+        [description]
+        map a user into a group
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns "success" if successful, raises an error if unsuccessful 
+        """
+        try:
+            # to make our conditionals easier
+            if 'unqun' not in query.keys() or not query['unqun']:
+                self.cfg.log.debug("API_userdata/utog: no username.realm.site_id provided!")
+                raise UserdataError("API_userdata/utog: no username.realm.site_id provided!")
+            if 'groupname' not in query.keys() or not query['groupname']:
+                self.cfg.log.debug("API_userdata/utog: no group provided!")
+                raise UserdataError("API_userdata/utog: no group provided!")
+
+            # setting our valid query keys
+            common = MothershipCommon(self.cfg)
+            valid_qkeys = common.get_valid_qkeys(self.namespace, 'utog')
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_userdata/utog: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/tog: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # check for min/max number of optional arguments
+            common.check_num_opt_args(query, self.namespace, 'utog')
+            # fetch our user and group
+            u = self.__get_user_obj(query['unqun'])
+            g = self.__get_group_obj("%s.%s.%s" % (query['groupname'], u.realm, u.site_id))
+            if not u:
+                self.cfg.log.debug("API_userdata/utog: user not found: %s" % query['unqun'])
+                raise UserdataError("API_userdata/utog: user not found: %s" % query['unqun'])
+            elif not g:
+                self.cfg.log.debug("API_userdata/utog: group not found: %s.%s.%s" % (query['groupname'], u.realm, u.site_id))
+                raise UserdataError("API_userdata/utog: group not found: %s.%s.%s" % (query['groupname'], u.realm, u.site_id))
+            else:
+                if self.cfg.dbsess.query(UserGroupMapping).\
+                filter(UserGroupMapping.users_id==u.id).\
+                filter(UserGroupMapping.groups_id==g.id).first():
+                    self.cfg.log.debug("API_userdata/utog: mapping exists! refusing to create duplicate mapping")
+                    raise UserdataError("API_userdata/utog: mapping exists! refusing to create duplicate mapping")
+                ugmap = UserGroupMapping(g.id, u.id)
+                self.cfg.dbsess.add(ugmap)
+                self.cfg.dbsess.commit()
+                return 'success'
+        except Exception, e:
+            # something odd happened, explode violently
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_userdata/utog: error: %s" % e)
+            raise UserdataError("API_userdata/utog: error: %s" % e)
+
+
+    def urmg(self, query):
+        """
+        [description]
+        unmap a user from a group
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return]
+        Returns "success" if successful, raises an error if unsuccessful 
+        """
+        try:
+            # to make our conditionals easier
+            if 'unqun' not in query.keys() or not query['unqun']:
+                self.cfg.log.debug("API_userdata/utog: no username.realm.site_id provided!")
+                raise UserdataError("API_userdata/utog: no username.realm.site_id provided!")
+            if 'groupname' not in query.keys() or not query['groupname']:
+                self.cfg.log.debug("API_userdata/utog: no group provided!")
+                raise UserdataError("API_userdata/utog: no group provided!")
+
+            # setting our valid query keys
+            common = MothershipCommon(self.cfg)
+            valid_qkeys = common.get_valid_qkeys(self.namespace, 'urmg')
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_userdata/utog: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise UserdataError("API_userdata/tog: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # check for min/max number of optional arguments
+            common.check_num_opt_args(query, self.namespace, 'urmg')
+            # fetch our user and group
+            u = self.__get_user_obj(query['unqun'])
+            g = self.__get_group_obj("%s.%s.%s" % (query['groupname'], u.realm, u.site_id))
+            if not u:
+                self.cfg.log.debug("API_userdata/utog: user not found: %s" % query['unqun'])
+                raise UserdataError("API_userdata/utog: user not found: %s" % query['unqun'])
+            elif not g:
+                self.cfg.log.debug("API_userdata/utog: group not found: %s.%s.%s" % (query['groupname'], u.realm, u.site_id))
+                raise UserdataError("API_userdata/utog: group not found: %s.%s.%s" % (query['groupname'], u.realm, u.site_id))
+            else:
+                ugmap = self.cfg.dbsess.query(UserGroupMapping).\
+                filter(UserGroupMapping.users_id==u.id).\
+                filter(UserGroupMapping.groups_id==g.id).first()
+                if not ugmap:
+                    self.cfg.log.debug("API_userdata/utog: mapping does not exist")
+                    raise UserdataError("API_userdata/utog: mapping does not exist")
+                self.cfg.dbsess.delete(ugmap)
+                self.cfg.dbsess.commit()
+                return 'success'
+        except Exception, e:
+            # something odd happened, explode violently
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_userdata/utog: error: %s" % e)
+            raise UserdataError("API_userdata/utog: error: %s" % e)
+
 
     #################################
     # internal functions below here #
