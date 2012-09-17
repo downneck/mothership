@@ -1,5 +1,6 @@
 
-groupname, gid:     {{r['data']['groupname']}}, {{r['data']['gid']}}
-realm.site_id:      {{r['data']['realm']}}.{{r['data']['site_id']}}
-description:        {{r['data']['description']}}
-sudo commands:      {{r['data']['sudo_cmds']}}
+groupname, gid:     {{r['data']['group']['groupname']}}, {{r['data']['group']['gid']}}
+realm.site_id:      {{r['data']['group']['realm']}}.{{r['data']['group']['site_id']}}
+description:        {{r['data']['group']['description']}}
+sudo commands:      {{r['data']['group']['sudo_cmds']}}
+users:              {% for u in r['data']['users'] %}{{u['username']}} {% endfor %}

@@ -1379,8 +1379,12 @@ class API_userdata:
             if not u:
                 self.cfg.log.debug("API_userdata/__get_groups_by_user: user not found: %s" % unqun)
                 raise UserdataError("API_userdata/__get_groups_by_user: user not found: %s" % unqun)
-            glist = self.cfg.dbsess.query(UserGroupMapping).\
-            filter(UserGroupMapping.users_id==u.id).all()
+            maplist = []
+            maplist = self.cfg.dbsess.query(UserGroupMapping).\
+                filter(UserGroupMapping.users_id==u.id).all()
+            if maplist:
+                for map in maplist:
+                    glist.append(self.cfg.dbsess.query(Groups).filter(Groups.id==map.groups_id).first())
             return glist
         except Exception, e:
             raise UserdataError("API_userdata/__get_groups_by_user: %s" % e)
@@ -1404,8 +1408,12 @@ class API_userdata:
             if not g:
                 self.cfg.log.debug("API_userdata/__get_users_by_group: group not found: %s" % unqgn)
                 raise UserdataError("API_userdata/__get_groups_by_user: group not found: %s" % unqgn)
-            ulist = self.cfg.dbsess.query(UserGroupMapping).\
-            filter(UserGroupMapping.groups_id==g.id).all()
+            maplist = []
+            maplist = self.cfg.dbsess.query(UserGroupMapping).\
+                filter(UserGroupMapping.groups_id==g.id).all()
+            if maplist:
+                for map in maplist:
+                    ulist.append(self.cfg.dbsess.query(Users).filter(Users.id==map.users_id).first())
             return ulist
         except Exception, e:
             raise UserdataError("API_userdata/__get_users_by_group: %s" % e)
