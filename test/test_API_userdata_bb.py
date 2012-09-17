@@ -213,6 +213,13 @@ class TestAPI_userdata(unittest.TestCase):
         self.assertRaises(UserdataError, ud.udelete, query)
         print "[API_userdata] test21: PASSED"
 
+    # user still belongs to group(s), error
+    def test79(self):
+        query = {'unqun': 'dkovach.satest.jfk',}
+        self.assertRaises(UserdataError, ud.udelete, query)
+        print "[API_userdata] test79: PASSED"
+
+
     ######################################
     # testing umodify()                  #
     ######################################
@@ -676,4 +683,10 @@ class TestAPI_userdata(unittest.TestCase):
         query = {'unqgn': 'jiffyjeff.satest.jfk',}
         self.assertRaises(UserdataError, ud.gdelete, query)
         print "[API_userdata] test78: PASSED"
+
+    # group still has users, error
+    def test80(self):
+        query = {'unqgn': 'web.satest.jfk',}
+        self.assertRaises(UserdataError, ud.gdelete, query)
+        print "[API_userdata] test80: PASSED"
 
