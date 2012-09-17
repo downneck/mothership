@@ -462,14 +462,36 @@ class TestAPI_userdata(unittest.TestCase):
         query = {'unqgn': 'jiffyjeff.satest.jfk'}
         result = ud.gdisplay(query)
         # remove the index id, it's going to change every time this is run
-        result.pop("id")
+        result['user'].pop("id")
         ret = {
-               "realm": "satest",
-               "description": "jeff",
-               "site_id": "jfk",
-               "sudo_cmds": "ALL",
-               "groupname": "jiffyjeff",
-               "gid": 8182,
+               "user": {
+                   "realm": "satest",
+                   "description": "jeff",
+                   "site_id": "jfk",
+                   "sudo_cmds": "ALL",
+                   "groupname": "jiffyjeff",
+                   "gid": 8182,
+               }
+               "groups": [
+                   {
+                        'realm': 'satest',
+                        "description": "No description given",
+                        "site_id": "jfk",
+                        "sudo_cmds": None,
+                        "groupname": "users",
+                        "gid": 401,
+                        "id": 1
+                   },
+                   { 
+                        "realm": "satest",
+                        "description": "No description given",
+                        "site_id": "jfk",
+                        "sudo_cmds": None,
+                        "groupname": "web",
+                        "gid": 402,
+                        "id": 2
+                   },
+               ]
         }
         ud.gdelete(query)
         self.assertEqual(result, ret)
@@ -561,14 +583,17 @@ class TestAPI_userdata(unittest.TestCase):
         query = {'unqgn': 'jiffyjeff.satest.jfk'}
         result = ud.gdisplay(query)
         # remove the index id, it's going to change every time this is run
-        result.pop("id")
+        result['group'].pop("id")
         ret = {
-               "realm": "satest",
-               "description": "jeff",
-               "site_id": "jfk",
-               "sudo_cmds": "ALL",
-               "groupname": "jiffyjeff",
-               "gid": 8182,
+               "group": {
+                   "realm": "satest",
+                   "description": "jeff",
+                   "site_id": "jfk",
+                   "sudo_cmds": "ALL",
+                   "groupname": "jiffyjeff",
+                   "gid": 8182,
+               },
+               'users': []
         }
         ud.gdelete(query)
         self.assertEqual(result, ret)
