@@ -188,9 +188,9 @@ class TestAPI_userdata(unittest.TestCase):
         # now we need to remove the user from the default groups: web, users
         # otherwise udelete will raise an error
         ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
-        ud.urmg(query)
+        ud.urmg(ugquery)
         ugquery['groupname'] = 'users'
-        ud.urmg(query)
+        ud.urmg(ugquery)
         result = ud.udelete(query)
         self.assertEqual(result, 'success')
         print "[API_userdata] test17: PASSED"
@@ -477,7 +477,7 @@ class TestAPI_userdata(unittest.TestCase):
                    "sudo_cmds": "ALL",
                    "groupname": "jiffyjeff",
                    "gid": 8182,
-               }
+               },
                "groups": [
                    {
                         'realm': 'satest',
