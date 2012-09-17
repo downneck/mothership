@@ -32,19 +32,41 @@ class TestAPI_userdata(unittest.TestCase):
         result = ud.udisplay(query)
         # pre-define expected output
         ret = {
-               'username': 'bobsponge',
-               'hdir': '/home/bobsponge',
-               'first_name': 'bob',
-               'last_name': 'two',
-               'realm': 'satest',
-               'uid': 639,
-               'site_id': 'jfk',
-               'id': 175,
-               'shell': '/bin/bash',
-               'ssh_public_key': None,
-               'active': True,
-               'type': 'employee',
-               'email': 'bobsponge@gilt.com' 
+            'user': {
+                'username': 'bobsponge',
+                'hdir': '/home/bobsponge',
+                'first_name': 'bob',
+                'last_name': 'two',
+                'realm': 'satest',
+                'uid': 639,
+                'site_id': 'jfk',
+                'id': 175,
+                'shell': '/bin/bash',
+                'ssh_public_key': None,
+                'active': True,
+                'type': 'employee',
+                'email': 'bobsponge@gilt.com'
+            },
+            "groups": [
+                {
+                    "realm": "satest",
+                    "description": "No description given",
+                    "site_id": "jfk",
+                    "sudo_cmds": None,
+                    "groupname": "users",
+                    "gid": 401,
+                    "id": 1
+                },
+                {
+                    "realm": "satest",
+                    "description": "No description given",
+                    "site_id": "jfk",
+                    "sudo_cmds": None,
+                    "groupname": "web",
+                    "gid": 402,
+                    "id": 2
+                }
+            ]
         }
         self.assertEqual(result, ret)
         print "[API_userdata] test1: PASSED"
@@ -387,13 +409,16 @@ class TestAPI_userdata(unittest.TestCase):
         query = {'unqgn': 'test6_satest_jfk.satest.jfk'}
         result = ud.gdisplay(query)
         ret = {
-               "realm": "satest",
-               "description": "No description given",
-               "site_id": "jfk",
-               "sudo_cmds": None,
-               "groupname": "test6_satest_jfk",
-               "gid": 767,
-               "id": 547
+            'group': {
+                "realm": "satest",
+                "description": "No description given",
+                "site_id": "jfk",
+                "sudo_cmds": None,
+                "groupname": "test6_satest_jfk",
+                "gid": 767,
+                "id": 547
+            },
+            'users': []
         }
         self.assertEqual(result, ret)
         print "[API_userdata] test41: PASSED"
@@ -470,9 +495,9 @@ class TestAPI_userdata(unittest.TestCase):
         query = {'unqgn': 'jiffyjeff.satest.jfk'}
         result = ud.gdisplay(query)
         # remove the index id, it's going to change every time this is run
-        result['user'].pop("id")
+        result['group'].pop("id")
         ret = {
-               "user": {
+               "group": {
                    "realm": "satest",
                    "description": "jeff",
                    "site_id": "jfk",
@@ -480,26 +505,7 @@ class TestAPI_userdata(unittest.TestCase):
                    "groupname": "jiffyjeff",
                    "gid": 8182,
                },
-               "groups": [
-                   {
-                        'realm': 'satest',
-                        "description": "No description given",
-                        "site_id": "jfk",
-                        "sudo_cmds": None,
-                        "groupname": "users",
-                        "gid": 401,
-                        "id": 1
-                   },
-                   { 
-                        "realm": "satest",
-                        "description": "No description given",
-                        "site_id": "jfk",
-                        "sudo_cmds": None,
-                        "groupname": "web",
-                        "gid": 402,
-                        "id": 2
-                   },
-               ]
+               "users": []
         }
         ud.gdelete(query)
         self.assertEqual(result, ret)
