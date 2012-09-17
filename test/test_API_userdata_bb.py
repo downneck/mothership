@@ -141,6 +141,12 @@ class TestAPI_userdata(unittest.TestCase):
         self.assertRaises(UserdataError, ud.uadd, query)
         print "[API_userdata] test12: PASSED"
 
+    # non-numeric uid, error raised
+    def test62(self):
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 'fred'}
+        self.assertRaises(UserdataError, ud.uadd, query)
+        print "[API_userdata] test62: PASSED"
+
     # uid too low (<500, configured in mothership_daemon.yaml), error raised
     def test13(self):
         query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 1}
@@ -381,7 +387,7 @@ class TestAPI_userdata(unittest.TestCase):
     def test42(self):
         query = {'unqgn': 'garbage.satest.jfk'}
         self.assertRaises(UserdataError, ud.gdisplay, query)
-        print "[API_userdata] test42: PASSED"
+        print "[API_userdata] test42: THE ANSWER TO LIFE, THE UNIVERSE, AND EVERYTHING (PASSED)."
 
     # bad realm, error
     def test43(self):
@@ -420,7 +426,7 @@ class TestAPI_userdata(unittest.TestCase):
         print "[API_userdata] test48: PASSED"
 
     ##################
-    # testing uadd() #
+    # testing gadd() #
     ##################
 
     # basic add, just groupname, success
@@ -461,4 +467,171 @@ class TestAPI_userdata(unittest.TestCase):
         ud.gdelete(query)
         self.assertEqual(result, ret)
         print "[API_userdata] test52: PASSED"
+
+    # duplicate gid, error
+    def test53(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': '767'}
+        self.assertRaises(UserdataError, ud.gadd, query)
+        print "[API_userdata] test53: PASSED"
+
+    # non-numeric gid, error
+    def test54(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': 'jeff'}
+        self.assertRaises(UserdataError, ud.gadd, query)
+        print "[API_userdata] test54: PASSED"
+
+    # xlarge gid (>65535, configured in mothership_daemon.yaml), error
+    def test55(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': 65539}
+        self.assertRaises(UserdataError, ud.gadd, query)
+        print "[API_userdata] test55: PASSED"
+
+    # xsmall gid (<500, configured in mothership_daemon.yaml), error
+    def test56(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': 1}
+        self.assertRaises(UserdataError, ud.gadd, query)
+        print "[API_userdata] test56: PASSED"
+
+    # too few arguments, error
+    def test57(self):
+        query = {}
+        self.assertRaises(UserdataError, ud.gadd, query)
+        print "[API_userdata] test57: PASSED"
+
+    # too many arguments, error
+    def test58(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': '12345', 'description': 'jeff', 'sudo_cmds': 'ALL', 'count': 'chocula'}
+        self.assertRaises(UserdataError, ud.gadd, query)
+        print "[API_userdata] test58: PASSED"
+
+    # duplicate name, error
+    def test59(self):
+        query = {'unqgn': 'test6_satest_jfk.satest.jfk',}
+        self.assertRaises(UserdataError, ud.gadd, query)
+        print "[API_userdata] test59: PASSED"
+
+    # bad realm, error
+    def test60(self):
+        query = {'unqgn': 'jiffyjeff.fred.jfk',}
+        self.assertRaises(UserdataError, ud.gadd, query)
+        print "[API_userdata] test60: PASSED"
+
+    # bad site_id, error
+    def test61(self):
+        query = {'unqgn': 'jiffyjeff.satest.fred',}
+        self.assertRaises(UserdataError, ud.gadd, query)
+        print "[API_userdata] test61: PASSED"
+
+    # bad name, error
+    def test63(self):
+        query = {'unqgn': 'jiffy@jeff.satest.jfk',}
+        self.assertRaises(UserdataError, ud.gadd, query)
+        print "[API_userdata] test63: PASSED"
+
+    #####################
+    # testing gmodify() #
+    #####################
+
+    # mod everything, success
+    def test64(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gadd(query)
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': '8182', 'sudo_cmds': 'ls, cp', 'description': 'jiffy jeff! jeff! jeff! what? what? what?'}
+        result = ud.gmodify(query)
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gdelete(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test64: PASSED"
+
+    # mod everything with sudo_cmds translation ("All" -> "ALL"), success
+    # for this we need to double check the entry using gdisplay
+    def test65(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gadd(query)
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': '8182', 'sudo_cmds': 'All', 'description': 'jeff'}
+        result = ud.gmodify(query)
+        self.assertEqual(result, 'success')
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        result = ud.gdisplay(query)
+        # remove the index id, it's going to change every time this is run
+        result.pop("id")
+        ret = {
+               "realm": "satest",
+               "description": "jeff",
+               "site_id": "jfk",
+               "sudo_cmds": "ALL",
+               "groupname": "jiffyjeff",
+               "gid": 8182,
+        }
+        ud.gdelete(query)
+        self.assertEqual(result, ret)
+        print "[API_userdata] test65: PASSED"
+
+    # duplicate gid, error
+    def test66(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gadd(query)
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': '767'}
+        self.assertRaises(UserdataError, ud.gmodify, query)
+        query.pop('gid')
+        ud.gdelete(query)
+        print "[API_userdata] test66: PASSED"
+
+    # non-numeric gid, error
+    def test67(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gadd(query)
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': 'jeff'}
+        self.assertRaises(UserdataError, ud.gmodify, query)
+        query.pop('gid')
+        ud.gdelete(query)
+        print "[API_userdata] test67: PASSED"
+
+    # xlarge gid (>65535, configured in mothership_daemon.yaml), error
+    def test68(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gadd(query)
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': 65539}
+        self.assertRaises(UserdataError, ud.gmodify, query)
+        query.pop('gid')
+        ud.gdelete(query)
+        print "[API_userdata] test68: PASSED"
+
+    # xsmall gid (<500, configured in mothership_daemon.yaml), error
+    def test69(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gadd(query)
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': 1}
+        self.assertRaises(UserdataError, ud.gmodify, query)
+        query.pop('gid')
+        ud.gdelete(query)
+        print "[API_userdata] test69: PASSED"
+
+    # too few arguments, error
+    def test70(self):
+        query = {}
+        self.assertRaises(UserdataError, ud.gmodify, query)
+        print "[API_userdata] test70: PASSED"
+
+    # too many arguments, error
+    def test71(self):
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gadd(query)
+        query = {'unqgn': 'jiffyjeff.satest.jfk', 'gid': '12345', 'description': 'jeff', 'sudo_cmds': 'ALL', 'count': 'chocula'}
+        self.assertRaises(UserdataError, ud.gmodify, query)
+        query = {'unqgn': 'jiffyjeff.satest.jfk'}
+        ud.gdelete(query)
+        print "[API_userdata] test71: PASSED"
+
+    # bad realm, error
+    def test72(self):
+        query = {'unqgn': 'jiffyjeff.fred.jfk', 'gid': '6666'}
+        self.assertRaises(UserdataError, ud.gmodify, query)
+        print "[API_userdata] test72: PASSED"
+
+    # bad site_id, error
+    def test73(self):
+        query = {'unqgn': 'jiffyjeff.satest.fred',}
+        self.assertRaises(UserdataError, ud.gmodify, query)
+        print "[API_userdata] test73: PASSED"
 

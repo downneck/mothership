@@ -1038,7 +1038,7 @@ class API_userdata:
             # sudo commands. if "all" (case insensetive), translate to "ALL". if not and not blank, assign
             if 'sudo_cmds' in query.keys() and query['sudo_cmds']:
                 g.sudo_cmds = query['sudo_cmds']
-                if sudo_cmds.upper() == 'ALL':
+                if g.sudo_cmds.upper() == 'ALL':
                     g.sudo_cmds = 'ALL'
 
             # gid, validate or leave alone 
