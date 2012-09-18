@@ -1,9 +1,13 @@
+# Mothership
+
+## Please note: active development is mostly being done in the api_rewrite branch
+
 ### QUICKSTART
 
-Read Install Dependencies section
-Read Bootstrap section
-Read INSTALL file
-Read UPGRADE file (if upgrading)
+* Read Install Dependencies section
+* Read Bootstrap section
+* Read INSTALL file
+* Read UPGRADE file (if upgrading)
 
 ### Install Dependencies
   * Dependencies:  SQLAlchemy
