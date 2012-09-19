@@ -1177,9 +1177,14 @@ class API_userdata:
             # find us a groupname to clone, validation done in the __get_group_obj function
             g = self.__get_group_obj(unqgn) 
             if g:
-                newg = Groups(g.description, g.sudo_cmds, g.groupname, nsite_id, nrealm, g.gid)
-                self.cfg.dbsess.add(newg)
-                self.cfg.dbsess.commit()
+                newunqgn = "%s.%s.%s" % (g.groupname, nrealm, nsite_id)
+                query = {
+                    'unqgn': newunqgn,
+                    'gid': g.gid,
+                    'sudo_cmds': g.sudo_cmds,
+                    'description': g.description,
+                }
+                self.gadd(query) 
                 self.cfg.log.debug("API_userdata/gclone: created group: %s.%s" % (newg.groupname, newunqn))
                 return "success"
             else:
