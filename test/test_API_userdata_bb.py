@@ -444,6 +444,11 @@ class TestAPI_userdata(unittest.TestCase):
         ud.udelete(query)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
+        # default groups need to not exist any longer 
+        query = {'unqgn': 'web.qa.sfo'}
+        ud.gdelete(query) 
+        query = {'unqgn': 'users.qa.sfo'}
+        ud.gdelete(query)
         self.assertEqual(result, 'success')
         print "[API_userdata] test34: PASSED"
 
