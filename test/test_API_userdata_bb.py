@@ -444,7 +444,7 @@ class TestAPI_userdata(unittest.TestCase):
         ud.udelete(query)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
-        # default groups need to not exist any longer 
+        # default groups need to not exist any longer or other tests will fail 
         query = {'unqgn': 'web.qa.sfo'}
         ud.gdelete(query) 
         query = {'unqgn': 'users.qa.sfo'}
