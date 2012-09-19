@@ -602,10 +602,34 @@ class API_userdata:
             else:
                 uid = self.__next_available_uid(realm, site_id)
 
+            # deal with default groups
+            dg = []
+            if self.cfg.default_groups:
+                for grp in self.cfg.default_groups:
+                    try:
+                        # see if our default group(s) exist
+                        g = self.__get_group_obj("%s.%s.%s" % (grp, realm, site_id))
+                        if g:
+                            dg.append(g)
+                        else:
+                            # if not, explode
+                            self.cfg.log.debug("API_userdata/uadd: default groups must exist before we can add users to them! missing group: %s.%s.%s" % (grp, realm, site_id))
+                            raise UserdataError("API_userdata/uadd: default groups must exist before we can add users to them! missing group: %s.%s.%s" % (grp, realm, site_id))
+                    except:
+                        # if anything goes wrong, explode.
+                        self.cfg.log.debug("API_userdata/uadd: default groups must exist before we can add users to them! missing group: %s.%s.%s" % (grp, realm, site_id))
+                        raise UserdataError("API_userdata/uadd: default groups must exist before we can add users to them! missing group: %s.%s.%s" % (grp, realm, site_id))
+
             # create the user object, push it to the db, return status
             u = Users(first_name, last_name, ssh_public_key, username, site_id, realm, uid, user_type, home_dir, shell, email_address, active=True)
             self.cfg.dbsess.add(u)
             self.cfg.dbsess.commit()
+            # if our default group(s) exist, shove the user into it/them
+            if dg:
+                for g in dg:
+                    ugquery = {'unqun': unqun, 'groupname': g.groupname}
+                    self.utog(ugquery)
+                    self.cfg.log.debug("API_userdata/uadd: adding user %s to default group %s" % (unqun, g.groupname))
             return 'success'
         except Exception, e:
             # something odd happened, explode violently
@@ -807,10 +831,20 @@ class API_userdata:
             # find us a username to clone, validation done in the __get_user_obj function
             u = self.__get_user_obj(unqun) 
             if u:
-                newu = Users(u.first_name, u.last_name, u.ssh_public_key, u.username, nsite_id, nrealm, u.uid, u.type, u.hdir, u.shell, u.email, active=True)
-                self.cfg.dbsess.add(newu)
-                self.cfg.dbsess.commit()
-                self.cfg.log.debug("API_userdata/uclone: created user: %s.%s" % (newu.username, newunqn))
+                newunqun = "%s.%s.%s" % (u.username, nrealm, nsite_id)
+                query = {
+                    'unqun': newunqun,
+                    'first_name': u.first_name,
+                    'last_name': u.last_name,
+                    'uid': u.uid,
+                    'user_type': u.type,
+                    'shell': u.shell,
+                    'email_address': u.email,
+                    'ssh_key': u.ssh_public_key,
+                    'home_dir': u.hdir,
+                }
+                self.uadd(query)
+                self.cfg.log.debug("API_userdata/uclone: created user: %s" % newunqun)
                 return "success"
             else:
                 self.cfg.log.debug("API_userdata/uclone: user not found: %s" % unqun)
@@ -868,8 +902,8 @@ class API_userdata:
             if g:
                 ret['group'] = g.to_dict()
             else:
-                self.cfg.log.debug("API_userdata/gdisplay: user %s not found." % unqgn)
-                raise UserdataError("API_userdata/gdisplay: user %s not found" % unqgn)
+                self.cfg.log.debug("API_userdata/gdisplay: group %s not found." % unqgn)
+                raise UserdataError("API_userdata/gdisplay: group %s not found" % unqgn)
             # now that we know the group exists, we can see if it's populated with users
             ret['users'] = []
             ulist = self.__get_users_by_group(unqgn)

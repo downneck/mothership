@@ -121,6 +121,12 @@ class TestAPI_userdata(unittest.TestCase):
     def test7(self):
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         result = ud.uadd(query)
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         ud.udelete(query)
         self.assertEqual(result, 'success')
         print "[API_userdata] test7: PASSED"
@@ -129,6 +135,12 @@ class TestAPI_userdata(unittest.TestCase):
     def test8(self):
         query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 1337, 'user_type': 'employee', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff'}
         result = ud.uadd(query)
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
         self.assertEqual(result, 'success')
@@ -139,6 +151,12 @@ class TestAPI_userdata(unittest.TestCase):
         filedata = [open('test/ssh_pubkey_good')]
         query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 1337, 'user_type': 'employee', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff'}
         result = ud.uadd(query, files=filedata)
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
         self.assertEqual(result, 'success')
@@ -207,14 +225,12 @@ class TestAPI_userdata(unittest.TestCase):
     def test17(self):
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.uadd(query)
-        # this doesn't actually happen yet.
-        #
         # now we need to remove the user from the default groups: web, users
         # otherwise udelete will raise an error
-        #ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
-        #ud.urmg(ugquery)
-        #ugquery['groupname'] = 'users'
-        #ud.urmg(ugquery)
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         result = ud.udelete(query)
         self.assertEqual(result, 'success')
         print "[API_userdata] test17: PASSED"
@@ -261,6 +277,12 @@ class TestAPI_userdata(unittest.TestCase):
         filedata = [open('test/ssh_pubkey_good')]
         query = {'unqun': 'jiffyjeff.satest.jfk', 'first_name': 'jiffy', 'last_name': 'jeff', 'uid': 31337, 'user_type': 'consultant', 'shell': '/bin/frank', 'email_address': 'jiffy@jeff.com', 'home_dir': '/fudge/jiffyjeff'}
         result = ud.umodify(query, files=filedata)
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
         self.assertEqual(result, 'success')
@@ -297,6 +319,12 @@ class TestAPI_userdata(unittest.TestCase):
         filedata = [open('test/ssh_pubkey_bad')]
         self.assertRaises(UserdataError, ud.umodify, query, files=filedata)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         ud.udelete(query)
         print "[API_userdata] test27: PASSED"
 
@@ -306,6 +334,12 @@ class TestAPI_userdata(unittest.TestCase):
         ud.uadd(query)
         query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 65539}
         self.assertRaises(UserdataError, ud.umodify, query)
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
         print "[API_userdata] test28: PASSED"
@@ -316,6 +350,12 @@ class TestAPI_userdata(unittest.TestCase):
         ud.uadd(query)
         query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 9}
         self.assertRaises(UserdataError, ud.umodify, query)
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
         print "[API_userdata] test29: PASSED"
@@ -326,6 +366,12 @@ class TestAPI_userdata(unittest.TestCase):
         ud.uadd(query)
         query = {'unqun': 'jiffyjeff.satest.jfk', 'uid': 9}
         self.assertRaises(UserdataError, ud.umodify, query)
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
         print "[API_userdata] test31: PASSED"
@@ -336,6 +382,12 @@ class TestAPI_userdata(unittest.TestCase):
         ud.uadd(query)
         query = {'unqun': 'jiffyjeff.satest.jfk', 'user_type': 'jerk'}
         self.assertRaises(UserdataError, ud.umodify, query)
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
         print "[API_userdata] test32: PASSED"
@@ -346,6 +398,12 @@ class TestAPI_userdata(unittest.TestCase):
         ud.uadd(query)
         query = {'unqun': 'jiffyjeff.satest.jfk', 'active': 'False'}
         result = ud.umodify(query)
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
         query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
         self.assertEqual(result, 'success')
@@ -356,10 +414,35 @@ class TestAPI_userdata(unittest.TestCase):
     ######################################
 
     # basic clone, success
+    # this is a reasonably complex test...
     def test34(self):
-        query = {'unqun': 'bobsponge.satest.jfk', 'newunqn': 'qa.sfo'}
+        # create a test user 
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
+        ud.uadd(query)
+        # default groups need to exist first...
+        query = {'unqgn': 'web.qa.sfo'}
+        ud.gadd(query) 
+        query = {'unqgn': 'users.qa.sfo'}
+        ud.gadd(query)
+        # clone 
+        query = {'unqun': 'jiffyjeff.satest.jfk', 'newunqn': 'qa.sfo'}
         result = ud.uclone(query)
-        query = {'unqun': 'bobsponge.qa.sfo'}
+        # now we need to remove the user from the default groups: web, users
+        # otherwise udelete will raise an error
+        # need to do this in both realms
+        ugquery = {'unqun': 'jiffyjeff.qa.sfo', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
+        query = {'unqun': 'jiffyjeff.qa.sfo'}
+        ugquery = {'unqun': 'jiffyjeff.satest.jfk', 'groupname': 'web'}
+        ud.urmg(ugquery)
+        ugquery['groupname'] = 'users'
+        ud.urmg(ugquery)
+        # remove both users
+        query = {'unqun': 'jiffyjeff.qa.sfo'}
+        ud.udelete(query)
+        query = {'unqun': 'jiffyjeff.satest.jfk'}
         ud.udelete(query)
         self.assertEqual(result, 'success')
         print "[API_userdata] test34: PASSED"
