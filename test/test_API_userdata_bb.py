@@ -817,3 +817,105 @@ class TestAPI_userdata(unittest.TestCase):
         self.assertRaises(UserdataError, ud.gdelete, query)
         print "[API_userdata] test80: PASSED"
 
+    ##################
+    # testing utog() #
+    ##################
+
+    # map, success
+    def test81(self):
+        query = {'unqun': 'dkovach.satest.jfk', 'groupname': 'app'}
+        result = ud.utog(query)
+        ud.urmg(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test81: PASSED"
+
+    # too few arguments, error
+    def test82(self):
+        query = {}
+        self.assertRaises(UserdataError, ud.utog, query)
+        print "[API_userdata] test82: PASSED"
+
+    # too many arguments, error
+    def test83(self):
+        query = {'unqun': 'dkovach.satest.jfk', 'groupname': 'app', 'sizzle': 'steak'}
+        self.assertRaises(UserdataError, ud.utog, query)
+        print "[API_userdata] test83: PASSED"
+
+    # nonexistent group, error
+    def test84(self):
+        query = {'unqun': 'dkovach.satest.jfk', 'groupname': 'HARRRRRRRRRRRRR'}
+        self.assertRaises(UserdataError, ud.utog, query)
+        print "[API_userdata] test84: PASSED"
+
+    # nonexistent user, error
+    def test85(self):
+        query = {'unqun': 'HARRRRRRRRRRRR.satest.jfk', 'groupname': 'app'}
+        self.assertRaises(UserdataError, ud.utog, query)
+        print "[API_userdata] test85: PASSED"
+
+    # bad realm, error
+    def test86(self):
+        query = {'unqun': 'dkovach.frank.jfk', 'groupname': 'app'}
+        self.assertRaises(UserdataError, ud.utog, query)
+        print "[API_userdata] test86: PASSED"
+
+    # bad site_id, error
+    def test87(self):
+        query = {'unqun': 'dkovach.satest.frank', 'groupname': 'app'}
+        self.assertRaises(UserdataError, ud.utog, query)
+        print "[API_userdata] test87: PASSED"
+
+    ##################
+    # testing urmg() #
+    ##################
+
+    # map, success
+    def test88(self):
+        query = {'unqun': 'dkovach.satest.jfk', 'groupname': 'app'}
+        ud.utog(query)
+        result = ud.urmg(query)
+        self.assertEqual(result, 'success')
+        print "[API_userdata] test88: PASSED"
+
+    # too few arguments, error
+    def test89(self):
+        query = {}
+        self.assertRaises(UserdataError, ud.urmg, query)
+        print "[API_userdata] test89: PASSED"
+
+    # too many arguments, error
+    def test90(self):
+        query = {'unqun': 'dkovach.satest.jfk', 'groupname': 'app', 'sizzle': 'steak'}
+        self.assertRaises(UserdataError, ud.urmg, query)
+        print "[API_userdata] test90: PASSED"
+
+    # nonexistent group, error
+    def test91(self):
+        query = {'unqun': 'dkovach.satest.jfk', 'groupname': 'HARRRRRRRRRRRRR'}
+        self.assertRaises(UserdataError, ud.urmg, query)
+        print "[API_userdata] test91: PASSED"
+
+    # nonexistent user, error
+    def test92(self):
+        query = {'unqun': 'HARRRRRRRRRRRR.satest.jfk', 'groupname': 'app'}
+        self.assertRaises(UserdataError, ud.urmg, query)
+        print "[API_userdata] test92: PASSED"
+
+    # nonexistent mapping (valid user and group, just not mapped to each other), error
+    def test93(self):
+        query = {'unqun': 'dkovach.satest.jfk', 'groupname': 'app'}
+        self.assertRaises(UserdataError, ud.urmg, query)
+        print "[API_userdata] test93: PASSED"
+
+    # bad realm, error
+    def test94(self):
+        query = {'unqun': 'dkovach.frank.jfk', 'groupname': 'app'}
+        self.assertRaises(UserdataError, ud.urmg, query)
+        print "[API_userdata] test94: PASSED"
+
+    # bad site_id, error
+    def test95(self):
+        query = {'unqun': 'dkovach.satest.frank', 'groupname': 'app'}
+        self.assertRaises(UserdataError, ud.urmg, query)
+        print "[API_userdata] test95: PASSED"
+
