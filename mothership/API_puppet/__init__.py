@@ -50,6 +50,7 @@ class API_puppet:
             'methods': {
                 'classify': {
                     'description': 'classify a puppet node',
+                    'short': 'c',
                     'rest_type': 'GET',
                     'admin_only': False, 
                     'required_args': {

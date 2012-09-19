@@ -42,6 +42,7 @@ class API_list_values:
             'methods': {
                 'lsv': {
                     'description': 'list all values of a given type',
+                    'short': 'l',
                     'rest_type': 'GET',
                     'admin_only': False,
                     'required_args': {

@@ -73,7 +73,8 @@ def get_commands(cfg, module_map):
             raise ShipCLIError("Error output:\n%s" % mmeta['msg'])
         buf += "Available module commands:\n\n"
         for k in mmeta['data']['methods'].keys():
-            buf += sys.argv[1]+'/'+k+' - '+mmeta['data']['methods'][k]['description']
+            buf += "%s/%s (%s) - %s" % (sys.argv[1], mmeta['data']['methods'][k]['short'], k, mmeta['data']['methods'][k]['description'])
+            #buf += sys.argv[1]+'/'+k+' - '+mmeta['data']['methods'][k]['description']
             buf += "\n"
         buf += "\nRun \"ship <submodule>/<command>\" for more information"
         return buf
@@ -88,6 +89,12 @@ def get_command_args(cfg, module_map):
 	module, call = sys.argv[1].split('/')
         response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
         mmeta = myjson.loads(response.content)
+        # map short aliases to calls
+        callmap = {}
+        for ccall in mmeta['data']['methods'].keys():
+            callmap[mmeta['data']['methods'][ccall]['short']] = ccall
+        if call in callmap.keys():
+            call = callmap[call]
         buf = ""
         if mmeta['status'] != 0:
             raise ShipCLIError("Error:\n%s" % mmeta['msg'])
@@ -122,7 +129,12 @@ def call_command(cfg, module_map):
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
                 raise ShipCLIError("Error output:\n%s" % mmeta['msg'])
-
+            # map short aliases to calls
+            callmap = {}
+            for ccall in mmeta['data']['methods'].keys():
+                callmap[mmeta['data']['methods'][ccall]['short']] = ccall
+            if call in callmap.keys():
+                call = callmap[call]
             # set up our command line options through optparse. will
             # change this to argparse if we upgrade past python 2.7
             if 'description' in  mmeta['data']['methods'][call]:

@@ -46,6 +46,7 @@ class API_kv:
             'methods': {
                 'select': {
                     'description': 'select a single KV entry',
+                    'short': 's',
                     'rest_type': 'GET',
                     'admin_only': False, 
                     'required_args': {
@@ -84,6 +85,7 @@ class API_kv:
                 },
                 'collect': {
                     'description': 'get all kv entries that match a query',
+                    'short': 'c',
                     'rest_type': 'GET',
                     'admin_only': False, 
                     'required_args': {
@@ -123,6 +125,7 @@ class API_kv:
                 },
                 'add': {
                     'description': 'add a KV entry',
+                    'short': 'a',
                     'rest_type': 'POST',
                     'admin_only': True, 
                     'required_args': {
@@ -152,6 +155,7 @@ class API_kv:
                 },
                 'delete': {
                     'description': 'delete a KV entry',
+                    'short': 'd',
                     'rest_type': 'DELETE',
                     'admin_only': True, 
                     'required_args': {
@@ -181,6 +185,7 @@ class API_kv:
                 },
                 'update': {
                     'description': 'update a KV entry',
+                    'short': 'u',
                     'rest_type': 'PUT',
                     'admin_only': True, 
                     'required_args': {

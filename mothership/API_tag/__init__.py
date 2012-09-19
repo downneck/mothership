@@ -51,6 +51,7 @@ class API_tag:
             'methods': {
                 'display': {
                     'description': 'display a tag\'s info',
+                    'short': 'di',
                     'rest_type': 'GET',
                     'admin_only': False,
                     'required_args': {
@@ -70,6 +71,7 @@ class API_tag:
                 },
                 'add': {
                     'description': 'create a tag entry in the tags table',
+                    'short': 'a',
                     'rest_type': 'POST',
                     'admin_only': True,
                     'required_args': {
@@ -108,6 +110,7 @@ class API_tag:
                 },
                 'delete': {
                     'description': 'delete a tag entry from the tags table',
+                    'short': 'de',
                     'rest_type': 'DELETE',
                     'admin_only': True, 
                     'required_args': {
@@ -127,6 +130,7 @@ class API_tag:
                 },
                 'update': {
                     'description': 'update a tag entry in the tags table. use "None" to clear a setting',
+                    'short': 'up',
                     'rest_type': 'PUT',
                     'admin_only': True, 
                     'required_args': {
@@ -165,6 +169,7 @@ class API_tag:
                 },
                 'tag': {
                     'description': 'map a tag to a server (tag! you\'re it!)',
+                    'short': 't',
                     'rest_type': 'POST',
                     'admin_only': True, 
                     'required_args': {
@@ -189,6 +194,7 @@ class API_tag:
                 },
                 'untag': {
                     'description': 'unmap a tag from a server',
+                    'short': 'un',
                     'rest_type': 'DELETE',
                     'admin_only': True, 
                     'required_args': {

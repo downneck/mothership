@@ -46,6 +46,7 @@ class API_userdata:
             'methods': {
                 'udisplay': {
                     'description': 'display a user\'s info',
+                    'short': 'udi',
                     'rest_type': 'GET',
                     'admin_only': False,
                     'required_args': {
@@ -69,6 +70,7 @@ class API_userdata:
                 },
                 'uadd': {
                     'description': 'create a user entry in the user table',
+                    'short': 'ua',
                     'rest_type': 'POST',
                     'admin_only': True,
                     'required_args': {
@@ -132,6 +134,7 @@ class API_userdata:
                 },
                 'udelete': {
                     'description': 'delete a user entry from the users table',
+                    'short': 'ude',
                     'rest_type': 'DELETE',
                     'admin_only': True, 
                     'required_args': {
@@ -151,6 +154,7 @@ class API_userdata:
                 },
                 'umodify': {
                     'description': 'modify an existing user entry',
+                    'short': 'um',
                     'rest_type': 'PUT',
                     'admin_only': True, 
                     'required_args': {
@@ -219,6 +223,7 @@ class API_userdata:
                 },
                 'uclone': {
                     'description': 'clone a user from one realm.site_id to another',
+                    'short': 'uc',
                     'rest_type': 'POST',
                     'admin_only': True, 
                     'required_args': {
@@ -243,6 +248,7 @@ class API_userdata:
                 },
                 'gdisplay': {
                     'description': 'display a group\'s info',
+                    'short': 'gdi',
                     'rest_type': 'GET',
                     'admin_only': False,
                     'required_args': {
@@ -266,6 +272,7 @@ class API_userdata:
                 },
                 'gadd': {
                     'description': 'create a group entry in the group table',
+                    'short': 'ga',
                     'rest_type': 'POST',
                     'admin_only': True,
                     'required_args': {
@@ -304,6 +311,7 @@ class API_userdata:
                 },
                 'gdelete': {
                     'description': 'delete a group entry from the groups table',
+                    'short': 'gde',
                     'rest_type': 'DELETE',
                     'admin_only': True, 
                     'required_args': {
@@ -323,6 +331,7 @@ class API_userdata:
                 },
                 'gmodify': {
                     'description': 'modify an existing group entry',
+                    'short': 'gm',
                     'rest_type': 'PUT',
                     'admin_only': True, 
                     'required_args': {
@@ -361,6 +370,7 @@ class API_userdata:
                 },
                 'gclone': {
                     'description': 'clone a group from one realm.site_id to another',
+                    'short': 'gc',
                     'rest_type': 'POST',
                     'admin_only': True, 
                     'required_args': {
@@ -385,6 +395,7 @@ class API_userdata:
                 },
                 'utog': {
                     'description': 'map a username.realm.site_id to group in the same realm.site_id',
+                    'short': 'ut',
                     'rest_type': 'POST',
                     'admin_only': True, 
                     'required_args': {
@@ -409,6 +420,7 @@ class API_userdata:
                 },
                 'urmg': {
                     'description': 'remove a username.realm.site_id from a group in the same realm.site_id',
+                    'short': 'ur',
                     'rest_type': 'POST',
                     'admin_only': True, 
                     'required_args': {
