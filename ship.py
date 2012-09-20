@@ -66,7 +66,12 @@ def get_submodules(cfg, module_map):
 def get_commands(cfg, module_map):
     try:
         revmodule_map = swap_dict(module_map)
-        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[sys.argv[1]]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
+        if sys.argv[1] in revmodule_map.keys():
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[sys.argv[1]]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
+        elif 'API_'+sys.argv[1] in module_map.keys():
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+'API_'+sys.argv[1]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
+        elif sys.argv[1] in module_map.keys():
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+sys.argv[1]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
         mmeta = myjson.loads(response.content)
         buf = ""
         if mmeta['status'] != 0:
@@ -74,7 +79,6 @@ def get_commands(cfg, module_map):
         buf += "Available module commands:\n\n"
         for k in mmeta['data']['methods'].keys():
             buf += "%s/%s (%s) - %s" % (sys.argv[1], mmeta['data']['methods'][k]['short'], k, mmeta['data']['methods'][k]['description'])
-            #buf += sys.argv[1]+'/'+k+' - '+mmeta['data']['methods'][k]['description']
             buf += "\n"
         buf += "\nRun \"ship <submodule>/<command>\" for more information"
         return buf
@@ -87,7 +91,12 @@ def get_command_args(cfg, module_map):
     try:
         revmodule_map = swap_dict(module_map)
 	module, call = sys.argv[1].split('/')
-        response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
+        if module in revmodule_map.keys():
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
+        elif 'API_'+module in module_map.keys():
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+'API_'+module+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
+        elif module in module_map.keys():
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+module+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
         mmeta = myjson.loads(response.content)
         # map short aliases to calls
         callmap = {}
@@ -123,9 +132,18 @@ def call_command(cfg, module_map):
     try:
         revmodule_map = swap_dict(module_map)
         module, call = sys.argv[1].split('/')
-        if revmodule_map[module]:
+        if module in revmodule_map.keys() or 'API_'+module in module_map.keys() or module in module_map.keys():
             buf = "" # our argument buffer for urlencoding
-            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
+            if module in revmodule_map.keys():
+                module = revmodule_map[module] 
+            elif 'API_'+module in module_map.keys():
+                module = 'API_'+module 
+            elif module in module_map.keys():
+                pass
+            else:
+                log.debug("Malformed module: %s" % module)
+                raise ShipCLIError("Malformed module: %s" % module)
+            response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+module+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
                 raise ShipCLIError("Error output:\n%s" % mmeta['msg'])
@@ -204,13 +222,13 @@ def call_command(cfg, module_map):
 
             # make the call out to our API service, expect JSON back,
             if mmeta['data']['methods'][call]['rest_type'] == 'GET':
-                callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
+                callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+module+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'POST':
-                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, files=files, auth=(cfg.api_admin_user, cfg.api_admin_pass))
+                callresponse = requests.post('http://'+cfg.api_server+':'+cfg.api_port+'/'+module+'/'+call+'?'+buf, files=files, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'DELETE':
-                callresponse = requests.delete('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
+                callresponse = requests.delete('http://'+cfg.api_server+':'+cfg.api_port+'/'+module+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'PUT':
-                callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+revmodule_map[module]+'/'+call+'?'+buf, files=files, auth=(cfg.api_admin_user, cfg.api_admin_pass))
+                callresponse = requests.put('http://'+cfg.api_server+':'+cfg.api_port+'/'+module+'/'+call+'?'+buf, files=files, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             # load the JSON response into the equivalent python variable type
             responsedata = myjson.loads(callresponse.content)
             if responsedata['status'] != 0:
@@ -346,20 +364,20 @@ if __name__ == "__main__":
             log.debug("get_submodules called()")
             print get_submodules(cfg, module_map)
         # user ran: ship <valid module>
-        elif len(sys.argv) == 2 and sys.argv[1] in module_map.values():
+        elif len(sys.argv) == 2 and (sys.argv[1] in module_map.values() or sys.argv[1] in module_map.keys() or 'API_'+sys.argv[1] in module_map.keys()):
             log.debug("get_commands called()")
             print get_commands(cfg, module_map)
         # user ran: ship <valid module>/<valid command>
-        elif len(sys.argv) == 2 and sys.argv[1].split('/')[0] in module_map.values():
+        elif len(sys.argv) == 2 and (sys.argv[1].split('/')[0] in module_map.values() or sys.argv[1].split('/')[0] in module_map.keys() or 'API_'+sys.argv[1].split('/')[0] in module_map.keys()):
             log.debug("get_command_args called()")
             print get_command_args(cfg, module_map)
-        # user ran: ship <invalid module>/<invalid command>
-        elif len(sys.argv) == 2 and sys.argv[1].split('/')[0] not in module_map.values():
+        # user ran: ship <invalid module>/<command>
+        elif len(sys.argv) == 2 and (sys.argv[1].split('/')[0] not in module_map.values() and sys.argv[1].split('/')[0] not in module_map.keys() and 'API_'+sys.argv[1].split('/')[0] not in module_map.keys()):
             raise ShipCLIError("Requested module does not exist: %s" % "API_"+sys.argv[1].split('/')[0])
         # user ran: ship <invalid module>
-        elif len(sys.argv) == 2 and sys.argv[1] not in module_map.values():
+        elif len(sys.argv) == 2 and (sys.argv[1] not in module_map.values() and sys.argv[1] not in module_map.keys() and 'API_'+sys.argv[1] not in module_map.keys()):
             raise ShipCLIError("Requested module does not exist: %s" % "API_"+sys.argv[1])
-        # user ran: ship <valid module>/<valid command> --valid=args -a
+        # user ran: ship <valid module>/<command> --valid=args -a
         elif len(sys.argv) >= 3:
             log.debug("call_command called()")
             call_command(cfg, module_map)
