@@ -68,6 +68,31 @@ class MothershipCommon(object):
         return valid_qkeys
 
 
+    def multikeysort(items, columns):
+        """
+        [description]
+        sort a list of dictionaries by multiple dictionary columns
+
+        [parameter info]
+            required:
+                items: the list of dicts
+                columns: a list of the keys to sort by in order of sorting
+
+        [return]
+        returns the sorted list of dicts
+        """
+        from operator import itemgetter
+        comparers = [ ((itemgetter(col[1:].strip()), -1) if col.startswith('-') else (itemgetter(col.strip()), 1)) for col in columns]
+        def comparer(left, right):
+            for fn, mult in comparers:
+                result = cmp(fn(left), fn(right))
+                if result:
+                    return mult * result
+            else:
+                return 0
+        return sorted(items, cmp=comparer)
+
+
 class MothershipLogger(object):
     """
     Mothership logger class

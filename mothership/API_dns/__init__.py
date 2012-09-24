@@ -54,9 +54,9 @@ class API_dns:
                         'min': 1,
                         'max': 1,
                         'args': {
-                            'fqn': {
+                            'unqn': {
                                 'vartype': 'str',
-                                'desc': 'fully-qualified name (realm.site_id.domain.tld) to display dns zonefile for',
+                                'desc': 'unqualified name (realm.site_id) to display dns zonefile for',
                                 'ol': 'f',
                             },
                             'all': {
@@ -66,10 +66,10 @@ class API_dns:
                             },
                         },
                     },
-                    'return': {
-                        'zone': {
-                            'fqn': 'realm.site_id.domain.tld',
+                    'return': [
+                        {
                             'header': {
+                                'fqn': 'realm.site_id.domain.tld',
                                 'contact': 'user_email.domain.tld',
                                 'serial': 'int',
                                 'refresh': 'int',
@@ -77,14 +77,26 @@ class API_dns:
                                 'expire': 'int',
                                 'ttl': 'int',
                                 'ns': ['ns1.domain.tld', 'ns2.domain.tld',],
-                            },
+                                },
                             'records': [
-                                'record1',
-                                'record2',
-                                'recordN',
+                                {
+                                    'host': 'str',
+                                    'type': 'str',
+                                    'target': 'str',
+                                },
+                                {
+                                    'host': 'str',
+                                    'type': 'str',
+                                    'target': 'str',
+                                },
+                                {
+                                    'host': 'str',
+                                    'type': 'str',
+                                    'target': 'str',
+                                },
                             ],
-                        },
-                    },
+                        }
+                    ],
                 },
             },
         }
@@ -100,26 +112,48 @@ class API_dns:
             query: the query dict being passed to us from the called URI
 
         [return value]
-        returns a dict of information if successful, raises an error if not
+        returns a list of zones' information if successful, raises an error if not
         """
+        # setting our valid query keys
+        common = MothershipCommon(self.cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'display')
+        try:
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'display')
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_dns/display: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise TagError("API_dns/display: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # actually doin stuff
+            ret = []
+            # first, if we have the "all" bit set in the query, we'll need to generate
+            # a list of all possible realm.site_id.domain combinations and then display them
+            if 'all' in query.keys():
+                for site_ids in self.cfg.site_ids:
+                    for realm in self.cfg.realms:
+                        zone['header'] = __generate_dns_header(realm, site_id)
+                        records = __generate_records(realm, site_id)
+                        zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                        ret.append(zone)
+            # otherwise, just do the one zone 
+            elif 'unqn' in query.keys():
+                zone['header'] = __generate_dns_header(realm, site_id)
+                records = __generate_records(realm, site_id)
+                zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                ret.append(zone)
+            # if nothing has blown up, return 
+            return ret
+        except Exception, e:
+            self.cfg.log.debug("API_dns/display: error: %s" % e)
+            raise DNSError("API_dns/display: error: %s" % e)
 
+           
+    ####################
+    # internal methods #
+    ####################
 
-
-
-# Copyright 2011 Gilt Groupe, INC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+    # do we need this thing? investigate
     def __filter_domain_query(query, table, domain):
         """
         [description]
@@ -132,15 +166,19 @@ class API_dns:
         [return value]
         returns a dict of information if successful, raises an error if not
         """
+        try:
+            sub = domain.split('.')
+            if len(sub) >= 4:
+                query = query.filter(table.realm==sub[-4:-3][0])
+            if len(sub) >= 3:
+                query = query.filter(table.site_id==sub[-3:-2][0])
+            return query, '.'.join(sub[-2:])
+        except Exception, e:
+            self.cfg.log.debug("API_dns/__filter_domain_query: error: %s" % e)
+            raise DNSError("API_dns/__filter_domain_query: error: %s" % e)
 
-        sub = domain.split('.')
-        if len(sub) >= 4:
-            query = query.filter(table.realm==sub[-4:-3][0])
-        if len(sub) >= 3:
-            query = query.filter(table.site_id==sub[-3:-2][0])
-        return query, '.'.join(sub[-2:])
-    
-    def __generate_dns_header(realm, site_id, domain=None):
+ 
+    def __generate_dns_header(self, realm, site_id):
         """
         [description]
         generates and returns header info for a dns zone 
@@ -149,42 +187,28 @@ class API_dns:
         required:
             realm: the realm to generate for
             site_id: the site_id to generate for
-            domain: only specified if different from what's in mothership_daemon.yaml 
 
         [return value]
-        returns a dict of information if successful, raises an error if not
+        returns a dict of zone header info if successful, raises an error if not
         """
-        if not domain:
-            domain = self.cfg.domain
-        fqn = "%s.%s.%s" % (realm, site_id, domain)
-        zone['serial'] = int(time.time())
-        if '@' in contact:
-            contact = contact.replace('@','.')
-        zone['contact'] = self.cfg.dns_contact
-        zone['refresh'] = self.cfg.dns_refresh
-        zone['retry'] = self.cfg.dns_retry
-        zone['expire'] = self.cfg.dns_expire
-        zone['ttl'] = self.cfg.dns_ttl
-        zone['ns'] = ["ns1.%s", "ns2.%s"] % fqn
+        try:
+            fqn = "%s.%s.%s" % (realm, site_id, self.cfg.domain)
+            zone['serial'] = int(time.time())
+            if '@' in contact:
+                contact = contact.replace('@','.')
+            zone['contact'] = self.cfg.dns_contact
+            zone['refresh'] = self.cfg.dns_refresh
+            zone['retry'] = self.cfg.dns_retry
+            zone['expire'] = self.cfg.dns_expire
+            zone['ttl'] = self.cfg.dns_ttl
+            zone['ns'] = ["ns1.%s", "ns2.%s"] % fqn
+            zone['fqn'] = fqn
+            return zone
+        except Exception, e:
+            self.cfg.log.debug("API_dns/__generate_dns_header: error: %s" % e)
+            raise DNSError("API_dns/__generate_dns_header: error: %s" % e)
 
-###### under construction
 
-        return """
-    $ORIGIN %s.
-    $TTL 86400
-    @                       IN      SOA     %s. %s. (
-                                            %s   ; Serial
-                                            21600        ; Refresh
-                                            3600         ; Retry
-                                            604800       ; Expire
-                                            86400        ; TTL
-                                            )
-    
-                            IN      NS      ns1.%s.
-                            IN      NS      ns2.%s.
-    
-    """ % (domainname, domainname, contact, serial, domainname, domainname)
-    
     def generate_dns_output(cfg, domain, outdir, usecobbler=False):
         """
         Turns the dns_addendum table into usable zonefiles

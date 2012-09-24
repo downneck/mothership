@@ -1,0 +1,18 @@
+{% for zone in {{r['data']}} %}
+$ORIGIN {{zone['header']['fqn']}}.
+$TTL {{zone['header']['ttl']}}
+@                       IN      SOA     {{zone['header']['fqn']}}. {{r['data']['zone']['contact']}}. (
+                                        {{zone['header']['serial']}}   ; Serial
+                                        {{zone['header']['refresh']}}        ; Refresh
+                                        {{zone['header']['retry']}}         ; Retry
+                                        {{zone['header']['expire']}}       ; Expire
+                                        {{zone['header']['ttl']}}        ; TTL
+                                        )
+
+{% for ns in zone['header']['ns'] %}
+                        IN      NS      {{ns}}.
+{% endfor %}
+{% for record in zone['records'] %}
+{{record['host']}} {{record['record_type']}} {{record['target']}}
+{% endfor %}
+{% endfor %}
