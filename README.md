@@ -10,24 +10,25 @@
 * Read UPGRADE file (if upgrading)
 
 ### Install Dependencies
-  * Dependencies:  SQLAlchemy
-  *                PyYAML
-  *                psycopg2
-  * Centos:
-  *       sudo yum install python-sqlalchemy0.5
-  *       sudo yum install python-psycopg2
-  *       sudo yum install python-setuptools
-  *       sudo yum install python-cmdln     # You need to 1.2.0 for manpage generation
-  *       sudo yum install python-hashlib   # For zabbix_agent
+* SQLAlchemy
+* PyYAML
+* psycopg2
 
-  * OSX:
-  *       sudo port install python26
-  *       sudo port install python_select  # In order to override system installed python
-  *       sudo port install py26-yaml
-  *       sudo port install py26-sqlalchemy
-  *       sudo port install py26-pip
-  *       sudo port install py26-psycopg2  # Need to use pip if using postgresql8.5 or higher
-  *       sudo pip-2.6 install cmdln
+#### Centos:
+*       sudo yum install python-sqlalchemy0.5
+*       sudo yum install python-psycopg2
+*       sudo yum install python-setuptools
+*       sudo yum install python-cmdln     # You need to 1.2.0 for manpage generation
+*       sudo yum install python-hashlib   # For zabbix_agent
+
+#### OSX:
+*       sudo port install python26
+*       sudo port install python_select  # In order to override system installed python
+*       sudo port install py26-yaml
+*       sudo port install py26-sqlalchemy
+*       sudo port install py26-pip
+*       sudo port install py26-psycopg2  # Need to use pip if using postgresql8.5 or higher
+*       sudo pip-2.6 install cmdln
 
 ### Bootstrap for OSX
 
