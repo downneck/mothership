@@ -33,12 +33,12 @@ Read UPGRADE file (if upgrading)
 * Ensure you have some sort of postgresql based database lying around
 
 #### Current Contributors
-David Kovach
+* David Kovach [![endorse](http://api.coderwall.com/downneck/endorsecount.png)](http://coderwall.com/downneck)
 
 #### Historical Contributors
-Andres Pereira
-Jared Brothers
-Kent Lee
-Alain Hoang
-Riccardo Setti
-Matthew Osterhaus
+* Andres Pereira
+* Jared Brothers
+* Kent Lee
+* Alain Hoang
+* Riccardo Setti
+* Matthew Osterhaus
