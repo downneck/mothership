@@ -1,4 +1,4 @@
-{% for zone in {{r['data']}} %}
+{% for zone in r['data'] %}
 $ORIGIN {{zone['header']['fqn']}}.
 $TTL {{zone['header']['ttl']}}
 @                       IN      SOA     {{zone['header']['fqn']}}. {{zone['header']['contact']}}. (
@@ -10,9 +10,8 @@ $TTL {{zone['header']['ttl']}}
                                         )
 
 {% for ns in zone['header']['ns'] %}
-                        IN      NS      {{ns}}.
-{% endfor %}
+                        IN      NS      {{ns}}.{% endfor %}
 {% for record in zone['records'] %}
-{{record['host']}} IN {{record['type']}} {{record['target']}}
-{% endfor %}
+{{record.host}} IN {{record.type}} {{record.target}}{% endfor %}
+
 {% endfor %}
