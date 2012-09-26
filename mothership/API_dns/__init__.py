@@ -334,6 +334,9 @@ class API_dns:
                 n = self.cfg.dbsess.query(Network).\
                     filter(Network.server_id==s.id).\
                     filter(Network.interface=='drac').first()
+                if not n and self.cfg.drac:
+                    self.cfg.log.debug("API_dns/__generate_drac_dns_records: no drac entries found in network table, but drac is enable in the configuration yaml. please rectify your configuration.")
+                    raise DNSError(" no drac entries found in network table, but drac is enable in the configuration yaml. please rectify your configuration.")
                 ret.append({'host': s.hostname, 'type': 'A', 'target': n.ip})
             return ret 
         except Exception, e:
