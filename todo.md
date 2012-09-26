@@ -1,6 +1,6 @@
 ### working on dns
-* unbreak template error
-* figure out how to deal with drac, mgmt, etc. (autogen all? make user select?) 
+* autogen drac, mgmt 
+* write display_rev to display reverse zones
 * need to actually generate records
 * need to create a "write out dns"  that will run by default on the daemon server
 * need to create dns addendum manipulation methods

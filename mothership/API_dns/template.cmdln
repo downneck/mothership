@@ -8,7 +8,6 @@ $TTL {{zone['header']['ttl']}}
                                         {{zone['header']['expire']}}       ; Expire
                                         {{zone['header']['ttl']}}        ; TTL
                                         )
-
 {% for ns in zone['header']['ns'] %}
                         IN      NS      {{ns}}.{% endfor %}
 {% for record in zone['records'] %}
