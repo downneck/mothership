@@ -139,6 +139,7 @@ power:
 
 # Dell Remote Access Controller options
 drac:
+  enable: True
   dell: 'calvin'
   user: 'root'
   pass: 'CHANGE_ME_PLEASE'

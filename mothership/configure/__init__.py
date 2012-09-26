@@ -225,6 +225,11 @@ class MothershipConfigureDaemon(MothershipConfigure):
 
         # DRAC related settings
         draconfig = all_configs['drac']
+        # turn DRAC functionality on or off
+        if 'enable' in draconfig and draconfig['enable']:
+            self.drac = draconfig['enable']  # enable or disable DRAC
+        else:
+            self.drac = False
         # default dell pass
         if 'dell' in draconfig and draconfig['dell']:
             self.ddell = draconfig['dell']
