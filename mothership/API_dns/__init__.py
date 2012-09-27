@@ -228,21 +228,6 @@ class API_dns:
             # construct our fqn: realm.site.domain.tld
             unqn = "%s.%s" % (realm, site_id)
             fqn = "%s.%s" % (unqn, self.cfg.domain)
-            # get KV data for this realm.site_id
-            query = {'key': 'nsmaster', 'unqdn': unqn}
-            zone['nsmaster'] = self.kv.select(query)
-            if not zone['nsmaster']:
-                # if not, try just the site
-                query['unqdn'] = site_id
-                zone['nsmaster'] = self.kv.select(query)
-                if not zone['nsmaster']:
-                    # if all else fails, try global
-                    query = {'key': 'nsmaster'}
-                    zone['nsmaster'] = self.kv.select(query)
-                    if not zone['nsmaster']:
-                    # no entry for nsmaster, explode
-                        self.cfg.log.debug("API_dns/__generate_dns_header: No nsmaster entry in your KV! Please configure one. Aborting.")
-                        raise DNSError("No nsmaster entry in your KV! Please configure one. Aborting.")
             # figure out if we should write a normal header, drac header, or mgmt header
             if drac and not mgmt:
                 ffqn = "drac."+fqn
