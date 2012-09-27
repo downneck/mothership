@@ -22,6 +22,7 @@ import time
 from mothership.validate import *
 from mothership.mothership_models import *
 from mothership.common import *
+from mothership.API_kv import *
 
 class DNSError(Exception):
     pass
@@ -32,6 +33,7 @@ class API_dns:
     def __init__(self, cfg):
         self.cfg = cfg
         self.common = MothershipCommon(cfg)
+        self.kv = API_kv(cfg)
         self.version = 1
         self.namespace = 'API_dns'
         self.metadata = {
@@ -215,13 +217,33 @@ class API_dns:
         required:
             realm: the realm to generate for
             site_id: the site_id to generate for
+            drac: boolean, whether to generate the drac version of the zone header
+            mgmt: boolean, whether to generate the mgmt version of the zone header
 
         [return value]
         returns a dict of zone header info if successful, raises an error if not
         """
         try:
             zone = {}
-            fqn = "%s.%s.%s" % (realm, site_id, self.cfg.domain)
+            # construct our fqn: realm.site.domain.tld
+            unqn = "%s.%s" % (realm, site_id)
+            fqn = "%s.%s" % (unqn, self.cfg.domain)
+            # get KV data for this realm.site_id
+            query = {'key': 'nsmaster', 'unqdn': unqn}
+            zone['nsmaster'] = self.kv.select(query)
+            if not zone['nsmaster']:
+                # if not, try just the site
+                query['unqdn'] = site_id
+                zone['nsmaster'] = self.kv.select(query)
+                if not zone['nsmaster']:
+                    # if all else fails, try global
+                    query = {'key': 'nsmaster'}
+                    zone['nsmaster'] = self.kv.select(query)
+                    if not zone['nsmaster']:
+                    # no entry for nsmaster, explode
+                        self.cfg.log.debug("API_dns/__generate_dns_header: No nsmaster entry in your KV! Please configure one. Aborting.")
+                        raise DNSError("No nsmaster entry in your KV! Please configure one. Aborting.")
+            # figure out if we should write a normal header, drac header, or mgmt header
             if drac and not mgmt:
                 ffqn = "drac."+fqn
             elif mgmt and not drac:
@@ -230,7 +252,8 @@ class API_dns:
                 ffqn = fqn
             else:
                 self.cfg.log.debug("API_dns/__generate_dns_header: error in drac/mgmt selection") 
-                raise DNSError("API_dns/__generate_dns_header: error in drac/mgmt selection") 
+                raise DNSError("API_dns/__generate_dns_header: error in drac/mgmt selection")
+            # populate our zone dict with relevant info
             zone['serial'] = int(time.time())
             if '@' in self.cfg.contact:
                 zone['contact'] = self.cfg.contact.replace('@','.')
@@ -242,7 +265,9 @@ class API_dns:
             zone['ttl'] = self.cfg.dns_ttl
             zone['ns'] = ["ns1.%s" % fqn, "ns2.%s" % fqn]
             zone['fqn'] = ffqn
-            return zone
+            # if we have some data, return it
+            if zone:
+                return zone
         except Exception, e:
             self.cfg.log.debug("API_dns/__generate_dns_header: error: %s" % e)
             raise DNSError("API_dns/__generate_dns_header: error: %s" % e)
@@ -264,7 +289,7 @@ class API_dns:
         """
         try:
             ret = []
-            # dns addendum records
+            # gather dns addendum records
             for a in self.cfg.dbsess.query(DnsAddendum).\
                      filter(DnsAddendum.realm==realm).\
                      filter(DnsAddendum.site_id==site_id).all():
@@ -277,6 +302,7 @@ class API_dns:
                     filter(Network.server_id==s.id).\
                     filter(Network.interface==self.cfg.primary_interface).first()
                 ret.append({'host': s.hostname, 'type': 'A', 'target': n.ip})
+            # if we have some data, return it
             return ret 
         except Exception, e:
             self.cfg.log.debug("API_dns/__generate_primary_dns_records: error: %s" % e)
@@ -294,7 +320,7 @@ class API_dns:
             site_id: the site_id to generate for
 
         [return value]
-        returns a dict of zone header info if successful, raises an error if not
+        returns a list of mgmt record info if successful, raises an error if not
         """
         try:
             ret = []
@@ -306,6 +332,7 @@ class API_dns:
                     filter(Network.server_id==s.id).\
                     filter(Network.interface==self.cfg.mgmt_vlan_interface).first()
                 ret.append({'host': s.hostname, 'type': 'A', 'target': n.ip})
+            # if we have some data, return it
             return ret 
         except Exception, e:
             self.cfg.log.debug("API_dns/__generate_mgmt_dns_records: error: %s" % e)
@@ -323,7 +350,7 @@ class API_dns:
             site_id: the site_id to generate for
 
         [return value]
-        returns a dict of zone header info if successful, raises an error if not
+        returns a list of drac record info if successful, raises an error if not
         """
         try:
             ret = []
@@ -334,14 +361,39 @@ class API_dns:
                 n = self.cfg.dbsess.query(Network).\
                     filter(Network.server_id==s.id).\
                     filter(Network.interface=='drac').first()
+                # just in case someone tries to be funny and turn on drac support
+                # without putting drac network entires in the network table
                 if not n and self.cfg.drac:
                     self.cfg.log.debug("API_dns/__generate_drac_dns_records: no drac entries found in network table, but drac is enable in the configuration yaml. please rectify your configuration.")
                     raise DNSError(" no drac entries found in network table, but drac is enable in the configuration yaml. please rectify your configuration.")
                 ret.append({'host': s.hostname, 'type': 'A', 'target': n.ip})
+            # if we have some data, return it
             return ret 
         except Exception, e:
             self.cfg.log.debug("API_dns/__generate_drac_dns_records: error: %s" % e)
             raise DNSError("API_dns/__generate_drac_dns_records: error: %s" % e)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# legacy
 
     def generate_dns_output(cfg, domain, outdir, usecobbler=False):
         """
