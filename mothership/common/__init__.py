@@ -68,7 +68,7 @@ class MothershipCommon(object):
         return valid_qkeys
 
 
-    def multikeysort(items, columns):
+    def multikeysort(self, items, columns):
         """
         [description]
         sort a list of dictionaries by multiple dictionary columns

@@ -1,5 +1,3 @@
-# Copyright 2011 Gilt Groupe, INC
-#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -227,6 +225,11 @@ class MothershipConfigureDaemon(MothershipConfigure):
 
         # DRAC related settings
         draconfig = all_configs['drac']
+        # turn DRAC functionality on or off
+        if 'enable' in draconfig and draconfig['enable']:
+            self.drac = draconfig['enable']  # enable or disable DRAC
+        else:
+            self.drac = False
         # default dell pass
         if 'dell' in draconfig and draconfig['dell']:
             self.ddell = draconfig['dell']
@@ -271,13 +274,13 @@ class MothershipConfigureDaemon(MothershipConfigure):
         else:
             self.snmpver = '2c'
 
-        # KV settings
-        kvconfig = all_configs['kv']
-        # kv search path, this should probably be deprecated
-        if 'search_path' in kvconfig and kvconfig['search_path']:
-            self.search_path = kvconfig['search_path']
-        else:
-            self.search_path = [ ['prod', 'iad'], ['iad'], [] ]
+#        # KV settings
+#        kvconfig = all_configs['kv']
+#        # kv search path, this should probably be deprecated
+#        if 'search_path' in kvconfig and kvconfig['search_path']:
+#            self.search_path = kvconfig['search_path']
+#        else:
+#            self.search_path = [ ['prod', 'iad'], ['iad'], [] ]
 
         # Zenoss settings
         zenconfig = all_configs['zenoss']
@@ -353,7 +356,14 @@ class MothershipConfigureDaemon(MothershipConfigure):
         netconf = all_configs['network']
         # suck in the network map construct from the yaml.
         # THERE IS NO DEFAULT FOR THIS. YOU MUST SPECIFY IT IN THE YAML.
+        # also, this sucks. we should drop this and find another way to do this.
         self.network_map = netconf['map']
+        # the main network interface. if you're doing bonding, this will be the
+        # first interface in the bond
+        if 'primary_interface' in netconf and netconf['primary_interface']:
+            self.primary_interface = netconf['primary_interface']
+        else:
+            self.primary_interface = 'eth1'
         # Management Vlan settings
         # This can be set to either 'snmp' or 'curl' depending on what
         # style of management you want to use. default is "snmp"
@@ -478,4 +488,38 @@ class MothershipConfigureDaemon(MothershipConfigure):
         else:
             self.ldap_default_gid = '500'
 
-
+        # DNS settings
+        # TODO: revisit this. this section was taken wholesale from master
+        dnsconfig = all_configs['dns']
+        if 'active' in dnsconfig and dnsconfig['active']:
+            self.dns_active = dnsconfig['active']
+        else:
+            self.dns_active = False
+        if 'zonecfg' in dnsconfig and dnsconfig['zonecfg']:
+            self.zonecfg = dnsconfig['zonecfg']
+        else:
+            self.zonecfg = '/etc/named/zones.conf'
+        if 'zonedir' in dnsconfig and dnsconfig['zonedir']:
+            self.zonedir = dnsconfig['zonedir']
+        else:
+            self.zonedir = '/var/named/'
+        if 'dns_ttl' in dnsconfig and dnsconfig['dns_ttl']:
+            self.dns_ttl = dnsconfig['dns_ttl']
+        else:
+            self.dns_ttl = '86400'
+        if 'dns_tmpdir' in dnsconfig and dnsconfig['dns_tmpdir']:
+            self.dns_tmpdir = dnsconfig['dns_tmpdir']
+        else:
+            self.dns_tmpdir = '/tmp'
+        if 'refresh' in dnsconfig and dnsconfig['refresh']:
+            self.dns_refresh = dnsconfig['refresh']
+        else:
+            self.dns_refresh = '21600'
+        if 'retry' in dnsconfig and dnsconfig['retry']:
+            self.dns_retry = dnsconfig['retry']
+        else:
+            self.dns_retry = '3600'
+        if 'expire' in dnsconfig and dnsconfig['expire']:
+            self.dns_expire = dnsconfig['expire']
+        else:
+            self.dns_expire = '604800'
