@@ -238,7 +238,6 @@ class API_kv:
         # assigning stuff
         # our config. love this guy.
         cfg = self.cfg
-        holdplease = None
         hostname = None
         realm = None
         site_id = None
@@ -434,7 +433,6 @@ class API_kv:
         cfg = self.cfg
         # setting up a debug buffer
         buf = "API_kv/collect: querying for "
-        holdplease = None
         hostname = None
         realm = None
         site_id = None
