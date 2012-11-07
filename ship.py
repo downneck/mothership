@@ -292,12 +292,10 @@ def print_responsedata(responsedata, mmeta):
             # no template at all! just spit the data out
             print responsedata
     else:
-        # TODO: dunno if i want to print anything here. revisit this later
-        # right now, we're printing debug info
-        #
-        # no data, no msg, no error. let's just go away quietly and pretend
-        # like this never happened...
-        print responsedata
+        # no data, no msg, no error. most likely an API command that returned
+        # an empty string or set. just print a blank line to indicate blankness
+        # in the response 
+        print "" 
         sys.exit(1)
 
 # main execution block
