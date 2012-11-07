@@ -58,6 +58,7 @@ class TestAPI_puppet(unittest.TestCase):
                 "unqdn": "stage2.satest.jfk",
                 "ntp_servers": "xenserver2.satest.jfk",
                 "ns": "172.16.20.81,10.190.44.55,10.190.44.93",
+                "nsmaster": "ns1.satest.jfk",
                 "primary_ip": "10.190.44.52",
                 "ssh_authorized_keys_command": "/usr/libexec/openssh/ssh-ldap-helper.sh",
                 "ldap_sync_user": "ldapsync",
