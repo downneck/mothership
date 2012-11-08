@@ -128,6 +128,66 @@ class API_dns:
                         'string': 'success',
                     },
                 },
+                'add': {
+                    'description': 'adds a record to the dns addendum table',
+                    'short': 'a',
+                    'rest_type': 'POST',
+                    'admin_only': True, 
+                    'required_args': {
+                        'args': {
+                            'unqdn': {
+                                'vartype': 'str',
+                                'desc': 'unqualified hostname (host.realm.site_id) to add record for',
+                                'ol': 'u',
+                            },
+                            'record_type': {
+                                'vartype': 'str',
+                                'desc': 'record type to add (A, CNAME, TXT, MX, etc.)',
+                                'ol': 'r',
+                            },
+                            'target': {
+                                'vartype': 'str',
+                                'desc': 'target for the record (ip address for A, fqdn for CNAME, etc.)',
+                                'ol': 't',
+                            },
+                        },
+                    },
+                    'optional_args': {
+                    },
+                    'return': { 
+                        'string': 'success',
+                    },
+                },
+                'remove': {
+                    'description': 'removes a record from the dns addendum table',
+                    'short': 'r',
+                    'rest_type': 'DELETE',
+                    'admin_only': True, 
+                    'required_args': {
+                        'args': {
+                            'unqdn': {
+                                'vartype': 'str',
+                                'desc': 'unqualified hostname (host.realm.site_id) to remove a record for',
+                                'ol': 'u',
+                            },
+                            'record_type': {
+                                'vartype': 'str',
+                                'desc': 'record type to remove (A, CNAME, TXT, MX, etc.)',
+                                'ol': 'r',
+                            },
+                            'target': {
+                                'vartype': 'str',
+                                'desc': 'target for the record to remove (ip address for A, fqdn for CNAME, etc.)',
+                                'ol': 't',
+                            },
+                        },
+                    },
+                    'optional_args': {
+                    },
+                    'return': { 
+                        'string': 'success',
+                    },
+                },
             },
         }
 
@@ -154,7 +214,7 @@ class API_dns:
             for qk in query.keys():
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_dns/display_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-                    raise TagError("API_dns/display_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise DNSError("API_dns/display_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
             # actually doin stuff
             ret = []
             # first, if we have the "all" bit set in the query, we'll need to generate
@@ -229,7 +289,7 @@ class API_dns:
             for qk in query.keys():
                 if qk not in valid_qkeys:
                     self.cfg.log.debug("API_dns/write_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-                    raise TagError("API_dns/write_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise DNSError("API_dns/write_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
             # actually doin stuff
             zonelist = []
             # first, if we have the "all" bit set in the query, we'll need to generate
@@ -302,7 +362,103 @@ class API_dns:
         except Exception, e:
             self.cfg.log.debug("API_dns/write_forward: error: %s" % e)
             raise DNSError("API_dns/write_forward: error: %s" % e)
-           
+
+
+    def add(self, query):
+        """
+        [description]
+        add a record to the DNS addendum 
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        returns 'success' if successful, raises an error if not
+        """
+        # setting our valid query keys
+        common = MothershipCommon(self.cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'add')
+        try:
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_dns/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise DNSError("API_dns/add: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # actually doin stuff
+            #
+            # translate the unqdn
+            host, realm, site_id = v_split_unqn(query['unqdn'])
+            # let's see if this thing exists already...
+            data = self.cfg.dbsess.query(DnsAddendum).\
+              filter(DnsAddendum.site_id==site_id).\
+              filter(DnsAddendum.realm==realm).\
+              filter(DnsAddendum.target==query['target']).\
+              filter(DnsAddendum.record_type==query['record_type']).\
+              filter(DnsAddendum.host==host).all()
+            if data:
+                self.cfg.log.debug("API_dns/add: error: record exists already")
+                raise DNSError("API_dns/add: error: record exists already")
+            if query['record_type'] == 'A' and (len(query['target'].split('.')) < 4 or not re.sub('\.', '', query['target']).isdigit()):
+                self.cfg.log.debug("API_dns/add: error: 'A' records must be ip addresses")
+                raise DNSError("API_dns/add: error: 'A' records must be ip addresses")
+            # TODO: more input sanitization
+
+            # add the record
+            data = DnsAddendum(host, query['record_type'], realm, site_id, query['target'])
+            self.cfg.dbsess.add(data)
+            # if nothing has blown up, return
+            return "success"
+        except Exception, e:
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_dns/add: error: %s" % e)
+            raise DNSError("API_dns/add: error: %s" % e)
+
+
+    def remove(self, query):
+        """
+        [description]
+        remove a record from the DNS addendum 
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        returns 'success' if successful, raises an error if not
+        """
+        # setting our valid query keys
+        common = MothershipCommon(self.cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'remove')
+        try:
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_dns/remove: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise DNSError("API_dns/remove: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # actually doin stuff
+            #
+            # translate the unqdn
+            host, realm, site_id = v_split_unqn(query['unqdn'])
+            # let's see if this thing exists
+            data = self.cfg.dbsess.query(DnsAddendum).\
+              filter(DnsAddendum.site_id==site_id).\
+              filter(DnsAddendum.realm==realm).\
+              filter(DnsAddendum.target==query['target']).\
+              filter(DnsAddendum.record_type==query['record_type']).\
+              filter(DnsAddendum.host==host).first()
+            if data:
+                self.cfg.log.debug("API_dns/remove: error: record does not exist")
+                raise DNSError("API_dns/remove: error: record does not exist")
+            # if nothing has blown up, return
+            return "success"
+        except Exception, e:
+            self.cfg.dbsess.rollback()
+            self.cfg.log.debug("API_dns/remove: error: %s" % e)
+            raise DNSError("API_dns/remove: error: %s" % e)
+
+
+       
     ####################
     # internal methods #
     ####################
