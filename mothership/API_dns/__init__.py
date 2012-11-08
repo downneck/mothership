@@ -403,10 +403,10 @@ class API_dns:
                 self.cfg.log.debug("API_dns/add: error: 'A' records must be ip addresses")
                 raise DNSError("API_dns/add: error: 'A' records must be ip addresses")
             # TODO: more input sanitization
-
             # add the record
-            data = DnsAddendum(host, query['record_type'], realm, site_id, query['target'])
-            self.cfg.dbsess.add(data)
+            newrec = DnsAddendum(host, query['record_type'], realm, site_id, query['target'])
+            self.cfg.dbsess.add(newrec)
+            self.cfg.dbsess.commit()
             # if nothing has blown up, return
             return "success"
         except Exception, e:
@@ -447,9 +447,11 @@ class API_dns:
               filter(DnsAddendum.target==query['target']).\
               filter(DnsAddendum.record_type==query['record_type']).\
               filter(DnsAddendum.host==host).first()
-            if data:
+            if not data:
                 self.cfg.log.debug("API_dns/remove: error: record does not exist")
                 raise DNSError("API_dns/remove: error: record does not exist")
+            else:
+                self.cfg.dbsess.delete(data)
             # if nothing has blown up, return
             return "success"
         except Exception, e:
