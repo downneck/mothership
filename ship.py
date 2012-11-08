@@ -49,7 +49,7 @@ def swap_dict(odict):
 def get_submodules(cfg, module_map):
     try:
         buf = "Available submodules:\n\n"
-        for i in module_map.keys():
+        for i in sorted(module_map.keys()):
             response = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+i+'/metadata', auth=(cfg.api_admin_user, cfg.api_admin_pass))
             mmeta = myjson.loads(response.content)
             if mmeta['status'] != 0:
@@ -77,7 +77,7 @@ def get_commands(cfg, module_map):
         if mmeta['status'] != 0:
             raise ShipCLIError("Error output:\n%s" % mmeta['msg'])
         buf += "Available module commands:\n\n"
-        for k in mmeta['data']['methods'].keys():
+        for k in sorted(mmeta['data']['methods'].keys()):
             buf += "%s/%s (%s) - %s" % (sys.argv[1], mmeta['data']['methods'][k]['short'], k, mmeta['data']['methods'][k]['description'])
             buf += "\n"
         buf += "\nRun \"ship <submodule>/<command>\" for more information"
@@ -114,12 +114,12 @@ def get_command_args(cfg, module_map):
             buf += "\n\n"
         if 'args' in mmeta['data']['methods'][call]['required_args']:
             buf += "Required arguments:\n"
-            for k in mmeta['data']['methods'][call]['required_args']['args'].keys():
+            for k in sorted(mmeta['data']['methods'][call]['required_args']['args'].keys()):
                 buf += "--%s (-%s): %s" % (k, mmeta['data']['methods'][call]['required_args']['args'][k]['ol'], mmeta['data']['methods'][call]['required_args']['args'][k]['desc'])
                 buf += "\n"
         if 'args' in mmeta['data']['methods'][call]['optional_args']:
             buf += "\nOptional arguments, supply a minimum of %s and a maximum of %s of the following:\n" % (mmeta['data']['methods'][call]['optional_args']['min'], mmeta['data']['methods'][call]['optional_args']['max'])
-            for k in mmeta['data']['methods'][call]['optional_args']['args'].keys():
+            for k in sorted(mmeta['data']['methods'][call]['optional_args']['args'].keys()):
                 buf += "--%s (-%s): %s" % (k, mmeta['data']['methods'][call]['optional_args']['args'][k]['ol'], mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'])
                 buf += "\n"
         return buf
@@ -162,7 +162,7 @@ def call_command(cfg, module_map):
             parser = OptionParser(usage=usage)
             arglist = {}
             if 'args' in mmeta['data']['methods'][call]['required_args']:
-                for k in mmeta['data']['methods'][call]['required_args']['args'].keys():
+                for k in sorted(mmeta['data']['methods'][call]['required_args']['args'].keys()):
                     if mmeta['data']['methods'][call]['required_args']['args'][k]['vartype'] != "bool":
                         parser.add_option('-'+mmeta['data']['methods'][call]['required_args']['args'][k]['ol'],\
                                           '--'+k, help=mmeta['data']['methods'][call]['required_args']['args'][k]['desc'])
@@ -173,7 +173,7 @@ def call_command(cfg, module_map):
                                           action="store_true")
                         arglist[k] = mmeta['data']['methods'][call]['required_args']['args'][k]['vartype']
             if 'args' in mmeta['data']['methods'][call]['optional_args']:
-                for k in mmeta['data']['methods'][call]['optional_args']['args'].keys():
+                for k in sorted(mmeta['data']['methods'][call]['optional_args']['args'].keys()):
                     if mmeta['data']['methods'][call]['optional_args']['args'][k]['vartype'] != "bool":
                         parser.add_option('-'+mmeta['data']['methods'][call]['optional_args']['args'][k]['ol'],\
                                           '--'+k, help=mmeta['data']['methods'][call]['optional_args']['args'][k]['desc'])
@@ -220,7 +220,7 @@ def call_command(cfg, module_map):
                 else:
                     pass
 
-            # make the call out to our API service, expect JSON back,
+            # make the call out to our API daemon, expect JSON back
             if mmeta['data']['methods'][call]['rest_type'] == 'GET':
                 callresponse = requests.get('http://'+cfg.api_server+':'+cfg.api_port+'/'+module+'/'+call+'?'+buf, auth=(cfg.api_admin_user, cfg.api_admin_pass))
             elif mmeta['data']['methods'][call]['rest_type'] == 'POST':

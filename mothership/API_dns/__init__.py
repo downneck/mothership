@@ -46,9 +46,9 @@ class API_dns:
                 },
             },
             'methods': {
-                'display': {
+                'display_forward': {
                     'description': 'displays dns data',
-                    'short': 'd',
+                    'short': 'df',
                     'rest_type': 'GET',
                     'admin_only': False, 
                     'required_args': {
@@ -101,9 +101,9 @@ class API_dns:
                         }
                     ],
                 },
-                'write': {
+                'write_forward': {
                     'description': 'writes dns data to disk on mothership master server',
-                    'short': 'w',
+                    'short': 'wf',
                     'rest_type': 'POST',
                     'admin_only': True, 
                     'required_args': {
@@ -132,10 +132,10 @@ class API_dns:
         }
 
 
-    def display(self, query):
+    def display_forward(self, query):
         """
         [description]
-        display stored/configured DNS data 
+        display stored/configured forward DNS data 
 
         [parameter info]
         required:
@@ -146,15 +146,15 @@ class API_dns:
         """
         # setting our valid query keys
         common = MothershipCommon(self.cfg)
-        valid_qkeys = common.get_valid_qkeys(self.namespace, 'display')
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'display_forward')
         try:
             # check for min/max number of optional arguments
-            self.common.check_num_opt_args(query, self.namespace, 'display')
+            self.common.check_num_opt_args(query, self.namespace, 'display_forward')
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    self.cfg.log.debug("API_dns/display: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-                    raise TagError("API_dns/display: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    self.cfg.log.debug("API_dns/display_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise TagError("API_dns/display_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
             # actually doin stuff
             ret = []
             # first, if we have the "all" bit set in the query, we'll need to generate
@@ -203,14 +203,14 @@ class API_dns:
             # if nothing has blown up, return 
             return ret
         except Exception, e:
-            self.cfg.log.debug("API_dns/display: error: %s" % e)
-            raise DNSError("API_dns/display: error: %s" % e)
+            self.cfg.log.debug("API_dns/display_forward: error: %s" % e)
+            raise DNSError("API_dns/display_forward: error: %s" % e)
 
 
-    def write(self, query):
+    def write_forward(self, query):
         """
         [description]
-        write stored/configured DNS data to disk
+        write stored/configured forward DNS data to disk
 
         [parameter info]
         required:
@@ -221,15 +221,15 @@ class API_dns:
         """
         # setting our valid query keys
         common = MothershipCommon(self.cfg)
-        valid_qkeys = common.get_valid_qkeys(self.namespace, 'write')
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'write_forward')
         try:
             # check for min/max number of optional arguments
-            self.common.check_num_opt_args(query, self.namespace, 'write')
+            self.common.check_num_opt_args(query, self.namespace, 'write_forward')
             # check for wierd query keys, explode
             for qk in query.keys():
                 if qk not in valid_qkeys:
-                    self.cfg.log.debug("API_dns/write: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
-                    raise TagError("API_dns/write: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    self.cfg.log.debug("API_dns/write_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise TagError("API_dns/write_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
             # actually doin stuff
             zonelist = []
             # first, if we have the "all" bit set in the query, we'll need to generate
@@ -277,8 +277,8 @@ class API_dns:
                     zonelist.append(zone)
             # ensure our zone directory exists
             if not os.path.exists(self.cfg.zonedir):
-                raise DNSError("API_dns/write: error, zone directory does not exist: %s" % self.cfg.zonedir)
-                self.cfg.log.debug("API_dns/write: error, zone directory does not exist: %s" % self.cfg.zonedir)
+                raise DNSError("API_dns/write_forward: error, zone directory does not exist: %s" % self.cfg.zonedir)
+                self.cfg.log.debug("API_dns/write_forward: error, zone directory does not exist: %s" % self.cfg.zonedir)
             # write a file for each zone
             for zone in zonelist:
                 responsedata = {'data': [zone]}
@@ -286,22 +286,22 @@ class API_dns:
                 zf = open(zfname, 'w')
                 env = Environment(loader=FileSystemLoader('mothership/'+self.namespace))
                 try:
-                    # try to load up a template called template.cmdln.write
+                    # try to load up a template called template.cmdln.write_forward
                     # this allows us to format output specifically to this call
-                    template = env.get_template("template.cmdln.write")
+                    template = env.get_template("template.cmdln.write_forward")
                     zf.write(template.render(r=responsedata))
                 except TemplateNotFound:
-                    # template.cmdln.write apparently doesn't exist. load the default template
+                    # template.cmdln.write_forward apparently doesn't exist. load the default template
                     template = env.get_template('template.cmdln')
                     zf.write(template.render(r=responsedata))
                 except:
-                    self.cfg.log.debug("API_dns/write: error, no template found. refusing to write dns zonefiles")
-                    raise DNSError("API_dns/write: error, no template found. refusing to write dns zonefiles")
+                    self.cfg.log.debug("API_dns/write_forward: error, no template found. refusing to write dns zonefiles")
+                    raise DNSError("API_dns/write_forward: error, no template found. refusing to write dns zonefiles")
             # if nothing has blown up, return
             return "success" 
         except Exception, e:
-            self.cfg.log.debug("API_dns/write: error: %s" % e)
-            raise DNSError("API_dns/write: error: %s" % e)
+            self.cfg.log.debug("API_dns/write_forward: error: %s" % e)
+            raise DNSError("API_dns/write_forward: error: %s" % e)
            
     ####################
     # internal methods #
