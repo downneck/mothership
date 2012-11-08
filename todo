@@ -1,3 +1,3 @@
-write tests for new dns funcitons
 reverse dns generation
-dns addendum stuff
+dns addendum stuff (add/delete)
+write tests for dns module 
