@@ -47,7 +47,7 @@ class API_dns:
             },
             'methods': {
                 'display_forward': {
-                    'description': 'displays dns data',
+                    'description': 'displays forward dns data',
                     'short': 'df',
                     'rest_type': 'GET',
                     'admin_only': False, 
@@ -102,7 +102,7 @@ class API_dns:
                     ],
                 },
                 'write_forward': {
-                    'description': 'writes dns data to disk on mothership master server',
+                    'description': 'writes forward dns data to disk on mothership master server',
                     'short': 'wf',
                     'rest_type': 'POST',
                     'admin_only': True, 
@@ -116,6 +116,88 @@ class API_dns:
                                 'vartype': 'str',
                                 'desc': 'unqualified name (realm.site_id) to write dns zonefile for',
                                 'ol': 'u',
+                            },
+                            'all': {
+                                'vartype': 'bool',
+                                'desc': 'write dns zonefile(s) for ALL fqns in the system',
+                                'ol': 'a',
+                            },
+                        },
+                    },
+                    'return': { 
+                        'string': 'success',
+                    },
+                },
+                'display_reverse': {
+                    'description': 'displays reverse dns data',
+                    'short': 'dr',
+                    'rest_type': 'GET',
+                    'admin_only': False, 
+                    'required_args': {
+                    },
+                    'optional_args': {
+                        'min': 1,
+                        'max': 1,
+                        'args': {
+                            'ip': {
+                                'vartype': 'str',
+                                'desc': 'ip block to display reverse dns zonefile for',
+                                'ol': 'i',
+                            },
+                            'all': {
+                                'vartype': 'bool',
+                                'desc': 'display dns zonefile(s) for ALL fqns in the system',
+                                'ol': 'a',
+                            },
+                        },
+                    },
+                    'return': [
+                        {
+                            'header': {
+                                'fqn': 'c.b.a.in-addr.arpa',
+                                'contact': 'user_email.domain.tld',
+                                'serial': 'int',
+                                'refresh': 'int',
+                                'retry': 'int',
+                                'expire': 'int',
+                                'ttl': 'int',
+                                'ns': ['ns1.domain.tld', 'ns2.domain.tld',],
+                                },
+                            'records': [
+                                {
+                                    'd': 'int', # "d" octet in a.b.c.d ip format
+                                    'type': 'str', # this should always be a PTR
+                                    'target': 'str',
+                                },
+                                {
+                                    'd': 'int', # "d" octet in a.b.c.d ip format
+                                    'type': 'str', # this should always be a PTR
+                                    'target': 'str',
+                                },
+                                {
+                                    'd': 'int', # "d" octet in a.b.c.d ip format
+                                    'type': 'str', # this should always be a PTR
+                                    'target': 'str',
+                                },
+                            ],
+                        }
+                    ],
+                },
+                'write_reverse': {
+                    'description': 'writes reverse dns data to disk on mothership master server',
+                    'short': 'wr',
+                    'rest_type': 'POST',
+                    'admin_only': True, 
+                    'required_args': {
+                    },
+                    'optional_args': {
+                        'min': 1,
+                        'max': 1,
+                        'args': {
+                            'ip': {
+                                'vartype': 'str',
+                                'desc': 'ip block to write reverse dns zonefile for',
+                                'ol': 'i',
                             },
                             'all': {
                                 'vartype': 'bool',
@@ -271,6 +353,190 @@ class API_dns:
         except Exception, e:
             self.cfg.log.debug("API_dns/display_forward: error: %s" % e)
             raise DNSError("API_dns/display_forward: error: %s" % e)
+
+
+    def write_forward(self, query):
+        """
+        [description]
+        write stored/configured forward DNS data to disk
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        returns "success" if successful, raises an error if not
+        """
+        # setting our valid query keys
+        common = MothershipCommon(self.cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'write_forward')
+        try:
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'write_forward')
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_dns/write_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise DNSError("API_dns/write_forward: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # actually doin stuff
+            zonelist = []
+            # first, if we have the "all" bit set in the query, we'll need to generate
+            # a list of all possible realm.site_id.domain combinations and then write them
+            if 'all' in query.keys():
+                for site_id in self.cfg.site_ids:
+                    for realm in self.cfg.realms:
+                        zone = {}
+                        zone['header'] = self.__generate_dns_header(realm, site_id)
+                        records = self.__generate_primary_dns_records(realm, site_id)
+                        zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                        zonelist.append(zone)
+                        zone = {}
+                        zone['header'] = self.__generate_dns_header(realm, site_id, mgmt=True)
+                        records = self.__generate_mgmt_dns_records(realm, site_id)
+                        zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                        zonelist.append(zone)
+                        if self.cfg.drac:
+                            zone = {}
+                            zone['header'] = self.__generate_dns_header(realm, site_id, drac=True)
+                            records = self.__generate_drac_dns_records(realm, site_id)
+                            zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                            zonelist.append(zone)
+            # otherwise, just do the one zone 
+            elif 'unqn' in query.keys() and query['unqn']:
+                # input validation for unqn 
+                special_vlan, realm, site_id = v_split_unqn(query['unqn'])
+                v_realm(self.cfg, realm)
+                v_site_id(self.cfg, site_id)
+                zone = {}
+                if not special_vlan:
+                    zone['header'] = self.__generate_dns_header(realm, site_id)
+                    records = self.__generate_primary_dns_records(realm, site_id)
+                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                    zonelist.append(zone)
+                elif special_vlan == 'mgmt':
+                    zone['header'] = self.__generate_dns_header(realm, site_id, mgmt=True)
+                    records = self.__generate_mgmt_dns_records(realm, site_id)
+                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                    zonelist.append(zone)
+                elif special_vlan == 'drac' and not self.cfg.drac:
+                    self.cfg.log.debug("API_dns/write_forward: error: drac is not enabled!")
+                    raise DNSError("API_dns/write_forward: error: drac is not enabled!")
+                elif special_vlan == 'drac' and self.cfg.drac:
+                    zone['header'] = self.__generate_dns_header(realm, site_id, drac=True)
+                    records = self.__generate_drac_dns_records(realm, site_id)
+                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                    zonelist.append(zone)
+                else:
+                    self.cfg.log.debug("API_dns/write_forward: error: malformed unqn")
+                    raise DNSError("API_dns/write_forward: error: malformed unqn")
+            # ensure our zone directory exists
+            if not os.path.exists(self.cfg.zonedir):
+                raise DNSError("API_dns/write_forward: error, zone directory does not exist: %s" % self.cfg.zonedir)
+                self.cfg.log.debug("API_dns/write_forward: error, zone directory does not exist: %s" % self.cfg.zonedir)
+            # write a file for each zone
+            for zone in zonelist:
+                responsedata = {'data': [zone]}
+                zfname = self.cfg.zonedir+'/'+zone['header']['fqn']
+                zf = open(zfname, 'w')
+                env = Environment(loader=FileSystemLoader('mothership/'+self.namespace))
+                try:
+                    # try to load up a template called template.cmdln.write_forward
+                    # this allows us to format output specifically to this call
+                    template = env.get_template("template.cmdln.write_forward")
+                    zf.write(template.render(r=responsedata))
+                except TemplateNotFound:
+                    # template.cmdln.write_forward apparently doesn't exist. load the default template
+                    template = env.get_template('template.cmdln')
+                    zf.write(template.render(r=responsedata))
+                except:
+                    self.cfg.log.debug("API_dns/write_forward: error, no template found. refusing to write dns zonefiles")
+                    raise DNSError("API_dns/write_forward: error, no template found. refusing to write dns zonefiles")
+            # if nothing has blown up, return
+            return "success" 
+        except Exception, e:
+            self.cfg.log.debug("API_dns/write_forward: error: %s" % e)
+            raise DNSError("API_dns/write_forward: error: %s" % e)
+
+
+    def display_reverse(self, query):
+        """
+        [description]
+        display stored/configured reverse DNS data 
+
+        [parameter info]
+        required:
+            query: the query dict being passed to us from the called URI
+
+        [return value]
+        returns a list of zones' information if successful, raises an error if not
+        """
+        # setting our valid query keys
+        common = MothershipCommon(self.cfg)
+        valid_qkeys = common.get_valid_qkeys(self.namespace, 'display_reverse')
+        try:
+            # check for min/max number of optional arguments
+            self.common.check_num_opt_args(query, self.namespace, 'display_reverse')
+            # check for wierd query keys, explode
+            for qk in query.keys():
+                if qk not in valid_qkeys:
+                    self.cfg.log.debug("API_dns/display_reverse: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+                    raise DNSError("API_dns/display_reverse: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
+            # actually doin stuff
+            ret = []
+            # first, if we have the "all" bit set in the query, we'll need to generate
+            # a list of all possible realm.site_id.domain combinations and then display them
+            if 'all' in query.keys():
+                for site_id in self.cfg.site_ids:
+                    for realm in self.cfg.realms:
+                        zone = {}
+                        zone['header'] = self.__generate_dns_header(realm, site_id)
+                        records = self.__generate_primary_dns_records(realm, site_id)
+                        zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                        ret.append(zone)
+                        zone = {}
+                        zone['header'] = self.__generate_dns_header(realm, site_id, mgmt=True)
+                        records = self.__generate_mgmt_dns_records(realm, site_id)
+                        zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                        ret.append(zone)
+                        if self.cfg.drac:
+                            zone = {}
+                            zone['header'] = self.__generate_dns_header(realm, site_id, drac=True)
+                            records = self.__generate_drac_dns_records(realm, site_id)
+                            zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                            ret.append(zone)
+            # otherwise, just do the one zone 
+            elif 'unqn' in query.keys() and query['unqn']:
+                # input validation for unqn 
+                special_vlan, realm, site_id = v_split_unqn(query['unqn'])
+                v_realm(self.cfg, realm)
+                v_site_id(self.cfg, site_id)
+                zone = {}
+                if not special_vlan:
+                    zone['header'] = self.__generate_dns_header(realm, site_id)
+                    records = self.__generate_primary_dns_records(realm, site_id)
+                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                    ret.append(zone)
+                elif special_vlan == 'mgmt':
+                    zone['header'] = self.__generate_dns_header(realm, site_id, mgmt=True)
+                    records = self.__generate_mgmt_dns_records(realm, site_id)
+                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                    ret.append(zone)
+                elif special_vlan == 'drac' and not self.cfg.drac:
+                    self.cfg.log.debug("API_dns/display_reverse: error: drac is not enabled!")
+                    raise DNSError("API_dns/display_reverse: error: drac is not enabled!")
+                elif special_vlan == 'drac' and self.cfg.drac:
+                    zone['header'] = self.__generate_dns_header(realm, site_id, drac=True)
+                    records = self.__generate_drac_dns_records(realm, site_id)
+                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                    ret.append(zone)
+                else:
+                    self.cfg.log.debug("API_dns/display_reverse: error: malformed unqn")
+                    raise DNSError("API_dns/display_reverse: error: malformed unqn")
+            # if nothing has blown up, return 
+            return ret
+        except Exception, e:
+            self.cfg.log.debug("API_dns/display_reverse: error: %s" % e)
+            raise DNSError("API_dns/display_reverse: error: %s" % e)
 
 
     def write_forward(self, query):

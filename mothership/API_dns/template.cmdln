@@ -1,7 +1,7 @@
 {% for zone in r['data'] %}
 $ORIGIN {{zone['header']['fqn']}}.
 $TTL {{zone['header']['ttl']}}
-@                       IN      SOA     {{zone['header']['fqn']}}. {{zone['header']['contact']}}. (
+@                       IN      SOA     {{zone['header']['ns'][0]}}. {{zone['header']['contact']}}. (
                                         {{zone['header']['serial']}}   ; Serial
                                         {{zone['header']['refresh']}}        ; Refresh
                                         {{zone['header']['retry']}}         ; Retry
