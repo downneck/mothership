@@ -218,13 +218,20 @@ network:
 
   # Network map, repeat blocks as necessary
   map:
-  - vlan: 100                   # the vlan number on switch for this subnet
-    cidr: '1.2.3.4/24'          # the network/prefix CIDR address for this subnet
+  - vlan: 200                   # the vlan number on switch for this subnet
+    cidr: '1.2.3.0/24'          # the network/prefix CIDR address for this subnet
     gw: '1.2.3.1'               # the gateway address for this subnet
     nic: 'eth0'                 # the interface name for this subnet
-    dom: '.realm.siteid.tld'    # the domain suffix to be appended to short-hostnames
-    1st_static_ip: '10.0.0.10'  # the first static ip address for baremetal hosts
-    1st_dyn_ip: '10.0.50.10'    # the first dynamic ip address for virtual instances
+    dom: 'mgmt.realm.site_id'   # the domain suffix to be appended to short-hostnames
+    1st_static_ip: '1.2.3.10'   # the first static ip address for baremetal hosts
+    1st_dyn_ip: '1.2.3.50'      # the first dynamic ip address for virtual instances
+  - vlan: 201                   # the vlan number on switch for this subnet
+    cidr: '192.168.1.0/24'          # the network/prefix CIDR address for this subnet
+    gw: '192.168.1.1'               # the gateway address for this subnet
+    nic: 'eth1'                     # the interface name for this subnet
+    dom: 'realm.site_id'            # the domain suffix to be appended to short-hostnames
+    1st_static_ip: '192.168.1.10'   # the first static ip address for baremetal hosts
+    1st_dyn_ip: '192.168.1.50'      # the first dynamic ip address for virtual instances
 
 # User and Group options
 users_and_groups:
