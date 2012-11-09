@@ -9,6 +9,7 @@ Read UPGRADE file (if upgrading)
 * SQLAlchemy
 * PyYAML
 * psycopg2
+* netaddr
 
 #### Centos:
 *       sudo yum install python-sqlalchemy0.5
