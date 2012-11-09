@@ -24,7 +24,7 @@ from mothership.mothership_models import *
 from mothership.common import *
 from mothership.API_kv import *
 from jinja2 import *
-from netaddr import IPNetwork
+from netaddr import *
 
 class DNSError(Exception):
     pass
@@ -484,58 +484,22 @@ class API_dns:
                     raise DNSError("API_dns/display_reverse: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
             # actually doin stuff
             ret = []
-            # first, if we have the "all" bit set in the query, we'll need to generate
-            # a list of all possible realm.site_id.domain combinations and then display them
+            # if we have the "all" bit set in the query, we'll need to iterate through all configured networks
             if 'all' in query.keys():
                 for net in self.cfg.network_map:
                     zone = {}
                     zone['header'] = self.__generate_reverse_dns_header(net)
                     zone['records'] = self.__generate_reverse_dns_records(net)
                     ret.append(zone)
-                return ret 
-#                        records = self.__generate_primary_dns_records(realm, site_id)
-#                        zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                        ret.append(zone)
-#                        zone = {}
-#                        zone['header'] = self.__generate_forward_dns_header(realm, site_id, mgmt=True)
-#                        records = self.__generate_mgmt_dns_records(realm, site_id)
-#                        zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                        ret.append(zone)
-#                        if self.cfg.drac:
-#                            zone = {}
-#                            zone['header'] = self.__generate_forward_dns_header(realm, site_id, drac=True)
-#                            records = self.__generate_drac_dns_records(realm, site_id)
-#                            zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                            ret.append(zone)
-            # otherwise, just do the one zone 
-            elif 'unqn' in query.keys() and query['unqn']:
-                # input validation for unqn 
-                pass
-#                special_vlan, realm, site_id = v_split_unqn(query['unqn'])
-#                v_realm(self.cfg, realm)
-#                v_site_id(self.cfg, site_id)
-#                zone = {}
-#                if not special_vlan:
-#                    zone['header'] = self.__generate_forward_dns_header(realm, site_id)
-#                    records = self.__generate_primary_dns_records(realm, site_id)
-#                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                    ret.append(zone)
-#                elif special_vlan == 'mgmt':
-#                    zone['header'] = self.__generate_forward_dns_header(realm, site_id, mgmt=True)
-#                    records = self.__generate_mgmt_dns_records(realm, site_id)
-#                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                    ret.append(zone)
-#                elif special_vlan == 'drac' and not self.cfg.drac:
-#                    self.cfg.log.debug("API_dns/display_reverse: error: drac is not enabled!")
-#                    raise DNSError("API_dns/display_reverse: error: drac is not enabled!")
-#                elif special_vlan == 'drac' and self.cfg.drac:
-#                    zone['header'] = self.__generate_forward_dns_header(realm, site_id, drac=True)
-#                    records = self.__generate_drac_dns_records(realm, site_id)
-#                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                    ret.append(zone)
-#                else:
-#                    self.cfg.log.debug("API_dns/display_reverse: error: malformed unqn")
-#                    raise DNSError("API_dns/display_reverse: error: malformed unqn")
+            # otherwise, just do the one network
+            elif 'ip' in query.keys() and query['ip']:
+                for net in self.cfg.network_map:
+                    if IPAddress(query['ip']) in list(IPNetwork(net['cidr'])):
+                        zone = {}
+                        zone['header'] = self.__generate_reverse_dns_header(net)
+                        zone['records'] = self.__generate_reverse_dns_records(net)
+                        ret.append(zone)
+                        break
             # if nothing has blown up, return 
             return ret
         except Exception, e:
@@ -568,64 +532,29 @@ class API_dns:
                     raise DNSError("API_dns/write_reverse: unknown querykey \"%s\"\ndumping valid_qkeys: %s" % (qk, valid_qkeys))
             # actually doin stuff
             zonelist = []
-            # first, if we have the "all" bit set in the query, we'll need to generate
-            # a list of all possible realm.site_id.domain combinations and then write them
+            # if we have the "all" bit set in the query, we'll need to iterate through all configured networks
             if 'all' in query.keys():
-                 for net in self.cfg.network_map:
-                     print net
-#                for site_id in self.cfg.site_ids:
-#                        zone = {}
-#                        zone['header'] = self.__generate_forward_dns_header(realm, site_id)
-#                        records = self.__generate_primary_dns_records(realm, site_id)
-#                        zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                        zonelist.append(zone)
-#                        zone = {}
-#                        zone['header'] = self.__generate_forward_dns_header(realm, site_id, mgmt=True)
-#                        records = self.__generate_mgmt_dns_records(realm, site_id)
-#                        zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                        zonelist.append(zone)
-#                        if self.cfg.drac:
-#                            zone = {}
-#                            zone['header'] = self.__generate_forward_dns_header(realm, site_id, drac=True)
-#                            records = self.__generate_drac_dns_records(realm, site_id)
-#                            zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                            zonelist.append(zone)
-            # otherwise, just do the one zone 
-            elif 'unqn' in query.keys() and query['unqn']:
-                # input validation for unqn 
-                pass
-#                special_vlan, realm, site_id = v_split_unqn(query['unqn'])
-#                v_realm(self.cfg, realm)
-#                v_site_id(self.cfg, site_id)
-#                zone = {}
-#                if not special_vlan:
-#                    zone['header'] = self.__generate_forward_dns_header(realm, site_id)
-#                    records = self.__generate_primary_dns_records(realm, site_id)
-#                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                    zonelist.append(zone)
-#                elif special_vlan == 'mgmt':
-#                    zone['header'] = self.__generate_forward_dns_header(realm, site_id, mgmt=True)
-#                    records = self.__generate_mgmt_dns_records(realm, site_id)
-#                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                    zonelist.append(zone)
-#                elif special_vlan == 'drac' and not self.cfg.drac:
-#                    self.cfg.log.debug("API_dns/write_reverse: error: drac is not enabled!")
-#                    raise DNSError("API_dns/write_reverse: error: drac is not enabled!")
-#               elif special_vlan == 'drac' and self.cfg.drac:
-#                   zone['header'] = self.__generate_forward_dns_header(realm, site_id, drac=True)
-#                   records = self.__generate_drac_dns_records(realm, site_id)
-#                   zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-#                   zonelist.append(zone)
-#               else:
-#                   self.cfg.log.debug("API_dns/write_reverse: error: malformed unqn")
-#                   raise DNSError("API_dns/write_reverse: error: malformed unqn")
+                for net in self.cfg.network_map:
+                    zone = {}
+                    zone['header'] = self.__generate_reverse_dns_header(net)
+                    zone['records'] = self.__generate_reverse_dns_records(net)
+                    zonelist.append(zone)
+            # otherwise, just do the one network
+            elif 'ip' in query.keys() and query['ip']:
+                for net in self.cfg.network_map:
+                    if IPAddress(query['ip']) in list(IPNetwork(net['cidr'])):
+                        zone = {}
+                        zone['header'] = self.__generate_reverse_dns_header(net)
+                        zone['records'] = self.__generate_reverse_dns_records(net)
+                        zonelist.append(zone)
+                        break
             # ensure our zone directory exists
             if not os.path.exists(self.cfg.zonedir):
                 raise DNSError("API_dns/write_reverse: error, zone directory does not exist: %s" % self.cfg.zonedir)
                 self.cfg.log.debug("API_dns/write_reverse: error, zone directory does not exist: %s" % self.cfg.zonedir)
             # write a file for each zone
             for zone in zonelist:
-                #responsedata = {'data': [zone]}
+                responsedata = {'data': [zone]}
                 zfname = self.cfg.zonedir+'/'+zone['header']['fqn']
                 zf = open(zfname, 'w')
                 env = Environment(loader=FileSystemLoader('mothership/'+self.namespace))
