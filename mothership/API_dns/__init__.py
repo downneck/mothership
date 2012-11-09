@@ -612,10 +612,20 @@ class API_dns:
             if data:
                 self.cfg.log.debug("API_dns/add: error: record exists already")
                 raise DNSError("API_dns/add: error: record exists already")
-            if query['record_type'] == 'A' and (len(query['target'].split('.')) < 4 or not re.sub('\.', '', query['target']).isdigit()):
-                self.cfg.log.debug("API_dns/add: error: 'A' records must be ip addresses")
-                raise DNSError("API_dns/add: error: 'A' records must be ip addresses")
-            # TODO: more input sanitization
+            # input sanitization for targets
+            # target = ip address
+            if query['record_type'] == "A":
+                IPAddress(query['target']) 
+            # target = fqdn
+            elif query['record_type'] == ("CNAME" or "MX" or "NS"):
+                domregex = re.compile('^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{,63}(?<!-)$')
+                for word in query['target'].split('.'):
+                    if not domregex.match(word):
+                        self.cfg.log.debug("API_dns/add: error: malformed CNAME target: %s" % query['target'])
+                        raise DNSError("API_dns/add: error: malformed CNAME target: %s" % query['target'])
+            # target = one of the MANY other resource record types 
+            else:
+                pass
             # add the record
             newrec = DnsAddendum(host, query['record_type'], realm, site_id, query['target'])
             self.cfg.dbsess.add(newrec)
