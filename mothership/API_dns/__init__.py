@@ -241,25 +241,31 @@ class API_dns:
             # otherwise, just do the one zone 
             elif 'unqn' in query.keys() and query['unqn']:
                 # input validation for unqn 
-                blank, realm, site_id = v_split_unqn(query['unqn'])
+                special_vlan, realm, site_id = v_split_unqn(query['unqn'])
                 v_realm(self.cfg, realm)
                 v_site_id(self.cfg, site_id)
                 zone = {}
-                zone['header'] = self.__generate_dns_header(realm, site_id)
-                records = self.__generate_primary_dns_records(realm, site_id)
-                zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-                ret.append(zone)
-                zone = {}
-                zone['header'] = self.__generate_dns_header(realm, site_id, mgmt=True)
-                records = self.__generate_mgmt_dns_records(realm, site_id)
-                zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-                ret.append(zone)
-                if self.cfg.drac:
-                    zone = {}
+                if not special_vlan:
+                    zone['header'] = self.__generate_dns_header(realm, site_id)
+                    records = self.__generate_primary_dns_records(realm, site_id)
+                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                    ret.append(zone)
+                elif special_vlan == 'mgmt':
+                    zone['header'] = self.__generate_dns_header(realm, site_id, mgmt=True)
+                    records = self.__generate_mgmt_dns_records(realm, site_id)
+                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                    ret.append(zone)
+                elif special_vlan == 'drac' and not self.cfg.drac:
+                    self.cfg.log.debug("API_dns/write_forward: error: drac is not enabled!")
+                    raise DNSError("API_dns/write_forward: error: drac is not enabled!")
+                elif special_vlan == 'drac' and self.cfg.drac:
                     zone['header'] = self.__generate_dns_header(realm, site_id, drac=True)
                     records = self.__generate_drac_dns_records(realm, site_id)
                     zone['records'] = self.common.multikeysort(records, ['type', 'host'])
                     ret.append(zone)
+                else:
+                    self.cfg.log.debug("API_dns/write_forward: error: malformed unqn")
+                    raise DNSError("API_dns/write_forward: error: malformed unqn")
             # if nothing has blown up, return 
             return ret
         except Exception, e:
@@ -316,25 +322,31 @@ class API_dns:
             # otherwise, just do the one zone 
             elif 'unqn' in query.keys() and query['unqn']:
                 # input validation for unqn 
-                blank, realm, site_id = v_split_unqn(query['unqn'])
+                special_vlan, realm, site_id = v_split_unqn(query['unqn'])
                 v_realm(self.cfg, realm)
                 v_site_id(self.cfg, site_id)
                 zone = {}
-                zone['header'] = self.__generate_dns_header(realm, site_id)
-                records = self.__generate_primary_dns_records(realm, site_id)
-                zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-                zonelist.append(zone)
-                zone = {}
-                zone['header'] = self.__generate_dns_header(realm, site_id, mgmt=True)
-                records = self.__generate_mgmt_dns_records(realm, site_id)
-                zone['records'] = self.common.multikeysort(records, ['type', 'host'])
-                zonelist.append(zone)
-                if self.cfg.drac:
-                    zone = {}
+                if not special_vlan:
+                    zone['header'] = self.__generate_dns_header(realm, site_id)
+                    records = self.__generate_primary_dns_records(realm, site_id)
+                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                    zonelist.append(zone)
+                elif special_vlan == 'mgmt':
+                    zone['header'] = self.__generate_dns_header(realm, site_id, mgmt=True)
+                    records = self.__generate_mgmt_dns_records(realm, site_id)
+                    zone['records'] = self.common.multikeysort(records, ['type', 'host'])
+                    zonelist.append(zone)
+                elif special_vlan == 'drac' and not self.cfg.drac:
+                    self.cfg.log.debug("API_dns/write_forward: error: drac is not enabled!")
+                    raise DNSError("API_dns/write_forward: error: drac is not enabled!")
+                elif special_vlan == 'drac' and self.cfg.drac:
                     zone['header'] = self.__generate_dns_header(realm, site_id, drac=True)
                     records = self.__generate_drac_dns_records(realm, site_id)
                     zone['records'] = self.common.multikeysort(records, ['type', 'host'])
                     zonelist.append(zone)
+                else:
+                    self.cfg.log.debug("API_dns/write_forward: error: malformed unqn")
+                    raise DNSError("API_dns/write_forward: error: malformed unqn")
             # ensure our zone directory exists
             if not os.path.exists(self.cfg.zonedir):
                 raise DNSError("API_dns/write_forward: error, zone directory does not exist: %s" % self.cfg.zonedir)
