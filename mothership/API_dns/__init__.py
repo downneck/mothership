@@ -24,6 +24,7 @@ from mothership.mothership_models import *
 from mothership.common import *
 from mothership.API_kv import *
 from jinja2 import *
+from netaddr import IPNetwork
 
 class DNSError(Exception):
     pass
@@ -487,10 +488,9 @@ class API_dns:
             # a list of all possible realm.site_id.domain combinations and then display them
             if 'all' in query.keys():
                 for net in self.cfg.network_map:
-                    block, size = net['cidr'].split('/')
-                    arpa = '%s.in-addr.arpa' % '.'.join(reversed(block.rpartition('.')[0].split('.')))
                     zone = {}
-                    zone['header'] = self.__generate_reverse_dns_header(arpa, net['dom'])
+                    zone['header'] = self.__generate_reverse_dns_header(net)
+                    zone['records'] = self.__generate_reverse_dns_records(net)
                     ret.append(zone)
                 return ret 
 #                        records = self.__generate_primary_dns_records(realm, site_id)
@@ -824,7 +824,7 @@ class API_dns:
             raise DNSError("API_dns/__generate_forward_dns_header: error: %s" % e)
 
 
-    def __generate_reverse_dns_header(self, arpa, unqn):
+    def __generate_reverse_dns_header(self, net):
         """
         [description]
         generates and returns header info for a dns zone 
@@ -838,13 +838,14 @@ class API_dns:
         returns a dict of zone header info if successful, raises an error if not
         """
         try:
+            block, size = net['cidr'].split('/')
+            arpa = '%s.in-addr.arpa' % '.'.join(reversed(block.rpartition('.')[0].split('.')))
             zone = {}
-            if len(unqn.split('.')) > 2:
-                discard, nsunqn = unqn.split('.', 1)
+            if len(net['dom'].split('.')) > 2:
+                discard, nsunqn = net['dom'].split('.', 1)
             else:
-                nsunqn = unqn
-            # construct our fqn: realm.site.domain.tld
-            fqn = "%s.%s" % (unqn, self.cfg.domain)
+                nsunqn = net['dom']
+            nsunqn = "%s.%s" % (nsunqn, self.cfg.domain)
             # populate our zone dict with relevant info
             zone['serial'] = int(time.time())
             if '@' in self.cfg.contact:
@@ -877,7 +878,7 @@ class API_dns:
             site_id: the site_id to generate for
 
         [return value]
-        returns a dict of zone header info if successful, raises an error if not
+        returns a dict of zone info if successful, raises an error if not
         """
         try:
             ret = []
@@ -964,3 +965,36 @@ class API_dns:
         except Exception, e:
             self.cfg.log.debug("API_dns/__generate_drac_dns_records: error: %s" % e)
             raise DNSError("API_dns/__generate_drac_dns_records: error: %s" % e)
+
+
+    def __generate_reverse_dns_records(self, net):
+        """
+        [description]
+        generates and returns record info for a reverse dns zone based on the ip block
+
+        [parameter info]
+        required:
+            cidr_block: the netblock to generate for (cidr notation, ie. a.b.c.d/16)
+            unqn: the unqn associated with that netblock
+
+        [return value]
+        returns a dict of zone info if successful, raises an error if not
+        """
+        try:
+            fqn = ".%s.%s." % (net['dom'], self.cfg.domain)
+            ret = []
+            for ip in IPNetwork(net['cidr']):
+                n = None
+                s = None
+                last_octet = str(ip).rsplit('.', 1)[1]
+                # look up server records by ip
+                n = self.cfg.dbsess.query(Network).filter(Network.ip==str(ip)).first()
+                if n:
+                    s = self.cfg.dbsess.query(Server).filter(Server.id==n.server_id).first()
+                    if s:
+                        ret.append({'host': last_octet, 'type': 'PTR', 'target': s.hostname+fqn})
+            # if we have some data, return it
+            return ret 
+        except Exception, e:
+            self.cfg.log.debug("API_dns/__generate_reverse_dns_records: error: %s" % e)
+            raise DNSError("API_dns/__generate_reverse_dns_records: error: %s" % e)
