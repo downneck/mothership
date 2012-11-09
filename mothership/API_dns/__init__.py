@@ -675,6 +675,7 @@ class API_dns:
                 raise DNSError("API_dns/remove: error: record does not exist")
             else:
                 self.cfg.dbsess.delete(data)
+                self.cfg.dbsess.commit()
             # if nothing has blown up, return
             return "success"
         except Exception, e:
