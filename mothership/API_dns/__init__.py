@@ -745,6 +745,11 @@ class API_dns:
                 self.cfg.log.debug("API_dns/__generate_forward_dns_header: error in drac/mgmt selection") 
                 raise DNSError("API_dns/__generate_forward_dns_header: error in drac/mgmt selection")
             # populate our zone dict with relevant info
+            #
+            # this uses unix epoch timestamp as a serial. max length for
+            # a positive signed 32-bit int is 2147483647, which means
+            # this serial will be too big after: Tuesday, 19 Jan 2038
+            # come up with a better way to do this before then.
             zone['serial'] = int(time.time())
             if '@' in self.cfg.contact:
                 zone['contact'] = self.cfg.contact.replace('@','.')
