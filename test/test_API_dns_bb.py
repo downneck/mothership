@@ -45,7 +45,6 @@ class TestAPI_dns(unittest.TestCase):
     def test1(self):
         query = {'all': True}
         result = dns.display_forward(query)
-        # pre-define expected output
         for i in result:
             del i['header']['serial']
         for i in allforward['data']:
@@ -69,4 +68,31 @@ class TestAPI_dns(unittest.TestCase):
             del i['header']['serial']
         self.assertEqual(result, df_unqn_satest_jfk['data'])
         print "[API_dns] test3: PASSED"
+
+    # test bad unqn, failure results
+    def test4(self):
+        query = {'unqn': 'laksjdf.garbage'}
+        self.assertRaises(DNSError, dns.display_forward, query)
+        print "[API_dns] test4: PASSED"
+
+    ######################################
+    # testing display_reverse()          #
+    ######################################
+
+    # all=True, good output
+    def test5(self):
+        query = {'all': True}
+        result = dns.display_reverse(query)
+        for i in result:
+            del i['header']['serial']
+        for i in allreverse['data']:
+            del i['header']['serial']
+        self.assertEqual(result, allreverse['data'])
+        print "[API_dns] test5: PASSED"
+
+    # test empty query, failure results
+    def test6(self):
+        query = {}
+        self.assertRaises(DNSError, dns.display_reverse, query)
+        print "[API_dns] test6: PASSED"
 
