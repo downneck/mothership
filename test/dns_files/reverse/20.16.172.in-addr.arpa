@@ -2,7 +2,6 @@
 $ORIGIN 20.16.172.in-addr.arpa.
 $TTL 86400
 @                       IN      SOA     ns1.satest.jfk.gilt.local. hostmaster.localhost.localdomain. (
-                                        1352496773   ; Serial
                                         21600        ; Refresh
                                         3600         ; Retry
                                         604800       ; Expire

@@ -1,8 +1,7 @@
 
-$ORIGIN mgmt.satest.sfo.gilt.local.
+$ORIGIN satest.sfo.gilt.local.
 $TTL 86400
-@                       IN      SOA     mgmt.satest.sfo.gilt.local. hostmaster.localhost.localdomain. (
-                                        1352408359   ; Serial
+@                       IN      SOA     satest.sfo.gilt.local. hostmaster.localhost.localdomain. (
                                         21600        ; Refresh
                                         3600         ; Retry
                                         604800       ; Expire
