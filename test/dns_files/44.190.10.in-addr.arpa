@@ -1,0 +1,47 @@
+
+$ORIGIN 44.190.10.in-addr.arpa.
+$TTL 86400
+@                       IN      SOA     ns1.satest.jfk.gilt.local. hostmaster.localhost.localdomain. (
+                                        1352496773   ; Serial
+                                        21600        ; Refresh
+                                        3600         ; Retry
+                                        604800       ; Expire
+                                        86400        ; TTL
+                                        )
+
+                        IN      NS      ns1.satest.jfk.gilt.local.
+                        IN      NS      ns2.satest.jfk.gilt.local.
+
+7 IN PTR xenserver3.satest.jfk.gilt.local.
+8 IN PTR xenserver1.satest.jfk.gilt.local.
+9 IN PTR xenserver2.satest.jfk.gilt.local.
+12 IN PTR zendc1.satest.jfk.gilt.local.
+52 IN PTR stage2.satest.jfk.gilt.local.
+53 IN PTR zenoss1.satest.jfk.gilt.local.
+54 IN PTR splunk1.satest.jfk.gilt.local.
+55 IN PTR ns1.satest.jfk.gilt.local.
+57 IN PTR stage7.satest.jfk.gilt.local.
+75 IN PTR jira1.satest.jfk.gilt.local.
+81 IN PTR cobbler1.satest.jfk.gilt.local.
+82 IN PTR rpmbuilder1.satest.jfk.gilt.local.
+83 IN PTR puppet.satest.jfk.gilt.local.
+91 IN PTR ldap1.satest.jfk.gilt.local.
+92 IN PTR ldap2.satest.jfk.gilt.local.
+93 IN PTR ns2.satest.jfk.gilt.local.
+94 IN PTR zbx1.satest.jfk.gilt.local.
+95 IN PTR hudson1.satest.jfk.gilt.local.
+96 IN PTR hudson2.satest.jfk.gilt.local.
+97 IN PTR dcmon1.satest.jfk.gilt.local.
+99 IN PTR cm2.satest.jfk.gilt.local.
+100 IN PTR swaptest2.satest.jfk.gilt.local.
+101 IN PTR swaptest1.satest.jfk.gilt.local.
+102 IN PTR mtest3.satest.jfk.gilt.local.
+103 IN PTR teststore.satest.jfk.gilt.local.
+110 IN PTR cm1.satest.jfk.gilt.local.
+115 IN PTR testeasyinstall.satest.jfk.gilt.local.
+122 IN PTR test2.satest.jfk.gilt.local.
+123 IN PTR test5.satest.jfk.gilt.local.
+124 IN PTR solr12.satest.jfk.gilt.local.
+127 IN PTR test6.satest.jfk.gilt.local.
+150 IN PTR ci1.satest.jfk.gilt.local.
+

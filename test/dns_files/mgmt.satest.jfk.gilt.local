@@ -1,0 +1,47 @@
+
+$ORIGIN mgmt.satest.jfk.gilt.local.
+$TTL 86400
+@                       IN      SOA     mgmt.satest.jfk.gilt.local. hostmaster.localhost.localdomain. (
+                                        1352408359   ; Serial
+                                        21600        ; Refresh
+                                        3600         ; Retry
+                                        604800       ; Expire
+                                        86400        ; TTL
+                                        )
+
+                        IN      NS      ns1.satest.jfk.gilt.local.
+                        IN      NS      ns2.satest.jfk.gilt.local.
+
+ci1 IN A 172.16.20.13
+cm1 IN A 172.16.20.56
+cm2 IN A 172.16.20.103
+cobbler1 IN A 172.16.20.81
+dcmon1 IN A 172.16.20.101
+hudson1 IN A 172.16.20.100
+hudson2 IN A 172.16.20.99
+jira1 IN A 172.16.20.106
+ldap1 IN A 172.16.20.91
+ldap2 IN A 172.16.20.92
+mtest3 IN A 172.16.20.105
+ns1 IN A 172.16.20.54
+ns2 IN A 172.16.20.95
+puppet IN A 172.16.20.83
+rpmbuilder1 IN A 172.16.20.82
+solr12 IN A 172.16.20.115
+splunk1 IN A 172.16.20.55
+stage2 IN A 172.16.20.52
+stage7 IN A 172.16.20.57
+swaptest1 IN A 172.16.20.251
+swaptest2 IN A 172.16.20.252
+test2 IN A 172.16.20.114
+test5 IN A 172.16.20.107
+test6 IN A 172.16.20.116
+testeasyinstall IN A 172.16.20.113
+teststore IN A 172.16.20.104
+xenserver1 IN A 172.16.20.8
+xenserver2 IN A 172.16.20.9
+xenserver3 IN A 172.16.20.7
+zbx1 IN A 172.16.20.96
+zendc1 IN A 172.16.20.12
+zenoss1 IN A 172.16.20.53
+

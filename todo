@@ -1,3 +1,2 @@
-need to figure out db session rollback stuff
 write tests for dns module
 figure out a way to test drac without dracs 

@@ -1,0 +1,15 @@
+
+$ORIGIN mgmt.qa.jfk.gilt.local.
+$TTL 86400
+@                       IN      SOA     mgmt.qa.jfk.gilt.local. hostmaster.localhost.localdomain. (
+                                        1352408359   ; Serial
+                                        21600        ; Refresh
+                                        3600         ; Retry
+                                        604800       ; Expire
+                                        86400        ; TTL
+                                        )
+
+                        IN      NS      ns1.qa.jfk.gilt.local.
+                        IN      NS      ns2.qa.jfk.gilt.local.
+
+

@@ -1,0 +1,47 @@
+
+$ORIGIN 20.16.172.in-addr.arpa.
+$TTL 86400
+@                       IN      SOA     ns1.satest.jfk.gilt.local. hostmaster.localhost.localdomain. (
+                                        1352496773   ; Serial
+                                        21600        ; Refresh
+                                        3600         ; Retry
+                                        604800       ; Expire
+                                        86400        ; TTL
+                                        )
+
+                        IN      NS      ns1.satest.jfk.gilt.local.
+                        IN      NS      ns2.satest.jfk.gilt.local.
+
+7 IN PTR xenserver3.mgmt.satest.jfk.gilt.local.
+8 IN PTR xenserver1.mgmt.satest.jfk.gilt.local.
+9 IN PTR xenserver2.mgmt.satest.jfk.gilt.local.
+12 IN PTR zendc1.mgmt.satest.jfk.gilt.local.
+13 IN PTR ci1.mgmt.satest.jfk.gilt.local.
+52 IN PTR stage2.mgmt.satest.jfk.gilt.local.
+53 IN PTR zenoss1.mgmt.satest.jfk.gilt.local.
+54 IN PTR ns1.mgmt.satest.jfk.gilt.local.
+55 IN PTR splunk1.mgmt.satest.jfk.gilt.local.
+56 IN PTR cm1.mgmt.satest.jfk.gilt.local.
+57 IN PTR stage7.mgmt.satest.jfk.gilt.local.
+81 IN PTR cobbler1.mgmt.satest.jfk.gilt.local.
+82 IN PTR rpmbuilder1.mgmt.satest.jfk.gilt.local.
+83 IN PTR puppet.mgmt.satest.jfk.gilt.local.
+91 IN PTR ldap1.mgmt.satest.jfk.gilt.local.
+92 IN PTR ldap2.mgmt.satest.jfk.gilt.local.
+95 IN PTR ns2.mgmt.satest.jfk.gilt.local.
+96 IN PTR zbx1.mgmt.satest.jfk.gilt.local.
+99 IN PTR hudson2.mgmt.satest.jfk.gilt.local.
+100 IN PTR hudson1.mgmt.satest.jfk.gilt.local.
+101 IN PTR dcmon1.mgmt.satest.jfk.gilt.local.
+103 IN PTR cm2.mgmt.satest.jfk.gilt.local.
+104 IN PTR teststore.mgmt.satest.jfk.gilt.local.
+105 IN PTR mtest3.mgmt.satest.jfk.gilt.local.
+106 IN PTR jira1.mgmt.satest.jfk.gilt.local.
+107 IN PTR test5.mgmt.satest.jfk.gilt.local.
+113 IN PTR testeasyinstall.mgmt.satest.jfk.gilt.local.
+114 IN PTR test2.mgmt.satest.jfk.gilt.local.
+115 IN PTR solr12.mgmt.satest.jfk.gilt.local.
+116 IN PTR test6.mgmt.satest.jfk.gilt.local.
+251 IN PTR swaptest1.mgmt.satest.jfk.gilt.local.
+252 IN PTR swaptest2.mgmt.satest.jfk.gilt.local.
+
