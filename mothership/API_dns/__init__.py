@@ -748,9 +748,14 @@ class API_dns:
             #
             # this uses unix epoch timestamp as a serial. max length for
             # a positive signed 32-bit int is 2147483647, which means
-            # this serial will be too big after: Tuesday, 19 Jan 2038
-            # come up with a better way to do this before then.
-            zone['serial'] = int(time.time())
+            # the epoch timestamp will be too big after: Tuesday, 19 Jan 2038
+            # so i added a bit of math to give us some room. subtracting
+            # 1352700000 from epoch time gives us roughly another 42.8 years
+            # at which point, we can just jack the number up higher i suppose.
+            #
+            # let's make sure to revisit sometime before 2080. maybe there will be
+            # a better way to do this. maybe there will be hovercars.
+            zone['serial'] = int(time.time()) - 1352700000
             if '@' in self.cfg.contact:
                 zone['contact'] = self.cfg.contact.replace('@','.')
             else:
