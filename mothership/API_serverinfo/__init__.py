@@ -100,47 +100,47 @@ class API_serverinfo:
 
     def _get_host_from_hwtag(self, key):
         try:
-            s = self.cfg.dbsess.query(Server).\
+            s = self.self.cfg.dbsess.query(Server).\
                 filter(Server.hw_tag==key).\
                 filter(Server.virtual==False).first()
             if s:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
-            self.cfg.log.debug("Something wrong happened in _get_host_from_hwtag. please re-run test")
+            self.self.cfg.log.debug("Something wrong happened in _get_host_from_hwtag. please re-run test")
             raise ServerInfoError("API_serverinfo/_get_host_from_hwtag: no host found with hw_tag: %s" % key)
 
     def _get_host_from_ip(self, key):
         # try the private ip
         try:
-            s, n = self.cfg.dbsess.query(Server, Network).\
+            s, n = self.self.cfg.dbsess.query(Server, Network).\
                    filter(Server.id==Network.server_id).\
                    filter(Network.ip==key).first()
             if s.hostname:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
-            self.cfg.log.debug("_get_host_from_ip couldn't find host via private ip")
+            self.self.cfg.log.debug("_get_host_from_ip couldn't find host via private ip")
         # try the public ip
         try:
-            s, n = self.cfg.dbsess.query(Server, Network).\
+            s, n = self.self.cfg.dbsess.query(Server, Network).\
                    filter(Server.id==Network.server_id).\
                    filter(Network.public_ip==key).first()
             if s.hostname:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
-            self.cfg.log.debug("_get_host_from_ip was not able to find the host via the public ip")
+            self.self.cfg.log.debug("_get_host_from_ip was not able to find the host via the public ip")
         # if we've made it this far without finding anyone...
         raise ServerInfoError("API_serverinfo/_get_host_from_ip: no host found with public or private ip: %s" % key)
 
     def _get_host_from_mac(self, key):
         try:
-            h, s = self.cfg.dbsess.query(Network, Server).\
+            h, s = self.self.cfg.dbsess.query(Network, Server).\
                    filter(Network.hw_tag==Server.hw_tag).\
                    filter(Network.mac==key).\
                    filter(Server.virtual==False).first()
             if s.hostname:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
-            self.cfg.log.debug("_get_host_from_mac was not able to find an hostname")
+            self.self.cfg.log.debug("_get_host_from_mac was not able to find an hostname")
             raise ServerInfoError("API_serverinfo/_get_host_from_mac: no host found with MAC address: %s" % key)
 
     def _get_host_from_unqdn(self, key):
@@ -148,12 +148,12 @@ class API_serverinfo:
             s = v_get_server_obj(self.cfg, key)
             if s:
                 if type(s) == list:
-                    self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn: hostname not unique enough")
+                    self.self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn: hostname not unique enough")
                     raise ServerInfoError("API_serverinfo/_get_host_from_unqdn: hostname not unique enough")
-                self.cfg.log.debug("API_serverinfo/_get_host_from hostname (validate): %s.%s.%s" % (s.hostname, s.realm, s.site_id))
+                self.self.cfg.log.debug("API_serverinfo/_get_host_from hostname (validate): %s.%s.%s" % (s.hostname, s.realm, s.site_id))
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except Exception, e:
-            self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn was not able to find a hostname")
+            self.self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn was not able to find a hostname")
             raise ServerInfoError("API_serverinfo/_get_host_from_unqdn: no host found with name: %s. Error: %s" % (key, e))
 
     def si(self, query):
@@ -169,7 +169,6 @@ class API_serverinfo:
         returns a dict of ORMobjects if successful, "None" if unsuccessful
         """
         try:
-            cfg = self.cfg
             metadata = self.metadata
             ret = None
 
@@ -194,10 +193,10 @@ class API_serverinfo:
             if ret:
                 return ret
             else:
-                cfg.log.debug("API_serverinfo/si: no host found!") 
+                self.cfg.log.debug("API_serverinfo/si: no host found!") 
                 raise ServerInfoError("API_serverinfo/si: no host found!")
         except Exception, e:
-            cfg.log.debug("API_serverinfo/si: %s" % e)
+            self.cfg.log.debug("API_serverinfo/si: %s" % e)
             raise ServerInfoError("API_serverinfo/si: %s" % e)
 
     def _get_serverinfo(self, host, realm, site_id):
@@ -215,26 +214,25 @@ class API_serverinfo:
         ret = a list of dicts related to the server entry
         """
 
-        cfg = self.cfg
         nets = [] # stores network objects to return
         ret = {} # dict of objects to return (except network and kv, which are lists of objects)
 
         # gather server info from mothership's db
         try:
           # hardware and server entries
-          h, s = cfg.dbsess.query(Hardware, Server).\
+          h, s = self.cfg.dbsess.query(Hardware, Server).\
                  filter(Server.hostname==host).\
                  filter(Server.realm==realm).\
                  filter(Server.site_id==site_id).\
                  filter(Hardware.hw_tag==Server.hw_tag).first()
 
           ret['server'] = s.to_dict() # add server object to return dict
-          cfg.log.debug("_get_serverinfo(): %s" % s.to_dict())
+          self.cfg.log.debug("_get_serverinfo(): %s" % s.to_dict())
           ret['hardware'] = h.to_dict() # add hardware object to return dict
-          cfg.log.debug("_get_serverinfo(): %s " % h.to_dict())
+          self.cfg.log.debug("_get_serverinfo(): %s " % h.to_dict())
 
           # kv entries
-          for h2, s2 in cfg.dbsess.query(Hardware, Server).\
+          for h2, s2 in self.cfg.dbsess.query(Hardware, Server).\
           filter(Server.hostname==host).\
           filter(Server.realm==realm).\
           filter(Server.site_id==site_id).\
@@ -246,15 +244,15 @@ class API_serverinfo:
           kquery = {'unqdn': fqdn, 'key': 'tag',}
           for kv in kvobj.collect(kquery):
               ret['kv'].append(kv)
-              cfg.log.debug("_get_serviceinfo(): %s " % kv)
+              self.cfg.log.debug("_get_serviceinfo(): %s " % kv)
 
           # network entries
-          for n in cfg.dbsess.query(Network).\
+          for n in self.cfg.dbsess.query(Network).\
                   filter(Server.id==Network.server_id).\
                   filter(Server.hostname==s.hostname).\
                   order_by(Network.interface).all():
               nets.append(n.to_dict()) # add network objects to our list
-              cfg.log.debug("_get_serverinof(): %s " %  n.to_dict())
+              self.cfg.log.debug("_get_serverinof(): %s " %  n.to_dict())
           ret['network'] = nets # add list of network objects to return dict
 
         except TypeError:
