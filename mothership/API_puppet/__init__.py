@@ -151,7 +151,6 @@ class API_puppet:
                             parameters['bond_options'] = network.bond_options
             else:
                 self.cfg.log.debug("API_puppet/classify: unqdn not found: %s" % query['unqdn'])
-                self.cfg.dbsess.rollback()
                 raise PuppetError("API_puppet/classify: unqdn not found: %s" % query['unqdn'])
             
             # Tag
@@ -200,7 +199,6 @@ class API_puppet:
 
         except Exception, e:
             self.cfg.log.debug("API_puppet/classify: query failed. Error: %s" % e)
-            self.cfg.dbsess.rollback()
             raise PuppetError("API_puppet/classify: query failed. Error: %s" % e)
 
         return node

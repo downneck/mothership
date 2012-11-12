@@ -412,7 +412,6 @@ class API_kv:
                 return None
 
         except Exception, e:
-            cfg.dbsess.rollback()
             raise KVError("API_kv/select: error: %s" % e) 
 
 
@@ -504,7 +503,6 @@ class API_kv:
         except Exception, e:
             cfg.log.debug("Error: %s" % e)
             cfg.log.debug("dumping buffer: %s" % buf)
-            cfg.dbsess.rollback()
             raise KVError("API_kv/collect: error: %s" % e) 
 
 
@@ -570,7 +568,6 @@ class API_kv:
             cfg.dbsess.commit()
             return 'success'
         except Exception, e:
-            cfg.dbsess.rollback()
             raise KVError("API_kv/add: error: %s" % e) 
 
 
@@ -646,7 +643,6 @@ class API_kv:
                 cfg.dbsess.commit()
                 return 'success'
             else:
-                cfg.dbsess.rollback()
                 raise KVError("API_kv/update: query failed for unqdn=%s key=%s value=%s, no record to update" % (unqdn, key, value))
         except Exception, e:
             cfg.dbsess.rollback()
@@ -720,7 +716,6 @@ class API_kv:
                 return 'success'
             else:
                 cfg.log.debug("API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value))
-                cfg.dbsess.rollback()
                 raise KVError("API_kv/delete: query failed for unqdn=%s key=%s value=%s, nothing to delete!" % (unqdn, key, value))
         except Exception, e:
             cfg.dbsess.rollback()

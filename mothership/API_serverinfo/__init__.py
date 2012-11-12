@@ -107,7 +107,6 @@ class API_serverinfo:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
             self.cfg.log.debug("Something wrong happened in _get_host_from_hwtag. please re-run test")
-            self.cfg.dbsess.rollback()
             raise ServerInfoError("API_serverinfo/_get_host_from_hwtag: no host found with hw_tag: %s" % key)
 
     def _get_host_from_ip(self, key):
@@ -130,7 +129,6 @@ class API_serverinfo:
         except TypeError:
             self.cfg.log.debug("_get_host_from_ip was not able to find the host via the public ip")
         # if we've made it this far without finding anyone...
-        self.cfg.dbsess.rollback()
         raise ServerInfoError("API_serverinfo/_get_host_from_ip: no host found with public or private ip: %s" % key)
 
     def _get_host_from_mac(self, key):
@@ -143,7 +141,6 @@ class API_serverinfo:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
             self.cfg.log.debug("_get_host_from_mac was not able to find an hostname")
-            self.cfg.dbsess.rollback()
             raise ServerInfoError("API_serverinfo/_get_host_from_mac: no host found with MAC address: %s" % key)
 
     def _get_host_from_unqdn(self, key):
@@ -157,7 +154,6 @@ class API_serverinfo:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except Exception, e:
             self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn was not able to find a hostname")
-            self.cfg.dbsess.rollback()
             raise ServerInfoError("API_serverinfo/_get_host_from_unqdn: no host found with name: %s. Error: %s" % (key, e))
 
     def si(self, query):
@@ -262,10 +258,8 @@ class API_serverinfo:
           ret['network'] = nets # add list of network objects to return dict
 
         except TypeError:
-            self.cfg.dbsess.rollback()
             raise ServerInfoError("host \"%s\" not found" % host)
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ServerInfoError("something horrible happened. Error: %s" % e)
 
         return dict(ret)

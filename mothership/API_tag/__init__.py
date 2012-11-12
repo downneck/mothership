@@ -575,6 +575,5 @@ class API_tag:
             else:
                 return None
         except Exception, e:
-            self.cfg.dbsess.rollback()
             self.cfg.log.debug("API_tag/__get_tag: error: %s" % e)
             raise TagError("API_tag/__get_tag: error: %s" % e)

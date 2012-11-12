@@ -133,7 +133,6 @@ class API_list_values:
                 self.cfg.log.debug(buf)
             except Exception, e:
                 self.cfg.log.debug("API_list_values/lsv: query failed for: vlans. Error: %s" % e)
-                cfg.dbsess.rollback()
                 raise ListValuesError("API_list_values/lsv: query failed for: vlans. Error: %s" % e)
 
         elif 'ips' in query.keys():
@@ -145,7 +144,6 @@ class API_list_values:
                 self.cfg.log.debug(buf)
             except Exception, e:
                 self.cfg.log.debug("API_list_values/lsv: query failed for: ips. Error: %s" % e)
-                cfg.dbsess.rollback()
                 raise ListValuesError("API_list_values/lsv: query failed for: ips. Error: %s" % e)
 
         elif 'tags' in query.keys():
@@ -156,7 +154,6 @@ class API_list_values:
                 self.cfg.log.debug(buf)
             except Exception, e:
                 self.cfg.log.debug("API_list_values/lsv: query failed for tags. Error: %s" % e)
-                cfg.dbsess.rollback()
                 raise ListValuesError("API_list_values/lsv: query failed for tags. Error: %s" % e)
 
         elif 'groups' in query.keys():
@@ -167,7 +164,6 @@ class API_list_values:
                 self.cfg.log.debug(buf)
             except Exception, e:
                 self.cfg.log.debug("API_list_values/lsv: query failed for groups. Error: %s" % e)
-                cfg.dbsess.rollback()
                 raise ListValuesError("API_list_values/lsv: query failed for groups. Error: %s" % e)
 
         elif 'users' in query.keys():
@@ -182,7 +178,6 @@ class API_list_values:
                 self.cfg.log.debug(buf)
             except Exception, e:
                 self.cfg.log.debug("API_list_values/lsv: query failed for users. Error: %s" % e)
-                cfg.dbsess.rollback()
                 raise ListValuesError("API_list_values/lsv: query failed for groups. Error: %s" % e)
 
         elif 'available_hardware' in query.keys():
@@ -201,7 +196,6 @@ class API_list_values:
                 buf = [item for item in all_hw if not item in alloc_hw]
                 self.cfg.log.debug(buf)
             except Exception, e:
-                cfg.dbsess.rollback()
                 raise ListValuesError("API_list_values/lsv: query failed for available_hardware" % e)
 
 

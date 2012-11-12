@@ -214,7 +214,6 @@ class API_list_servers:
             for serv in self.cfg.dbsess.query(Server).order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_all_servers: query failed for ALL servers. Error: %s" % e)
         return result
 
@@ -238,7 +237,6 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_by_hostname: query failed. Error: %s" % e)
         return result
 
@@ -261,7 +259,6 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_physical_servers: query failed. Error: %s" % e)
         return result
 
@@ -284,7 +281,6 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_virtual_servers: query failed. Error: %s" % e)
         return result
 
@@ -306,7 +302,6 @@ class API_list_servers:
                     filter(Server.hw_tag==query['hw_tag']):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_from_hw_tag: query failed. Error: %s" % e)
         return result
     
@@ -335,7 +330,6 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_from_vlan: query failed. Error: %s" % e)
         return result
 
@@ -358,7 +352,6 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_from_site_id: query failed. Error: %s" % e)
         return result
     
@@ -399,7 +392,6 @@ class API_list_servers:
                 for serv in servers_kv:
                     result.append(serv)
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_from_tag: query failed. Error: %s" % e)
         return result
     
@@ -422,7 +414,6 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_from_realm: query failed. Error: %s" % e)
         return result
     
@@ -447,7 +438,6 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_from_manufacturer: query failed. Error: %s" % e)
         return result
 
@@ -472,7 +462,6 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_from_model: query failed. Error: %s" % e)
         return result
 
@@ -498,7 +487,6 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_from_cores: query failed. Error: %s" % e)
         return result
     
@@ -524,7 +512,6 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_from_ram: query failed. Error: %s" % e)
         return result
 
@@ -550,6 +537,5 @@ class API_list_servers:
                     order_by(Server.hostname):
                 result.append("%s.%s.%s" % (serv.hostname, serv.realm, serv.site_id))
         except Exception, e:
-            self.cfg.dbsess.rollback()
             raise ListServersError("API_list_servers/_get_servers_from_disk: query failed. Error: %s" % e)
         return result
