@@ -346,9 +346,9 @@ class API_dns:
                     records = self.__generate_drac_dns_records(realm, site_id)
                     zone['records'] = self.common.multikeysort(records, ['type', 'host'])
                     ret.append(zone)
-                else:
-                    self.cfg.log.debug("API_dns/display_forward: error: malformed unqn")
-                    raise DNSError("API_dns/display_forward: error: malformed unqn")
+            else:
+                self.cfg.log.debug("API_dns/display_forward: error: malformed unqn")
+                raise DNSError("API_dns/display_forward: error: malformed unqn")
             # if nothing has blown up, return 
             return ret
         except Exception, e:
@@ -427,9 +427,9 @@ class API_dns:
                     records = self.__generate_drac_dns_records(realm, site_id)
                     zone['records'] = self.common.multikeysort(records, ['type', 'host'])
                     zonelist.append(zone)
-                else:
-                    self.cfg.log.debug("API_dns/write_forward: error: malformed unqn")
-                    raise DNSError("API_dns/write_forward: error: malformed unqn")
+            else:
+                self.cfg.log.debug("API_dns/write_forward: error: malformed unqn")
+                raise DNSError("API_dns/write_forward: error: malformed unqn")
             # ensure our zone directory exists
             if not os.path.exists(self.cfg.zonedir):
                 raise DNSError("API_dns/write_forward: error, zone directory does not exist: %s" % self.cfg.zonedir)
