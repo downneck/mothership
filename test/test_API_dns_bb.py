@@ -96,3 +96,20 @@ class TestAPI_dns(unittest.TestCase):
         self.assertRaises(DNSError, dns.display_reverse, query)
         print "[API_dns] test6: PASSED"
 
+    # ip=10.190.44.0, good output
+    def test7(self):
+        query = {'ip': '10.190.44.0'}
+        result = dns.display_reverse(query)
+        for i in result:
+            del i['header']['serial']
+        for i in dr_ip_10_190_44_0['data']:
+            del i['header']['serial']
+        self.assertEqual(result, dr_ip_10_190_44_0['data'])
+        print "[API_dns] test7: PASSED"
+
+    # test bad ip, failure results
+    def test8(self):
+        query = {'ip': '10.190.44.400'}
+        self.assertRaises(DNSError, dns.display_reverse, query)
+        print "[API_dns] test8: PASSED"
+
