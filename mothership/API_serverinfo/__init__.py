@@ -100,47 +100,47 @@ class API_serverinfo:
 
     def _get_host_from_hwtag(self, key):
         try:
-            s = self.self.cfg.dbsess.query(Server).\
+            s = self.cfg.dbsess.query(Server).\
                 filter(Server.hw_tag==key).\
                 filter(Server.virtual==False).first()
             if s:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
-            self.self.cfg.log.debug("Something wrong happened in _get_host_from_hwtag. please re-run test")
+            self.cfg.log.debug("Something wrong happened in _get_host_from_hwtag. please re-run test")
             raise ServerInfoError("API_serverinfo/_get_host_from_hwtag: no host found with hw_tag: %s" % key)
 
     def _get_host_from_ip(self, key):
         # try the private ip
         try:
-            s, n = self.self.cfg.dbsess.query(Server, Network).\
+            s, n = self.cfg.dbsess.query(Server, Network).\
                    filter(Server.id==Network.server_id).\
                    filter(Network.ip==key).first()
             if s.hostname:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
-            self.self.cfg.log.debug("_get_host_from_ip couldn't find host via private ip")
+            self.cfg.log.debug("_get_host_from_ip couldn't find host via private ip")
         # try the public ip
         try:
-            s, n = self.self.cfg.dbsess.query(Server, Network).\
+            s, n = self.cfg.dbsess.query(Server, Network).\
                    filter(Server.id==Network.server_id).\
                    filter(Network.public_ip==key).first()
             if s.hostname:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
-            self.self.cfg.log.debug("_get_host_from_ip was not able to find the host via the public ip")
+            self.cfg.log.debug("_get_host_from_ip was not able to find the host via the public ip")
         # if we've made it this far without finding anyone...
         raise ServerInfoError("API_serverinfo/_get_host_from_ip: no host found with public or private ip: %s" % key)
 
     def _get_host_from_mac(self, key):
         try:
-            h, s = self.self.cfg.dbsess.query(Network, Server).\
+            h, s = self.cfg.dbsess.query(Network, Server).\
                    filter(Network.hw_tag==Server.hw_tag).\
                    filter(Network.mac==key).\
                    filter(Server.virtual==False).first()
             if s.hostname:
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except TypeError:
-            self.self.cfg.log.debug("_get_host_from_mac was not able to find an hostname")
+            self.cfg.log.debug("_get_host_from_mac was not able to find an hostname")
             raise ServerInfoError("API_serverinfo/_get_host_from_mac: no host found with MAC address: %s" % key)
 
     def _get_host_from_unqdn(self, key):
@@ -148,12 +148,12 @@ class API_serverinfo:
             s = v_get_server_obj(self.cfg, key)
             if s:
                 if type(s) == list:
-                    self.self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn: hostname not unique enough")
+                    self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn: hostname not unique enough")
                     raise ServerInfoError("API_serverinfo/_get_host_from_unqdn: hostname not unique enough")
-                self.self.cfg.log.debug("API_serverinfo/_get_host_from hostname (validate): %s.%s.%s" % (s.hostname, s.realm, s.site_id))
+                self.cfg.log.debug("API_serverinfo/_get_host_from hostname (validate): %s.%s.%s" % (s.hostname, s.realm, s.site_id))
                 return self._get_serverinfo(s.hostname, s.realm, s.site_id)
         except Exception, e:
-            self.self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn was not able to find a hostname")
+            self.cfg.log.debug("API_serverinfo/_get_host_from_unqdn was not able to find a hostname")
             raise ServerInfoError("API_serverinfo/_get_host_from_unqdn: no host found with name: %s. Error: %s" % (key, e))
 
     def si(self, query):
@@ -240,7 +240,7 @@ class API_serverinfo:
             fqdn = '.'.join([host,realm,site_id])
 
           ret['kv'] = []
-          kvobj = mothership.API_kv.API_kv(cfg)
+          kvobj = mothership.API_kv.API_kv(self.cfg)
           kquery = {'unqdn': fqdn, 'key': 'tag',}
           for kv in kvobj.collect(kquery):
               ret['kv'].append(kv)
