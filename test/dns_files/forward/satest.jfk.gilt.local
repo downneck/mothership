@@ -1,7 +1,7 @@
 
 $ORIGIN satest.jfk.gilt.local.
 $TTL 86400
-@                       IN      SOA     satest.jfk.gilt.local. hostmaster.localhost.localdomain. (
+@                       IN      SOA     ns1.satest.jfk.gilt.local. hostmaster.localhost.localdomain. (
                                         21600        ; Refresh
                                         3600         ; Retry
                                         604800       ; Expire
@@ -11,14 +11,14 @@ $TTL 86400
                         IN      NS      ns1.satest.jfk.gilt.local.
                         IN      NS      ns2.satest.jfk.gilt.local.
 
-ci1 IN A 10.190.33.150
+ci1 IN A 10.190.44.150
 cm1 IN A 10.190.44.110
 cm2 IN A 10.190.44.99
 cobbler1 IN A 10.190.44.81
 dcmon1 IN A 10.190.44.97
 hudson1 IN A 10.190.44.95
 hudson2 IN A 10.190.44.96
-jira1 IN A 10.190.33.75
+jira1 IN A 10.190.44.75
 ldap1 IN A 10.190.44.91
 ldap2 IN A 10.190.44.92
 matttest IN A 90.90.90.90

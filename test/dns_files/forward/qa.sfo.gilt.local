@@ -1,7 +1,7 @@
 
 $ORIGIN qa.sfo.gilt.local.
 $TTL 86400
-@                       IN      SOA     qa.sfo.gilt.local. hostmaster.localhost.localdomain. (
+@                       IN      SOA     ns1.qa.sfo.gilt.local. hostmaster.localhost.localdomain. (
                                         21600        ; Refresh
                                         3600         ; Retry
                                         604800       ; Expire

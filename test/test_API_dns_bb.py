@@ -5,6 +5,8 @@ from mothership.API_kv import API_kv
 from mothership.configure import *
 from mothership.common import *
 
+import os
+import filecmp
 
 # globals
 ###
@@ -88,6 +90,59 @@ class TestAPI_dns(unittest.TestCase):
         for i in allreverse['data']:
             del i['header']['serial']
         self.assertEqual(result, allreverse['data'])
+        print "[API_dns] test5: PASSED"
+
+    # test empty query, failure results
+    def test6(self):
+        query = {}
+        self.assertRaises(DNSError, dns.display_reverse, query)
+        print "[API_dns] test6: PASSED"
+
+    # ip=10.190.44.0, good output
+    def test7(self):
+        query = {'ip': '10.190.44.0'}
+        result = dns.display_reverse(query)
+        for i in result:
+            del i['header']['serial']
+        for i in dr_ip_10_190_44_0['data']:
+            del i['header']['serial']
+        self.assertEqual(result, dr_ip_10_190_44_0['data'])
+        print "[API_dns] test7: PASSED"
+
+    # test bad ip, failure results
+    def test8(self):
+        query = {'ip': '10.190.44.400'}
+        self.assertRaises(DNSError, dns.display_reverse, query)
+        print "[API_dns] test8: PASSED"
+
+    ######################################
+    # testing write_forward()            #
+    ######################################
+
+    # all=True, good output
+    def test9(self):
+        cfg.zonedir = '/tmp/mothership_dns_temp'
+        if os.path.isdir(cfg.zonedir):
+            for file in os.listdir(cfg.zonedir):
+                os.remove(cfg.zonedir+'/'+file)
+            os.removedirs(cfg.zonedir)
+        os.makedirs(cfg.zonedir)
+        query = {'all': True}
+        dns.write_forward(query)
+        result = 0
+        for file in os.listdir(cfg.zonedir):
+            file1 = "%s/%s" % (cfg.zonedir, file)
+            file2 = "test/dns_files/forward/%s" % file
+            ftemp = open (file1, "r")
+            linelist = ftemp.readlines()
+            ftemp.close()
+            del linelist[4]
+            ftemp = open (file1, "w")
+            ftemp.writelines(linelist)
+            ftemp.close()
+            if not filecmp.cmp(file1, file2):
+                result += 1
+        self.assertEqual(result, 0)
         print "[API_dns] test5: PASSED"
 
     # test empty query, failure results

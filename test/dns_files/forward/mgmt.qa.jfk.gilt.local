@@ -1,7 +1,7 @@
 
 $ORIGIN mgmt.qa.jfk.gilt.local.
 $TTL 86400
-@                       IN      SOA     mgmt.qa.jfk.gilt.local. hostmaster.localhost.localdomain. (
+@                       IN      SOA     ns1.qa.jfk.gilt.local. hostmaster.localhost.localdomain. (
                                         21600        ; Refresh
                                         3600         ; Retry
                                         604800       ; Expire
