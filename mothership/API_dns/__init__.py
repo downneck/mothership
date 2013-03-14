@@ -453,7 +453,7 @@ class API_dns:
                     self.cfg.log.debug("API_dns/write_forward: error, no template found. refusing to write dns zonefiles")
                     raise DNSError("API_dns/write_forward: error, no template found. refusing to write dns zonefiles")
             # if nothing has blown up, return
-            return "success" 
+            return "zones written to %s" % self.cfg.zonedir
         except Exception, e:
             self.cfg.log.debug("API_dns/write_forward: error: %s" % e)
             raise DNSError("API_dns/write_forward: error: %s" % e)
@@ -571,7 +571,7 @@ class API_dns:
                     self.cfg.log.debug("API_dns/write_reverse: error, no template found. refusing to write dns zonefiles")
                     raise DNSError("API_dns/write_reverse: error, no template found. refusing to write dns zonefiles")
             # if nothing has blown up, return
-            return "success" 
+            return "zones written to %s" % self.cfg.zonedir 
         except Exception, e:
             self.cfg.log.debug("API_dns/write_reverse: error: %s" % e)
             raise DNSError("API_dns/write_reverse: error: %s" % e)
