@@ -105,10 +105,9 @@ class TestAPI_dns(unittest.TestCase):
         result = dns.display_reverse(query)
         for i in result:
             del i['header']['serial']
-        dr = deepcopy(dr_ip_10_190_44_0)
-        for i in dr['data']:
+        for i in dr_ip_10_190_44_0['data']:
             del i['header']['serial']
-        self.assertEqual(result, dr['data'])
+        self.assertEqual(result, dr_ip_10_190_44_0['data'])
         print "[API_dns] test7: PASSED"
 
     # test bad ip, failure results
@@ -145,29 +144,59 @@ class TestAPI_dns(unittest.TestCase):
             if not filecmp.cmp(file1, file2):
                 result += 1
         self.assertEqual(result, 0)
-        print "[API_dns] test5: PASSED"
+        print "[API_dns] test9: PASSED"
 
     # test empty query, failure results
     def test10(self):
         query = {}
-        self.assertRaises(DNSError, dns.display_reverse, query)
+        self.assertRaises(DNSError, dns.write_forward, query)
         print "[API_dns] test10: PASSED"
 
-    # ip=10.190.44.0, good output
+    # test bad ip, failure results
     def test11(self):
-        query = {'ip': '10.190.44.0'}
-        result = dns.display_reverse(query)
-        for i in result:
-            del i['header']['serial']
-        dr = deepcopy(dr_ip_10_190_44_0)
-        for i in dr['data']:
-            del i['header']['serial']
-        self.assertEqual(result, dr['data'])
+        query = {'unqn': 'blah.bladitty'}
+        self.assertRaises(DNSError, dns.write_forward, query)
         print "[API_dns] test11: PASSED"
 
-    # test bad ip, failure results
+    ######################################
+    # testing write_forward()            #
+    ######################################
+
+    # all=True, good output
     def test12(self):
-        query = {'ip': '10.190.44.400'}
-        self.assertRaises(DNSError, dns.display_reverse, query)
+        cfg.zonedir = '/tmp/mothership_dns_temp'
+        if os.path.isdir(cfg.zonedir):
+            for file in os.listdir(cfg.zonedir):
+                os.remove(cfg.zonedir+'/'+file)
+            os.removedirs(cfg.zonedir)
+        os.makedirs(cfg.zonedir)
+        query = {'all': True}
+        dns.write_reverse(query)
+        result = 0
+        for file in os.listdir(cfg.zonedir):
+            file1 = "%s/%s" % (cfg.zonedir, file)
+            file2 = "test/dns_files/reverse/%s" % file
+            ftemp = open (file1, "r")
+            linelist = ftemp.readlines()
+            ftemp.close()
+            del linelist[4]
+            ftemp = open (file1, "w")
+            ftemp.writelines(linelist)
+            ftemp.close()
+            if not filecmp.cmp(file1, file2):
+                result += 1
+        self.assertEqual(result, 0)
         print "[API_dns] test12: PASSED"
+
+    # test empty query, failure results
+    def test13(self):
+        query = {}
+        self.assertRaises(DNSError, dns.write_reverse, query)
+        print "[API_dns] test13: PASSED"
+
+    # test bad ip, failure results
+    def test14(self):
+        query = {'ip': '10.190.44.400'}
+        self.assertRaises(DNSError, dns.write_reverse, query)
+        print "[API_dns] test14: PASSED"
 
