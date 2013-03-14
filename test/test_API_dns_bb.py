@@ -4,6 +4,7 @@ from mothership.API_dns import *
 from mothership.API_kv import API_kv 
 from mothership.configure import *
 from mothership.common import *
+from copy import deepcopy 
 
 import os
 import filecmp
@@ -104,9 +105,10 @@ class TestAPI_dns(unittest.TestCase):
         result = dns.display_reverse(query)
         for i in result:
             del i['header']['serial']
-        for i in dr_ip_10_190_44_0['data']:
+        dr = deepcopy(dr_ip_10_190_44_0)
+        for i in dr['data']:
             del i['header']['serial']
-        self.assertEqual(result, dr_ip_10_190_44_0['data'])
+        self.assertEqual(result, dr['data'])
         print "[API_dns] test7: PASSED"
 
     # test bad ip, failure results
@@ -146,25 +148,26 @@ class TestAPI_dns(unittest.TestCase):
         print "[API_dns] test5: PASSED"
 
     # test empty query, failure results
-    def test6(self):
+    def test10(self):
         query = {}
         self.assertRaises(DNSError, dns.display_reverse, query)
-        print "[API_dns] test6: PASSED"
+        print "[API_dns] test10: PASSED"
 
     # ip=10.190.44.0, good output
-    def test7(self):
+    def test11(self):
         query = {'ip': '10.190.44.0'}
         result = dns.display_reverse(query)
         for i in result:
             del i['header']['serial']
-        for i in dr_ip_10_190_44_0['data']:
+        dr = deepcopy(dr_ip_10_190_44_0)
+        for i in dr['data']:
             del i['header']['serial']
-        self.assertEqual(result, dr_ip_10_190_44_0['data'])
-        print "[API_dns] test7: PASSED"
+        self.assertEqual(result, dr['data'])
+        print "[API_dns] test11: PASSED"
 
     # test bad ip, failure results
-    def test8(self):
+    def test12(self):
         query = {'ip': '10.190.44.400'}
         self.assertRaises(DNSError, dns.display_reverse, query)
-        print "[API_dns] test8: PASSED"
+        print "[API_dns] test12: PASSED"
 
