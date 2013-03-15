@@ -159,7 +159,7 @@ class TestAPI_dns(unittest.TestCase):
         print "[API_dns] test11: PASSED"
 
     ######################################
-    # testing write_forward()            #
+    # testing write_reverse()            #
     ######################################
 
     # all=True, good output
@@ -200,3 +200,100 @@ class TestAPI_dns(unittest.TestCase):
         self.assertRaises(DNSError, dns.write_reverse, query)
         print "[API_dns] test14: PASSED"
 
+
+    ######################################
+    # testing add()                      #
+    ######################################
+
+    # test empty query, failure results
+    def test15(self):
+        query = {}
+        self.assertRaises(DNSError, dns.add, query)
+        print "[API_dns] test15: PASSED"
+
+    # test record_type empty, failure results
+    def test16(self):
+        query = {'record_type': '', 'unqdn': 'test', 'target': 'test-target'}
+        self.assertRaises(DNSError, dns.add, query)
+        print "[API_dns] test16: PASSED"
+
+    # test unqdn empty, failure results
+    def test17(self):
+        query = {'record_type': 'MX', 'unqdn': '', 'target': 'test-target'}
+        self.assertRaises(DNSError, dns.add, query)
+        print "[API_dns] test17: PASSED"
+
+    # test target empty, failure results
+    def test18(self):
+        query = {'record_type': 'MX', 'unqdn': 'test', 'target': ''}
+        self.assertRaises(DNSError, dns.add, query)
+        print "[API_dns] test18: PASSED"
+
+    # test target too large (>200 chars), failure results
+    def test19(self):
+        query = {'record_type': 'MX', 'unqdn': 'test', 'target': '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890'}
+        self.assertRaises(DNSError, dns.add, query)
+        print "[API_dns] test19: PASSED"
+
+    # test unqdn too large (>200 chars), failure results
+    def test20(self):
+        query = {'record_type': 'MX', 'unqdn': '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890', 'target': 'test-target'}
+        self.assertRaises(DNSError, dns.add, query)
+        print "[API_dns] test20: PASSED"
+
+    # test good data, success 
+    def test21(self):
+        query = {'record_type': 'CNAME', 'unqdn': 'unittest.satest.jfk', 'target': 'unittest-target.satest.jfk'}
+        result = dns.add(query)
+        dns.remove(query)
+        self.assertEqual(result, "success") 
+        print "[API_dns] test21: PASSED"
+
+
+    ######################################
+    # testing remove()                   #
+    ######################################
+
+    # test empty query, failure results
+    def test22(self):
+        query = {}
+        self.assertRaises(DNSError, dns.remove, query)
+        print "[API_dns] test22: PASSED"
+
+    # test record_type empty, failure results
+    def test23(self):
+        query = {'record_type': '', 'unqdn': 'test', 'target': 'test-target'}
+        self.assertRaises(DNSError, dns.remove, query)
+        print "[API_dns] test23: PASSED"
+
+    # test unqdn empty, failure results
+    def test24(self):
+        query = {'record_type': 'MX', 'unqdn': '', 'target': 'test-target'}
+        self.assertRaises(DNSError, dns.remove, query)
+        print "[API_dns] test24: PASSED"
+
+    # test target empty, failure results
+    def test25(self):
+        query = {'record_type': 'MX', 'unqdn': 'test', 'target': ''}
+        self.assertRaises(DNSError, dns.remove, query)
+        print "[API_dns] test25: PASSED"
+
+    # test target too large (>200 chars), failure results
+    def test26(self):
+        query = {'record_type': 'MX', 'unqdn': 'test', 'target': '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890'}
+        self.assertRaises(DNSError, dns.remove, query)
+        print "[API_dns] test26: PASSED"
+
+    # test unqdn too large (>200 chars), failure results
+    def test27(self):
+        query = {'record_type': 'MX', 'unqdn': '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890', 'target': 'test-target'}
+        self.assertRaises(DNSError, dns.remove, query)
+        print "[API_dns] test27: PASSED"
+
+    # test good data, success 
+    def test28(self):
+        query = {'record_type': 'CNAME', 'unqdn': 'unittest.satest.jfk', 'target': 'unittest-target.satest.jfk'}
+        dns.add(query)
+        result = dns.remove(query)
+        self.assertEqual(result, "success") 
+        print "[API_dns] test28: PASSED"
