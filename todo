@@ -1,3 +1,5 @@
-write tests for dns module
+maybe more dns unit tests? try and catch some wierd input corner cases
+
 convert server module
+
 figure out a way to test drac without dracs 
