@@ -204,6 +204,10 @@ network:
   # Set the interface your management vlan uses
   # eth0 is a reasonable default for this
   mgmt_interface: 'eth0'
+  
+  # Set the interface your primary vlan uses
+  # eth1 is a reasonable default for this
+  primary_interface: 'eth1'
 
   # Set the read-write community string for your switches here
   # only applicable if you chose 'snmp' as your facility
