@@ -67,7 +67,7 @@ class API_idrac:
                         'string': 'success',
                     },
                 },
-                'import': {
+                'ingest': {
                     'description': 'import iDrac info into mothership\'s hardware database',
                     'short': 'i',
                     'rest_type': 'POST',
@@ -96,7 +96,7 @@ class API_idrac:
         }
 
 
-    def import(self, query):
+    def ingest(self, query):
         """
         [description]
         display stored/configured forward DNS data 
