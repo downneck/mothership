@@ -187,23 +187,16 @@ class API_cobbler:
 
 
 
-########### unconverted below here
+########### partially converted below here
 
     def add_system(self, host_dict):
         hostname = host_dict['hostname']
         if not host_dict['cobbler_profile']:
-            print '%s has empty profile: system not provisioned for cobbler!' % hostname
-            return
+            raise CobblerError("%s has empty profile: system not provisioned for cobbler!" % hostname)
         if self.cfg.coblive:
             if self.find_system_by_hostname(hostname):
-                print 'System already exists: %s' % hostname
-                self.delete_system(hostname)
-            print 'Adding system: %s' % hostname
+                raise CobblerError("System already exists: %s" % hostname)
             handle = self.cfg.remote.new_system(cfg.token)
-        else:
-            print 'API: remote.find_system({\'name\':hostname})'
-            print 'API: if found: remote.remove_system(hostname, token)'
-            print 'API: set new handle = remote.new_system(token)'
 
         sysdict = mothership.transkey(host_dict, self.map_system)
         # Adjust power management values after mothership.transkey
@@ -224,13 +217,6 @@ class API_cobbler:
                         sysdict[k] = int(sysdict[k]) * 1024
                     #print 'Modifying %s system values: %s' % (hostname, k)
                     self.cfg.remote.modify_system(handle, k, sysdict[k], self.cfg.token)
-        else:
-            from pprint import pprint
-            print 'API: sysdict = { \'key\':\'value\', }'
-            pprint(sysdict, indent=4)
-            print 'API: loop through all the cobbler \'system\' values:'
-            print 'API:     remote.modify_system(handle, key, sysdict[key], token)'
-            print 'API: then loop through all interfaces...'
 
         ifbond = False
         for k in sorted(host_dict['interfaces'].keys()):
@@ -251,6 +237,7 @@ class API_cobbler:
             # add appropriate dns_names for each interface
             domain = None
             if x['ip']:
+                # again with the network mapper....
                 domain = mothership.network_mapper.remap(self.cfg, 'dom', nic=x['interface'], siteid=x['site_id'], ip=x['ip'])
             if domain:
                 x['dns_name'] = '%s%s' % (hostname, domain)
@@ -267,9 +254,6 @@ class API_cobbler:
                     self.cfg.remote.modify_system(handle, 'modify_interface', 
                         self.append_value_to_keyname(mothership.transkey(ifdict,
                         self.map_interface, True), '-'+ifbond), self.cfg.token)
-                else:
-                    print 'API: since bond_options are set:'
-                    print 'API:     remote.modify_system(handle, \'modify_interface\', ifbond-dict-map, token)'
                 # if xenserver, then add template for bond0
                 if 'xenserver' in sysdict['profile']:
                     if self.cfg.coblive:
@@ -279,9 +263,6 @@ class API_cobbler:
                             '/var/www/cobbler/aux/xenserver/create_eth1.template': '/eth1',
                             '/var/www/cobbler/aux/xenserver/gateway_eth1.template': '/defgw',
                             }, self.cfg.token)
-                    else:
-                        print 'API: if \'xenserver\' profile:'
-                        print 'API:     remote.modify_system(handle, \'template_files\', {template-path:alias}, token)'
 
             # set the bond0 slave interfaces
             if x['bond_options']:
@@ -296,29 +277,32 @@ class API_cobbler:
                     self.cfg.remote.modify_system(handle, 'modify_interface', 
                         self.append_value_to_keyname(mothership.transkey(host_dict['interfaces'][k],
                         self.map_interface, True), '-'+k), self.cfg.token)
-                except Fault, err:
-                    print 'Aborting cobbler add, failed to modify %s %s' % (hostname, k)
-                    print '    ' + str(err)
-                    return False
-            else:
-                print 'API: remote.modify_system(handle, \'modify_interface\', %s-dict-map, token)' % k
+                except Exception, e:
+                    raise CobblerError("Aborting cobbler add, failed to modify %s %s. Error: %s" % (hostname, k, e))
 
         # save all system changes
         if self.cfg.coblive:
             self.cfg.remote.save_system(handle, self.cfg.token)
-        else:
-            print 'API: remote.save_system(handle, token)'
         return True
+
 
     def remove_system(self, unqdn):
         if self.cfg.coblive:
             if not self.find_system_by_hostname(unqdn):
-                print 'Skipping cobbler delete, system does not exist: %s' % hostname
-                return
-            print 'Deleting cobbler system: %s' % hostname
+                raise CobblerError("Skipping cobbler delete, system does not exist: %s" % hostname)
             self.cfg.remote.remove_system(unqdn, self.cfg.token)
-        else:
-            print 'API: remote.remove_system(hostname, token)'
+
+
+
+
+
+
+# unconverted below
+
+
+
+
+
 
 
 # internal methods
